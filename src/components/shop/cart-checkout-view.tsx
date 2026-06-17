@@ -9,6 +9,12 @@ import {
   countryLabel,
   useCheckoutShipping,
 } from "@/hooks/use-checkout-shipping";
+import { isLiveCheckoutEnabled } from "@/lib/checkout-mode";
+import {
+  submitCheckout,
+  updateCheckoutCustomerShipping,
+} from "@/lib/graphql/checkout";
+import { readWooSessionToken } from "@/lib/graphql/checkout-client";
 import {
   CheckoutMobilePayBar,
   CheckoutOrderSummary,
@@ -21,6 +27,7 @@ import {
 import { cartLineThumbnailClass } from "@/lib/shop/cart-line-image";
 import { formatPrice } from "@/lib/shop/category";
 import { cartHasEquipment } from "@/lib/shop/cart-has-equipment";
+import { defaultLocationForCountry } from "@/lib/shop/countries";
 import { cn } from "@/lib/utils";
 import { EquipmentReturnPromise } from "@/components/shop/equipment-return-promise";
 import { CampaignCartPanels } from "@/components/campaigns/campaign-cart-panels";
@@ -316,6 +323,7 @@ export function CartCheckoutView() {
   const [couponCode, setCouponCode] = useState("");
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [orderId, setOrderId] = useState<string | null>(null);
 
   const customer = useMemo(
@@ -342,6 +350,7 @@ export function CartCheckoutView() {
     Boolean(email) &&
     Boolean(firstName) &&
     Boolean(lastName) &&
+    Boolean(phone) &&
     Boolean(shipping.selectedRateId) &&
     (!shipping.needsAddress || Boolean(address1 && city && postcode));
 
@@ -379,20 +388,60 @@ export function CartCheckoutView() {
     };
   }, [checkoutStep, itemCount, orderId, setCheckoutStep]);
 
-  const handleSubmit = (event: React.FormEvent) => {
+  const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
-    if (!canSubmit) {
+    if (!canSubmit || submitting) {
       return;
     }
 
     setSubmitting(true);
+    setSubmitError(null);
 
-    window.setTimeout(() => {
-      setOrderId(`MR-${Date.now().toString(36).toUpperCase()}`);
+    try {
+      if (!isLiveCheckoutEnabled()) {
+        await new Promise((resolve) => window.setTimeout(resolve, 900));
+        setOrderId(`DEMO-${Date.now().toString(36).toUpperCase()}`);
+        clearCart();
+        return;
+      }
+
+      const sessionToken = readWooSessionToken();
+      const fallbackLocation = defaultLocationForCountry(shipping.country);
+
+      await updateCheckoutCustomerShipping(
+        {
+          country: shipping.country,
+          email,
+          firstName,
+          lastName,
+          phone,
+          postcode: shipping.needsAddress ? postcode : fallbackLocation.postcode,
+          city: shipping.needsAddress ? city : fallbackLocation.city,
+          address1: shipping.needsAddress ? address1 : undefined,
+        },
+        sessionToken,
+      );
+
+      const result = await submitCheckout({}, readWooSessionToken());
+
+      if (result.redirect) {
+        clearCart();
+        window.location.assign(result.redirect);
+        return;
+      }
+
+      setOrderId(result.orderNumber ?? `MR-${Date.now().toString(36).toUpperCase()}`);
       clearCart();
+    } catch (cause) {
+      setSubmitError(
+        cause instanceof Error
+          ? friendlyCheckoutError(cause.message) ?? cause.message
+          : "Payment could not be started. Please try again.",
+      );
+    } finally {
       setSubmitting(false);
-    }, 900);
+    }
   };
 
   if (orderId) {
@@ -407,6 +456,11 @@ export function CartCheckoutView() {
           way via {shipping.selectedRate?.label ?? "your chosen delivery"}.
           We sent a confirmation to {email}.
         </p>
+        {!isLiveCheckoutEnabled() ? (
+          <p className="mx-auto mt-3 max-w-lg text-sm text-ink/55">
+            Demo checkout only — no order was placed and no payment was taken.
+          </p>
+        ) : null}
         <Link href="/" className="btn-accent mt-10 inline-flex">
           Back to home
         </Link>
@@ -484,6 +538,30 @@ export function CartCheckoutView() {
               }
               onRemove={(line) => removeItem(line.slug, line.size)}
             />
+            <details className="mt-6 border-t border-ink/10 pt-5">
+              <summary className="cursor-pointer text-sm font-medium text-ink/55 hover:text-ink">
+                Have a discount code?
+              </summary>
+              <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center">
+                <label className="sr-only" htmlFor="coupon_code">
+                  Discount code
+                </label>
+                <input
+                  id="coupon_code"
+                  type="text"
+                  value={couponCode}
+                  onChange={(event) => setCouponCode(event.target.value)}
+                  placeholder="Discount code"
+                  className="w-full border border-ink/15 bg-paper px-4 py-3 text-base focus:border-accent focus:outline-none sm:max-w-xs"
+                />
+                <button
+                  type="button"
+                  className="inline-flex min-h-11 items-center justify-center border border-ink/20 px-5 text-xs font-bold uppercase tracking-aggressive text-ink/70"
+                >
+                  Apply
+                </button>
+              </div>
+            </details>
             {cartHasEquipment(lines) ? (
               <div className="mt-6">
                 <EquipmentReturnPromise variant="banner" />
@@ -637,12 +715,11 @@ export function CartCheckoutView() {
                     />
                   </label>
                   <label className="block sm:col-span-2">
-                    <span className={labelClassName}>
-                      Phone <span className="text-ink/30">(optional)</span>
-                    </span>
+                    <span className={labelClassName}>Phone</span>
                     <input
                       type="tel"
                       name="phone"
+                      required
                       autoComplete="tel"
                       value={phone}
                       onChange={(event) => setPhone(event.target.value)}
@@ -651,30 +728,11 @@ export function CartCheckoutView() {
                   </label>
                 </div>
 
-                <details className="border-t border-ink/10 pt-5">
-                  <summary className="cursor-pointer text-sm font-medium text-ink/55 hover:text-ink">
-                    Have a discount code?
-                  </summary>
-                  <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center">
-                    <label className="sr-only" htmlFor="coupon_code">
-                      Discount code
-                    </label>
-                    <input
-                      id="coupon_code"
-                      type="text"
-                      value={couponCode}
-                      onChange={(event) => setCouponCode(event.target.value)}
-                      placeholder="Discount code"
-                      className="w-full border border-ink/15 bg-paper px-4 py-3 text-base focus:border-accent focus:outline-none sm:max-w-xs"
-                    />
-                    <button
-                      type="button"
-                      className="inline-flex min-h-11 items-center justify-center border border-ink/20 px-5 text-xs font-bold uppercase tracking-aggressive text-ink/70"
-                    >
-                      Apply
-                    </button>
-                  </div>
-                </details>
+                {submitError ? (
+                  <p className="text-sm text-accent" role="alert">
+                    {submitError}
+                  </p>
+                ) : null}
               </div>
             </CheckoutBlock>
           </form>

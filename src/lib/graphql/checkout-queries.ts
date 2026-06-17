@@ -118,3 +118,27 @@ export const UPDATE_SHIPPING_METHOD = `
     }
   }
 `;
+
+export const PAYMENT_GATEWAYS = `
+  query PaymentGateways {
+    paymentGateways {
+      nodes {
+        id
+        title
+      }
+    }
+  }
+`;
+
+export const CHECKOUT = `
+  mutation Checkout($input: CheckoutInput!) {
+    checkout(input: $input) {
+      result
+      redirect
+      order {
+        databaseId
+        orderNumber
+      }
+    }
+  }
+`;

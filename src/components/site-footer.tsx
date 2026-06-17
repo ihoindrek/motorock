@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { brands } from "@/data/brands";
 import { useCheckoutStep } from "@/context/checkout-step-context";
+import { getBrandCatalogHref } from "@/lib/shop/brand-catalog-url";
 
 const shopLinks = [
   { href: "/shop/motorcycles", label: "Motorcycles" },
@@ -24,7 +25,7 @@ const companyLinks = [
 
 const quickLinks = [
   { href: "/search", label: "Search" },
-  { href: "/shop/brands/brixton", label: "Brands" },
+  { href: "/shop/motorcycles", label: "Brands" },
   { href: "/cart", label: "Cart & checkout" },
   { href: "/test-ride", label: "Book test ride" },
 ] as const;
@@ -308,7 +309,7 @@ export function SiteFooter() {
                 {motorcycleBrands.map((brand) => (
                   <li key={brand.slug}>
                     <Link
-                      href={`/shop/brands/${brand.slug}`}
+                      href={getBrandCatalogHref(brand.slug)}
                       className="opacity-45 transition-opacity duration-300 hover:opacity-100"
                     >
                       <Image

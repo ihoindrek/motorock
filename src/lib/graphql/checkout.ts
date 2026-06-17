@@ -7,11 +7,15 @@ import {
   ADD_TO_CART,
   ALLOWED_COUNTRIES,
   CART_SHIPPING,
+  CHECKOUT,
   EMPTY_CART,
+  PAYMENT_GATEWAYS,
   RESOLVE_PRODUCT_IDS,
   UPDATE_CUSTOMER,
   UPDATE_SHIPPING_METHOD,
 } from "@/lib/graphql/checkout-queries";
+
+export const MONTONIO_PAYMENT_METHOD_ID = "wc_montonio_payments";
 import { parseGraphqlPrice } from "@/lib/shop/parse-graphql-price";
 import type { ShippingRate } from "@/lib/shop/shipping-method";
 
@@ -302,4 +306,84 @@ export async function selectShippingRate(
 
 export function parseCartMoney(value: string | null | undefined) {
   return parseGraphqlPrice(value);
+}
+
+type PaymentGatewaysResponse = {
+  paymentGateways: {
+    nodes: Array<{ id: string; title: string }>;
+  };
+};
+
+type CheckoutResponse = {
+  checkout: {
+    result: string;
+    redirect: string | null;
+    order: {
+      databaseId: number | null;
+      orderNumber: string | null;
+    } | null;
+  } | null;
+};
+
+export async function fetchPaymentGateways(sessionToken?: string | null) {
+  const { data } = await checkoutGraphqlRequest<PaymentGatewaysResponse>(
+    PAYMENT_GATEWAYS,
+    undefined,
+    sessionToken,
+  );
+
+  return data.paymentGateways.nodes;
+}
+
+export async function resolveCheckoutPaymentMethod(
+  sessionToken?: string | null,
+) {
+  const gateways = await fetchPaymentGateways(sessionToken);
+  const montonio = gateways.find(
+    (gateway) => gateway.id === MONTONIO_PAYMENT_METHOD_ID,
+  );
+
+  return montonio?.id ?? gateways[0]?.id ?? MONTONIO_PAYMENT_METHOD_ID;
+}
+
+export async function submitCheckout(
+  input: {
+    paymentMethod?: string;
+    customerNote?: string;
+  },
+  sessionToken?: string | null,
+) {
+  const paymentMethod =
+    input.paymentMethod ??
+    (await resolveCheckoutPaymentMethod(sessionToken));
+
+  const { data, sessionToken: nextSession } = await checkoutGraphqlRequest<
+    CheckoutResponse,
+    {
+      input: {
+        paymentMethod: string;
+        customerNote?: string;
+      };
+    }
+  >(
+    CHECKOUT,
+    {
+      input: {
+        paymentMethod,
+        ...(input.customerNote ? { customerNote: input.customerNote } : {}),
+      },
+    },
+    sessionToken,
+  );
+
+  const checkout = data.checkout;
+  if (!checkout || checkout.result !== "success") {
+    throw new Error("Checkout could not be completed. Please try again.");
+  }
+
+  return {
+    redirect: checkout.redirect,
+    orderNumber: checkout.order?.orderNumber ?? null,
+    sessionToken: nextSession,
+  };
 }

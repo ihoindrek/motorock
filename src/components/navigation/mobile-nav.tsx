@@ -1,8 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useId, useState, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { brands } from "@/data/brands";
 import { shopNav, siteNav, type NavColumn } from "@/data/navigation";
+import { useFocusTrap } from "@/hooks/use-focus-trap";
+import { getBrandCatalogHref } from "@/lib/shop/brand-catalog-url";
 
 type MobileNavProps = {
   open: boolean;
@@ -220,6 +223,45 @@ function EquipmentAccordion({
   );
 }
 
+function MotorcycleBrandsAccordion({ onNavigate }: { onNavigate: () => void }) {
+  const [open, setOpen] = useState(false);
+  const triggerId = useId();
+  const panelId = useId();
+  const motorcycleBrands = brands.filter((brand) => brand.logo);
+
+  return (
+    <section className="border-b border-ink/10">
+      <button
+        type="button"
+        id={triggerId}
+        aria-expanded={open}
+        aria-controls={panelId}
+        onClick={() => setOpen((value) => !value)}
+        className="flex w-full items-center justify-between py-4 font-display text-sm font-bold uppercase tracking-aggressive text-ink/75 transition-colors hover:text-accent"
+      >
+        Motorcycle brands
+        <ChevronIcon open={open} />
+      </button>
+
+      <CollapsiblePanel id={panelId} open={open}>
+        <ul className="space-y-0.5 border-l border-ink/10 pb-4 pl-4">
+          {motorcycleBrands.map((brand) => (
+            <li key={brand.slug}>
+              <Link
+                href={getBrandCatalogHref(brand.slug)}
+                onClick={onNavigate}
+                className="block py-2.5 text-sm text-ink/75 transition-colors hover:text-accent"
+              >
+                {brand.name}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </CollapsiblePanel>
+    </section>
+  );
+}
+
 export function MobileNav({
   open,
   onClose,
@@ -227,6 +269,10 @@ export function MobileNav({
   onLocaleChange,
 }: MobileNavProps) {
   const labelId = useId();
+  const panelRef = useRef<HTMLElement>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
+
+  useFocusTrap(panelRef, open, { onEscape: onClose, initialFocus: closeRef });
 
   useEffect(() => {
     if (!open) {
@@ -261,7 +307,10 @@ export function MobileNav({
       />
 
       <nav
+        ref={panelRef}
         id="mobile-navigation"
+        role="dialog"
+        aria-modal="true"
         aria-labelledby={labelId}
         className={`fixed inset-y-0 right-0 z-50 flex w-full max-w-sm flex-col bg-white transition-transform duration-200 ease-out lg:hidden ${
           open ? "translate-x-0" : "translate-x-full"
@@ -275,6 +324,7 @@ export function MobileNav({
             Menu
           </p>
           <button
+            ref={closeRef}
             type="button"
             onClick={onClose}
             className="inline-flex size-10 items-center justify-center text-ink transition-colors hover:text-accent"
@@ -300,6 +350,8 @@ export function MobileNav({
               </div>
             ),
           )}
+
+          <MotorcycleBrandsAccordion onNavigate={onClose} />
 
           <div
             className="my-1 border-t border-ink/10"

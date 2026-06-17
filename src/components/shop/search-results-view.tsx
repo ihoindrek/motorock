@@ -9,6 +9,7 @@ import {
   CategoryFilters,
   type ActiveFilters,
 } from "@/components/shop/category-filters";
+import { MobileFilterDrawer } from "@/components/ui/mobile-filter-drawer";
 import {
   searchResultsRoute,
   sortProducts,
@@ -406,69 +407,21 @@ export function SearchResultsView({ query, products }: SearchResultsViewProps) {
             </div>
           )}
 
-          {mobileFiltersOpen ? (
-            <>
-              <div
-                className="fixed inset-0 z-50 bg-ink/55 lg:hidden"
-                aria-hidden="true"
-                onClick={() => setMobileFiltersOpen(false)}
-              />
-              <aside className="fixed inset-y-0 left-0 z-[60] flex w-full max-w-sm flex-col bg-white lg:hidden">
-                <div className="flex items-center justify-between border-b border-ink/10 px-6 py-5">
-                  <p className="font-display text-sm font-bold uppercase tracking-aggressive text-ink">
-                    Filters
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setMobileFiltersOpen(false)}
-                      className="inline-flex min-h-11 items-center px-2 font-display text-xs font-bold uppercase tracking-aggressive text-accent"
-                    >
-                      Apply
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setMobileFiltersOpen(false)}
-                      className="inline-flex size-10 items-center justify-center text-ink/65 transition-colors hover:text-accent"
-                      aria-label="Close filters"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth={2}
-                        strokeLinecap="square"
-                        className="size-5"
-                        aria-hidden="true"
-                      >
-                        <path d="M6 6l12 12M18 6L6 18" />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-                <div className="flex-1 space-y-6 overflow-y-auto px-6 py-5">
-                  {facets.showTypeFilter ? (
-                    <SearchTypeFilter
-                      options={facets.typeOptions}
-                      value={typeFilter}
-                      onChange={setTypeFilter}
-                    />
-                  ) : null}
-                  <CategoryFilters {...filterProps} variant="drawer" />
-                </div>
-                <div className="border-t border-ink/10 px-6 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
-                  <button
-                    type="button"
-                    onClick={() => setMobileFiltersOpen(false)}
-                    className="btn-accent w-full"
-                  >
-                    Apply filters
-                  </button>
-                </div>
-              </aside>
-            </>
-          ) : null}
+          <MobileFilterDrawer
+            open={mobileFiltersOpen}
+            onClose={() => setMobileFiltersOpen(false)}
+          >
+            <div className="space-y-6 py-3">
+              {facets.showTypeFilter ? (
+                <SearchTypeFilter
+                  options={facets.typeOptions}
+                  value={typeFilter}
+                  onChange={setTypeFilter}
+                />
+              ) : null}
+              <CategoryFilters {...filterProps} variant="drawer" />
+            </div>
+          </MobileFilterDrawer>
         </>
       ) : null}
 

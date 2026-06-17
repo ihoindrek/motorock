@@ -14,6 +14,7 @@ import { CatalogLoadMore } from "@/components/shop/catalog-load-more";
 import { CatalogProductGrid } from "@/components/shop/catalog-product-grid";
 import { CategoryFilters, type ActiveFilters } from "@/components/shop/category-filters";
 import { MotorcycleBrandLogoFilter } from "@/components/shop/motorcycle-brand-logo-filter";
+import { MobileFilterDrawer } from "@/components/ui/mobile-filter-drawer";
 import { cn } from "@/lib/utils";
 
 type CategoryViewProps = {
@@ -30,10 +31,13 @@ type CategoryViewProps = {
   footer?: ReactNode;
 };
 
-function getInitialFilters(products: readonly CatalogProduct[]): ActiveFilters {
+function getInitialFilters(
+  products: readonly CatalogProduct[],
+  route?: CategoryRoute,
+): ActiveFilters {
   if (products.length === 0) {
     return {
-      brands: [],
+      brands: route?.brand ? [route.brand] : [],
       sizes: [],
       inStockOnly: false,
       priceMin: 0,
@@ -44,7 +48,7 @@ function getInitialFilters(products: readonly CatalogProduct[]): ActiveFilters {
   const prices = products.map((product) => product.price);
 
   return {
-    brands: [],
+    brands: route?.brand ? [route.brand] : [],
     sizes: [],
     inStockOnly: false,
     priceMin: Math.min(...prices),
@@ -188,7 +192,9 @@ export function CategoryView({
     isToolsCatalog ||
     isEquipmentCatalog ||
     route.title.length > 12;
-  const [filters, setFilters] = useState(() => getInitialFilters(routeProducts));
+  const [filters, setFilters] = useState(() =>
+    getInitialFilters(routeProducts, route),
+  );
   const [sort, setSort] = useState<SortOption>(() => defaultSortForRoute(route));
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [visibleCount, setVisibleCount] = useState(pageSize);
@@ -414,62 +420,12 @@ export function CategoryView({
         </div>
       )}
 
-      {mobileFiltersOpen ? (
-        <>
-          <div
-            className="fixed inset-0 z-50 bg-ink/55 lg:hidden"
-            aria-hidden="true"
-            onClick={() => setMobileFiltersOpen(false)}
-          />
-          <aside className="fixed inset-y-0 left-0 z-[60] flex w-full max-w-sm flex-col bg-paper lg:hidden">
-            <div className="flex items-center justify-between border-b border-ink/10 px-6 py-5">
-              <p className="font-display text-sm font-bold uppercase tracking-aggressive text-ink">
-                Filters
-              </p>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setMobileFiltersOpen(false)}
-                  className="inline-flex min-h-11 items-center px-2 font-display text-xs font-bold uppercase tracking-aggressive text-accent"
-                >
-                  Apply
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setMobileFiltersOpen(false)}
-                  className="inline-flex size-10 items-center justify-center text-ink/65 transition-colors hover:text-accent"
-                  aria-label="Close filters"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                    strokeLinecap="square"
-                    className="size-5"
-                    aria-hidden="true"
-                  >
-                    <path d="M6 6l12 12M18 6L6 18" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-            <div className="flex-1 overflow-y-auto px-6 py-2">
-              <CategoryFilters {...filterProps} variant="drawer" />
-            </div>
-            <div className="border-t border-ink/10 bg-paper px-6 py-4">
-              <button
-                type="button"
-                onClick={() => setMobileFiltersOpen(false)}
-                className="btn-accent w-full justify-center"
-              >
-                Apply filters
-              </button>
-            </div>
-          </aside>
-        </>
-      ) : null}
+      <MobileFilterDrawer
+        open={mobileFiltersOpen}
+        onClose={() => setMobileFiltersOpen(false)}
+      >
+        <CategoryFilters {...filterProps} variant="drawer" />
+      </MobileFilterDrawer>
 
       {footer ? <div className="mt-12">{footer}</div> : null}
       </div>

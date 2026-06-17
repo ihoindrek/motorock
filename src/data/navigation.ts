@@ -31,13 +31,20 @@ const womenGearLinks = [
   { href: "/shop/equipment/women/base-layers", label: "Base layers" },
 ] as const;
 
-const equipmentBrandLinks = [
-  { href: "/shop/brands/pando-moto", label: "Pando Moto" },
-  { href: "/shop/brands/holyfreedom", label: "Holyfreedom" },
-  { href: "/shop/brands/johnny-reb", label: "Johnny Reb" },
-  { href: "/shop/brands/bobhead", label: "Bobhead" },
-  { href: "/shop/brands/motogirl", label: "Motogirl" },
+import { getBrandCatalogHref } from "@/lib/shop/brand-catalog-url";
+
+const equipmentBrandSlugs = [
+  { slug: "pando-moto", label: "Pando Moto" },
+  { slug: "holyfreedom", label: "Holyfreedom" },
+  { slug: "johnny-reb", label: "Johnny Reb" },
+  { slug: "bobhead", label: "Bobhead" },
+  { slug: "motogirl", label: "Motogirl" },
 ] as const;
+
+const equipmentBrandLinks = equipmentBrandSlugs.map(({ slug, label }) => ({
+  href: getBrandCatalogHref(slug),
+  label,
+}));
 
 export const equipmentMegaMenu = {
   columns: [
@@ -73,7 +80,7 @@ export const equipmentMegaMenu = {
     },
   ],
   promo: {
-    href: "/shop/brands/pando-moto",
+    href: getBrandCatalogHref("pando-moto"),
     image: "/JRH10015_L23.webp",
     imageAlt: "Pando Moto riding gear",
     tag: "New in",
