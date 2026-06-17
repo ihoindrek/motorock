@@ -252,7 +252,7 @@ function RichMotorcycleProductView({
                 ) : null}
               </div>
 
-              <h1 className="heading-product !normal-case !leading-[0.92] mt-4 text-[clamp(1.5rem,4.5vw,3.75rem)] sm:text-[clamp(1.75rem,5vw,3.75rem)] lg:mt-5">
+              <h1 className="heading-product !normal-case !leading-[0.92] mt-4 text-[clamp(1.65rem,5vw,4.1rem)] sm:text-[clamp(1.9rem,5.5vw,4.1rem)] lg:mt-5">
                 {sync.name}
               </h1>
 
@@ -403,7 +403,7 @@ function RichMotorcycleProductView({
                 <p className="font-body text-[9px] font-bold uppercase tracking-aggressive text-ink/40">
                   {spec.label}
                 </p>
-                <p className="mt-2 font-display text-[clamp(0.9375rem,1.6vw,1.25rem)] font-extrabold uppercase leading-snug tracking-tight text-ink">
+                <p className="mt-2 font-display text-[clamp(1.05rem,1.75vw,1.4rem)] font-extrabold uppercase leading-snug tracking-tight text-ink">
                   {spec.value}
                 </p>
               </li>
@@ -415,7 +415,7 @@ function RichMotorcycleProductView({
       {parallaxImages.length >= 3 ? (
         <section aria-label="Closer look" className="bg-white">
           <div className="site-container py-14 lg:py-20">
-            <h2 className="text-[clamp(2rem,4.5vw,3.5rem)] font-extrabold uppercase leading-[0.92] tracking-tight text-ink">
+            <h2 className="text-[clamp(2.2rem,5vw,3.85rem)] font-extrabold uppercase leading-[0.92] tracking-tight text-ink">
               {t.closerLook}
             </h2>
             <p className="mt-4 max-w-lg text-sm text-ink/55 sm:text-base">
@@ -466,7 +466,7 @@ function RichMotorcycleProductView({
         <section className="bg-ink py-16 text-paper lg:py-24">
           <div className="site-container">
             <p className="section-eyebrow text-accent">{t.technical}</p>
-            <h2 className="mt-3 text-2xl font-extrabold uppercase leading-[0.92] sm:text-3xl">
+            <h2 className="mt-3 text-3xl font-extrabold uppercase leading-[0.92] sm:text-4xl">
               {t.underTank}
             </h2>
 

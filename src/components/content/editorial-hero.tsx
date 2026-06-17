@@ -42,7 +42,7 @@ export function EditorialHero({
     >
       <BlogEditorialColumn className="relative z-10 flex flex-col gap-5">
         {eyebrow ? <p className="section-eyebrow">{eyebrow}</p> : null}
-        <h1 className="text-4xl font-extrabold uppercase leading-[0.95] tracking-tight sm:text-5xl lg:text-6xl">
+        <h1 className="text-5xl font-extrabold uppercase leading-[0.95] tracking-tight sm:text-6xl lg:text-7xl">
           {title}
           {accent ? (
             <>

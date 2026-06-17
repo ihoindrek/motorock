@@ -153,7 +153,7 @@ export function ContactView({ locale }: ContactViewProps) {
           <div className="site-container pt-16 sm:pt-20 lg:pt-28">
             <h2
               id="find-us-heading"
-              className="max-w-2xl font-display text-[clamp(2.25rem,6vw,4rem)] font-extrabold uppercase leading-[0.9] tracking-tight text-ink"
+              className="max-w-2xl font-display text-[clamp(2.5rem,6.6vw,4.4rem)] font-extrabold uppercase leading-[0.9] tracking-tight text-ink"
             >
               {t.findUs} <span className="text-accent">Tallinn</span>
             </h2>
@@ -192,7 +192,7 @@ export function ContactView({ locale }: ContactViewProps) {
               <p className="font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/40">
                 {t.replyWithin}
               </p>
-              <p className="mt-4 max-w-sm font-display text-[clamp(1.75rem,4vw,2.75rem)] font-extrabold uppercase leading-[0.95] tracking-tight text-ink">
+              <p className="mt-4 max-w-sm font-display text-[clamp(1.9rem,4.4vw,3rem)] font-extrabold uppercase leading-[0.95] tracking-tight text-ink">
                 {t.noCallCenter}
                 <br />
                 <span className="text-accent">{t.realPeople}</span>
@@ -200,7 +200,7 @@ export function ContactView({ locale }: ContactViewProps) {
             </div>
 
             <div className="border border-ink/15 p-6 sm:p-8 lg:col-span-7 lg:col-start-6 lg:p-10">
-              <h2 className="font-display text-2xl font-extrabold uppercase leading-tight tracking-tight text-ink sm:text-3xl">
+              <h2 className="font-display text-3xl font-extrabold uppercase leading-tight tracking-tight text-ink sm:text-4xl">
                 {t.sendLine}
               </h2>
               <p className="mt-2 max-w-md text-sm text-ink/50 lg:hidden">
@@ -209,7 +209,7 @@ export function ContactView({ locale }: ContactViewProps) {
 
               {submitted ? (
                 <div className="mt-10">
-                  <p className="font-display text-lg font-extrabold uppercase leading-snug tracking-tight text-ink">
+                  <p className="font-display text-xl font-extrabold uppercase leading-snug tracking-tight text-ink">
                     {t.submittedTitle}
                   </p>
                   <p className="mt-2 text-sm text-ink/60">

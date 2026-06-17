@@ -48,6 +48,30 @@
     @apply font-display font-bold uppercase tracking-tight text-balance;
   }
 
+  h1 {
+    @apply text-5xl sm:text-6xl;
+  }
+
+  h2 {
+    @apply text-4xl sm:text-5xl;
+  }
+
+  h3 {
+    @apply text-2xl sm:text-3xl;
+  }
+
+  h4 {
+    @apply text-xl sm:text-2xl;
+  }
+
+  h5 {
+    @apply text-lg sm:text-xl;
+  }
+
+  h6 {
+    @apply text-base sm:text-lg;
+  }
+
   p {
     @apply text-pretty leading-relaxed;
   }
@@ -100,13 +124,17 @@
   @apply font-body text-xs font-bold uppercase tracking-aggressive text-ink/50;
 }
 
+@utility heading-block {
+  @apply font-display text-4xl font-extrabold uppercase leading-[0.95] tracking-tight sm:text-5xl lg:text-6xl;
+}
+
 @utility heading-hero {
-  @apply font-display text-4xl font-extrabold uppercase leading-none tracking-tight sm:text-5xl lg:text-7xl;
+  @apply font-display text-5xl font-extrabold uppercase leading-none tracking-tight sm:text-6xl lg:text-8xl;
 }
 
 @utility heading-category {
-  @apply inline-block origin-left font-display text-4xl font-extrabold uppercase leading-[0.92] tracking-tight sm:text-5xl lg:text-[3.5rem];
-  transform: scaleX(1.12);
+  @apply inline-block origin-left font-display text-5xl font-extrabold uppercase leading-[0.92] tracking-tight sm:text-6xl lg:text-[4rem];
+  transform: scaleX(1.04);
 }
 
 @media (max-width: 639px) {
@@ -122,8 +150,8 @@
 }
 
 @utility heading-product {
-  @apply block w-full max-w-full origin-left break-words font-display font-extrabold !normal-case leading-tight tracking-normal text-balance;
-  transform: scaleX(1.12);
+  @apply block w-full max-w-full origin-left break-words font-display text-2xl font-extrabold !normal-case leading-tight tracking-normal text-balance sm:text-3xl lg:text-4xl;
+  transform: scaleX(1.04);
 }
 
 @media (max-width: 639px) {

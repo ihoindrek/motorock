@@ -48,7 +48,7 @@ export function LegalDocumentView({
         <div className="mx-auto max-w-3xl space-y-12">
           {sections.map((section) => (
             <section key={section.id} id={section.id} className="scroll-mt-28">
-              <h2 className="font-display text-xl font-extrabold uppercase tracking-tight text-ink sm:text-2xl">
+              <h2 className="font-display text-2xl font-extrabold uppercase tracking-tight text-ink sm:text-3xl">
                 {section.title}
               </h2>
               <div className="mt-4 space-y-4 text-base leading-relaxed text-ink/75">

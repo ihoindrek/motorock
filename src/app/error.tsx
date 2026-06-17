@@ -17,7 +17,7 @@ export default function Error({
   return (
     <div className="site-container flex min-h-[50vh] flex-col items-start justify-center py-16">
       <p className="section-eyebrow">Something went wrong</p>
-      <h1 className="heading-category mt-3 text-3xl sm:text-4xl">
+      <h1 className="heading-category mt-3 text-4xl sm:text-5xl">
         We hit a bump
       </h1>
       <p className="mt-4 max-w-md text-base text-ink/65">

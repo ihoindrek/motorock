@@ -6,41 +6,59 @@ import {
   RidersFavoritesCarousel,
   type FavoriteProduct,
 } from "@/components/riders-favorites-carousel";
+import type { Locale } from "@/i18n/config";
+import { localizedHref } from "@/i18n/paths";
 import { cn } from "@/lib/utils";
 
 type GearAudience = "men" | "women" | "accessories";
 
-type PopularGearSectionProps = {
-  productsByAudience: Record<GearAudience, readonly FavoriteProduct[]>;
+type PopularGearCopy = {
+  eyebrow: string;
+  title: string;
+  cta: string;
+  tabs: Record<GearAudience, string>;
 };
 
-const tabs: readonly {
+type PopularGearSectionProps = {
+  locale: Locale;
+  productsByAudience: Record<GearAudience, readonly FavoriteProduct[]>;
+  copy: PopularGearCopy;
+};
+
+const tabConfig: readonly {
   id: GearAudience;
-  label: string;
   href: string;
 }[] = [
-  { id: "men", label: "For men", href: "/shop/equipment/men" },
-  { id: "women", label: "For women", href: "/shop/equipment/women" },
-  { id: "accessories", label: "Accessories", href: "/shop/equipment/accessories" },
+  { id: "men", href: "/shop/equipment/men" },
+  { id: "women", href: "/shop/equipment/women" },
+  { id: "accessories", href: "/shop/equipment/accessories" },
 ];
 
 export function PopularGearSection({
+  locale,
   productsByAudience,
+  copy,
 }: PopularGearSectionProps) {
-  const availableTabs = useMemo(
-    () => tabs.filter((tab) => productsByAudience[tab.id].length > 0),
-    [productsByAudience],
+  const tabs = useMemo(
+    () =>
+      tabConfig
+        .filter((tab) => productsByAudience[tab.id].length > 0)
+        .map((tab) => ({
+          ...tab,
+          label: copy.tabs[tab.id],
+          href: localizedHref(locale, tab.href),
+        })),
+    [copy.tabs, locale, productsByAudience],
   );
 
   const [activeId, setActiveId] = useState<GearAudience>(
-    () => availableTabs[0]?.id ?? "men",
+    () => tabs[0]?.id ?? "men",
   );
 
-  const activeTab =
-    availableTabs.find((tab) => tab.id === activeId) ?? availableTabs[0];
+  const activeTab = tabs.find((tab) => tab.id === activeId) ?? tabs[0];
   const products = activeTab ? productsByAudience[activeTab.id] : [];
 
-  if (availableTabs.length === 0 || products.length === 0) {
+  if (tabs.length === 0 || products.length === 0) {
     return null;
   }
 
@@ -52,28 +70,25 @@ export function PopularGearSection({
       <div className="site-container relative z-10">
         <header className="mb-6 flex flex-col gap-4 sm:mb-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="section-eyebrow">Equipment</p>
-            <h3
-              id="favorites-equipment"
-              className="mt-2 text-2xl font-extrabold uppercase text-ink sm:text-3xl"
-            >
-              Popular Gear
+            <p className="section-eyebrow">{copy.eyebrow}</p>
+            <h3 id="favorites-equipment" className="heading-block mt-2 text-ink">
+              {copy.title}
             </h3>
           </div>
           <Link
-            href={activeTab?.href ?? "/shop/equipment"}
+            href={activeTab?.href ?? localizedHref(locale, "/shop/equipment")}
             className="inline-flex items-center self-start rounded-full bg-paper px-7 py-3 font-body text-xs font-bold uppercase tracking-aggressive text-ink transition-colors duration-200 hover:bg-accent hover:text-paper sm:self-auto"
           >
-            Shop equipment →
+            {copy.cta}
           </Link>
         </header>
 
         <div
           className="mb-6 flex gap-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] sm:gap-2 [&::-webkit-scrollbar]:hidden"
           role="tablist"
-          aria-label="Popular gear categories"
+          aria-label={copy.title}
         >
-          {availableTabs.map((tab) => {
+          {tabs.map((tab) => {
             const isActive = tab.id === activeTab?.id;
 
             return (

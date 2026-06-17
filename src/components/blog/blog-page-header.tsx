@@ -18,7 +18,7 @@ export function BlogPageHeader({ copy, children }: BlogPageHeaderProps) {
       >
         <BlogEditorialColumn className="flex flex-col gap-6">
           <div className="flex flex-col gap-5">
-            <h1 className="font-display text-4xl font-extrabold uppercase leading-[0.95] tracking-tight text-ink sm:text-5xl lg:text-6xl">
+            <h1 className="font-display text-5xl font-extrabold uppercase leading-[0.95] tracking-tight text-ink sm:text-6xl lg:text-7xl">
               {copy.heroTitleTop}
               <br />
               <span className="bg-gradient-to-r from-[#FF5A00] via-[#ff7e26] to-[#ff9c59] bg-clip-text text-transparent">

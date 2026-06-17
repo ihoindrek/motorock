@@ -112,7 +112,7 @@ export function ShopModal({
               id={titleId}
               className={cn(
                 "font-extrabold uppercase leading-tight tracking-tight text-ink",
-                eyebrow ? "mt-2 text-lg" : "text-lg",
+                eyebrow ? "mt-2 text-xl" : "text-xl",
               )}
             >
               {title}

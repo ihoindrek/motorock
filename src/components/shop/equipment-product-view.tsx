@@ -203,7 +203,7 @@ export function EquipmentProductView({
 
           <div>
             <BrandLogo brand={product.brand} size="sm" className="mb-3" />
-            <h1 className="heading-product !normal-case text-xl sm:text-2xl lg:text-[2.25rem]">
+            <h1 className="heading-product !normal-case text-2xl sm:text-3xl lg:text-[2.75rem]">
               {product.name}
             </h1>
             {(product.tagline || product.shortDescription) && (

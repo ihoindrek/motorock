@@ -51,7 +51,7 @@ export function BlogPostView({
           </Link>
           <div className="max-w-4xl">
             <BlogBadge variant="accent">{post.category}</BlogBadge>
-            <h1 className="mt-4 font-display text-[clamp(1.5rem,5vw,4rem)] font-extrabold uppercase leading-[0.92] tracking-tight text-paper sm:text-[clamp(1.875rem,5.5vw,4rem)]">
+            <h1 className="mt-4 font-display text-[clamp(1.65rem,5.5vw,4.4rem)] font-extrabold uppercase leading-[0.92] tracking-tight text-paper sm:text-[clamp(2rem,6vw,4.4rem)]">
               {post.title}
             </h1>
             {campaign ? (
@@ -114,7 +114,7 @@ export function BlogPostView({
               </p>
               <h2
                 id="related-articles-heading"
-                className="mt-2 font-display text-lg font-extrabold uppercase tracking-tight text-ink sm:text-xl"
+                className="mt-2 font-display text-xl font-extrabold uppercase tracking-tight text-ink sm:text-2xl"
               >
                 {copy.relatedStories}
               </h2>

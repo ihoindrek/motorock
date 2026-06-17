@@ -23,7 +23,7 @@ export function TestRideView({ initial }: { initial: TestRideInitialValues }) {
       <section className="bg-moto py-16 lg:py-24">
         <div className="site-container lg:grid lg:grid-cols-12 lg:gap-16">
           <div className="lg:col-span-5">
-            <h2 className="text-xl font-extrabold uppercase leading-tight tracking-tight text-ink sm:text-2xl">
+            <h2 className="text-2xl font-extrabold uppercase leading-tight tracking-tight text-ink sm:text-3xl">
               Showroom
             </h2>
             <p className="mt-4 text-base leading-relaxed text-ink/70">

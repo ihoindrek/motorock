@@ -48,7 +48,7 @@ function MobileCategoryPanel({
         <p className="font-body text-[10px] font-bold uppercase tracking-[0.35em] text-paper/45">
           {category.index}
         </p>
-        <h2 className="mt-2 font-display text-3xl font-extrabold uppercase leading-[0.92] tracking-tight text-paper sm:text-4xl">
+        <h2 className="mt-2 font-display text-4xl font-extrabold uppercase leading-[0.92] tracking-tight text-paper sm:text-5xl">
           {category.titleLines?.map((line) => (
             <span key={line} className="block">
               {line}
@@ -103,7 +103,7 @@ function DesktopCategoryIndex({
               >
                 {category.index}
               </span>
-              <span className="font-display text-[clamp(1.75rem,3.2vw,2.75rem)] font-extrabold uppercase leading-[0.92] tracking-tight transition-transform duration-300 group-hover:translate-x-1 motion-reduce:transition-none motion-reduce:group-hover:translate-x-0">
+              <span className="font-display text-[clamp(1.9rem,3.5vw,3rem)] font-extrabold uppercase leading-[0.92] tracking-tight transition-transform duration-300 group-hover:translate-x-1 motion-reduce:transition-none motion-reduce:group-hover:translate-x-0">
                 {category.title}
               </span>
             </Link>
@@ -177,7 +177,7 @@ export function EquipmentHubView({ locale }: { locale: Locale }) {
           </nav>
 
           <p className="section-eyebrow text-paper/55">{equipmentHubCopy.eyebrow}</p>
-          <h1 className="mt-3 max-w-4xl font-display text-[clamp(2.75rem,8vw,5.5rem)] font-extrabold uppercase leading-[0.9] tracking-tight text-paper">
+          <h1 className="mt-3 max-w-4xl font-display text-[clamp(3rem,8.8vw,6rem)] font-extrabold uppercase leading-[0.9] tracking-tight text-paper">
             {equipmentHubCopy.title}
             <span className="block bg-gradient-to-r from-[#FF5A00] via-[#ff7e26] to-[#ff9c59] bg-clip-text text-transparent">
               {equipmentHubCopy.accent}
@@ -237,7 +237,7 @@ export function EquipmentHubView({ locale }: { locale: Locale }) {
                     <p className="font-body text-[10px] font-bold uppercase tracking-[0.35em] text-paper/45">
                       {activeCategory.index}
                     </p>
-                    <h2 className="mt-2 font-display text-4xl font-extrabold uppercase leading-[0.92] tracking-tight text-paper xl:text-5xl">
+                    <h2 className="mt-2 font-display text-5xl font-extrabold uppercase leading-[0.92] tracking-tight text-paper xl:text-6xl">
                       {activeCategory.title}
                     </h2>
                     <p className="mt-3 text-sm leading-relaxed text-paper/70 sm:text-base">

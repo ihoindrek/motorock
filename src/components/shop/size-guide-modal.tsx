@@ -103,7 +103,7 @@ export function SizeGuideModal({
             </p>
             <h2
               id="size-guide-title"
-              className="mt-2 text-lg font-extrabold uppercase leading-tight tracking-tight text-ink"
+              className="mt-2 text-xl font-extrabold uppercase leading-tight tracking-tight text-ink"
             >
               {guide.title}
             </h2>

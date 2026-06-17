@@ -306,7 +306,7 @@ export function CategoryView({
             className={cn(
               "heading-category",
               hasLongCategoryTitle &&
-                "block max-w-full text-balance leading-[0.95] text-[clamp(1.15rem,4.5vw,2rem)] sm:text-5xl",
+                "block max-w-full text-balance leading-[0.95] text-[clamp(1.25rem,5vw,2.2rem)] sm:text-6xl",
             )}
           >
             {route.title}

@@ -7,6 +7,7 @@ import {
 import { PopularGearSection } from "@/components/popular-gear-section";
 import { VideoText } from "@/components/video-text";
 import type { Locale } from "@/i18n/config";
+import { localizedHref } from "@/i18n/paths";
 import {
   getEquipmentCatalogForRoute,
   getMotorcycleCatalog,
@@ -19,7 +20,7 @@ import {
 } from "@/lib/shop/favorite-product";
 
 const headingVideoClass =
-  "font-display text-4xl font-extrabold uppercase leading-[0.95] tracking-tight sm:text-5xl lg:text-7xl";
+  "font-display text-5xl font-extrabold uppercase leading-[0.95] tracking-tight sm:text-6xl lg:text-8xl";
 
 const blocks = [
   {
@@ -94,10 +95,7 @@ function RidersFavoritesBlock({
         >
           <div>
             <p className="section-eyebrow">{eyebrow}</p>
-            <h3
-              id={id}
-              className={`mt-2 text-2xl font-extrabold uppercase sm:text-3xl ${titleClass}`}
-            >
+            <h3 id={id} className={`heading-block mt-2 ${titleClass}`}>
               {title}
             </h3>
           </div>
@@ -168,6 +166,12 @@ export async function RidersFavorites({ locale }: { locale: Locale }) {
           motorcyclesEyebrow: "Mootorrattad",
           motorcyclesTitle: "Populaarsed rattad",
           motorcyclesCta: "Vaata mootorrattaid →",
+          gearEyebrow: "Varustus",
+          gearTitle: "Populaarne varustus",
+          gearCta: "Vaata varustust →",
+          gearTabMen: "Meestele",
+          gearTabWomen: "Naistele",
+          gearTabAccessories: "Aksessuaarid",
         }
       : {
           rebelTop: "Rebel on",
@@ -177,6 +181,12 @@ export async function RidersFavorites({ locale }: { locale: Locale }) {
           motorcyclesEyebrow: "Motorcycles",
           motorcyclesTitle: "Popular Bikes",
           motorcyclesCta: "Shop motorcycles →",
+          gearEyebrow: "Equipment",
+          gearTitle: "Popular Gear",
+          gearCta: "Shop equipment →",
+          gearTabMen: "For men",
+          gearTabWomen: "For women",
+          gearTabAccessories: "Accessories",
         };
   const [motorcycles, menEquipment, womenEquipment, accessoriesEquipment] =
     await Promise.all([
@@ -231,6 +241,7 @@ export async function RidersFavorites({ locale }: { locale: Locale }) {
         <RidersFavoritesBlock
           key={block.id}
           {...block}
+          href={localizedHref(locale, block.href)}
           eyebrow={copy.motorcyclesEyebrow}
           title={copy.motorcyclesTitle}
           linkLabel={copy.motorcyclesCta}
@@ -238,7 +249,20 @@ export async function RidersFavorites({ locale }: { locale: Locale }) {
         />
       ))}
 
-      <PopularGearSection productsByAudience={gearProductsByAudience} />
+      <PopularGearSection
+        locale={locale}
+        productsByAudience={gearProductsByAudience}
+        copy={{
+          eyebrow: copy.gearEyebrow,
+          title: copy.gearTitle,
+          cta: copy.gearCta,
+          tabs: {
+            men: copy.gearTabMen,
+            women: copy.gearTabWomen,
+            accessories: copy.gearTabAccessories,
+          },
+        }}
+      />
     </section>
   );
 }

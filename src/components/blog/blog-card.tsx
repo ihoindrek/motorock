@@ -68,7 +68,7 @@ export function BlogCard({
                 </time>
               </BlogBadge>
             </div>
-            <h2 className="mt-3 font-display text-xl font-extrabold uppercase leading-[1.05] tracking-tight text-paper transition-colors duration-200 group-hover:text-accent sm:text-2xl">
+            <h2 className="mt-3 font-display text-2xl font-extrabold uppercase leading-[1.05] tracking-tight text-paper transition-colors duration-200 group-hover:text-accent sm:text-3xl">
               {post.title}
             </h2>
           </figcaption>
@@ -134,7 +134,7 @@ function BlogFeatureCard({
               </time>
             </BlogBadge>
           </div>
-          <h2 className="font-display text-[clamp(1.5rem,3.25vw,2.25rem)] font-extrabold uppercase leading-[0.95] tracking-tight text-ink transition-colors duration-200 group-hover:text-accent">
+          <h2 className="font-display text-[clamp(1.65rem,3.6vw,2.5rem)] font-extrabold uppercase leading-[0.95] tracking-tight text-ink transition-colors duration-200 group-hover:text-accent">
             {post.title}
           </h2>
           <p className="max-w-md text-base leading-relaxed text-ink/65 sm:text-lg">
@@ -177,7 +177,7 @@ function BlogCompactCard({
           <BlogBadge variant="accent" className="px-2.5 py-0.5 text-[9px]">
             {post.category}
           </BlogBadge>
-          <h3 className="mt-2 font-display text-xs font-extrabold uppercase leading-snug tracking-tight text-ink transition-colors group-hover:text-accent">
+          <h3 className="mt-2 font-display text-sm font-extrabold uppercase leading-snug tracking-tight text-ink transition-colors group-hover:text-accent">
             {post.title}
           </h3>
         </div>
