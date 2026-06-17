@@ -200,7 +200,6 @@ export function ProductImageGallery({
 }: ProductImageGalleryProps) {
   const isHero = layout === "hero";
   const isProduct = variant === "product";
-  const seamlessProduct = isHero && isProduct;
   const preferredIndex = preferredImage
     ? images.findIndex((src) => src === preferredImage)
     : -1;
@@ -260,7 +259,7 @@ export function ProductImageGallery({
           theme={theme}
           compact={compact}
           fillRail={orientation === "vertical"}
-          seamless={seamlessProduct}
+          seamless={false}
           onSelect={select}
           onOpenLightbox={() => {
             setActiveIndex(index);
@@ -494,7 +493,7 @@ export function ProductImageGallery({
               }
               aspectClass="h-full"
               className="h-full"
-              seamless={seamlessProduct}
+              seamless={false}
               theme={theme}
             />
           ) : (
