@@ -7,7 +7,7 @@ type InStoreNowBadgeProps = {
 const label = "In store now";
 
 const solidBadgeClassName =
-  "inline-flex items-center gap-1.5 bg-stock px-2.5 py-1 font-display text-[9px] font-bold uppercase tracking-aggressive text-paper shadow-[0_4px_14px_rgb(31_168_85_/_0.35)]";
+  "inline-flex items-center gap-1.5 bg-stock px-2.5 py-1 font-body text-[9px] font-bold uppercase tracking-aggressive text-paper shadow-[0_4px_14px_rgb(31_168_85_/_0.35)]";
 
 export function InStoreNowBadge({
   variant = "solid",

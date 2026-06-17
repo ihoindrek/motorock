@@ -20,7 +20,7 @@ const config = {
         },
       },
       fontFamily: {
-        display: ["var(--font-syne)", "system-ui", "sans-serif"],
+        display: ["var(--font-racing-sans-one)", "system-ui", "sans-serif"],
         body: ["var(--font-plus-jakarta)", "system-ui", "sans-serif"],
       },
       letterSpacing: {

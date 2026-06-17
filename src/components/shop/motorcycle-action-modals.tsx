@@ -147,7 +147,7 @@ export function MotorcycleActionModals({
               href={SHOWROOM_GOOGLE_MAPS_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center rounded-full bg-ink px-7 py-3 font-display text-xs font-bold uppercase tracking-aggressive text-paper transition-colors duration-200 hover:bg-accent"
+              className="inline-flex items-center rounded-full bg-ink px-7 py-3 font-body text-xs font-bold uppercase tracking-aggressive text-paper transition-colors duration-200 hover:bg-accent"
             >
               Google Maps →
             </a>
@@ -155,7 +155,7 @@ export function MotorcycleActionModals({
               href={SHOWROOM_WAZE_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center rounded-full border border-ink/15 bg-paper px-7 py-3 font-display text-xs font-bold uppercase tracking-aggressive text-ink transition-colors duration-200 hover:border-ink/30 hover:bg-surface"
+              className="inline-flex items-center rounded-full border border-ink/15 bg-paper px-7 py-3 font-body text-xs font-bold uppercase tracking-aggressive text-ink transition-colors duration-200 hover:border-ink/30 hover:bg-surface"
             >
               Waze →
             </a>
@@ -170,7 +170,7 @@ export function MotorcycleActionModals({
           <button
             type="button"
             onClick={() => onClose()}
-            className="inline-flex items-center font-display text-xs font-bold uppercase tracking-aggressive text-ink/50 transition-colors hover:text-accent"
+            className="inline-flex items-center font-body text-xs font-bold uppercase tracking-aggressive text-ink/50 transition-colors hover:text-accent"
           >
             Close
           </button>
@@ -181,4 +181,4 @@ export function MotorcycleActionModals({
 }
 
 const shopEyebrowClassName =
-  "font-display text-[10px] font-bold uppercase tracking-aggressive text-ink/40";
+  "font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/40";

@@ -5,6 +5,13 @@ const CATALOG_LIST_FIELDS = `
     name
     slug
     sku
+    languageCode
+    translations {
+      slug
+      language {
+        code
+      }
+    }
     image {
       sourceUrl
       altText
@@ -60,6 +67,13 @@ export const PRODUCT_BY_SLUG = `
       name
       slug
       sku
+      languageCode
+      translations {
+        slug
+        language {
+          code
+        }
+      }
       shortDescription
       description
       image {

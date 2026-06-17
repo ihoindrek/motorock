@@ -1,4 +1,5 @@
 import type { LegalSection } from "@/components/legal/legal-document-view";
+import type { Locale } from "@/i18n/config";
 import { SHIPPING_COST, SHIPPING_THRESHOLD } from "@/lib/shop/cart-totals";
 import { SHOWROOM } from "@/data/showroom";
 
@@ -79,6 +80,80 @@ export const privacySections: readonly LegalSection[] = [
   },
 ];
 
+const privacySectionsEt: readonly LegalSection[] = [
+  {
+    id: "controller",
+    title: "Kes me oleme",
+    paragraphs: [
+      `${companyName} haldab motorock.eu veebilehte ja on selle kaudu kogutud isikuandmete vastutav töötleja.`,
+      `Privaatsusega seotud küsimustes kirjuta meile aadressil ${contactEmail}.`,
+    ],
+  },
+  {
+    id: "data-we-collect",
+    title: "Mida me kogume",
+    paragraphs: ["Võime töödelda järgmisi isikuandmete kategooriaid:"],
+    bullets: [
+      "Kontaktandmed (nimi, e-post, telefon), kui teed päringu, broneerid proovisõidu või esitad tellimuse",
+      "Tarne- ja arveldusaadress ostude puhul",
+      "Tellimuste ajalugu, ostukorvi sisu ja maksete staatus",
+      "Tehnilised andmed nagu IP-aadress, brauseri tüüp ja veebilehe toimimiseks vajalikud küpsised",
+      "Sinu poolt e-posti või kontaktvormi kaudu saadetud suhtlus",
+    ],
+  },
+  {
+    id: "why",
+    title: "Miks me sinu andmeid kasutame",
+    paragraphs: ["Töötleme isikuandmeid selleks, et:"],
+    bullets: [
+      "täita tellimusi ja pakkuda kliendituge",
+      "korraldada showroomi külastusi ja proovisõite",
+      "arvutada tarnehindu ja töödelda makseid meie maksepartneritega",
+      "parendada veebilehte ja ennetada pettusi",
+      "täita raamatupidamis- ja seadusest tulenevaid kohustusi",
+    ],
+  },
+  {
+    id: "legal-basis",
+    title: "Õiguslik alus",
+    paragraphs: [
+      "Tugineme lepingu täitmisele tellimuste korral, õigustatud huvile klienditeeninduse ja turvalisuse puhul ning õiguslikule kohustusele, kui seda nõuab Eesti või EL õigus. Turundussõnumeid saadame vaid nõusoleku alusel, kui see on kohaldatav.",
+    ],
+  },
+  {
+    id: "sharing",
+    title: "Andmete jagamine kolmandate osapooltega",
+    paragraphs: [
+      "Jagame andmeid ainult ulatuses, mis on poe toimimiseks vajalik, näiteks makseteenuse pakkujate (nt Montonio), kullerite, hostingu teenusepakkujate ja WooCommerce taustsüsteemiga. Need partnerid töötlevad andmeid oma tingimuste ja kehtivate andmekaitsenõuete alusel.",
+    ],
+  },
+  {
+    id: "retention",
+    title: "Säilitamine",
+    paragraphs: [
+      "Säilitame tellimuste ja raamatupidamise andmeid seadusest tulenevalt. Turundus- ja päringuandmeid säilitame ainult seni, kuni see on eesmärgi täitmiseks vajalik või kuni palud need kustutada, arvestades seaduslikke säilituskohustusi.",
+    ],
+  },
+  {
+    id: "rights",
+    title: "Sinu õigused",
+    paragraphs: ["GDPR-i alusel võivad sul olla järgmised õigused:"],
+    bullets: [
+      "tutvuda oma isikuandmetega ning neid parandada või kustutada",
+      "piirata või vaidlustada teatud töötlemistoiminguid",
+      "andmete ülekandmise õigus, kui see on kohaldatav",
+      "esitada kaebus Andmekaitse Inspektsioonile",
+    ],
+  },
+  {
+    id: "cookies",
+    title: "Küpsised",
+    paragraphs: [
+      "Kasutame hädavajalikke küpsiseid ostukorvi ja checkouti toimimiseks. Kui lisame hiljem analüütika- või turundusküpsiseid, kirjeldame need selle poliitika uuendatud versioonis.",
+    ],
+  },
+];
+
 export const termsSections: readonly LegalSection[] = [
   {
     id: "general",
@@ -145,6 +220,72 @@ export const termsSections: readonly LegalSection[] = [
   },
 ];
 
+const termsSectionsEt: readonly LegalSection[] = [
+  {
+    id: "general",
+    title: "Üldtingimused",
+    paragraphs: [
+      `${companyName} hallatava motorock.eu ostudele ja kasutamisele kehtivad käesolevad tingimused. Tellimust esitades kinnitad, et oled vähemalt 18-aastane ning esitatud andmed on õiged.`,
+    ],
+  },
+  {
+    id: "products",
+    title: "Tooted ja hinnad",
+    paragraphs: [
+      "Tootepildid on illustratiivsed. Tehnilised näitajad võivad tootja poolt muutuda. Hinnad on eurodes ja sisaldavad käibemaksu, kui checkoutis ei ole märgitud teisiti. Jätame õiguse enne tellimuse kinnitamist parandada ilmseid hinnavigu.",
+    ],
+  },
+  {
+    id: "orders",
+    title: "Tellimused ja leping",
+    paragraphs: [
+      "Tellimus muutub siduvaks, kui kinnitame selle e-posti teel ja/või kui makse on edukalt laekunud sõltuvalt makseviisist. Võime tellimusest keelduda või selle tühistada, kui toode pole saadaval, esineb pettusekahtlus või seda nõuab seadus.",
+    ],
+  },
+  {
+    id: "payment",
+    title: "Maksmine",
+    paragraphs: [
+      "Aktsepteerime checkoutis kuvatud makseviise, sh pangalingid ja järelmaksulahendused meie maksepartneritelt. Lõplikud finantseerimise tingimused määrab teenusepakkuja taotluse esitamise hetkel.",
+    ],
+  },
+  {
+    id: "delivery",
+    title: "Tarne",
+    paragraphs: [
+      "Tarnevõimalused ja kulud kuvatakse checkoutis. Risk läheb ostjale üle kauba üleandmisel vedajale või kauba kättesaamisel showroomist, kui kohustuslik tarbijakaitse ei sätesta teisiti.",
+    ],
+  },
+  {
+    id: "returns",
+    title: "Tagastused ja vahetused",
+    paragraphs: [
+      "Sõiduvarustusele pakume 14 päeva jooksul tasuta vahetust või tagastust kasutamata ja originaalkorras toodetele, kui seadusest ei tulene teisiti. Mootorratastele ja eritellimustele võivad kehtida eritingimused — ebakindluse korral võta enne ostu ühendust.",
+    ],
+  },
+  {
+    id: "warranty",
+    title: "Garantii",
+    paragraphs: [
+      "Kui tootja annab garantii, kehtib tootjagarantii. Eesti ja EL seadusest tulenevaid tarbijaõigusi need tingimused ei piira.",
+    ],
+  },
+  {
+    id: "liability",
+    title: "Vastutus",
+    paragraphs: [
+      "Vastutame seadusega lubatud ulatuses meie rikkumisega põhjustatud otsese kahju eest. Kaudse kahju eest me ei vastuta, välja arvatud juhul, kui kohustuslik õigus sätestab teisiti.",
+    ],
+  },
+  {
+    id: "law",
+    title: "Kohaldatav õigus",
+    paragraphs: [
+      "Tingimustele kohaldatakse Eesti õigust. Vaidlused lahendatakse Eesti kohtutes, kui kohustuslikud tarbijakaitse normid ei nõua teisiti.",
+    ],
+  },
+];
+
 export const shippingSections: readonly LegalSection[] = [
   {
     id: "overview",
@@ -194,3 +335,65 @@ export const shippingSections: readonly LegalSection[] = [
     ],
   },
 ];
+
+const shippingSectionsEt: readonly LegalSection[] = [
+  {
+    id: "overview",
+    title: "Ülevaade",
+    paragraphs: [
+      "Tarnime sõiduvarustust ja aksessuaare üle Eesti ning valitud välisriikidesse. Tarnevõimalused ja hinnad arvutatakse checkoutis vastavalt ostukorvile ja tarneaadressile.",
+    ],
+  },
+  {
+    id: "estonia",
+    title: "Eesti",
+    paragraphs: [
+      `Tellimustele üle €${SHIPPING_THRESHOLD} kehtib Eestis tasuta standardtarne, kui see on checkoutis saadaval. Alla selle piiri on standardtarne hind €${SHIPPING_COST.toFixed(2).replace(".", ",")}, kui checkoutis ei ole märgitud teisiti.`,
+    ],
+    bullets: [
+      "Checkoutis kuvatakse pakiautomaadi ja kulleri valikud",
+      "Showroomist kättesaamine on võimalik, kui see on sinu tellimusele saadaval",
+      "Tüüpiline käsitlusaeg enne väljasaatmist on 1–3 tööpäeva",
+    ],
+  },
+  {
+    id: "international",
+    title: "Rahvusvaheline tarne",
+    paragraphs: [
+      "Rahvusvaheline kulleritarne on saadaval valitud riikidesse. Väljaspool EL-i võivad lisanduda tollimaksud, impordi käibemaks ja kohalikud käsitlustasud, mis jäävad saaja kanda, kui checkoutis pole märgitud teisiti.",
+    ],
+  },
+  {
+    id: "motorcycles",
+    title: "Mootorrattad",
+    paragraphs: [
+      "Mootorrattad antakse üle showroomis või tarnitakse erikokkuleppel. Enne tellimist võta ühendust registreerimise, transpordi ja tarneaegade osas.",
+    ],
+  },
+  {
+    id: "pickup",
+    title: "Showroomist kättesaamine",
+    paragraphs: [
+      `Kättesaamine aadressilt ${SHOWROOM.name}, ${SHOWROOM.addressLine}, ${SHOWROOM.city}. Saadame e-kirja, kui tellimus on valmis.`,
+    ],
+  },
+  {
+    id: "tracking",
+    title: "Jälgimine ja probleemid",
+    paragraphs: [
+      `Kui pakk hilineb või saabub kahjustatult, kirjuta aadressil ${contactEmail} ja lisa tellimuse number. Aitame saadetist jälitada või avada vedaja juures nõude.`,
+    ],
+  },
+];
+
+export function getPrivacySections(locale: Locale): readonly LegalSection[] {
+  return locale === "et" ? privacySectionsEt : privacySections;
+}
+
+export function getTermsSections(locale: Locale): readonly LegalSection[] {
+  return locale === "et" ? termsSectionsEt : termsSections;
+}
+
+export function getShippingSections(locale: Locale): readonly LegalSection[] {
+  return locale === "et" ? shippingSectionsEt : shippingSections;
+}

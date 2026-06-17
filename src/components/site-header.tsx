@@ -2,19 +2,25 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useCart } from "@/context/cart-context";
 import { useCheckoutStep } from "@/context/checkout-step-context";
-import { shopNav, siteNav, type PrimaryNavItem } from "@/data/navigation";
+import { useDictionary, useLocale } from "@/context/locale-context";
+import { useLocaleAlternates } from "@/context/locale-alternates-context";
+import type { Locale } from "@/i18n/config";
+import {
+  getShopNav,
+  getSiteNav,
+} from "@/i18n/navigation";
+import { localizedHref, stripLocaleFromPath, switchLocaleInPath } from "@/i18n/paths";
+import type { PrimaryNavItem } from "@/data/navigation";
 import { CheckoutProgress } from "@/components/shop/checkout-progress";
 import { EquipmentMegaMenu } from "@/components/navigation/equipment-mega-menu";
 import { HeaderSearch } from "@/components/navigation/header-search";
 import { MobileNav } from "@/components/navigation/mobile-nav";
 import { MenuToggle } from "@/components/ui/menu-toggle";
 import { cn } from "@/lib/utils";
-
-type Locale = "en" | "et";
 
 function CartIcon() {
   return (
@@ -55,7 +61,7 @@ function LanguageSwitcher({
       role="group"
       aria-label="Language"
       className={cn(
-        "relative inline-grid grid-cols-2 rounded-sm border p-0.5 font-display text-[10px] font-bold uppercase tracking-aggressive",
+        "relative inline-grid grid-cols-2 rounded-sm border p-0.5 font-body text-[10px] font-bold uppercase tracking-aggressive",
         inverted ? "border-paper/20" : "border-ink/15",
       )}
     >
@@ -111,9 +117,24 @@ function NavDivider({ inverted = false }: { inverted?: boolean }) {
 
 export function SiteHeader() {
   const pathname = usePathname();
+  const router = useRouter();
+  const locale = useLocale();
+  const dictionary = useDictionary();
+  const localeAlternates = useLocaleAlternates();
+  const shopNav = useMemo(
+    () => getShopNav(locale, dictionary),
+    [locale, dictionary],
+  );
+  const siteNav = useMemo(
+    () => getSiteNav(locale, dictionary),
+    [locale, dictionary],
+  );
+  const equipmentMegaMenu = useMemo(
+    () => shopNav.find((item) => item.megaMenu)?.megaMenu ?? null,
+    [shopNav],
+  );
   const { itemCount, toggleCart, drawerOpen } = useCart();
   const { checkoutStep } = useCheckoutStep();
-  const [locale, setLocale] = useState<Locale>("en");
   const [mobileOpen, setMobileOpen] = useState(false);
   const [equipmentOpen, setEquipmentOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -172,7 +193,19 @@ export function SiteHeader() {
     };
   }, []);
 
-  const isCheckoutHeader = pathname === "/cart" && checkoutStep !== null;
+  const isCheckoutHeader =
+    stripLocaleFromPath(pathname) === "/cart" && checkoutStep !== null;
+
+  const handleLocaleChange = (nextLocale: Locale) => {
+    const translatedSlug = localeAlternates?.[nextLocale];
+
+    if (translatedSlug && stripLocaleFromPath(pathname).startsWith("/shop/product/")) {
+      router.push(localizedHref(nextLocale, `/shop/product/${translatedSlug}`));
+      return;
+    }
+
+    router.push(switchLocaleInPath(pathname, nextLocale));
+  };
 
   const navTextColor = (
     group: PrimaryNavItem["group"],
@@ -202,7 +235,7 @@ export function SiteHeader() {
           href={item.href}
           onClick={closeEquipmentMenuImmediately}
           className={cn(
-            "inline-flex items-center gap-1 whitespace-nowrap font-display text-sm font-bold uppercase tracking-aggressive transition-colors hover:text-accent",
+            "inline-flex items-center gap-1 whitespace-nowrap font-body text-sm font-bold uppercase tracking-aggressive transition-colors hover:text-accent",
             navTextColor(item.group, {
               scrolled,
               accent: equipmentOpen,
@@ -233,7 +266,7 @@ export function SiteHeader() {
         <Link
           href={item.href}
           className={cn(
-            "whitespace-nowrap font-display text-sm font-bold uppercase tracking-aggressive transition-colors hover:text-accent",
+            "whitespace-nowrap font-body text-sm font-bold uppercase tracking-aggressive transition-colors hover:text-accent",
             navTextColor(item.group, { scrolled }),
           )}
         >
@@ -250,7 +283,11 @@ export function SiteHeader() {
       )}
     >
       <div className="site-container flex h-16 items-center gap-4 sm:h-20 lg:gap-8">
-        <Link href="/" aria-label="Motorock.eu — Home" className="shrink-0">
+        <Link
+          href={localizedHref(locale, "/")}
+          aria-label="Motorock.eu — Home"
+          className="shrink-0"
+        >
           <Image
             src="/logo.png"
             alt="Motorock.eu"
@@ -290,7 +327,7 @@ export function SiteHeader() {
           <div className="hidden sm:block">
             <LanguageSwitcher
               locale={locale}
-              onChange={setLocale}
+              onChange={handleLocaleChange}
               inverted={scrolled}
             />
           </div>
@@ -310,7 +347,7 @@ export function SiteHeader() {
           >
             <CartIcon />
             {itemCount > 0 ? (
-              <span className="absolute right-0.5 top-0.5 inline-flex min-w-4 items-center justify-center rounded-full bg-accent px-1 font-display text-[9px] font-bold leading-4 text-paper">
+              <span className="absolute right-0.5 top-0.5 inline-flex min-w-4 items-center justify-center rounded-full bg-accent px-1 font-body text-[9px] font-bold leading-4 text-paper">
                 {itemCount}
               </span>
             ) : null}
@@ -352,18 +389,21 @@ export function SiteHeader() {
         </div>
       ) : null}
 
-      <EquipmentMegaMenu
-        open={equipmentOpen}
-        onMouseEnter={openEquipmentMenu}
-        onMouseLeave={closeEquipmentMenu}
-        onNavigate={closeEquipmentMenuImmediately}
-      />
+      {equipmentMegaMenu ? (
+        <EquipmentMegaMenu
+          megaMenu={equipmentMegaMenu}
+          open={equipmentOpen}
+          onMouseEnter={openEquipmentMenu}
+          onMouseLeave={closeEquipmentMenu}
+          onNavigate={closeEquipmentMenuImmediately}
+        />
+      ) : null}
 
       <MobileNav
         open={mobileOpen}
         onClose={() => setMobileOpen(false)}
         locale={locale}
-        onLocaleChange={setLocale}
+        onLocaleChange={handleLocaleChange}
       />
     </header>
   );

@@ -9,12 +9,15 @@ import {
   postMatchesCategory,
   type BlogPostsPageInfo,
 } from "@/lib/blog/posts";
+import type { Dictionary } from "@/i18n/dictionaries/en";
 import type { BlogPost } from "@/types/blog-post";
 
 type BlogListContentProps = {
   initialPosts: readonly BlogPost[];
   initialPageInfo: BlogPostsPageInfo;
   categories: readonly string[];
+  locale: "en" | "et";
+  copy: Dictionary["blog"];
 };
 
 function mergePosts(
@@ -30,6 +33,8 @@ export function BlogListContent({
   initialPosts,
   initialPageInfo,
   categories,
+  locale,
+  copy,
 }: BlogListContentProps) {
   const [activeCategory, setActiveCategory] = useState<string | "All">("All");
   const [posts, setPosts] = useState<readonly BlogPost[]>(initialPosts);
@@ -59,6 +64,7 @@ export function BlogListContent({
     try {
       const params = new URLSearchParams({
         first: String(BLOG_LOAD_MORE_SIZE),
+        locale,
       });
 
       if (pageInfo.endCursor) {
@@ -83,7 +89,7 @@ export function BlogListContent({
     } finally {
       setIsLoading(false);
     }
-  }, [isLoading, pageInfo.endCursor, pageInfo.hasNextPage]);
+  }, [isLoading, locale, pageInfo.endCursor, pageInfo.hasNextPage]);
 
   useEffect(() => {
     const sentinel = sentinelRef.current;
@@ -108,14 +114,14 @@ export function BlogListContent({
 
   return (
     <>
-      <BlogPageHeader>
+      <BlogPageHeader copy={copy}>
         <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
           <button
             type="button"
             onClick={() => setActiveCategory("All")}
             className={blogFilterBadgeClassName(activeCategory === "All")}
           >
-            All
+            {copy.all}
           </button>
           {categories.map((category) => (
             <button
@@ -130,33 +136,40 @@ export function BlogListContent({
         </div>
       </BlogPageHeader>
 
-      <section aria-label="Featured article" className="bg-moto">
+      <section aria-label={copy.featuredArticle} className="bg-moto">
         <div className="site-container py-10 lg:py-14">
           {featured ? (
-            <BlogCard post={featured} variant="feature" priority />
+            <BlogCard
+              post={featured}
+              variant="feature"
+              priority
+              locale={locale}
+              copy={copy}
+            />
           ) : (
-            <p className="text-ink/60">No articles in this category yet.</p>
+            <p className="text-ink/60">{copy.noArticlesCategory}</p>
           )}
         </div>
       </section>
 
       {rest.length > 0 ? (
-        <section aria-label="More articles" className="bg-paper py-16 lg:py-24">
+        <section aria-label={copy.moreArticles} className="bg-paper py-16 lg:py-24">
           <div className="site-container">
             <div className="mb-10 flex items-end justify-between gap-6 lg:mb-14">
               <div>
-                <p className="section-eyebrow">More stories</p>
-                <h2 className="mt-3 font-display text-2xl font-extrabold uppercase tracking-tight text-ink sm:text-3xl">
-                  From the journal
+                <p className="section-eyebrow">{copy.moreStories}</p>
+                <h2 className="mt-3 font-body text-2xl font-extrabold uppercase tracking-tight text-ink sm:text-3xl">
+                  {copy.fromJournal}
                 </h2>
               </div>
               <p className="hidden sm:block">
                 <BlogBadge>
-                  {rest.length} article{rest.length === 1 ? "" : "s"}
+                  {rest.length}{" "}
+                  {rest.length === 1 ? copy.article : copy.articles}
                 </BlogBadge>
               </p>
             </div>
-            <BlogCardGrid posts={rest} />
+            <BlogCardGrid posts={rest} locale={locale} copy={copy} />
           </div>
         </section>
       ) : null}
@@ -169,17 +182,17 @@ export function BlogListContent({
             aria-live="polite"
           >
             {isLoading ? (
-              <p className="font-display text-[10px] font-bold uppercase tracking-aggressive text-ink/45">
-                Loading articles…
+              <p className="font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/45">
+                {copy.loadingArticles}
               </p>
             ) : null}
             {loadError ? (
               <button
                 type="button"
                 onClick={() => void loadMore()}
-                className="rounded-full border border-ink/20 bg-white px-8 py-3 font-display text-[10px] font-bold uppercase tracking-aggressive text-ink transition-colors hover:border-accent hover:text-accent"
+                className="rounded-full border border-ink/20 bg-white px-8 py-3 font-body text-[10px] font-bold uppercase tracking-aggressive text-ink transition-colors hover:border-accent hover:text-accent"
               >
-                Try again
+                {copy.tryAgain}
               </button>
             ) : null}
           </div>

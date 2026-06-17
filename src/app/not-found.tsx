@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { defaultLocale } from "@/i18n/config";
+import { localizedHref } from "@/i18n/paths";
 
 export default function NotFound() {
   return (
@@ -9,10 +11,13 @@ export default function NotFound() {
         This page does not exist or has moved. Try the shop or search instead.
       </p>
       <div className="mt-8 flex flex-wrap gap-3">
-        <Link href="/shop/equipment" className="btn-accent">
+        <Link
+          href={localizedHref(defaultLocale, "/shop/equipment")}
+          className="btn-accent"
+        >
           Shop equipment
         </Link>
-        <Link href="/search" className="btn-ghost">
+        <Link href={localizedHref(defaultLocale, "/search")} className="btn-ghost">
           Search
         </Link>
       </div>

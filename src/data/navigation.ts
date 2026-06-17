@@ -87,7 +87,19 @@ export const equipmentMegaMenu = {
     headline: "Pando Moto 2026 collection in stock",
     cta: "Shop equipment",
   },
-} as const;
+};
+
+export type MegaMenu = {
+  columns: NavColumn[];
+  promo: {
+    href: string;
+    image: string;
+    imageAlt: string;
+    tag: string;
+    headline: string;
+    cta: string;
+  };
+};
 
 export type NavGroup = "shop" | "site";
 
@@ -97,7 +109,7 @@ export type PrimaryNavItem =
       href: string;
       label: string;
       group: NavGroup;
-      megaMenu: typeof equipmentMegaMenu;
+      megaMenu: MegaMenu;
     };
 
 export const shopNav: readonly PrimaryNavItem[] = [

@@ -3,9 +3,13 @@
 import Link from "next/link";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { brands } from "@/data/brands";
-import { shopNav, siteNav, type NavColumn } from "@/data/navigation";
+import type { NavColumn } from "@/data/navigation";
+import { useDictionary, useLocale } from "@/context/locale-context";
+import type { Locale } from "@/i18n/config";
+import { getShopNav, getSiteNav } from "@/i18n/navigation";
 import { useFocusTrap } from "@/hooks/use-focus-trap";
 import { getBrandCatalogHref } from "@/lib/shop/brand-catalog-url";
+import { localizedHref } from "@/i18n/paths";
 
 type MobileNavProps = {
   open: boolean;
@@ -92,7 +96,7 @@ function EquipmentColumnAccordion({
         <Link
           href={column.viewAll.href}
           onClick={onNavigate}
-          className="min-w-0 flex-1 py-3.5 font-display text-sm font-bold uppercase tracking-aggressive text-ink/80 transition-colors hover:text-accent"
+          className="min-w-0 flex-1 py-3.5 font-body text-sm font-bold uppercase tracking-aggressive text-ink/80 transition-colors hover:text-accent"
         >
           {column.title}
         </Link>
@@ -128,7 +132,7 @@ function EquipmentColumnAccordion({
         <Link
           href={column.viewAll.href}
           onClick={onNavigate}
-          className="mb-4 inline-block pl-4 font-display text-[10px] font-bold uppercase tracking-aggressive text-ink/45 transition-colors hover:text-accent"
+          className="mb-4 inline-block pl-4 font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/45 transition-colors hover:text-accent"
         >
           {column.viewAll.label} →
         </Link>
@@ -142,6 +146,9 @@ function EquipmentAccordion({
 }: {
   onNavigate: () => void;
 }) {
+  const locale = useLocale();
+  const dictionary = useDictionary();
+  const shopNav = getShopNav(locale, dictionary);
   const item = shopNav.find((navItem) => navItem.megaMenu);
   const [open, setOpen] = useState(false);
   const [openColumn, setOpenColumn] = useState<string | null>(null);
@@ -164,7 +171,7 @@ function EquipmentAccordion({
         <Link
           href={item.href}
           onClick={onNavigate}
-          className="min-w-0 flex-1 py-5 font-display text-base font-bold uppercase tracking-aggressive text-ink transition-colors hover:text-accent"
+          className="min-w-0 flex-1 py-5 font-body text-base font-bold uppercase tracking-aggressive text-ink transition-colors hover:text-accent"
         >
           {item.label}
         </Link>
@@ -211,7 +218,7 @@ function EquipmentAccordion({
               <Link
                 href={item.megaMenu.promo.href}
                 onClick={onNavigate}
-                className="inline-flex font-display text-xs font-bold uppercase tracking-aggressive text-accent transition-colors hover:text-accent-hover"
+                className="inline-flex font-body text-xs font-bold uppercase tracking-aggressive text-accent transition-colors hover:text-accent-hover"
               >
                 {item.megaMenu.promo.cta} →
               </Link>
@@ -223,7 +230,14 @@ function EquipmentAccordion({
   );
 }
 
-function MotorcycleBrandsAccordion({ onNavigate }: { onNavigate: () => void }) {
+function MotorcycleBrandsAccordion({
+  onNavigate,
+  title,
+}: {
+  onNavigate: () => void;
+  title: string;
+}) {
+  const locale = useLocale();
   const [open, setOpen] = useState(false);
   const triggerId = useId();
   const panelId = useId();
@@ -237,9 +251,9 @@ function MotorcycleBrandsAccordion({ onNavigate }: { onNavigate: () => void }) {
         aria-expanded={open}
         aria-controls={panelId}
         onClick={() => setOpen((value) => !value)}
-        className="flex w-full items-center justify-between py-4 font-display text-sm font-bold uppercase tracking-aggressive text-ink/75 transition-colors hover:text-accent"
+        className="flex w-full items-center justify-between py-4 font-body text-sm font-bold uppercase tracking-aggressive text-ink/75 transition-colors hover:text-accent"
       >
-        Motorcycle brands
+        {title}
         <ChevronIcon open={open} />
       </button>
 
@@ -248,7 +262,7 @@ function MotorcycleBrandsAccordion({ onNavigate }: { onNavigate: () => void }) {
           {motorcycleBrands.map((brand) => (
             <li key={brand.slug}>
               <Link
-                href={getBrandCatalogHref(brand.slug)}
+                href={localizedHref(locale, getBrandCatalogHref(brand.slug))}
                 onClick={onNavigate}
                 className="block py-2.5 text-sm text-ink/75 transition-colors hover:text-accent"
               >
@@ -268,6 +282,9 @@ export function MobileNav({
   locale,
   onLocaleChange,
 }: MobileNavProps) {
+  const dictionary = useDictionary();
+  const shopNav = getShopNav(locale, dictionary);
+  const siteNav = getSiteNav(locale, dictionary);
   const labelId = useId();
   const panelRef = useRef<HTMLElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
@@ -319,9 +336,9 @@ export function MobileNav({
         <div className="flex h-16 items-center justify-between border-b border-ink/10 px-5 sm:h-20">
           <p
             id={labelId}
-            className="font-display text-xs font-bold uppercase tracking-aggressive text-ink"
+            className="font-body text-xs font-bold uppercase tracking-aggressive text-ink"
           >
-            Menu
+            {dictionary.nav.menu}
           </p>
           <button
             ref={closeRef}
@@ -329,7 +346,7 @@ export function MobileNav({
             onClick={onClose}
             className="inline-flex size-10 items-center justify-center text-ink transition-colors hover:text-accent"
           >
-            <span className="sr-only">Close menu</span>
+            <span className="sr-only">{dictionary.nav.closeMenu}</span>
             <CloseIcon />
           </button>
         </div>
@@ -343,7 +360,7 @@ export function MobileNav({
                 <Link
                   href={item.href}
                   onClick={onClose}
-                  className="block py-5 font-display text-base font-bold uppercase tracking-aggressive text-ink transition-colors hover:text-accent"
+                  className="block py-5 font-body text-base font-bold uppercase tracking-aggressive text-ink transition-colors hover:text-accent"
                 >
                   {item.label}
                 </Link>
@@ -351,7 +368,10 @@ export function MobileNav({
             ),
           )}
 
-          <MotorcycleBrandsAccordion onNavigate={onClose} />
+          <MotorcycleBrandsAccordion
+            onNavigate={onClose}
+            title={dictionary.nav.motorcycleBrands}
+          />
 
           <div
             className="my-1 border-t border-ink/10"
@@ -364,7 +384,7 @@ export function MobileNav({
               <Link
                 href={item.href}
                 onClick={onClose}
-                className="block py-4 font-display text-sm font-bold uppercase tracking-aggressive text-ink/75 transition-colors hover:text-accent"
+                className="block py-4 font-body text-sm font-bold uppercase tracking-aggressive text-ink/75 transition-colors hover:text-accent"
               >
                 {item.label}
               </Link>
@@ -372,10 +392,10 @@ export function MobileNav({
           ))}
 
           <div className="border-b border-ink/10 py-4">
-            <p className="font-display text-[10px] font-bold uppercase tracking-aggressive text-ink/45">
-              Language
+            <p className="font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/45">
+              {dictionary.nav.language}
             </p>
-            <div className="mt-3 inline-grid grid-cols-2 rounded-sm border border-ink/15 p-0.5 font-display text-[11px] font-bold uppercase tracking-aggressive">
+            <div className="mt-3 inline-grid grid-cols-2 rounded-sm border border-ink/15 p-0.5 font-body text-[11px] font-bold uppercase tracking-aggressive">
               {([
                 { code: "en", label: "EN" },
                 { code: "et", label: "ET" },
@@ -399,12 +419,12 @@ export function MobileNav({
         </div>
 
         <div className="shrink-0 border-t border-ink/10 px-5 py-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
-          <p className="font-display text-[10px] font-bold uppercase tracking-aggressive text-ink/45">
-            Get in touch
+          <p className="font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/45">
+            {dictionary.nav.getInTouch}
           </p>
           <a
             href="tel:+37255551234"
-            className="mt-3 flex min-h-12 w-full items-center justify-center border border-ink/20 px-4 py-3 font-display text-sm font-bold tabular-nums tracking-tight text-ink transition-colors hover:border-accent hover:text-accent"
+            className="mt-3 flex min-h-12 w-full items-center justify-center border border-ink/20 px-4 py-3 font-body text-sm font-bold tabular-nums tracking-tight text-ink transition-colors hover:border-accent hover:text-accent"
           >
             +372 5555 1234
           </a>

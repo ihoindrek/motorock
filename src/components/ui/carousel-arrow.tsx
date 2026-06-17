@@ -42,7 +42,7 @@ export function CarouselArrow({
     >
       {!isIcon ? (
         <span
-          className={`font-display text-[10px] font-bold uppercase tracking-[0.2em] transition-colors duration-300 group-hover/arrow:text-accent ${
+          className={`font-body text-[10px] font-bold uppercase tracking-[0.2em] transition-colors duration-300 group-hover/arrow:text-accent ${
             isLight ? "text-ink/40" : "text-paper/40"
           }`}
         >

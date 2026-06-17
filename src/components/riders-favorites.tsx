@@ -6,6 +6,7 @@ import {
 } from "@/components/riders-favorites-carousel";
 import { PopularGearSection } from "@/components/popular-gear-section";
 import { VideoText } from "@/components/video-text";
+import type { Locale } from "@/i18n/config";
 import {
   getEquipmentCatalogForRoute,
   getMotorcycleCatalog,
@@ -102,7 +103,7 @@ function RidersFavoritesBlock({
           </div>
           <Link
             href={href}
-            className={`self-start font-display text-xs font-bold uppercase tracking-aggressive transition-[color,border-color] duration-200 sm:self-auto ${linkClass}`}
+            className={`self-start font-body text-xs font-bold uppercase tracking-aggressive transition-[color,border-color] duration-200 sm:self-auto ${linkClass}`}
           >
             {linkLabel}
           </Link>
@@ -156,13 +157,33 @@ function RidersFavoritesBlock({
   );
 }
 
-export async function RidersFavorites() {
+export async function RidersFavorites({ locale }: { locale: Locale }) {
+  const copy =
+    locale === "et"
+      ? {
+          rebelTop: "Mässuline",
+          rebelBottom: "kahel rattal.",
+          description:
+            "Premium sõiduvarustus ja mootorrattad sõitjatele, kes ei taha massi sulanduda.",
+          motorcyclesEyebrow: "Mootorrattad",
+          motorcyclesTitle: "Populaarsed rattad",
+          motorcyclesCta: "Vaata mootorrattaid →",
+        }
+      : {
+          rebelTop: "Rebel on",
+          rebelBottom: "two wheels.",
+          description:
+            "Premium riding gear and motorcycles for riders who refuse to blend in.",
+          motorcyclesEyebrow: "Motorcycles",
+          motorcyclesTitle: "Popular Bikes",
+          motorcyclesCta: "Shop motorcycles →",
+        };
   const [motorcycles, menEquipment, womenEquipment, accessoriesEquipment] =
     await Promise.all([
-      getMotorcycleCatalog(),
-      getEquipmentCatalogForRoute(parseEquipmentSlug(["men"])),
-      getEquipmentCatalogForRoute(parseEquipmentSlug(["women"])),
-      getEquipmentCatalogForRoute(parseEquipmentSlug(["accessories"])),
+      getMotorcycleCatalog(locale),
+      getEquipmentCatalogForRoute(parseEquipmentSlug(["men"]), locale),
+      getEquipmentCatalogForRoute(parseEquipmentSlug(["women"]), locale),
+      getEquipmentCatalogForRoute(parseEquipmentSlug(["accessories"]), locale),
     ]);
 
   const blockProducts: Record<string, FavoriteProduct[]> = {
@@ -193,16 +214,15 @@ export async function RidersFavorites() {
               videoSrc="/5052415-hd_1920_1080_30fps.mp4"
               className={headingVideoClass}
             >
-              Rebel on
+              {copy.rebelTop}
             </VideoText>
             <br />
             <span className="bg-gradient-to-r from-[#FF5A00] via-[#ff7e26] to-[#ff9c59] bg-clip-text text-transparent">
-              two wheels.
+              {copy.rebelBottom}
             </span>
           </h2>
           <p className="max-w-md text-base leading-relaxed text-paper/75 sm:text-lg lg:pb-2 lg:text-right">
-            Premium riding gear and motorcycles for riders who refuse to blend
-            in.
+            {copy.description}
           </p>
         </div>
       </header>
@@ -211,6 +231,9 @@ export async function RidersFavorites() {
         <RidersFavoritesBlock
           key={block.id}
           {...block}
+          eyebrow={copy.motorcyclesEyebrow}
+          title={copy.motorcyclesTitle}
+          linkLabel={copy.motorcyclesCta}
           products={blockProducts[block.id] ?? []}
         />
       ))}

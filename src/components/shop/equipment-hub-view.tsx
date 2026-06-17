@@ -5,18 +5,26 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { GrainOverlay } from "@/components/ui/grain-overlay";
+import type { Locale } from "@/i18n/config";
+import { localizedHref } from "@/i18n/paths";
 import {
-  equipmentHubBrands,
-  equipmentHubCategories,
-  equipmentHubCopy,
+  getEquipmentHubData,
   type EquipmentHubCategory,
 } from "@/data/equipment-hub";
 import { cn } from "@/lib/utils";
 
-function MobileCategoryPanel({ category }: { category: EquipmentHubCategory }) {
+function MobileCategoryPanel({
+  category,
+  locale,
+  exploreLabel,
+}: {
+  category: EquipmentHubCategory;
+  locale: Locale;
+  exploreLabel: string;
+}) {
   return (
     <Link
-      href={category.href}
+      href={localizedHref(locale, category.href)}
       className="group relative flex min-h-[46svh] items-end overflow-hidden bg-ink sm:min-h-[52svh]"
     >
       <Image
@@ -37,7 +45,7 @@ function MobileCategoryPanel({ category }: { category: EquipmentHubCategory }) {
       />
 
       <div className="relative z-10 w-full p-6 sm:p-8">
-        <p className="font-display text-[10px] font-bold uppercase tracking-[0.35em] text-paper/45">
+        <p className="font-body text-[10px] font-bold uppercase tracking-[0.35em] text-paper/45">
           {category.index}
         </p>
         <h2 className="mt-2 font-display text-3xl font-extrabold uppercase leading-[0.92] tracking-tight text-paper sm:text-4xl">
@@ -51,7 +59,7 @@ function MobileCategoryPanel({ category }: { category: EquipmentHubCategory }) {
           {category.description}
         </p>
         <span className="btn-hero-ghost mt-5 inline-flex px-5 py-3 sm:px-6">
-          Explore
+          {exploreLabel}
         </span>
       </div>
     </Link>
@@ -59,21 +67,25 @@ function MobileCategoryPanel({ category }: { category: EquipmentHubCategory }) {
 }
 
 function DesktopCategoryIndex({
+  categories,
   activeId,
   onActiveChange,
+  locale,
 }: {
+  categories: readonly EquipmentHubCategory[];
   activeId: string;
   onActiveChange: (id: string) => void;
+  locale: Locale;
 }) {
   return (
     <ul className="flex flex-col gap-1">
-      {equipmentHubCategories.map((category) => {
+      {categories.map((category) => {
         const isActive = category.id === activeId;
 
         return (
           <li key={category.id}>
             <Link
-              href={category.href}
+              href={localizedHref(locale, category.href)}
               onMouseEnter={() => onActiveChange(category.id)}
               onFocus={() => onActiveChange(category.id)}
               className={cn(
@@ -85,7 +97,7 @@ function DesktopCategoryIndex({
             >
               <span
                 className={cn(
-                  "font-display text-[10px] font-bold uppercase tracking-[0.35em] transition-colors",
+                  "font-body text-[10px] font-bold uppercase tracking-[0.35em] transition-colors",
                   isActive ? "text-accent" : "text-paper/30",
                 )}
               >
@@ -102,11 +114,27 @@ function DesktopCategoryIndex({
   );
 }
 
-export function EquipmentHubView() {
-  const [activeId, setActiveId] = useState<string>(equipmentHubCategories[0].id);
+export function EquipmentHubView({ locale }: { locale: Locale }) {
+  const { categories, copy: equipmentHubCopy, brands: equipmentHubBrands } =
+    getEquipmentHubData(locale);
+  const ui =
+    locale === "et"
+      ? {
+          explore: "Avasta",
+          home: "Avaleht",
+          categories: "Kategooriad",
+          featuredBrands: "Esiletõstetud brändid",
+        }
+      : {
+          explore: "Explore",
+          home: "Home",
+          categories: "Categories",
+          featuredBrands: "Featured brands",
+        };
+
+  const [activeId, setActiveId] = useState<string>(categories[0].id);
   const activeCategory =
-    equipmentHubCategories.find((category) => category.id === activeId) ??
-    equipmentHubCategories[0];
+    categories.find((category) => category.id === activeId) ?? categories[0];
 
   return (
     <div className="bg-ink">
@@ -134,10 +162,13 @@ export function EquipmentHubView() {
 
         <div className="site-container relative z-10 flex min-h-[52svh] flex-col justify-end pb-10 pt-28 sm:min-h-[58svh] sm:pb-12 lg:min-h-[62svh] lg:pb-16">
           <nav aria-label="Breadcrumb" className="mb-8">
-            <ol className="flex flex-wrap items-center gap-2 font-display text-[10px] font-bold uppercase tracking-aggressive text-paper/45">
+            <ol className="flex flex-wrap items-center gap-2 font-body text-[10px] font-bold uppercase tracking-aggressive text-paper/45">
               <li>
-                <Link href="/" className="transition-colors hover:text-accent">
-                  Home
+                <Link
+                  href={localizedHref(locale, "/")}
+                  className="transition-colors hover:text-accent"
+                >
+                  {ui.home}
                 </Link>
               </li>
               <li aria-hidden="true">/</li>
@@ -164,13 +195,15 @@ export function EquipmentHubView() {
       >
         <div className="site-container grid grid-cols-12 items-start gap-10 py-16 xl:gap-14 xl:py-20">
           <div className="col-span-5 xl:col-span-4">
-            <p className="font-display text-[10px] font-bold uppercase tracking-[0.35em] text-paper/35">
-              Categories
+            <p className="font-body text-[10px] font-bold uppercase tracking-[0.35em] text-paper/35">
+              {ui.categories}
             </p>
             <div className="mt-6">
               <DesktopCategoryIndex
+                categories={categories}
                 activeId={activeId}
                 onActiveChange={setActiveId}
+                locale={locale}
               />
             </div>
           </div>
@@ -191,7 +224,7 @@ export function EquipmentHubView() {
                   fill
                   sizes="(max-width: 1280px) 58vw, 50vw"
                   className="object-cover"
-                  priority={activeCategory.id === equipmentHubCategories[0].id}
+                  priority={activeCategory.id === categories[0].id}
                 />
                 <GrainOverlay variant="dark" subtle />
                 <div
@@ -201,7 +234,7 @@ export function EquipmentHubView() {
 
                 <div className="absolute inset-x-0 bottom-0 z-10 flex flex-wrap items-end justify-between gap-4 p-8 xl:p-10">
                   <div className="max-w-md">
-                    <p className="font-display text-[10px] font-bold uppercase tracking-[0.35em] text-paper/45">
+                    <p className="font-body text-[10px] font-bold uppercase tracking-[0.35em] text-paper/45">
                       {activeCategory.index}
                     </p>
                     <h2 className="mt-2 font-display text-4xl font-extrabold uppercase leading-[0.92] tracking-tight text-paper xl:text-5xl">
@@ -212,10 +245,10 @@ export function EquipmentHubView() {
                     </p>
                   </div>
                   <Link
-                    href={activeCategory.href}
+                    href={localizedHref(locale, activeCategory.href)}
                     className="btn-hero-primary shrink-0"
                   >
-                    Explore
+                    {ui.explore}
                   </Link>
                 </div>
               </motion.div>
@@ -228,22 +261,27 @@ export function EquipmentHubView() {
         aria-label="Equipment categories"
         className="flex flex-col lg:hidden"
       >
-        {equipmentHubCategories.map((category) => (
-          <MobileCategoryPanel key={category.id} category={category} />
+        {categories.map((category) => (
+          <MobileCategoryPanel
+            key={category.id}
+            category={category}
+            locale={locale}
+            exploreLabel={ui.explore}
+          />
         ))}
       </section>
 
       <section className="border-t border-paper/10 bg-ink py-12 lg:py-14">
         <div className="site-container">
-          <p className="font-display text-[10px] font-bold uppercase tracking-[0.35em] text-paper/35">
-            Featured brands
+          <p className="font-body text-[10px] font-bold uppercase tracking-[0.35em] text-paper/35">
+            {ui.featuredBrands}
           </p>
           <ul className="mt-5 flex flex-wrap gap-3">
             {equipmentHubBrands.map((brand) => (
               <li key={brand.name}>
                 <Link
-                  href={brand.href}
-                  className="inline-flex min-h-11 items-center border border-paper/15 px-5 py-2 font-display text-[10px] font-bold uppercase tracking-aggressive text-paper/70 transition-colors hover:border-accent hover:text-accent"
+                  href={localizedHref(locale, brand.href)}
+                  className="inline-flex min-h-11 items-center border border-paper/15 px-5 py-2 font-body text-[10px] font-bold uppercase tracking-aggressive text-paper/70 transition-colors hover:border-accent hover:text-accent"
                 >
                   {brand.name}
                 </Link>

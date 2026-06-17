@@ -224,7 +224,7 @@ export function GalleryThumbnailRail({
 
   const thumbRailMeta = (
     <div className="flex shrink-0 flex-col items-center gap-1 pt-1">
-      <p className="font-display text-[10px] font-bold tabular-nums tracking-aggressive text-ink/70">
+      <p className="font-body text-[10px] font-bold tabular-nums tracking-aggressive text-ink/70">
         {String(activeIndex + 1).padStart(2, "0")}
         <span className="text-ink/35">
           {" "}
@@ -232,7 +232,7 @@ export function GalleryThumbnailRail({
         </span>
       </p>
       {needsThumbScroll && !atEnd && hiddenThumbsRemaining > 0 ? (
-        <p className="font-display text-[9px] font-bold uppercase tracking-aggressive text-accent">
+        <p className="font-body text-[9px] font-bold uppercase tracking-aggressive text-accent">
           +{hiddenThumbsRemaining} more
         </p>
       ) : null}

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { useDictionary, useLocale } from "@/context/locale-context";
 import type { CatalogProduct, ProductSpec } from "@/types/catalog-product";
 import type { MotorcycleProduct } from "@/types/motorcycle-product";
 import { formatPrice } from "@/lib/shop/category";
@@ -40,7 +41,7 @@ function SpecBlock({
   return (
     <div>
       <h3
-        className={`font-display text-xs font-bold uppercase tracking-aggressive ${
+        className={`font-body text-xs font-bold uppercase tracking-aggressive ${
           dark ? "text-paper/40" : "text-ink/45"
         }`}
       >
@@ -60,7 +61,7 @@ function SpecBlock({
               {spec.label}
             </dt>
             <dd
-              className={`font-display text-sm font-bold uppercase tracking-tight sm:text-right ${
+              className={`font-body text-sm font-bold uppercase tracking-tight sm:text-right ${
                 dark ? "text-paper" : "text-ink"
               }`}
             >
@@ -76,7 +77,7 @@ function SpecBlock({
 function ModelOverviewAccordion({ html }: { html: string }) {
   return (
     <details className="group border border-ink/10 bg-paper">
-      <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 font-display text-xs font-bold uppercase tracking-aggressive text-ink transition-colors hover:text-accent sm:px-6 sm:py-5 [&::-webkit-details-marker]:hidden">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 font-body text-xs font-bold uppercase tracking-aggressive text-ink transition-colors hover:text-accent sm:px-6 sm:py-5 [&::-webkit-details-marker]:hidden">
         Model overview
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -101,6 +102,54 @@ function RichMotorcycleProductView({
   product,
   relatedProducts = [],
 }: MotorcycleProductViewProps) {
+  const locale = useLocale();
+  const dict = useDictionary();
+  const t =
+    locale === "et"
+      ? {
+          modelOverview: "Mudelist",
+          new: "Uus",
+          onDisplay: "Tallinna showroomis kohal — tule vaatama ja broneeri proovisõit",
+          availableToOrder: "Tellitav — vaatamise kokkuleppimiseks võta ühendust",
+          bookTestRide: "Broneeri proovisõit",
+          askQuestion: "Küsi küsimus",
+          enquireModel: "Uuri selle mudeli kohta",
+          visitShowroom: "Külasta showroomi",
+          contactUs: "Võta ühendust",
+          keySpecifications: "Põhispetsifikatsioonid",
+          closerLook: "Lähem pilk",
+          closerLookBody: `Iga nurk mudelist ${product.sync.name} — keri ja avasta.`,
+          overview: "Ülevaade",
+          technical: "Tehniline",
+          underTank: "Paagi all",
+          showLess: "Näita vähem",
+          showMore: "Näita rohkem",
+          engineTransmission: "Mootor ja jõuülekanne",
+          chassisPerformance: "Raam ja jõudlus",
+          dimensionsWeight: "Mõõdud ja kaal",
+        }
+      : {
+          modelOverview: "Model overview",
+          new: "New",
+          onDisplay: "On display in our Tallinn showroom — come see it and book a test ride",
+          availableToOrder: "Available to order — contact us to arrange a viewing",
+          bookTestRide: "Book a test ride",
+          askQuestion: "Ask a question",
+          enquireModel: "Enquire about this model",
+          visitShowroom: "Visit showroom",
+          contactUs: "Contact us",
+          keySpecifications: "Key specifications",
+          closerLook: "Closer look",
+          closerLookBody: `Every angle of the ${product.sync.name} — scroll to explore.`,
+          overview: "Overview",
+          technical: "Technical",
+          underTank: "Under the tank",
+          showLess: "Show less",
+          showMore: "Show more",
+          engineTransmission: "Engine & transmission",
+          chassisPerformance: "Chassis & performance",
+          dimensionsWeight: "Dimensions & weight",
+        };
   const { sync, enrichment, content, showroomAvailable } = product;
 
   const colorSwatches = useMemo(() => {
@@ -151,8 +200,8 @@ function RichMotorcycleProductView({
     content.tagline?.trim() || sync.shortDescription.trim() || undefined;
   const hasEngineSpecs = content.engineSpecs.length > 0;
   const leftColumnTitle = hasEngineSpecs
-    ? "Engine & transmission"
-    : "Chassis & performance";
+    ? t.engineTransmission
+    : t.chassisPerformance;
   const leftColumnSpecs =
     showMoreSpecs && hasEngineSpecs
       ? [...content.engineSpecs, ...content.extendedSpecs]
@@ -182,7 +231,7 @@ function RichMotorcycleProductView({
               }`}
             >
               <nav aria-label="Breadcrumb" className="mb-5 lg:mb-6">
-                <ol className="flex flex-wrap items-center gap-2 font-display text-[10px] font-bold uppercase tracking-aggressive text-ink/50">
+                <ol className="flex flex-wrap items-center gap-2 font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/50">
                   <li>
                     <Link
                       href={product.backHref}
@@ -197,8 +246,8 @@ function RichMotorcycleProductView({
               <div className="flex flex-wrap items-center gap-3">
                 <BrandLogo brand={sync.brand} size="sm" />
                 {enrichment.isNew ? (
-                  <span className="bg-accent px-2.5 py-1 font-display text-[9px] font-bold uppercase tracking-aggressive text-paper">
-                    New
+                  <span className="bg-accent px-2.5 py-1 font-body text-[9px] font-bold uppercase tracking-aggressive text-paper">
+                    {t.new}
                   </span>
                 ) : null}
               </div>
@@ -235,8 +284,7 @@ function RichMotorcycleProductView({
                       className="size-1.5 shrink-0 rounded-full bg-stock motion-safe:animate-pulse"
                       aria-hidden="true"
                     />
-                    On display in our Tallinn showroom — come see it and book
-                    a test ride
+                    {t.onDisplay}
                   </p>
                 ) : (
                   <p className="mt-6 flex items-center gap-2 text-xs text-ink/60">
@@ -244,12 +292,12 @@ function RichMotorcycleProductView({
                       className="size-1.5 shrink-0 rounded-full bg-ink/30"
                       aria-hidden="true"
                     />
-                    Available to order — contact us to arrange a viewing
+                    {t.availableToOrder}
                   </p>
                 )
               ) : (
                 <p className="mt-6 text-xs text-ink/50">
-                  Contact us for availability
+                  {dict.pdp.contactAvailability}
                 </p>
               )}
 
@@ -264,7 +312,7 @@ function RichMotorcycleProductView({
                   />
                 </div>
               ) : sync.colors.length === 1 && sync.colors[0] !== "—" ? (
-                <p className="mt-8 font-display text-[10px] font-bold uppercase tracking-aggressive text-ink/50">
+                <p className="mt-8 font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/50">
                   Finish · {sync.colors[0]}
                 </p>
               ) : null}
@@ -279,14 +327,14 @@ function RichMotorcycleProductView({
                         className="btn-accent min-w-[200px] gap-2"
                       >
                         <TestRideIcon />
-                        Book a test ride
+                        {t.bookTestRide}
                       </button>
                       <button
                         type="button"
                         onClick={() => setModalAction("question")}
                         className="btn-ghost min-w-[200px]"
                       >
-                        Ask a question
+                        {t.askQuestion}
                       </button>
                     </>
                   ) : (
@@ -296,14 +344,14 @@ function RichMotorcycleProductView({
                         onClick={() => setModalAction("enquire")}
                         className="btn-accent min-w-[200px]"
                       >
-                        Enquire about this model
+                        {t.enquireModel}
                       </button>
                       <button
                         type="button"
                         onClick={() => setModalAction("showroom")}
                         className="btn-ghost min-w-[200px]"
                       >
-                        Visit showroom
+                        {t.visitShowroom}
                       </button>
                     </>
                   )}
@@ -315,7 +363,7 @@ function RichMotorcycleProductView({
                     onClick={() => setModalAction("contact")}
                     className="btn-accent min-w-[200px]"
                   >
-                    Contact us
+                    {t.contactUs}
                   </button>
                 </div>
               )}
@@ -337,7 +385,7 @@ function RichMotorcycleProductView({
 
       {content.keySpecs.length > 0 ? (
         <section
-          aria-label="Key specifications"
+          aria-label={t.keySpecifications}
           className="border-b border-ink/10 bg-paper"
         >
           <ul className="site-container grid grid-cols-2 lg:grid-cols-4">
@@ -352,7 +400,7 @@ function RichMotorcycleProductView({
                     : ""
                 }`}
               >
-                <p className="font-display text-[9px] font-bold uppercase tracking-aggressive text-ink/40">
+                <p className="font-body text-[9px] font-bold uppercase tracking-aggressive text-ink/40">
                   {spec.label}
                 </p>
                 <p className="mt-2 font-display text-[clamp(0.9375rem,1.6vw,1.25rem)] font-extrabold uppercase leading-snug tracking-tight text-ink">
@@ -368,10 +416,10 @@ function RichMotorcycleProductView({
         <section aria-label="Closer look" className="bg-white">
           <div className="site-container py-14 lg:py-20">
             <h2 className="text-[clamp(2rem,4.5vw,3.5rem)] font-extrabold uppercase leading-[0.92] tracking-tight text-ink">
-              Closer look
+              {t.closerLook}
             </h2>
             <p className="mt-4 max-w-lg text-sm text-ink/55 sm:text-base">
-              Every angle of the {sync.name} — scroll to explore.
+              {t.closerLookBody}
             </p>
           </div>
           <ZoomParallax
@@ -387,11 +435,11 @@ function RichMotorcycleProductView({
         <div className="site-container max-w-3xl">
           {content.overviewSections.length > 0 ? (
             <div>
-              <p className="section-eyebrow">Overview</p>
+              <p className="section-eyebrow">{t.overview}</p>
               <div className="mt-6 space-y-10">
                 {content.overviewSections.map((section) => (
                   <div key={section.title}>
-                    <h2 className="font-display text-xs font-bold uppercase tracking-aggressive text-ink/45">
+                    <h2 className="font-body text-xs font-bold uppercase tracking-aggressive text-ink/45">
                       {section.title}
                     </h2>
                     <div className="mt-4 space-y-4 text-sm leading-relaxed text-ink/75 sm:text-base">
@@ -417,9 +465,9 @@ function RichMotorcycleProductView({
       {showTechnical ? (
         <section className="bg-ink py-16 text-paper lg:py-24">
           <div className="site-container">
-            <p className="section-eyebrow text-accent">Technical</p>
+            <p className="section-eyebrow text-accent">{t.technical}</p>
             <h2 className="mt-3 text-2xl font-extrabold uppercase leading-[0.92] sm:text-3xl">
-              Under the tank
+              {t.underTank}
             </h2>
 
             <div className="mt-12 grid gap-14 lg:grid-cols-2 lg:gap-20">
@@ -434,16 +482,16 @@ function RichMotorcycleProductView({
                     <button
                       type="button"
                       onClick={() => setShowMoreSpecs((open) => !open)}
-                      className="mt-6 font-display text-[10px] font-bold uppercase tracking-aggressive text-accent hover:underline"
+                      className="mt-6 font-body text-[10px] font-bold uppercase tracking-aggressive text-accent hover:underline"
                     >
-                      {showMoreSpecs ? "Show less" : "Show more"}
+                      {showMoreSpecs ? t.showLess : t.showMore}
                     </button>
                   ) : null}
                 </div>
               ) : null}
               {content.dimensionSpecs.length > 0 ? (
                 <SpecBlock
-                  title="Dimensions & weight"
+                  title={t.dimensionsWeight}
                   specs={content.dimensionSpecs}
                   dark
                 />

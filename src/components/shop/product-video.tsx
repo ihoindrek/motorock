@@ -15,7 +15,7 @@ export function ProductVideo({
     <section aria-labelledby="product-video-heading">
       <h2
         id="product-video-heading"
-        className={`font-display text-xs font-bold uppercase tracking-aggressive ${
+        className={`font-body text-xs font-bold uppercase tracking-aggressive ${
           isDark ? "text-paper/40" : "text-ink/50"
         }`}
       >

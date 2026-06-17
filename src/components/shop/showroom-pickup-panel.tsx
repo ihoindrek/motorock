@@ -37,7 +37,7 @@ export function ShowroomPickupPanel({
         className,
       )}
     >
-      <p className="font-display text-sm font-extrabold uppercase leading-snug tracking-tight text-ink">
+      <p className="font-body text-sm font-extrabold uppercase leading-snug tracking-tight text-ink">
         Pick up at showroom & try on
       </p>
       <p className="mt-2 text-sm leading-relaxed text-ink/65">
@@ -50,7 +50,7 @@ export function ShowroomPickupPanel({
             type="button"
             onClick={() => onSelectRate(pickupRate.id)}
             className={cn(
-              "inline-flex items-center rounded-full px-5 py-2.5 font-display text-[10px] font-bold uppercase tracking-aggressive transition-colors",
+              "inline-flex items-center rounded-full px-5 py-2.5 font-body text-[10px] font-bold uppercase tracking-aggressive transition-colors",
               pickupSelected
                 ? "bg-ink text-paper"
                 : "border border-ink/20 bg-paper text-ink hover:border-ink/40",
@@ -63,7 +63,7 @@ export function ShowroomPickupPanel({
           href={SHOWROOM_GOOGLE_MAPS_URL}
           target="_blank"
           rel="noopener noreferrer"
-          className="font-display text-[10px] font-bold uppercase tracking-aggressive text-ink/45 transition-colors hover:text-accent"
+          className="font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/45 transition-colors hover:text-accent"
         >
           Directions →
         </Link>

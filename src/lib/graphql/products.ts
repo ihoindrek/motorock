@@ -1,3 +1,4 @@
+import type { Locale } from "@/i18n/config";
 import type { CatalogProduct } from "@/types/catalog-product";
 import type { MotorcycleProduct } from "@/types/motorcycle-product";
 import { pickSimilarProducts } from "@/lib/shop/similar-products";
@@ -14,6 +15,12 @@ import {
 } from "@/lib/graphql/map-graphql-product";
 import { PRODUCT_BY_SLUG, PRODUCT_CATALOG_PAGE } from "@/lib/graphql/queries";
 import type { GraphQLProduct, GraphQLProductCard } from "@/lib/graphql/types";
+import {
+  filterGraphqlNodesByLocale,
+  getGraphqlLanguageCode,
+  resolveProductSlugForLocale,
+  buildProductSlugAlternates,
+} from "@/lib/graphql/wpml";
 
 type ProductBySlugResponse = {
   product: GraphQLProduct | null;
@@ -45,6 +52,7 @@ const CATALOG_PAGE_SIZE = 100;
 
 async function fetchAllCatalogNodes(
   where: CatalogWhere,
+  locale: Locale,
 ): Promise<GraphQLProductCard[]> {
   const nodes: GraphQLProductCard[] = [];
   let after: string | null = null;
@@ -62,7 +70,7 @@ async function fetchAllCatalogNodes(
       variables,
     );
 
-    nodes.push(...data.products.nodes);
+    nodes.push(...filterGraphqlNodesByLocale(data.products.nodes, locale));
 
     if (!data.products.pageInfo.hasNextPage) {
       break;
@@ -96,13 +104,49 @@ export async function fetchGraphqlProductBySlug(slug: string) {
   }
 }
 
+export async function getProductBySlugForLocale(
+  slug: string,
+  locale: Locale,
+): Promise<CatalogProduct | undefined> {
+  const remote = await fetchGraphqlProductBySlug(slug);
+
+  if (!remote) {
+    return undefined;
+  }
+
+  if (getGraphqlLanguageCode(remote) === locale) {
+    return mapGraphqlToCatalogProduct(remote);
+  }
+
+  const translatedSlug = resolveProductSlugForLocale(remote, locale);
+  if (translatedSlug && translatedSlug !== slug) {
+    const translated = await fetchGraphqlProductBySlug(translatedSlug);
+    if (translated && getGraphqlLanguageCode(translated) === locale) {
+      return mapGraphqlToCatalogProduct(translated);
+    }
+  }
+
+  return undefined;
+}
+
 export async function getMotorcycleProductBySlug(
   slug: string,
+  locale: Locale = "en",
 ): Promise<MotorcycleProduct | null> {
   const remote = await fetchGraphqlProductBySlug(slug);
 
   if (remote && isGraphqlMotorcycle(remote)) {
-    return mapGraphqlToMotorcycleProduct(remote);
+    if (getGraphqlLanguageCode(remote) === locale) {
+      return mapGraphqlToMotorcycleProduct(remote);
+    }
+
+    const translatedSlug = resolveProductSlugForLocale(remote, locale);
+    if (translatedSlug) {
+      const translated = await fetchGraphqlProductBySlug(translatedSlug);
+      if (translated && isGraphqlMotorcycle(translated)) {
+        return mapGraphqlToMotorcycleProduct(translated);
+      }
+    }
   }
 
   return null;
@@ -110,19 +154,28 @@ export async function getMotorcycleProductBySlug(
 
 export async function getProductBySlug(
   slug: string,
+  locale: Locale = "en",
 ): Promise<CatalogProduct | undefined> {
-  const remote = await fetchGraphqlProductBySlug(slug);
-
-  if (remote) {
-    return mapGraphqlToCatalogProduct(remote);
-  }
-
-  return undefined;
+  return getProductBySlugForLocale(slug, locale);
 }
 
-export async function getMotorcycleCatalog(): Promise<CatalogProduct[]> {
+export async function getProductSlugAlternates(
+  slug: string,
+): Promise<Partial<Record<Locale, string>>> {
+  const remote = await fetchGraphqlProductBySlug(slug);
+
+  if (!remote) {
+    return {};
+  }
+
+  return buildProductSlugAlternates(remote);
+}
+
+export async function getMotorcycleCatalog(
+  locale: Locale = "en",
+): Promise<CatalogProduct[]> {
   try {
-    const nodes = await fetchAllCatalogNodes({ category: "motorcycles" });
+    const nodes = await fetchAllCatalogNodes({ category: "motorcycles" }, locale);
     return nodes.map(mapGraphqlCardToCatalogProduct);
   } catch (error) {
     console.error("[motorcycles] GraphQL catalog fetch failed:", error);
@@ -130,11 +183,16 @@ export async function getMotorcycleCatalog(): Promise<CatalogProduct[]> {
   }
 }
 
-export async function getEquipmentCatalog(): Promise<CatalogProduct[]> {
+export async function getEquipmentCatalog(
+  locale: Locale = "en",
+): Promise<CatalogProduct[]> {
   try {
-    const nodes = await fetchAllCatalogNodes({
-      categoryNotIn: ["motorcycles", "tools-maintenance"],
-    });
+    const nodes = await fetchAllCatalogNodes(
+      {
+        categoryNotIn: ["motorcycles", "tools-maintenance"],
+      },
+      locale,
+    );
 
     return mapEquipmentCatalogNodes(nodes);
   } catch (error) {
@@ -145,10 +203,11 @@ export async function getEquipmentCatalog(): Promise<CatalogProduct[]> {
 
 export async function getEquipmentCatalogForRoute(
   route: CategoryRoute,
+  locale: Locale = "en",
 ): Promise<CatalogProduct[]> {
   try {
     const where = resolveEquipmentCatalogWhere(route);
-    const nodes = await fetchAllCatalogNodes(where);
+    const nodes = await fetchAllCatalogNodes(where, locale);
     return mapEquipmentCatalogNodes(nodes);
   } catch (error) {
     console.error("[equipment] GraphQL catalog fetch failed:", error);
@@ -156,11 +215,20 @@ export async function getEquipmentCatalogForRoute(
   }
 }
 
-export async function getToolsCatalog(): Promise<CatalogProduct[]> {
+export async function getToolsCatalog(
+  locale: Locale = "en",
+): Promise<CatalogProduct[]> {
+  if (locale !== "et") {
+    return [];
+  }
+
   try {
-    const nodes = await fetchAllCatalogNodes({
-      category: "tools-maintenance",
-    });
+    const nodes = await fetchAllCatalogNodes(
+      {
+        category: "tools-maintenance",
+      },
+      locale,
+    );
 
     return nodes
       .map(mapGraphqlCardToCatalogProduct)
@@ -173,19 +241,23 @@ export async function getToolsCatalog(): Promise<CatalogProduct[]> {
 
 export async function getCatalogProductsBySlugs(
   slugs: readonly string[],
+  locale: Locale = "en",
 ): Promise<CatalogProduct[]> {
-  const products = await Promise.all(slugs.map((slug) => getProductBySlug(slug)));
+  const products = await Promise.all(
+    slugs.map((slug) => getProductBySlug(slug, locale)),
+  );
   return products.filter((product): product is CatalogProduct => product !== undefined);
 }
 
 export async function getSimilarProducts(
   product: CatalogProduct,
   limit = 4,
+  locale: Locale = "en",
 ): Promise<CatalogProduct[]> {
   const catalog =
     product.type === "motorcycle"
-      ? await getMotorcycleCatalog()
-      : await getEquipmentCatalog();
+      ? await getMotorcycleCatalog(locale)
+      : await getEquipmentCatalog(locale);
 
   return pickSimilarProducts(product, catalog, limit);
 }

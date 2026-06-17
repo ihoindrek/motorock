@@ -1,3 +1,5 @@
+import type { Locale } from "@/i18n/config";
+
 export type EquipmentHubCategory = {
   id: string;
   index: string;
@@ -62,6 +64,59 @@ export const equipmentHubCategories = [
   },
 ] as const satisfies readonly EquipmentHubCategory[];
 
+const equipmentHubCategoriesEt: readonly EquipmentHubCategory[] = [
+  {
+    id: "helmets",
+    index: "01",
+    title: "Kiivrid",
+    titleLines: ["Kiivrid"],
+    description: "Retro kiivrid, open-face klassikud ja täiskaitse.",
+    href: "/shop/equipment/helmets",
+    image: "/equipment-helmets.webp",
+    imageAlt: "Mootorrattakiiver",
+  },
+  {
+    id: "men",
+    index: "02",
+    title: "Meeste varustus",
+    titleLines: ["Meeste", "varustus"],
+    description: "Joped, vestid, püksid, kindad — loodud sõiduks.",
+    href: "/shop/equipment/men",
+    image: "/Brando-22.webp",
+    imageAlt: "Meeste mootorrattavarustus",
+  },
+  {
+    id: "women",
+    index: "03",
+    title: "Naiste varustus",
+    titleLines: ["Naiste", "varustus"],
+    description: "Varustus sõitjatele, kes ei taha massi sulanduda.",
+    href: "/shop/equipment/women",
+    image: "/Motogirl_17_sept_edited_sized_for_website74-re6v5j7w.webp",
+    imageAlt: "Naiste mootorrattavarustus",
+  },
+  {
+    id: "accessories",
+    index: "04",
+    title: "Aksessuaarid",
+    titleLines: ["Aksessuaarid"],
+    description: "Prillid, kotid, peakated ja viimistlevad detailid.",
+    href: "/shop/equipment/accessories",
+    image: "/backpack-bushcraft-4.webp",
+    imageAlt: "Mootorrattaseljakott",
+  },
+  {
+    id: "tools",
+    index: "05",
+    title: "Tööriistad ja hooldus",
+    titleLines: ["Tööriistad", "ja hooldus"],
+    description: "Töökoja hädavajalik, et ratas oleks alati teevalmis.",
+    href: "/shop/tools",
+    image: "/hero-may-ggh01z.webp",
+    imageAlt: "Mootorratta tööriistad",
+  },
+];
+
 export const equipmentHubCopy = {
   eyebrow: "Shop",
   title: "Driving",
@@ -74,9 +129,29 @@ export const equipmentHubCopy = {
   heroImageAlt: "Capo Cor armored motorcycle shirt for men",
 } as const;
 
+const equipmentHubCopyEt = {
+  eyebrow: "Pood",
+  title: "Sõidu",
+  accent: "varustus",
+  description:
+    "Kihid, kiivrid ja mässulise sõitja hädavajalik — valitud neile, kes ei taha massi sulanduda.",
+  outline: "Sõiduks valmis",
+  heroImage:
+    "https://motorock.eu/wp-content/uploads/2026/06/Capo-Cor-02-Black-1-1_fcc5dbe4-95fc-4a09-bcd0-f7a42c5dd699.jpg",
+  heroImageAlt: "Capo Cor turvasärk meestele",
+} as const;
+
 export const equipmentHubBrands = [
   { name: "Pando Moto", href: "/shop/brands/pando-moto" },
   { name: "Holyfreedom", href: "/shop/brands/holyfreedom" },
   { name: "Johnny Reb", href: "/shop/brands/johnny-reb" },
   { name: "Motogirl", href: "/shop/brands/motogirl" },
 ] as const;
+
+export function getEquipmentHubData(locale: Locale) {
+  return {
+    categories: locale === "et" ? equipmentHubCategoriesEt : equipmentHubCategories,
+    copy: locale === "et" ? equipmentHubCopyEt : equipmentHubCopy,
+    brands: equipmentHubBrands,
+  };
+}

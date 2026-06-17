@@ -3,36 +3,63 @@ import Link from "next/link";
 import { RotateCcw, ShieldCheck, Truck, type LucideIcon } from "lucide-react";
 import { EditorialHero } from "@/components/content/editorial-hero";
 import { brands } from "@/data/brands";
+import type { Locale } from "@/i18n/config";
+import { localizedHref } from "@/i18n/paths";
 
-const purchaseReasons: readonly {
+const purchaseReasonsByLocale: Record<Locale, readonly {
   title: string;
   subtitle: string;
   body: string;
   offset: string;
   Icon: LucideIcon;
-}[] = [
-  {
-    title: "Fast delivery",
-    subtitle: "International shipping",
-    body: "Your order on the road, not on hold — EU-wide.",
-    offset: "lg:ml-[6%]",
-    Icon: Truck,
-  },
-  {
-    title: "14 days",
-    subtitle: "Return policy",
-    body: "Changed your mind? Send it back within 14 days.",
-    offset: "lg:ml-auto lg:mr-[10%]",
-    Icon: RotateCcw,
-  },
-  {
-    title: "Guaranteed",
-    subtitle: "Quality products",
-    body: "Gear we'd put on our own bikes — not shelf filler.",
-    offset: "lg:ml-[28%]",
-    Icon: ShieldCheck,
-  },
-];
+}[]> = {
+  en: [
+    {
+      title: "Fast delivery",
+      subtitle: "International shipping",
+      body: "Your order on the road, not on hold — EU-wide.",
+      offset: "lg:ml-[6%]",
+      Icon: Truck,
+    },
+    {
+      title: "14 days",
+      subtitle: "Return policy",
+      body: "Changed your mind? Send it back within 14 days.",
+      offset: "lg:ml-auto lg:mr-[10%]",
+      Icon: RotateCcw,
+    },
+    {
+      title: "Guaranteed",
+      subtitle: "Quality products",
+      body: "Gear we'd put on our own bikes — not shelf filler.",
+      offset: "lg:ml-[28%]",
+      Icon: ShieldCheck,
+    },
+  ],
+  et: [
+    {
+      title: "Kiire tarne",
+      subtitle: "Rahvusvaheline kohaletoimetus",
+      body: "Sinu tellimus liigub, mitte ei oota — üle kogu EL-i.",
+      offset: "lg:ml-[6%]",
+      Icon: Truck,
+    },
+    {
+      title: "14 päeva",
+      subtitle: "Tagastusõigus",
+      body: "Mõtlesid ümber? Saada 14 päeva jooksul tagasi.",
+      offset: "lg:ml-auto lg:mr-[10%]",
+      Icon: RotateCcw,
+    },
+    {
+      title: "Garanteeritud",
+      subtitle: "Kvaliteetsed tooted",
+      body: "Varustus, mille paneksime ka oma ratastele.",
+      offset: "lg:ml-[28%]",
+      Icon: ShieldCheck,
+    },
+  ],
+};
 
 const motorcycleBrands = brands.filter(
   (brand): brand is typeof brand & { logo: string } => Boolean(brand.logo),
@@ -46,14 +73,81 @@ const proseMutedClassName =
 const headingClassName =
   "font-display text-[clamp(1.75rem,4vw,2.75rem)] font-extrabold uppercase leading-[0.95] tracking-tight text-ink";
 
-export function AboutView() {
+type AboutViewProps = {
+  locale: Locale;
+};
+
+export function AboutView({ locale }: AboutViewProps) {
+  const purchaseReasons = purchaseReasonsByLocale[locale];
+  const t =
+    locale === "et"
+      ? {
+          hero: {
+            eyebrow: "Meist",
+            title: "Stiil kohtub",
+            accent: "seiklusega.",
+            description:
+              "Tahame olla esimene valik neile, kes hindavad vabadust ja enesekindlust.",
+          },
+          howItStarted: "Kuidas see kõik algas?",
+          originP1:
+            "Kõik algas Tarmo mõttest, et tema täisealiseks saavale tütrele on vaja ägedat ratast. Veebis ringi vaadates leidis ta MUTT Motorcycles'i.",
+          originP2:
+            "Ettevõtliku inimesena uuris ta tootjalt, kas piirkonnas on juba ametlik partner. Sealt hakkas kõik veerema.",
+          crazies: "Leidus veel paar samasugust hulljulget.",
+          startBrand:
+            "Tegime ära — tõime esimesed neli ratast kohale ja hakkasime brändi esindama.",
+          why: "Miks MotoRock?",
+          whyP1:
+            "Me võime olla väga erinevad inimesed, aga rattad ja rock'i energia on miski, mis ühendab.",
+          whyP2: "Asi pole tegelikult ainult muusikas.",
+          whyP3:
+            "Rock on elustiil — vabadus, enesekindlus, seiklus ja julgus eristuda.",
+          values: "Vabadus · Enesekindlus · Seiklus · Eristu",
+          buyTitle: "Miks osta MotoRockist?",
+          buyBody:
+            "Erinevalt paljudest tavapärastest poodidest tahame pakkuda midagi, mis on päriselt äge.",
+          dealer: "Ametlik edasimüüja",
+          shopMotorcycles: "Vaata mootorrattaid →",
+          getInTouch: "Võta ühendust →",
+        }
+      : {
+          hero: {
+            eyebrow: "About",
+            title: "Style meets",
+            accent: "adventure.",
+            description:
+              "We want to be the number one choice for the free and confident.",
+          },
+          howItStarted: "How did it all start?",
+          originP1:
+            "It all started simply from Tarmo's idea that he needed a cool bike for his daughter coming of age, and while browsing he came across MUTT Motorcycles.",
+          originP2:
+            "As an enterprising man, he asked the producers whether they already had a resale partner in the region — and that set things in motion.",
+          crazies: "A couple of crazies showed up too.",
+          startBrand:
+            "Done and done — we brought the first four bikes here and started to represent the brand.",
+          why: "Why MotoRock?",
+          whyP1:
+            "We can be very different as people, but bikes and rock energy have always brought us together.",
+          whyP2: "Of course, it's not really about the music.",
+          whyP3:
+            "Rock is a lifestyle — freedom, confidence, adventure and standing out from the crowd.",
+          values: "Freedom · Confidence · Adventure · Stand out",
+          buyTitle: "Why buy from MotoRock?",
+          buyBody:
+            "Unlike most motorbike shops selling samey stuff, we want to offer something cool.",
+          dealer: "Official dealer",
+          shopMotorcycles: "Shop motorcycles →",
+          getInTouch: "Get in touch →",
+        };
   return (
     <>
       <EditorialHero
-        eyebrow="About"
-        title="Style meets"
-        accent="adventure."
-        description="We want to be the number one choice for the free and confident."
+        eyebrow={t.hero.eyebrow}
+        title={t.hero.title}
+        accent={t.hero.accent}
+        description={t.hero.description}
       />
 
       <div className="overflow-hidden bg-moto">
@@ -71,7 +165,7 @@ export function AboutView() {
             aria-hidden="true"
           />
           <span
-            className="pointer-events-none absolute right-[8%] top-[28%] hidden max-w-[12rem] select-none text-right font-display text-[10px] font-bold uppercase leading-relaxed tracking-[0.35em] text-ink/[0.18] lg:block"
+            className="pointer-events-none absolute right-[8%] top-[28%] hidden max-w-[12rem] select-none text-right font-body text-[10px] font-bold uppercase leading-relaxed tracking-[0.35em] text-ink/[0.18] lg:block"
             aria-hidden="true"
           >
             Est.
@@ -81,9 +175,7 @@ export function AboutView() {
 
           <div className="relative z-10 max-w-sm sm:max-w-md lg:ml-[4%] lg:max-w-lg">
             <h2 id="about-origin" className={headingClassName}>
-              How did it
-              <br />
-              all start?
+              {t.howItStarted}
             </h2>
           </div>
 
@@ -98,22 +190,15 @@ export function AboutView() {
           </figure>
 
           <p className="relative z-20 mt-12 max-w-md text-lg font-semibold leading-[1.65] text-ink sm:ml-10 sm:text-xl lg:mt-[22rem] lg:ml-[14%] lg:max-w-lg">
-            It all started simply from Tarmo&apos;s idea that he needed a cool
-            bike for his daughter who was coming of age, and while browsing the
-            web he came across MUTT Motorcycles. Since Tarmo is not a jealous
-            person at all, he thought that maybe there are some people in the
-            area who might be interested in such vehicles.
+            {t.originP1}
           </p>
 
           <p className={`relative z-20 mt-6 max-w-md sm:max-w-sm lg:ml-[12%] lg:mt-10 lg:max-w-lg ${proseMutedClassName}`}>
-            As an enterprising man, he asked the producers on the ground
-            whether or not they already had a partner with resale rights in
-            Marjumaa. Tarmo shouted loudly in a village square on Facebook that
-            he was looking for partners.
+            {t.originP2}
           </p>
 
           <p className="relative z-20 mt-10 max-w-4xl font-display text-[clamp(2.5rem,10vw,6.5rem)] font-extrabold uppercase leading-[0.88] tracking-tight text-paper mix-blend-difference lg:ml-[8%] lg:mt-20 lg:max-w-3xl">
-            A couple of crazies showed up too.
+            {t.crazies}
           </p>
 
           <figure className="relative z-[1] mt-14 aspect-[4/5] w-[94vw] max-w-lg sm:ml-auto sm:mr-2 lg:absolute lg:left-[-3%] lg:top-[52%] lg:mt-0 lg:w-[46vw] lg:max-w-none">
@@ -127,8 +212,7 @@ export function AboutView() {
           </figure>
 
           <p className="relative z-20 mt-10 max-w-2xl font-display text-[clamp(1.25rem,2.8vw,2rem)] font-extrabold leading-snug tracking-tight text-ink lg:ml-auto lg:mr-[8%] lg:mt-[52rem]">
-            Done and done — we brought the first four bikes here and started to
-            represent the brand.
+            {t.startBrand}
           </p>
         </section>
 
@@ -154,29 +238,24 @@ export function AboutView() {
 
           <div className="relative z-10 ml-auto max-w-sm lg:mr-[6%] lg:max-w-md">
             <h2 id="about-why" className={headingClassName}>
-              Why MotoRock?
+              {t.why}
             </h2>
           </div>
 
           <p className={`relative z-10 mt-8 max-w-md sm:ml-6 lg:ml-[10%] lg:mt-12 lg:max-w-xl ${proseClassName}`}>
-            We can be very different as people. Living in the city or the
-            countryside, doing our daily work with a bell and a hammer, a mouse
-            and a keyboard, or an oil pan in the garage. One thing is clear —
-            from the very beginning, none of us has been indifferent to bikes,
-            and rock music always gets most of us on our feet.
+            {t.whyP1}
           </p>
 
           <p className="relative z-10 mt-6 max-w-xs font-display text-xl font-extrabold uppercase leading-snug tracking-tight text-ink sm:ml-12 lg:ml-[42%] lg:mt-10 lg:max-w-sm lg:text-2xl">
-            Of course, it&apos;s not really about the music.
+            {t.whyP2}
           </p>
 
           <p className={`relative z-10 mt-5 ml-auto max-w-sm lg:mr-[18%] lg:mt-8 lg:max-w-md ${proseClassName}`}>
-            Rock is a lifestyle — freedom, confidence, adventure and standing
-            out from the crowd.
+            {t.whyP3}
           </p>
 
-          <p className="relative z-10 mt-6 font-display text-[10px] font-bold uppercase tracking-aggressive text-ink/45 sm:ml-16 lg:ml-[22%] lg:mt-10">
-            Freedom · Confidence · Adventure · Stand out
+          <p className="relative z-10 mt-6 font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/45 sm:ml-16 lg:ml-[22%] lg:mt-10">
+            {t.values}
           </p>
 
           <div className="relative z-10 mt-12 lg:absolute lg:bottom-8 lg:left-[8%] lg:mt-0">
@@ -197,18 +276,16 @@ export function AboutView() {
         >
           <div className="max-w-md lg:ml-[12%]">
             <h2 id="about-buy" className={headingClassName}>
-              Why buy from MotoRock?
+              {t.buyTitle}
             </h2>
             <p className={`mt-5 max-w-sm ${proseClassName}`}>
-              Unlike most motorbike shops on the market today, which sell
-              relatively bland and samey stuff, we want to offer{" "}
-              <span className="font-extrabold text-accent">something cool.</span>
+              {t.buyBody}
             </p>
           </div>
 
-          <ul className="relative mt-12 space-y-12 lg:mt-16 lg:space-y-14">
+          <ul className="relative mt-12 grid gap-8 md:grid-cols-2 lg:mt-16 lg:grid-cols-3 lg:gap-10">
             {purchaseReasons.map(({ title, subtitle, body, offset, Icon }) => (
-              <li key={title} className={`max-w-xs sm:max-w-sm lg:max-w-md ${offset}`}>
+              <li key={title} className="h-full">
                 <Icon
                   className="size-5 text-accent"
                   strokeWidth={1.75}
@@ -217,7 +294,7 @@ export function AboutView() {
                 <h3 className="mt-3 font-display text-lg font-extrabold uppercase leading-tight tracking-tight text-ink sm:text-xl">
                   {title}
                 </h3>
-                <p className="mt-1 font-display text-[10px] font-bold uppercase tracking-aggressive text-accent">
+                <p className="mt-1 font-body text-[10px] font-bold uppercase tracking-aggressive text-accent">
                   {subtitle}
                 </p>
                 <p className={`mt-2.5 ${proseMutedClassName}`}>{body}</p>
@@ -229,7 +306,7 @@ export function AboutView() {
         {/* Partners + CTA */}
         <section className="site-container relative pb-20 pt-8 lg:pb-28 lg:pt-12">
           <div className="lg:ml-auto lg:max-w-lg lg:text-right">
-            <h2 className={headingClassName}>Official dealer</h2>
+            <h2 className={headingClassName}>{t.dealer}</h2>
           </div>
 
           <ul className="mt-12 flex flex-wrap items-center gap-x-10 gap-y-8 lg:mt-16 lg:gap-x-14">
@@ -245,7 +322,7 @@ export function AboutView() {
                 }
               >
                 <Link
-                  href={`/shop/brands/${brand.slug}`}
+                  href={localizedHref(locale, `/shop/brands/${brand.slug}`)}
                   className="opacity-45 mix-blend-multiply transition-opacity hover:opacity-100"
                 >
                   <Image
@@ -262,16 +339,16 @@ export function AboutView() {
 
           <div className="mt-14 flex flex-wrap gap-3 lg:ml-[18%] lg:mt-20">
             <Link
-              href="/shop/motorcycles"
-              className="inline-flex items-center rounded-full bg-ink px-7 py-3 font-display text-xs font-bold uppercase tracking-aggressive text-paper transition-colors duration-200 hover:bg-accent"
+              href={localizedHref(locale, "/shop/motorcycles")}
+              className="inline-flex items-center rounded-full bg-ink px-7 py-3 font-body text-xs font-bold uppercase tracking-aggressive text-paper transition-colors duration-200 hover:bg-accent"
             >
-              Shop motorcycles →
+              {t.shopMotorcycles}
             </Link>
             <Link
-              href="/contact"
-              className="inline-flex items-center rounded-full border border-ink/15 bg-transparent px-7 py-3 font-display text-xs font-bold uppercase tracking-aggressive text-ink transition-colors duration-200 hover:border-ink/30"
+              href={localizedHref(locale, "/contact")}
+              className="inline-flex items-center rounded-full border border-ink/15 bg-transparent px-7 py-3 font-body text-xs font-bold uppercase tracking-aggressive text-ink transition-colors duration-200 hover:border-ink/30"
             >
-              Get in touch →
+              {t.getInTouch}
             </Link>
           </div>
         </section>

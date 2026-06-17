@@ -1,22 +1,20 @@
 import type { Metadata, Viewport } from "next";
-import { Plus_Jakarta_Sans, Syne } from "next/font/google";
+import { Plus_Jakarta_Sans, Racing_Sans_One } from "next/font/google";
 import { Providers } from "@/components/providers";
-import { SiteFooter } from "@/components/site-footer";
-import { SiteHeader } from "@/components/site-header";
 import { isSiteIndexable } from "@/lib/site-indexing";
 import "./globals.css";
 
-const syne = Syne({
+const displayFont = Racing_Sans_One({
   subsets: ["latin"],
-  variable: "--font-syne",
-  weight: ["700", "800"],
+  variable: "--font-racing-sans-one",
+  weight: "400",
   display: "swap",
 });
 
 const plusJakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
   variable: "--font-plus-jakarta",
-  weight: ["400", "500", "600"],
+  weight: ["400", "500", "600", "700", "800"],
   display: "swap",
 });
 
@@ -65,22 +63,11 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${syne.variable} ${plusJakarta.variable} h-full`}
+      className={`${displayFont.variable} ${plusJakarta.variable} h-full`}
+      suppressHydrationWarning
     >
       <body className="flex min-h-full flex-col bg-paper font-body text-ink antialiased">
-        <Providers>
-          <a href="#main-content" className="sr-only-focusable">
-            Skip to content
-          </a>
-
-          <SiteHeader />
-
-          <main id="main-content" className="flex-1">
-            {children}
-          </main>
-
-          <SiteFooter />
-        </Providers>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

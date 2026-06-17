@@ -65,7 +65,7 @@ export function GiveawayCountdown({
 
   return (
     <div className={className}>
-      <p className="font-display text-[10px] font-bold uppercase tracking-aggressive text-paper/45">
+      <p className="font-body text-[10px] font-bold uppercase tracking-aggressive text-paper/45">
         {ended ? "Draw closed" : "Time left to enter"}
       </p>
       <div
@@ -80,10 +80,10 @@ export function GiveawayCountdown({
       >
         {segments.map(({ key, label, pad }) => (
           <div key={key} className="min-w-[3.25rem]">
-            <span className="font-display text-[clamp(1.75rem,5vw,2.75rem)] font-extrabold leading-none tabular-nums text-accent">
+            <span className="font-body text-[clamp(1.75rem,5vw,2.75rem)] font-extrabold leading-none tabular-nums text-accent">
               {pad ? String(timeLeft[key]).padStart(2, "0") : timeLeft[key]}
             </span>
-            <span className="mt-1.5 block font-display text-[10px] font-bold uppercase tracking-aggressive text-paper/50">
+            <span className="mt-1.5 block font-body text-[10px] font-bold uppercase tracking-aggressive text-paper/50">
               {label}
             </span>
           </div>

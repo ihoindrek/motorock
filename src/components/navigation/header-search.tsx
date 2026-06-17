@@ -11,11 +11,15 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
 } from "react";
 import { GrainOverlay } from "@/components/ui/grain-overlay";
+import { useDictionary, useLocale } from "@/context/locale-context";
+import type { Locale } from "@/i18n/config";
+import type { Dictionary } from "@/i18n/dictionaries/en";
+import { localizedHref } from "@/i18n/paths";
 import {
   HEADER_SEARCH_LIMIT,
   type ProductSearchResult,
 } from "@/lib/graphql/search";
-import { formatPrice } from "@/lib/shop/category";
+import { Price } from "@/components/shop/price";
 import { cn } from "@/lib/utils";
 
 type HeaderSearchProps = {
@@ -24,26 +28,34 @@ type HeaderSearchProps = {
 
 type SearchState = "idle" | "loading" | "ready" | "error";
 
-const QUICK_BROWSE = [
-  {
-    href: "/shop/motorcycles",
-    label: "Motorcycles",
-    tag: "Ride",
-    image: "/brixton-image.webp",
-  },
-  {
-    href: "/shop/equipment",
-    label: "Equipment",
-    tag: "Gear",
-    image: "/JRH10015_L23.webp",
-  },
-  {
-    href: "/shop/tools",
-    label: "Tools",
-    tag: "Maintain",
-    image: "/makita-tools.jpg",
-  },
-] as const;
+
+function getQuickBrowse(locale: Locale, dictionary: Dictionary) {
+  const items = [
+    {
+      href: localizedHref(locale, "/shop/motorcycles"),
+      label: dictionary.search.motorcycles,
+      tag: dictionary.search.ride,
+      image: "/brixton-image.webp",
+    },
+    {
+      href: localizedHref(locale, "/shop/equipment"),
+      label: dictionary.search.equipment,
+      tag: dictionary.search.gear,
+      image: "/JRH10015_L23.webp",
+    },
+  ];
+
+  if (locale === "et") {
+    items.push({
+      href: localizedHref(locale, "/shop/tools"),
+      label: dictionary.search.tools,
+      tag: dictionary.search.maintain,
+      image: "/makita-tools.jpg",
+    });
+  }
+
+  return items;
+}
 
 function SearchIcon({ className }: { className?: string }) {
   return (
@@ -110,20 +122,24 @@ function highlightMatch(text: string, query: string) {
 function SearchPreview({
   result,
   query,
+  locale,
+  dictionary,
 }: {
   result: ProductSearchResult | null;
   query: string;
+  locale: Locale;
+  dictionary: Dictionary;
 }) {
   if (!result) {
     return (
       <div className="relative flex aspect-[4/5] min-h-[18rem] items-end overflow-hidden rounded-sm border border-paper/10 bg-paper/5 lg:min-h-[24rem]">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgb(255_90_0_/_0.18),transparent_55%)]" />
         <div className="relative z-[1] p-6">
-          <p className="font-display text-[10px] font-bold uppercase tracking-aggressive text-accent">
-            Preview
+          <p className="font-body text-[10px] font-bold uppercase tracking-aggressive text-accent">
+            {dictionary.search.preview}
           </p>
-          <p className="mt-2 max-w-xs font-display text-2xl font-extrabold uppercase leading-none tracking-tight text-paper/70">
-            Start typing to explore the catalog
+          <p className="mt-2 max-w-xs font-body text-2xl font-extrabold uppercase leading-none tracking-tight text-paper/70">
+            {dictionary.search.previewHint}
           </p>
         </div>
       </div>
@@ -134,7 +150,7 @@ function SearchPreview({
 
   return (
     <Link
-      href={`/shop/product/${result.slug}`}
+      href={localizedHref(locale, `/shop/product/${result.slug}`)}
       className="group flex min-h-[18rem] flex-col overflow-hidden rounded-sm border border-paper/10 bg-paper/5 lg:min-h-[24rem]"
     >
       <div
@@ -169,22 +185,24 @@ function SearchPreview({
       </div>
 
       <div className="flex flex-1 flex-col border-t border-paper/10 p-5">
-        <p className="font-display text-[10px] font-bold uppercase tracking-aggressive text-accent">
+        <p className="font-body text-[10px] font-bold uppercase tracking-aggressive text-accent">
           {result.brand}
         </p>
-        <p className="mt-2 font-display text-xl font-extrabold uppercase leading-tight tracking-tight text-paper sm:text-2xl">
+        <p className="mt-2 font-body text-xl font-extrabold uppercase leading-tight tracking-tight text-paper sm:text-2xl">
           {highlightMatch(result.name, query)}
         </p>
         <div className="mt-auto flex items-end justify-between gap-4 pt-4">
-          <p className="font-display text-[10px] font-bold uppercase tracking-aggressive text-paper/55">
+          <p className="font-body text-[10px] font-bold uppercase tracking-aggressive text-paper/55">
             {result.categoryLabel}
           </p>
-          <p className="font-display text-lg font-bold tabular-nums text-paper">
-            {formatPrice(result.price)}
-          </p>
+          <Price
+            value={result.price}
+            variant="lg"
+            className="text-paper"
+          />
         </div>
-        <p className="mt-4 inline-flex items-center gap-2 font-display text-[10px] font-bold uppercase tracking-aggressive text-paper/80 transition-colors group-hover:text-accent">
-          View product
+        <p className="mt-4 inline-flex items-center gap-2 font-body text-[10px] font-bold uppercase tracking-aggressive text-paper/80 transition-colors group-hover:text-accent">
+          {dictionary.search.viewProduct}
           <ArrowIcon className="size-3.5 transition-transform group-hover:translate-x-0.5" />
         </p>
       </div>
@@ -197,6 +215,8 @@ function SearchResultRow({
   query,
   active,
   index,
+  locale,
+  dictionary,
   onSelect,
   onHover,
 }: {
@@ -204,6 +224,8 @@ function SearchResultRow({
   query: string;
   active: boolean;
   index: number;
+  locale: Locale;
+  dictionary: Dictionary;
   onSelect: () => void;
   onHover: () => void;
 }) {
@@ -211,7 +233,7 @@ function SearchResultRow({
 
   return (
     <Link
-      href={`/shop/product/${result.slug}`}
+      href={localizedHref(locale, `/shop/product/${result.slug}`)}
       onClick={onSelect}
       onMouseEnter={onHover}
       onTouchStart={onHover}
@@ -244,24 +266,26 @@ function SearchResultRow({
       </div>
 
       <div className="min-w-0 flex-1">
-        <p className="font-display text-[10px] font-bold uppercase tracking-aggressive text-accent/80">
+        <p className="font-body text-[10px] font-bold uppercase tracking-aggressive text-accent/80">
           {result.brand}
         </p>
         <p className="truncate font-body text-sm leading-snug text-paper sm:text-base">
           {highlightMatch(result.name, query)}
         </p>
-        <p className="mt-1 font-display text-[10px] font-bold uppercase tracking-aggressive text-paper/40">
+        <p className="mt-1 font-body text-[10px] font-bold uppercase tracking-aggressive text-paper/40">
           {result.categoryLabel}
           {!result.inStock ? (
-            <span className="ml-2 text-paper/55">· Sold out</span>
+            <span className="ml-2 text-paper/55">· {dictionary.search.soldOut}</span>
           ) : null}
         </p>
       </div>
 
       <div className="flex shrink-0 flex-col items-end gap-2">
-        <p className="font-display text-sm font-bold tabular-nums text-paper">
-          {formatPrice(result.price)}
-        </p>
+        <Price
+          value={result.price}
+          variant="sm"
+          className="text-paper"
+        />
         <ArrowIcon
           className={cn(
             "size-4 text-paper/30 transition-all duration-200",
@@ -312,10 +336,10 @@ function QuickBrowseCard({
         aria-hidden="true"
       />
       <div className="absolute inset-x-0 bottom-0 z-[1] p-4">
-        <p className="font-display text-[10px] font-bold uppercase tracking-aggressive text-accent">
+        <p className="font-body text-[10px] font-bold uppercase tracking-aggressive text-accent">
           {tag}
         </p>
-        <p className="mt-1 font-display text-lg font-extrabold uppercase leading-none tracking-tight text-paper">
+        <p className="mt-1 font-body text-lg font-extrabold uppercase leading-none tracking-tight text-paper">
           {label}
         </p>
       </div>
@@ -324,6 +348,9 @@ function QuickBrowseCard({
 }
 
 export function HeaderSearch({ inverted = false }: HeaderSearchProps) {
+  const locale = useLocale();
+  const dictionary = useDictionary();
+  const quickBrowse = getQuickBrowse(locale, dictionary);
   const dialogId = useId();
   const inputId = `${dialogId}-input`;
   const inputRef = useRef<HTMLInputElement>(null);
@@ -438,7 +465,7 @@ export function HeaderSearch({ inverted = false }: HeaderSearchProps) {
 
       try {
         const response = await fetch(
-          `/api/search?q=${encodeURIComponent(trimmed)}&limit=${HEADER_SEARCH_LIMIT}`,
+          `/api/search?q=${encodeURIComponent(trimmed)}&limit=${HEADER_SEARCH_LIMIT}&locale=${locale}`,
           { signal: controller.signal },
         );
 
@@ -472,7 +499,7 @@ export function HeaderSearch({ inverted = false }: HeaderSearchProps) {
         clearTimeout(debounceRef.current);
       }
     };
-  }, [query]);
+  }, [query, locale]);
 
   const handleInputKeyDown = (event: ReactKeyboardEvent<HTMLInputElement>) => {
     if (event.key === "ArrowDown") {
@@ -493,7 +520,10 @@ export function HeaderSearch({ inverted = false }: HeaderSearchProps) {
 
     if (event.key === "Enter" && activeIndex >= 0 && results[activeIndex]) {
       event.preventDefault();
-      window.location.href = `/shop/product/${results[activeIndex].slug}`;
+      window.location.href = localizedHref(
+        locale,
+        `/shop/product/${results[activeIndex].slug}`,
+      );
       close();
     }
   };
@@ -516,7 +546,7 @@ export function HeaderSearch({ inverted = false }: HeaderSearchProps) {
           inverted ? "text-paper" : "text-ink",
         )}
       >
-        <span className="sr-only">Open search</span>
+        <span className="sr-only">{dictionary.search.open}</span>
         <SearchIcon className="size-5 transition-transform duration-200 group-hover:scale-110" />
       </button>
 
@@ -532,7 +562,7 @@ export function HeaderSearch({ inverted = false }: HeaderSearchProps) {
 
           <button
             type="button"
-            aria-label="Close search"
+            aria-label={dictionary.search.close}
             className="absolute inset-0 z-[1]"
             onClick={close}
           />
@@ -542,9 +572,9 @@ export function HeaderSearch({ inverted = false }: HeaderSearchProps) {
               <button
                 type="button"
                 onClick={close}
-                className="inline-flex min-h-11 items-center gap-2 px-1 font-display text-[10px] font-bold uppercase tracking-aggressive text-paper/50 transition-colors hover:text-accent"
+                className="inline-flex min-h-11 items-center gap-2 px-1 font-body text-[10px] font-bold uppercase tracking-aggressive text-paper/50 transition-colors hover:text-accent"
               >
-                Close
+                {dictionary.common.close}
                 <kbd className="hidden rounded-sm border border-paper/15 px-1.5 py-0.5 text-paper/35 sm:inline">
                   Esc
                 </kbd>
@@ -553,10 +583,10 @@ export function HeaderSearch({ inverted = false }: HeaderSearchProps) {
 
             <div className="site-container shrink-0 pb-6 sm:pb-8">
               <label htmlFor={inputId} id={`${dialogId}-label`} className="sr-only">
-                Search products
+                {dictionary.search.label}
               </label>
-              <h2 className="font-display text-2xl font-extrabold uppercase leading-none tracking-tight text-paper sm:text-3xl lg:text-4xl">
-                Find your next ride
+              <h2 className="font-body text-2xl font-extrabold uppercase leading-none tracking-tight text-paper sm:text-3xl lg:text-4xl">
+                {dictionary.search.title}
               </h2>
 
               <div className="relative mt-6 sm:mt-8">
@@ -579,12 +609,12 @@ export function HeaderSearch({ inverted = false }: HeaderSearchProps) {
                     value={query}
                     onChange={(event) => setQuery(event.target.value)}
                     onKeyDown={handleInputKeyDown}
-                    placeholder="Helmet, Brixton, gloves…"
+                    placeholder={dictionary.search.placeholder}
                     autoComplete="off"
                     spellCheck={false}
-                    className="min-w-0 flex-1 bg-transparent font-display text-2xl font-bold uppercase tracking-tight text-paper outline-none placeholder:text-paper/20 sm:text-4xl"
+                    className="min-w-0 flex-1 bg-transparent font-body text-2xl font-bold uppercase tracking-tight text-paper outline-none placeholder:text-paper/20 sm:text-4xl"
                   />
-                  <kbd className="hidden shrink-0 rounded-sm border border-paper/15 px-2 py-1 font-display text-[10px] font-bold uppercase tracking-aggressive text-paper/35 md:inline">
+                  <kbd className="hidden shrink-0 rounded-sm border border-paper/15 px-2 py-1 font-body text-[10px] font-bold uppercase tracking-aggressive text-paper/35 md:inline">
                     ⌘K
                   </kbd>
                 </div>
@@ -597,11 +627,11 @@ export function HeaderSearch({ inverted = false }: HeaderSearchProps) {
                   <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-8 [-ms-overflow-style:none] [scrollbar-width:none] sm:pb-12 lg:pr-1 [&::-webkit-scrollbar]:hidden">
                   {showQuickBrowse ? (
                     <div>
-                      <p className="font-display text-[10px] font-bold uppercase tracking-aggressive text-paper/40">
-                        Browse the shop
+                      <p className="font-body text-[10px] font-bold uppercase tracking-aggressive text-paper/40">
+                        {dictionary.search.browseShop}
                       </p>
                       <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
-                        {QUICK_BROWSE.map((item, index) => (
+                        {quickBrowse.map((item, index) => (
                           <QuickBrowseCard
                             key={item.href}
                             {...item}
@@ -611,7 +641,7 @@ export function HeaderSearch({ inverted = false }: HeaderSearchProps) {
                         ))}
                       </div>
                       <p className="mt-6 font-body text-sm text-paper/45">
-                        Type at least 2 characters — results update live.
+                        {dictionary.search.typeHint}
                       </p>
                     </div>
                   ) : null}
@@ -635,26 +665,29 @@ export function HeaderSearch({ inverted = false }: HeaderSearchProps) {
 
                   {state === "error" ? (
                     <p className="py-8 font-body text-sm text-paper/60">
-                      Search is temporarily unavailable. Try again in a moment.
+                      {dictionary.search.unavailable}
                     </p>
                   ) : null}
 
                   {state === "ready" && results.length === 0 ? (
                     <p className="py-8 font-body text-sm text-paper/60">
-                      Nothing matched &ldquo;{trimmedQuery}&rdquo;. Try another
-                      keyword or browse the categories.
+                      {dictionary.search.noResults}
                     </p>
                   ) : null}
 
                   {results.length > 0 ? (
                     <div className="space-y-1">
                       <p
-                        className="mb-3 font-display text-[10px] font-bold uppercase tracking-aggressive text-paper/40"
+                        className="mb-3 font-body text-[10px] font-bold uppercase tracking-aggressive text-paper/40"
                         aria-live="polite"
                       >
                         {hasMore
-                          ? `${HEADER_SEARCH_LIMIT}+ matches`
-                          : `${results.length} match${results.length === 1 ? "" : "es"}`}
+                          ? `${HEADER_SEARCH_LIMIT}+ ${dictionary.search.matches}`
+                          : `${results.length} ${
+                              results.length === 1
+                                ? dictionary.search.match
+                                : dictionary.search.matches
+                            }`}
                       </p>
                       {results.map((result, index) => (
                         <SearchResultRow
@@ -663,6 +696,8 @@ export function HeaderSearch({ inverted = false }: HeaderSearchProps) {
                           query={trimmedQuery}
                           active={index === activeIndex}
                           index={index}
+                          locale={locale}
+                          dictionary={dictionary}
                           onSelect={close}
                           onHover={() => setActiveIndex(index)}
                         />
@@ -670,11 +705,14 @@ export function HeaderSearch({ inverted = false }: HeaderSearchProps) {
                       {hasMore ? (
                         <div className="border-t border-paper/10 pt-4">
                           <Link
-                            href={`/search?q=${encodeURIComponent(trimmedQuery)}`}
+                            href={localizedHref(
+                              locale,
+                              `/search?q=${encodeURIComponent(trimmedQuery)}`,
+                            )}
                             onClick={close}
-                            className="inline-flex items-center gap-2 font-display text-xs font-bold uppercase tracking-aggressive text-paper/70 transition-colors hover:text-accent"
+                            className="inline-flex items-center gap-2 font-body text-xs font-bold uppercase tracking-aggressive text-paper/70 transition-colors hover:text-accent"
                           >
-                            View more
+                            {dictionary.search.viewMore}
                             <ArrowIcon className="size-3.5" />
                           </Link>
                         </div>
@@ -693,6 +731,8 @@ export function HeaderSearch({ inverted = false }: HeaderSearchProps) {
                     <SearchPreview
                       result={showQuickBrowse ? null : previewResult}
                       query={trimmedQuery}
+                      locale={locale}
+                      dictionary={dictionary}
                     />
                   </div>
                 </div>
@@ -702,17 +742,17 @@ export function HeaderSearch({ inverted = false }: HeaderSearchProps) {
             <div className="site-container shrink-0 border-t border-paper/10 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
               <p className="font-body text-[11px] text-paper/35">
                 {state === "loading"
-                  ? "Scanning catalog…"
+                  ? dictionary.search.scanning
                   : results.length > 0
                     ? (
                         <>
-                          <span className="sm:hidden">Tap a result to open</span>
+                          <span className="sm:hidden">{dictionary.search.tapResult}</span>
                           <span className="hidden sm:inline">
-                            Use ↑ ↓ to browse, Enter to open
+                            {dictionary.search.keyboardHint}
                           </span>
                         </>
                       )
-                    : "Motorcycles · Equipment · Tools"}
+                    : dictionary.search.categoriesHint}
               </p>
             </div>
           </div>

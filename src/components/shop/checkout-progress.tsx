@@ -1,11 +1,8 @@
+"use client";
+
+import { useDictionary } from "@/context/locale-context";
 import { cn } from "@/lib/utils";
 import type { CheckoutStep } from "@/context/checkout-step-context";
-
-const steps = [
-  { id: 1, label: "Cart" },
-  { id: 2, label: "Delivery" },
-  { id: 3, label: "Pay" },
-] as const;
 
 export function CheckoutProgress({
   currentStep,
@@ -18,11 +15,17 @@ export function CheckoutProgress({
   inverted?: boolean;
   className?: string;
 }) {
+  const dict = useDictionary();
+  const steps = [
+    { id: 1, label: dict.checkout.cart },
+    { id: 2, label: dict.checkout.delivery },
+    { id: 3, label: dict.checkout.pay },
+  ] as const;
   const isHeader = variant === "header";
 
   return (
     <nav
-      aria-label="Checkout progress"
+      aria-label={dict.checkout.progress}
       className={cn(
         isHeader ? "w-full max-w-xl" : "mb-8 w-full",
         className,
@@ -66,7 +69,7 @@ export function CheckoutProgress({
                 </span>
                 <span
                   className={cn(
-                    "truncate font-display font-bold uppercase tracking-aggressive",
+                    "truncate font-body font-bold uppercase tracking-aggressive",
                     isHeader ? "text-[10px]" : "text-[11px]",
                     active || done
                       ? inverted

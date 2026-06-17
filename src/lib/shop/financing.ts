@@ -153,7 +153,9 @@ export function formatMonthlyPrice(amount: number) {
     style: "currency",
     currency: "EUR",
     maximumFractionDigits: 0,
-  }).format(Math.ceil(amount));
+  })
+    .format(Math.ceil(amount))
+    .replace(/ /g, "\u00a0");
 }
 
 export function formatInterestRate(rate: number) {

@@ -8,7 +8,8 @@ import { A11y } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/react";
 
 import { CarouselArrow } from "@/components/ui/carousel-arrow";
-import { formatPrice } from "@/lib/shop/category";
+import { Price } from "@/components/shop/price";
+import { cn } from "@/lib/utils";
 
 import "swiper/css";
 
@@ -146,7 +147,7 @@ export function FavoriteProductCard({
             />
           ) : (
             <p
-              className={`font-display text-[10px] font-bold uppercase tracking-aggressive sm:text-xs ${
+              className={`font-body text-[10px] font-bold uppercase tracking-aggressive sm:text-xs ${
                 prominentMeta ? "text-ink" : "text-accent"
               }`}
             >
@@ -162,19 +163,16 @@ export function FavoriteProductCard({
           >
             {name}
           </h3>
-          <p
-            className={`mt-auto font-display transition-colors duration-200 group-hover:text-accent ${
-              compact ? "pt-1" : "pt-2"
-            } ${
-              prominentMeta
-                ? "text-sm font-extrabold text-ink sm:text-base"
-                : theme === "light"
-                  ? "text-base font-extrabold text-ink sm:text-lg"
-                  : `text-sm font-bold ${textClass}`
-            }`}
-          >
-            {formatPrice(price)}
-          </p>
+          <Price
+            value={price}
+            as="p"
+            variant={prominentMeta ? "md" : compact ? "sm" : "md"}
+            className={cn(
+              "mt-auto transition-colors duration-200 group-hover:text-accent",
+              compact ? "pt-1" : "pt-2",
+              !prominentMeta && theme !== "light" && "text-paper",
+            )}
+          />
         </div>
       </Link>
     </article>

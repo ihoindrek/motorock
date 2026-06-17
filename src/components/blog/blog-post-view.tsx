@@ -6,15 +6,29 @@ import { BlogPostContent } from "@/components/blog/blog-post-content";
 import { GiveawayCountdown } from "@/components/giveaway/giveaway-countdown";
 import { getCampaignForBlogPost } from "@/lib/campaigns/blog";
 import { formatBlogDate } from "@/lib/blog/posts";
+import type { Dictionary } from "@/i18n/dictionaries/en";
+import { localizedHref } from "@/i18n/paths";
 import type { BlogPost } from "@/types/blog-post";
 
 type BlogPostViewProps = {
   post: BlogPost;
   relatedPosts?: readonly BlogPost[];
+  locale: "en" | "et";
+  copy: Dictionary["blog"];
 };
 
-export function BlogPostView({ post, relatedPosts = [] }: BlogPostViewProps) {
+export function BlogPostView({
+  post,
+  relatedPosts = [],
+  locale,
+  copy,
+}: BlogPostViewProps) {
   const campaign = getCampaignForBlogPost(post);
+  const blogHref = localizedHref(locale, "/blog");
+  const shopHref = localizedHref(
+    locale,
+    campaign ? "/shop/equipment" : "/shop/motorcycles",
+  );
 
   return (
     <article>
@@ -32,8 +46,8 @@ export function BlogPostView({ post, relatedPosts = [] }: BlogPostViewProps) {
           aria-hidden="true"
         />
         <div className="site-container relative z-10 flex min-h-[72vh] flex-col justify-end pb-10 pt-28 sm:pb-14 lg:pb-16">
-          <Link href="/blog" className="mb-8 inline-flex w-fit">
-            <BlogBadge variant="on-dark">← Articles</BlogBadge>
+          <Link href={blogHref} className="mb-8 inline-flex w-fit">
+            <BlogBadge variant="on-dark">{copy.backToArticles}</BlogBadge>
           </Link>
           <div className="max-w-4xl">
             <BlogBadge variant="accent">{post.category}</BlogBadge>
@@ -48,7 +62,9 @@ export function BlogPostView({ post, relatedPosts = [] }: BlogPostViewProps) {
             ) : null}
             <div className="mt-6 flex flex-wrap items-center gap-2">
               <BlogBadge variant="on-dark">
-                <time dateTime={post.publishedAt}>{formatBlogDate(post.publishedAt)}</time>
+                <time dateTime={post.publishedAt}>
+                  {formatBlogDate(post.publishedAt, locale)}
+                </time>
               </BlogBadge>
               <BlogBadge variant="on-dark">{post.author}</BlogBadge>
             </div>
@@ -73,16 +89,13 @@ export function BlogPostView({ post, relatedPosts = [] }: BlogPostViewProps) {
 
             <footer className="mt-14 flex flex-col gap-6 border-t border-ink/10 pt-8 sm:mt-16 sm:flex-row sm:items-center sm:justify-between">
               <Link
-                href="/blog"
-                className="font-display text-xs font-bold uppercase tracking-aggressive text-ink/50 transition-colors hover:text-accent"
+                href={blogHref}
+                className="font-body text-xs font-bold uppercase tracking-aggressive text-ink/50 transition-colors hover:text-accent"
               >
-                ← All articles
+                {copy.allArticles}
               </Link>
-              <Link
-                href={campaign ? "/shop/equipment" : "/shop/motorcycles"}
-                className="btn-accent"
-              >
-                {campaign ? "Shop now →" : "Shop motorcycles"}
+              <Link href={shopHref} className="btn-accent">
+                {campaign ? copy.shopNow : copy.shopMotorcycles}
               </Link>
             </footer>
           </div>
@@ -96,20 +109,25 @@ export function BlogPostView({ post, relatedPosts = [] }: BlogPostViewProps) {
         >
           <div className="site-container">
             <div className="mx-auto max-w-2xl lg:mx-0 lg:max-w-none">
-              <p className="font-display text-[10px] font-bold uppercase tracking-aggressive text-accent">
-                Keep reading
+              <p className="font-body text-[10px] font-bold uppercase tracking-aggressive text-accent">
+                {copy.keepReading}
               </p>
               <h2
                 id="related-articles-heading"
                 className="mt-2 font-display text-lg font-extrabold uppercase tracking-tight text-ink sm:text-xl"
               >
-                Related stories
+                {copy.relatedStories}
               </h2>
             </div>
             <ul className="mx-auto mt-6 grid max-w-2xl gap-5 lg:mx-0 lg:max-w-none lg:grid-cols-3 lg:gap-6">
               {relatedPosts.map((related) => (
                 <li key={related.slug}>
-                  <BlogCard post={related} variant="compact" />
+                  <BlogCard
+                    post={related}
+                    variant="compact"
+                    locale={locale}
+                    copy={copy}
+                  />
                 </li>
               ))}
             </ul>

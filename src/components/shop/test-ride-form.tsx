@@ -34,7 +34,7 @@ export function TestRideForm({ initial, idPrefix = "test-ride" }: TestRideFormPr
   if (submitted) {
     return (
       <div>
-        <p className="font-display text-lg font-extrabold uppercase leading-snug tracking-tight text-ink">
+        <p className="font-body text-lg font-extrabold uppercase leading-snug tracking-tight text-ink">
           Request received
         </p>
         <p className="mt-2 text-sm text-ink/60">
@@ -49,7 +49,7 @@ export function TestRideForm({ initial, idPrefix = "test-ride" }: TestRideFormPr
       {bikeLabel ? (
         <div>
           <p className={shopFieldLabelClassName}>Motorcycle</p>
-          <p className="mt-2 font-display text-lg font-extrabold uppercase leading-tight tracking-tight text-ink">
+          <p className="mt-2 font-body text-lg font-extrabold uppercase leading-tight tracking-tight text-ink">
             {bikeLabel}
           </p>
           {initial.color ? (
@@ -147,7 +147,7 @@ export function TestRideForm({ initial, idPrefix = "test-ride" }: TestRideFormPr
 
       <button
         type="submit"
-        className="inline-flex min-h-12 w-full items-center justify-center rounded-full bg-ink px-7 py-3 font-display text-xs font-bold uppercase tracking-aggressive text-paper transition-colors duration-200 hover:bg-accent sm:w-auto"
+        className="inline-flex min-h-12 w-full items-center justify-center rounded-full bg-ink px-7 py-3 font-body text-xs font-bold uppercase tracking-aggressive text-paper transition-colors duration-200 hover:bg-accent sm:w-auto"
       >
         Send request →
       </button>

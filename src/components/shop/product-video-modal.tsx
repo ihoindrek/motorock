@@ -94,7 +94,7 @@ export function GalleryVideoPlayButton({
         </span>
       </span>
       <span
-        className={`font-display font-bold uppercase tracking-aggressive ${
+        className={`font-body font-bold uppercase tracking-aggressive ${
           isColumn
             ? "max-w-[5.5rem] text-center text-[9px] leading-tight"
             : "text-[10px]"
@@ -162,7 +162,7 @@ export function ProductVideoModal({
           <div className="flex items-center justify-between gap-4 border-b border-paper/10 px-4 py-3 sm:px-5">
             <p
               id={titleId}
-              className="font-display text-[10px] font-bold uppercase tracking-aggressive text-paper/55"
+              className="font-body text-[10px] font-bold uppercase tracking-aggressive text-paper/55"
             >
               {title}
             </p>

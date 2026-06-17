@@ -62,7 +62,7 @@ export function PopularGearSection({
           </div>
           <Link
             href={activeTab?.href ?? "/shop/equipment"}
-            className="inline-flex items-center self-start rounded-full bg-paper px-7 py-3 font-display text-xs font-bold uppercase tracking-aggressive text-ink transition-colors duration-200 hover:bg-accent hover:text-paper sm:self-auto"
+            className="inline-flex items-center self-start rounded-full bg-paper px-7 py-3 font-body text-xs font-bold uppercase tracking-aggressive text-ink transition-colors duration-200 hover:bg-accent hover:text-paper sm:self-auto"
           >
             Shop equipment →
           </Link>
@@ -84,7 +84,7 @@ export function PopularGearSection({
                 aria-selected={isActive}
                 onClick={() => setActiveId(tab.id)}
                 className={cn(
-                  "inline-flex min-h-10 shrink-0 items-center whitespace-nowrap px-4 py-2 font-display text-xs font-bold uppercase tracking-aggressive transition-colors sm:px-5",
+                  "inline-flex min-h-10 shrink-0 items-center whitespace-nowrap px-4 py-2 font-body text-xs font-bold uppercase tracking-aggressive transition-colors sm:px-5",
                   isActive
                     ? "bg-ink text-paper"
                     : "text-ink/60 hover:bg-surface hover:text-ink",

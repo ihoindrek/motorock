@@ -6,35 +6,15 @@ import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { brands } from "@/data/brands";
 import { useCheckoutStep } from "@/context/checkout-step-context";
+import { useDictionary, useLocale } from "@/context/locale-context";
+import {
+  getFooterCompanyLinks,
+  getFooterLegalLinks,
+  getFooterQuickLinks,
+  getFooterShopLinks,
+} from "@/i18n/navigation";
+import { localizedHref, stripLocaleFromPath } from "@/i18n/paths";
 import { getBrandCatalogHref } from "@/lib/shop/brand-catalog-url";
-
-const shopLinks = [
-  { href: "/shop/motorcycles", label: "Motorcycles" },
-  { href: "/shop/equipment", label: "Driving equipment" },
-  { href: "/shop/equipment/men", label: "Men's gear" },
-  { href: "/shop/equipment/women", label: "Women's gear" },
-  { href: "/shop/equipment/accessories", label: "Accessories" },
-  { href: "/shop/tools", label: "Tools" },
-] as const;
-
-const companyLinks = [
-  { href: "/about", label: "About" },
-  { href: "/contact", label: "Contact" },
-  { href: "/blog", label: "Blog" },
-] as const;
-
-const quickLinks = [
-  { href: "/search", label: "Search" },
-  { href: "/shop/motorcycles", label: "Brands" },
-  { href: "/cart", label: "Cart & checkout" },
-  { href: "/test-ride", label: "Book test ride" },
-] as const;
-
-const legalLinks = [
-  { href: "/privacy", label: "Privacy" },
-  { href: "/terms", label: "Terms" },
-  { href: "/shipping", label: "Shipping" },
-] as const;
 
 function SocialIcon({ children }: { children: ReactNode }) {
   return (
@@ -130,7 +110,7 @@ function FooterLink({ href, label }: { href: string; label: string }) {
     <li>
       <Link
         href={href}
-        className="group inline-flex items-center gap-0 font-display text-xs font-bold uppercase tracking-aggressive text-paper/55 transition-colors hover:text-paper sm:text-sm"
+        className="group inline-flex items-center gap-0 font-body text-xs font-bold uppercase tracking-aggressive text-paper/55 transition-colors hover:text-paper sm:text-sm"
       >
         <span
           className="inline-block w-0 overflow-hidden text-[10px] font-bold text-accent transition-all duration-300 group-hover:mr-2 group-hover:w-3"
@@ -168,6 +148,10 @@ function FooterNav({
 }
 
 function CheckoutFooter() {
+  const locale = useLocale();
+  const dictionary = useDictionary();
+  const legalLinks = getFooterLegalLinks(locale, dictionary);
+
   return (
     <footer className="relative text-paper">
       <div className="site-footer-surface relative overflow-hidden">
@@ -178,17 +162,17 @@ function CheckoutFooter() {
         <div className="site-container relative z-10 py-8 sm:py-10">
           <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <p className="section-eyebrow text-paper/45">Need help?</p>
+              <p className="section-eyebrow text-paper/45">{dictionary.footer.needHelp}</p>
               <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-baseline sm:gap-x-8 sm:gap-y-2">
                 <a
                   href="mailto:hello@motorock.eu"
-                  className="font-display text-xl font-extrabold uppercase tracking-tight text-paper transition-colors hover:text-accent sm:text-2xl"
+                  className="font-body text-xl font-extrabold uppercase tracking-tight text-paper transition-colors hover:text-accent sm:text-2xl"
                 >
                   hello@motorock.eu
                 </a>
                 <a
                   href="tel:+37255551234"
-                  className="font-display text-lg font-bold tabular-nums text-paper/80 transition-colors hover:text-accent sm:text-xl"
+                  className="font-body text-lg font-bold tabular-nums text-paper/80 transition-colors hover:text-accent sm:text-xl"
                 >
                   +372 5555 1234
                 </a>
@@ -220,8 +204,15 @@ function CheckoutFooter() {
 
 export function SiteFooter() {
   const pathname = usePathname();
+  const locale = useLocale();
+  const dictionary = useDictionary();
   const { checkoutStep } = useCheckoutStep();
-  const isCheckoutFlow = pathname === "/cart" && checkoutStep !== null;
+  const isCheckoutFlow =
+    stripLocaleFromPath(pathname) === "/cart" && checkoutStep !== null;
+  const shopLinks = getFooterShopLinks(locale, dictionary);
+  const quickLinks = getFooterQuickLinks(locale, dictionary);
+  const companyLinks = getFooterCompanyLinks(locale, dictionary);
+  const legalLinks = getFooterLegalLinks(locale, dictionary);
 
   if (isCheckoutFlow) {
     return <CheckoutFooter />;
@@ -240,7 +231,11 @@ export function SiteFooter() {
               aria-labelledby="footer-brand"
               className="flex flex-col gap-6 lg:col-span-5"
             >
-              <Link href="/" aria-label="Motorock.eu — Home" className="w-fit">
+              <Link
+                href={localizedHref(locale, "/")}
+                aria-label="Motorock.eu — Home"
+                className="w-fit"
+              >
                 <Image
                   src="/logo.png"
                   alt=""
@@ -255,8 +250,7 @@ export function SiteFooter() {
                 id="footer-brand"
                 className="max-w-sm text-sm leading-relaxed text-paper/55"
               >
-                Premium motorcycles, riding gear, and tools — curated for
-                riders who refuse to blend in. Built in Europe, shipped EU-wide.
+                {dictionary.footer.tagline}
               </p>
 
               <div className="flex flex-wrap items-center gap-3">
@@ -282,15 +276,15 @@ export function SiteFooter() {
             </section>
 
             <div className="grid grid-cols-2 gap-x-5 gap-y-8 sm:gap-x-8 sm:gap-y-10 lg:col-span-7 lg:grid-cols-3 lg:gap-8">
-              <FooterNav id="footer-shop" title="Shop" links={shopLinks} />
+              <FooterNav id="footer-shop" title={dictionary.footer.shop} links={shopLinks} />
               <FooterNav
                 id="footer-nav"
-                title="Quick links"
+                title={dictionary.footer.quickLinks}
                 links={quickLinks}
               />
               <FooterNav
                 id="footer-company"
-                title="Company"
+                title={dictionary.footer.company}
                 links={companyLinks}
               />
             </div>
@@ -299,17 +293,16 @@ export function SiteFooter() {
           <div className="border-t border-paper/10 py-10">
             <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <p className="section-eyebrow text-paper/45">Our brands</p>
+                <p className="section-eyebrow text-paper/45">{dictionary.footer.ourBrands}</p>
                 <p className="mt-3 max-w-md text-sm text-paper/45">
-                  Official dealer for Europe&apos;s most distinctive motorcycle
-                  and gear labels.
+                  {dictionary.footer.brandsBlurb}
                 </p>
               </div>
               <ul className="flex flex-wrap items-center gap-x-8 gap-y-4">
                 {motorcycleBrands.map((brand) => (
                   <li key={brand.slug}>
                     <Link
-                      href={getBrandCatalogHref(brand.slug)}
+                      href={localizedHref(locale, getBrandCatalogHref(brand.slug))}
                       className="opacity-45 transition-opacity duration-300 hover:opacity-100"
                     >
                       <Image
@@ -328,7 +321,7 @@ export function SiteFooter() {
 
           <div className="flex flex-col items-start justify-between gap-4 border-t border-paper/10 py-6 sm:flex-row sm:items-center">
             <small className="text-xs text-paper/35">
-              &copy; {new Date().getFullYear()} Motorock.eu. All rights reserved.
+              &copy; {new Date().getFullYear()} Motorock.eu. {dictionary.footer.rights}
             </small>
             <nav aria-label="Legal">
               <ul className="flex flex-wrap gap-x-6 gap-y-2">

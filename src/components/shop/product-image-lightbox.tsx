@@ -90,7 +90,7 @@ function LightboxThumbnail({
         aria-hidden="true"
       />
       <span
-        className={`pointer-events-none absolute left-1 top-1 font-display text-[8px] font-bold tabular-nums tracking-widest text-ink/40 ${
+        className={`pointer-events-none absolute left-1 top-1 font-body text-[8px] font-bold tabular-nums tracking-widest text-ink/40 ${
           selected ? "text-accent" : ""
         }`}
         aria-hidden="true"
@@ -215,7 +215,7 @@ export function ProductImageLightbox({
                 type="button"
                 onClick={onClose}
                 aria-label="Close gallery"
-                className="pointer-events-auto inline-flex min-h-12 min-w-12 items-center justify-center gap-2.5 border border-ink/15 bg-white px-4 font-display text-xs font-bold uppercase tracking-aggressive text-ink shadow-[0_8px_24px_rgb(11_11_11_/_0.08)] transition-colors hover:border-accent hover:text-accent sm:min-h-14 sm:px-5"
+                className="pointer-events-auto inline-flex min-h-12 min-w-12 items-center justify-center gap-2.5 border border-ink/15 bg-white px-4 font-body text-xs font-bold uppercase tracking-aggressive text-ink shadow-[0_8px_24px_rgb(11_11_11_/_0.08)] transition-colors hover:border-accent hover:text-accent sm:min-h-14 sm:px-5"
               >
                 <CloseIcon />
                 <span>Close</span>
@@ -353,7 +353,7 @@ export function ProductImageLightbox({
                   />
                 ))}
               </div>
-              <p className="mt-2 text-center font-display text-[10px] font-bold tabular-nums tracking-aggressive text-ink/70 lg:mt-3">
+              <p className="mt-2 text-center font-body text-[10px] font-bold tabular-nums tracking-aggressive text-ink/70 lg:mt-3">
                 {String(activeIndex + 1).padStart(2, "0")}
                 <span className="text-ink/35">
                   {" "}

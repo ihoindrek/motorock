@@ -104,14 +104,14 @@ export function ShopModal({
         <div className="flex shrink-0 items-start justify-between gap-4 border-b border-ink/10 px-5 py-5 sm:px-6">
           <div className="min-w-0">
             {eyebrow ? (
-              <p className="font-display text-[10px] font-bold uppercase tracking-aggressive text-accent">
+              <p className="font-body text-[10px] font-bold uppercase tracking-aggressive text-accent">
                 {eyebrow}
               </p>
             ) : null}
             <h2
               id={titleId}
               className={cn(
-                "font-display font-extrabold uppercase leading-tight tracking-tight text-ink",
+                "font-extrabold uppercase leading-tight tracking-tight text-ink",
                 eyebrow ? "mt-2 text-lg" : "text-lg",
               )}
             >

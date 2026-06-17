@@ -73,7 +73,7 @@ export function FinancingCalculatorModal({
               onClose();
               onEnquire();
             }}
-            className="inline-flex items-center rounded-full bg-ink px-7 py-3 font-display text-xs font-bold uppercase tracking-aggressive text-paper transition-colors duration-200 hover:bg-accent"
+            className="inline-flex items-center rounded-full bg-ink px-7 py-3 font-body text-xs font-bold uppercase tracking-aggressive text-paper transition-colors duration-200 hover:bg-accent"
           >
             Ask about financing →
           </button>
@@ -111,7 +111,7 @@ export function FinancingCalculatorModal({
                   }
                 }}
                 className={cn(
-                  "border px-3 py-2 font-display text-[10px] font-bold uppercase tracking-aggressive transition-colors",
+                  "border px-3 py-2 font-body text-[10px] font-bold uppercase tracking-aggressive transition-colors",
                   provider.id === activeProvider?.id
                     ? "border-ink bg-ink text-paper"
                     : "border-ink/15 text-ink/60 hover:border-ink/30 hover:text-ink",
@@ -122,7 +122,7 @@ export function FinancingCalculatorModal({
             ))}
           </div>
         ) : activeProvider ? (
-          <p className="font-display text-[10px] font-bold uppercase tracking-aggressive text-ink">
+          <p className="font-body text-[10px] font-bold uppercase tracking-aggressive text-ink">
             {activeProvider.name}
           </p>
         ) : null}
@@ -132,7 +132,7 @@ export function FinancingCalculatorModal({
         ) : null}
 
         <div>
-          <p className="font-display text-[10px] font-bold uppercase tracking-aggressive text-ink/40">
+          <p className="font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/40">
             Term
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
@@ -156,10 +156,10 @@ export function FinancingCalculatorModal({
 
         {quote ? (
           <div className="border border-ink/10 bg-moto/50 p-5 sm:p-6">
-            <p className="font-display text-[10px] font-bold uppercase tracking-aggressive text-ink/40">
+            <p className="font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/40">
               Estimated monthly
             </p>
-            <p className="mt-2 font-display text-4xl font-extrabold tracking-tight text-accent sm:text-5xl">
+            <p className="mt-2 font-body text-4xl font-extrabold tracking-tight text-accent sm:text-5xl">
               {formatMonthlyPrice(quote.monthlyPayment)}
               <span className="ml-1 text-lg font-bold text-ink/45">/mo</span>
             </p>
@@ -207,7 +207,7 @@ export function FinancingCalculatorModal({
                   onClose();
                   onCheckout();
                 }}
-                className="inline-flex items-center rounded-full bg-ink px-7 py-3 font-display text-xs font-bold uppercase tracking-aggressive text-paper transition-colors duration-200 hover:bg-accent"
+                className="inline-flex items-center rounded-full bg-ink px-7 py-3 font-body text-xs font-bold uppercase tracking-aggressive text-paper transition-colors duration-200 hover:bg-accent"
               >
                 {productType === "equipment"
                   ? "Continue to checkout →"
@@ -229,7 +229,7 @@ export function FinancingCalculatorModal({
               onClose();
               onEnquire();
             }}
-            className="inline-flex items-center font-display text-xs font-bold uppercase tracking-aggressive text-ink/55 transition-colors hover:text-accent"
+            className="inline-flex items-center font-body text-xs font-bold uppercase tracking-aggressive text-ink/55 transition-colors hover:text-accent"
           >
             Ask about {activeProvider?.name ?? "financing"} →
           </button>

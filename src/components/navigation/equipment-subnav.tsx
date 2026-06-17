@@ -68,7 +68,7 @@ export function EquipmentSubnav() {
                   href={section.href}
                   aria-current={isActive ? "page" : undefined}
                   className={cn(
-                    "inline-flex min-h-10 items-center whitespace-nowrap px-4 py-2 font-display text-xs font-bold uppercase tracking-aggressive transition-colors sm:px-5",
+                    "inline-flex min-h-10 items-center whitespace-nowrap px-4 py-2 font-body text-xs font-bold uppercase tracking-aggressive transition-colors sm:px-5",
                     isActive
                       ? "bg-ink text-paper"
                       : "text-ink/60 hover:bg-surface hover:text-ink",

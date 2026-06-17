@@ -2,6 +2,9 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import type { Locale } from "@/i18n/config";
+import type { Dictionary } from "@/i18n/dictionaries/en";
+import { localizedHref } from "@/i18n/paths";
 import type { CatalogProduct } from "@/types/catalog-product";
 import { CatalogLoadMore } from "@/components/shop/catalog-load-more";
 import { CatalogProductGrid } from "@/components/shop/catalog-product-grid";
@@ -19,16 +22,22 @@ import {
 type SearchResultsViewProps = {
   query: string;
   products: readonly CatalogProduct[];
+  dictionary: Dictionary;
+  locale: Locale;
 };
 
 type ProductTypeFilter = "all" | "motorcycle" | "equipment" | "tools";
 
-const typeFilterLabels: Record<ProductTypeFilter, string> = {
-  all: "All",
-  motorcycle: "Motorcycles",
-  equipment: "Equipment",
-  tools: "Tools",
-};
+function getTypeFilterLabels(
+  dictionary: Dictionary,
+): Record<ProductTypeFilter, string> {
+  return {
+    all: dictionary.search.all,
+    motorcycle: dictionary.search.motorcycles,
+    equipment: dictionary.search.equipment,
+    tools: dictionary.search.tools,
+  };
+}
 
 function productMatchesType(
   product: CatalogProduct,
@@ -73,7 +82,7 @@ function getSearchFacets(products: readonly CatalogProduct[]) {
 }
 
 const filterTriggerClass =
-  "inline-flex min-h-12 items-center gap-2.5 border border-ink/15 bg-white px-5 py-3 font-display text-xs font-bold uppercase tracking-aggressive text-ink transition-colors hover:border-accent hover:text-accent";
+  "inline-flex min-h-12 items-center gap-2.5 border border-ink/15 bg-white px-5 py-3 font-body text-xs font-bold uppercase tracking-aggressive text-ink transition-colors hover:border-accent hover:text-accent";
 
 function getInitialFilters(products: readonly CatalogProduct[]): ActiveFilters {
   if (products.length === 0) {
@@ -139,13 +148,13 @@ function CatalogSortSelect({
 }) {
   return (
     <label className="flex shrink-0 items-center gap-2">
-      <span className="font-display text-xs font-bold uppercase tracking-aggressive text-ink/50">
+      <span className="font-body text-xs font-bold uppercase tracking-aggressive text-ink/50">
         Sort
       </span>
       <select
         value={value}
         onChange={(event) => onChange(event.target.value as SortOption)}
-        className="min-h-12 border border-ink/15 bg-white px-4 py-3 font-display text-xs font-bold uppercase tracking-aggressive text-ink focus:border-accent focus:outline-none"
+        className="min-h-12 border border-ink/15 bg-white px-4 py-3 font-body text-xs font-bold uppercase tracking-aggressive text-ink focus:border-accent focus:outline-none"
       >
         <option value="featured">Featured</option>
         <option value="newest">Newest</option>
@@ -160,11 +169,13 @@ function SearchTypeFilter({
   options,
   value,
   onChange,
+  labels,
   className = "",
 }: {
   options: readonly ProductTypeFilter[];
   value: ProductTypeFilter;
   onChange: (value: ProductTypeFilter) => void;
+  labels: Record<ProductTypeFilter, string>;
   className?: string;
 }) {
   return (
@@ -185,14 +196,20 @@ function SearchTypeFilter({
               : ""
           }`}
         >
-          {typeFilterLabels[option]}
+          {labels[option]}
         </button>
       ))}
     </div>
   );
 }
 
-export function SearchResultsView({ query, products }: SearchResultsViewProps) {
+export function SearchResultsView({
+  query,
+  products,
+  dictionary,
+  locale,
+}: SearchResultsViewProps) {
+  const typeFilterLabels = getTypeFilterLabels(dictionary);
   const hasQuery = query.length >= 2;
   const pageSize = 12;
 
@@ -295,25 +312,28 @@ export function SearchResultsView({ query, products }: SearchResultsViewProps) {
   return (
     <div className="site-container py-8 lg:py-12">
       <nav aria-label="Breadcrumb" className="mb-6">
-        <ol className="flex flex-wrap items-center gap-2 font-display text-[10px] font-bold uppercase tracking-aggressive text-ink/50">
+        <ol className="flex flex-wrap items-center gap-2 font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/50">
           <li>
-            <Link href="/" className="transition-colors hover:text-accent">
-              Home
+            <Link
+              href={localizedHref(locale, "/")}
+              className="transition-colors hover:text-accent"
+            >
+              {dictionary.common.home}
             </Link>
           </li>
           <li className="flex items-center gap-2">
             <span aria-hidden="true">/</span>
-            <span className="text-ink">Search</span>
+            <span className="text-ink">{dictionary.search.pageTitle}</span>
           </li>
         </ol>
       </nav>
 
       <header className="mb-8 max-w-3xl">
-        <p className="section-eyebrow">Shop</p>
+        <p className="section-eyebrow">{dictionary.common.shop}</p>
         <div className="mt-2 flex flex-wrap items-center gap-x-10 gap-y-2 sm:gap-x-14 lg:gap-x-20">
           {hasQuery ? (
             <h1 className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-              <span className="font-display text-sm font-medium normal-case tracking-normal text-ink/50">
+              <span className="font-body text-sm font-medium normal-case tracking-normal text-ink/50">
                 Results for
               </span>
               <span className="heading-category normal-case">
@@ -321,19 +341,19 @@ export function SearchResultsView({ query, products }: SearchResultsViewProps) {
               </span>
             </h1>
           ) : (
-            <h1 className="heading-category">Search</h1>
+            <h1 className="heading-category">{dictionary.search.pageTitle}</h1>
           )}
           {hasQuery ? (
-            <span className="inline-flex shrink-0 items-center rounded-full border border-ink/20 bg-white px-4 py-1.5 font-display text-[10px] font-bold uppercase tracking-aggressive text-ink">
+            <span className="inline-flex shrink-0 items-center rounded-full border border-ink/20 bg-white px-4 py-1.5 font-body text-[10px] font-bold uppercase tracking-aggressive text-ink">
               {filteredProducts.length}{" "}
-              {filteredProducts.length === 1 ? "result" : "results"}
+              {filteredProducts.length === 1
+                ? dictionary.search.match
+                : dictionary.search.matches}
             </span>
           ) : null}
         </div>
         {!hasQuery ? (
-          <p className="mt-3 text-base text-ink/70">
-            Enter at least 2 characters in the search bar to find products.
-          </p>
+          <p className="mt-3 text-base text-ink/70">{dictionary.search.minChars}</p>
         ) : null}
       </header>
 
@@ -342,7 +362,7 @@ export function SearchResultsView({ query, products }: SearchResultsViewProps) {
           <div className="mb-6 flex items-center justify-end gap-3 lg:hidden">
             <button
               type="button"
-              className="inline-flex min-h-12 items-center gap-2.5 border border-ink/15 bg-white px-5 py-3 font-display text-xs font-bold uppercase tracking-aggressive text-ink transition-colors hover:border-accent hover:text-accent"
+              className="inline-flex min-h-12 items-center gap-2.5 border border-ink/15 bg-white px-5 py-3 font-body text-xs font-bold uppercase tracking-aggressive text-ink transition-colors hover:border-accent hover:text-accent"
               onClick={() => setMobileFiltersOpen(true)}
             >
               Filters
@@ -356,6 +376,7 @@ export function SearchResultsView({ query, products }: SearchResultsViewProps) {
                 options={facets.typeOptions}
                 value={typeFilter}
                 onChange={setTypeFilter}
+                labels={typeFilterLabels}
               />
             ) : null}
             <div className="flex items-center gap-4">
@@ -391,16 +412,16 @@ export function SearchResultsView({ query, products }: SearchResultsViewProps) {
             </>
           ) : (
             <div className="flex min-h-[20rem] flex-col items-start justify-center border border-dashed border-ink/15 bg-surface/50 p-8">
-              <p className="font-display text-sm font-bold uppercase tracking-aggressive text-ink">
-                No products found
+              <p className="font-body text-sm font-bold uppercase tracking-aggressive text-ink">
+                {dictionary.search.noMatches}
               </p>
               <p className="mt-2 max-w-sm text-sm text-ink/60">
-                Try adjusting your filters or search for a different keyword.
+                {dictionary.search.adjustFilters}
               </p>
               <button
                 type="button"
                 onClick={clearFilters}
-                className="mt-4 font-display text-[10px] font-bold uppercase tracking-aggressive text-accent"
+                className="mt-4 font-body text-[10px] font-bold uppercase tracking-aggressive text-accent"
               >
                 Clear filters
               </button>
@@ -417,6 +438,7 @@ export function SearchResultsView({ query, products }: SearchResultsViewProps) {
                   options={facets.typeOptions}
                   value={typeFilter}
                   onChange={setTypeFilter}
+                  labels={typeFilterLabels}
                 />
               ) : null}
               <CategoryFilters {...filterProps} variant="drawer" />

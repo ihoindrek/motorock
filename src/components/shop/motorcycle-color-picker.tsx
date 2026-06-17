@@ -27,7 +27,7 @@ export function MotorcycleColorPicker({
   return (
     <div>
       <p
-        className={`font-display text-[10px] font-bold uppercase tracking-aggressive ${
+        className={`font-body text-[10px] font-bold uppercase tracking-aggressive ${
           isDark ? "text-paper/40" : "text-ink/50"
         }`}
       >

@@ -32,7 +32,7 @@ export function PriceRangeSlider({
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between gap-3 font-display text-sm font-bold uppercase tracking-wide text-ink">
+      <div className="flex items-center justify-between gap-3 font-body text-sm font-extrabold tabular-nums tracking-normal text-ink">
         <span>{formatPrice(value[0])}</span>
         <span className="text-ink/25" aria-hidden="true">
           —

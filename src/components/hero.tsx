@@ -1,5 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
+import type { Locale } from "@/i18n/config";
+import type { Dictionary } from "@/i18n/dictionaries/en";
+import { localizedHref } from "@/i18n/paths";
 
 const motorcycleLogos = [
   {
@@ -32,37 +35,42 @@ const motorcycleLogos = [
   },
 ] as const;
 
-const banners = [
-  {
-    label: "Motorcycles",
-    href: "/shop/motorcycles",
-    image: "/brixton-image.webp",
-    video: "/5052415-hd_1920_1080_30fps.mp4",
-    span: "col-span-1 md:col-span-2",
-    imageSizes: "(max-width: 768px) 100vw, 66vw",
-    titleClass: "text-2xl sm:text-3xl lg:text-5xl",
-    cta: "Shop motorcycles",
-    ctaClass: "btn-hero-primary",
-    logos: motorcycleLogos,
-  },
-  {
-    label: "Driving\nequipment",
-    href: "/shop/equipment",
-    image: "/JRH10015_L23.webp",
-    video: undefined,
-    span: "col-span-1",
-    imageSizes: "(max-width: 768px) 100vw, 33vw",
-    titleClass: "text-lg sm:text-xl lg:text-2xl",
-    cta: "Browse products",
-    ctaClass: "btn-hero-ghost px-5 py-3 sm:px-6 sm:py-3",
-    logos: null,
-  },
-] as const;
+type HeroProps = {
+  locale: Locale;
+  dictionary: Dictionary;
+};
 
-export function Hero() {
+export function Hero({ locale, dictionary }: HeroProps) {
+  const banners = [
+    {
+      label: dictionary.hero.motorcycles,
+      href: localizedHref(locale, "/shop/motorcycles"),
+      image: "/brixton-image.webp",
+      video: "/5052415-hd_1920_1080_30fps.mp4",
+      span: "col-span-1 md:col-span-2",
+      imageSizes: "(max-width: 768px) 100vw, 66vw",
+      titleClass: "text-2xl sm:text-3xl lg:text-5xl",
+      cta: dictionary.hero.shopMotorcycles,
+      ctaClass: "btn-hero-primary",
+      logos: motorcycleLogos,
+    },
+    {
+      label: dictionary.hero.equipment,
+      href: localizedHref(locale, "/shop/equipment"),
+      image: "/JRH10015_L23.webp",
+      video: undefined,
+      span: "col-span-1",
+      imageSizes: "(max-width: 768px) 100vw, 33vw",
+      titleClass: "text-lg sm:text-xl lg:text-2xl",
+      cta: dictionary.hero.browseProducts,
+      ctaClass: "btn-hero-ghost px-5 py-3 sm:px-6 sm:py-3",
+      logos: null,
+    },
+  ] as const;
+
   return (
     <section
-      aria-label="Shop categories"
+      aria-label={dictionary.common.shop}
       className="grid grid-cols-1 md:grid-cols-3"
     >
       <h1 className="sr-only">Motorock.eu</h1>
@@ -84,7 +92,7 @@ export function Hero() {
           index,
         ) => (
           <Link
-            key={label}
+            key={href}
             href={href}
             className={`group relative flex min-h-[40svh] items-center justify-center overflow-hidden sm:min-h-[46svh] lg:min-h-[52svh] ${span}`}
           >

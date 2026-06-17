@@ -28,7 +28,7 @@ export function ContactMapZoomControls() {
           type="button"
           onClick={zoomIn}
           aria-label="Suumi sisse"
-          className="flex h-10 w-10 items-center justify-center border-b border-ink/10 font-display text-xl font-extrabold leading-none text-ink transition-colors hover:bg-paper"
+          className="flex h-10 w-10 items-center justify-center border-b border-ink/10 font-body text-xl font-extrabold leading-none text-ink transition-colors hover:bg-paper"
         >
           +
         </button>
@@ -36,7 +36,7 @@ export function ContactMapZoomControls() {
           type="button"
           onClick={zoomOut}
           aria-label="Suumi välja"
-          className="flex h-10 w-10 items-center justify-center font-display text-xl font-extrabold leading-none text-ink transition-colors hover:bg-paper"
+          className="flex h-10 w-10 items-center justify-center font-body text-xl font-extrabold leading-none text-ink transition-colors hover:bg-paper"
         >
           −
         </button>

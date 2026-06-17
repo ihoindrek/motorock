@@ -1,9 +1,10 @@
-import type { CatalogProduct } from "@/types/catalog-product";
+import type { Locale } from "@/i18n/config";
+import type { CatalogProduct, ProductType } from "@/types/catalog-product";
 import { graphqlRequest } from "@/lib/graphql/client";
 import { mapGraphqlCardToCatalogProduct } from "@/lib/graphql/map-graphql-product";
 import { PRODUCT_SEARCH } from "@/lib/graphql/queries";
 import type { GraphQLProductCard } from "@/lib/graphql/types";
-import type { ProductType } from "@/types/catalog-product";
+import { filterGraphqlNodesByLocale } from "@/lib/graphql/wpml";
 
 export const HEADER_SEARCH_LIMIT = 5;
 
@@ -52,6 +53,7 @@ function mapSearchNode(node: GraphQLProductCard): ProductSearchResult {
 export async function searchProductsPage(
   query: string,
   limit: number,
+  locale: Locale = "en",
   after: string | null = null,
 ): Promise<{
   results: ProductSearchResult[];
@@ -73,8 +75,10 @@ export async function searchProductsPage(
     { cache: "no-store" },
   );
 
+  const nodes = filterGraphqlNodesByLocale(data.products.nodes, locale);
+
   return {
-    results: data.products.nodes.map(mapSearchNode),
+    results: nodes.map(mapSearchNode),
     hasMore: data.products.pageInfo.hasNextPage,
     endCursor: data.products.pageInfo.endCursor,
   };
@@ -83,19 +87,21 @@ export async function searchProductsPage(
 export async function searchProducts(
   query: string,
   limit = HEADER_SEARCH_LIMIT,
+  locale: Locale = "en",
 ): Promise<ProductSearchResult[]> {
-  const page = await searchProductsPage(query, limit);
+  const page = await searchProductsPage(query, limit, locale);
   return page.results;
 }
 
 export async function searchProductsWithMeta(
   query: string,
   limit = HEADER_SEARCH_LIMIT,
+  locale: Locale = "en",
 ): Promise<{
   results: ProductSearchResult[];
   hasMore: boolean;
 }> {
-  const page = await searchProductsPage(query, limit);
+  const page = await searchProductsPage(query, limit, locale);
   return {
     results: page.results,
     hasMore: page.hasMore,
@@ -104,6 +110,7 @@ export async function searchProductsWithMeta(
 
 export async function getSearchCatalog(
   query: string,
+  locale: Locale = "en",
   max = 100,
 ): Promise<CatalogProduct[]> {
   const search = query.trim();
@@ -129,7 +136,8 @@ export async function getSearchCatalog(
       { cache: "no-store" },
     );
 
-    products.push(...data.products.nodes.map(mapGraphqlCardToCatalogProduct));
+    const nodes = filterGraphqlNodesByLocale(data.products.nodes, locale);
+    products.push(...nodes.map(mapGraphqlCardToCatalogProduct));
 
     if (!data.products.pageInfo.hasNextPage) {
       break;

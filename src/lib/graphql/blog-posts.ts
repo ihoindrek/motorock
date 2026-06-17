@@ -1,4 +1,5 @@
 import { blogPosts as fallbackBlogPosts } from "@/data/blog-posts";
+import type { Locale } from "@/i18n/config";
 import { graphqlRequest } from "@/lib/graphql/client";
 import { BLOG_POST_BY_SLUG, BLOG_POSTS_LIST } from "@/lib/graphql/blog-queries";
 import {
@@ -44,6 +45,7 @@ function getFallbackPosts(): readonly BlogPost[] {
 function getFallbackPage(
   first: number,
   after: string | null,
+  _locale: Locale,
 ): BlogPostsPage {
   const all = getFallbackPosts();
   const offset = after ? Number.parseInt(after, 10) : 0;
@@ -63,17 +65,20 @@ function getFallbackPage(
 export async function fetchBlogPostsPage({
   first,
   after = null,
+  locale = "en",
 }: {
   first: number;
   after?: string | null;
+  locale?: Locale;
 }): Promise<BlogPostsPage> {
   try {
     const data = await graphqlRequest<
       BlogPostsListResponse,
-      { first: number; after: string | null }
+      { first: number; after: string | null; language: Locale }
     >(BLOG_POSTS_LIST, {
       first,
       after,
+      language: locale,
     });
 
     const posts = data.contentNodes.nodes
@@ -81,7 +86,7 @@ export async function fetchBlogPostsPage({
       .map(mapGraphqlToBlogPostCard);
 
     if (posts.length === 0 && !after) {
-      return getFallbackPage(first, null);
+      return getFallbackPage(first, null, locale);
     }
 
     return {
@@ -92,15 +97,16 @@ export async function fetchBlogPostsPage({
       },
     };
   } catch {
-    return getFallbackPage(first, after);
+    return getFallbackPage(first, after, locale);
   }
 }
 
-export async function fetchAllBlogPosts(): Promise<readonly BlogPost[]> {
+export async function fetchAllBlogPosts(locale: Locale = "en"): Promise<readonly BlogPost[]> {
   try {
     const data = await graphqlRequest<BlogPostsListResponse>(BLOG_POSTS_LIST, {
       first: BLOG_LIST_SIZE,
       after: null,
+      language: locale,
     });
 
     const posts = data.contentNodes.nodes
@@ -119,6 +125,7 @@ export async function fetchAllBlogPosts(): Promise<readonly BlogPost[]> {
 
 export async function fetchBlogPostBySlug(
   slug: string,
+  locale: Locale = "en",
 ): Promise<BlogPost | undefined> {
   try {
     const data = await graphqlRequest<BlogPostBySlugResponse, { slug: string }>(
@@ -136,7 +143,7 @@ export async function fetchBlogPostBySlug(
   }
 }
 
-export async function fetchBlogPostSlugs(): Promise<string[]> {
-  const posts = await fetchAllBlogPosts();
+export async function fetchBlogPostSlugs(locale: Locale = "en"): Promise<string[]> {
+  const posts = await fetchAllBlogPosts(locale);
   return posts.map((post) => post.slug);
 }

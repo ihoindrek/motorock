@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useLocale } from "@/context/locale-context";
 import type { ShippingRate } from "@/lib/shop/shipping-method";
 import { parseShippingRateCost } from "@/lib/shop/shipping-method";
 import {
@@ -13,18 +14,21 @@ import { cn } from "@/lib/utils";
 
 function formatRatePrice(cost: string | null) {
   const value = parseShippingRateCost(cost);
-  return value === 0 ? "Free" : formatPrice(value);
+  return value === 0 ? null : formatPrice(value);
 }
 
 function ShippingRateButton({
   rate,
   selected,
   onSelect,
+  freeLabel,
 }: {
   rate: ShippingRate;
   selected: boolean;
   onSelect: (rateId: string) => void;
+  freeLabel: string;
 }) {
+  const price = formatRatePrice(rate.cost);
   return (
     <button
       type="button"
@@ -45,8 +49,8 @@ function ShippingRateButton({
           {shippingGroupLabel(rate)}
         </span>
       </span>
-      <span className="shrink-0 font-display text-sm font-bold tabular-nums">
-        {formatRatePrice(rate.cost)}
+      <span className="shrink-0 font-body text-sm font-bold tabular-nums">
+        {price ?? freeLabel}
       </span>
     </button>
   );
@@ -74,6 +78,23 @@ export function CheckoutShippingOptions({
   selectedRateId: string | null;
   onSelect: (rateId: string) => void;
 }) {
+  const locale = useLocale();
+  const t =
+    locale === "et"
+      ? {
+          free: "Tasuta",
+          showFewer: "Näita vähem valikuid",
+          showMorePrefix: "Näita",
+          showMoreSuffix: "täiendavat tarnevalikut",
+          selected: "valitud",
+        }
+      : {
+          free: "Free",
+          showFewer: "Show fewer options",
+          showMorePrefix: "Show",
+          showMoreSuffix: "more delivery options",
+          selected: "selected",
+        };
   const [showAll, setShowAll] = useState(false);
   const { featured, rest, showToggle } = useMemo(
     () => splitFeaturedShippingRates(rates),
@@ -92,6 +113,7 @@ export function CheckoutShippingOptions({
               rate={rate}
               selected={selectedRateId === rate.id}
               onSelect={onSelect}
+              freeLabel={t.free}
             />
           </li>
         ))}
@@ -104,9 +126,9 @@ export function CheckoutShippingOptions({
           className="mt-3 text-sm font-medium text-ink/60 underline-offset-2 hover:text-accent hover:underline"
         >
           {showAll
-            ? "Show fewer options"
-            : `Show ${rest.length} more delivery option${rest.length === 1 ? "" : "s"}`}
-          {!showAll && selectedInRest ? " (selected)" : ""}
+            ? t.showFewer
+            : `${t.showMorePrefix} ${rest.length} ${t.showMoreSuffix}`}
+          {!showAll && selectedInRest ? ` (${t.selected})` : ""}
         </button>
       ) : null}
     </div>

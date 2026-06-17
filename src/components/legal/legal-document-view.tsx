@@ -14,6 +14,10 @@ type LegalDocumentViewProps = {
   description: string;
   updated: string;
   sections: readonly LegalSection[];
+  lastUpdatedLabel: string;
+  questionsLabel: string;
+  contactUsLabel: string;
+  contactHref: string;
 };
 
 export function LegalDocumentView({
@@ -22,6 +26,10 @@ export function LegalDocumentView({
   description,
   updated,
   sections,
+  lastUpdatedLabel,
+  questionsLabel,
+  contactUsLabel,
+  contactHref,
 }: LegalDocumentViewProps) {
   return (
     <article>
@@ -33,8 +41,8 @@ export function LegalDocumentView({
       />
 
       <div className="site-container py-12 lg:py-16">
-        <p className="mb-10 font-display text-[10px] font-bold uppercase tracking-aggressive text-ink/45">
-          Last updated {updated}
+        <p className="mb-10 font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/45">
+          {lastUpdatedLabel} {updated}
         </p>
 
         <div className="mx-auto max-w-3xl space-y-12">
@@ -60,9 +68,9 @@ export function LegalDocumentView({
         </div>
 
         <p className="mx-auto mt-16 max-w-3xl border-t border-ink/10 pt-8 text-sm text-ink/60">
-          Questions?{" "}
-          <Link href="/contact" className="text-ink underline-offset-2 hover:text-accent hover:underline">
-            Contact us
+          {questionsLabel}{" "}
+          <Link href={contactHref} className="text-ink underline-offset-2 hover:text-accent hover:underline">
+            {contactUsLabel}
           </Link>{" "}
           or email{" "}
           <a

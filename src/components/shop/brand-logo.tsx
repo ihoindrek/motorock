@@ -19,7 +19,7 @@ export function BrandLogo({
   if (!config?.logo) {
     return (
       <p
-        className={`font-display text-[10px] font-bold uppercase tracking-aggressive text-accent sm:text-xs ${
+        className={`font-body text-[10px] font-bold uppercase tracking-aggressive text-accent sm:text-xs ${
           size === "lg" ? "text-xs sm:text-sm" : ""
         } ${className}`}
       >

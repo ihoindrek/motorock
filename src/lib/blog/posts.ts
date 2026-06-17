@@ -8,6 +8,7 @@ import {
   type BlogPostsPage,
   type BlogPostsPageInfo,
 } from "@/lib/graphql/blog-posts";
+import type { Locale } from "@/i18n/config";
 import type { BlogPost } from "@/types/blog-post";
 
 export {
@@ -18,23 +19,24 @@ export {
 };
 
 export async function getBlogPostsPage(
-  options: Parameters<typeof fetchBlogPostsPage>[0],
+  options: Parameters<typeof fetchBlogPostsPage>[0] & { locale?: Locale },
 ) {
   return fetchBlogPostsPage(options);
 }
 
-export async function getAllBlogPosts(): Promise<readonly BlogPost[]> {
-  return fetchAllBlogPosts();
+export async function getAllBlogPosts(locale: Locale = "en"): Promise<readonly BlogPost[]> {
+  return fetchAllBlogPosts(locale);
 }
 
 export async function getBlogPostBySlug(
   slug: string,
+  locale: Locale = "en",
 ): Promise<BlogPost | undefined> {
-  return fetchBlogPostBySlug(slug);
+  return fetchBlogPostBySlug(slug, locale);
 }
 
-export async function getBlogPostSlugs(): Promise<string[]> {
-  return fetchBlogPostSlugs();
+export async function getBlogPostSlugs(locale: Locale = "en"): Promise<string[]> {
+  return fetchBlogPostSlugs(locale);
 }
 
 export function getBlogCategories(
@@ -53,9 +55,10 @@ export function getBlogCategories(
 
 export async function getRelatedBlogPosts(
   slug: string,
+  locale: Locale = "en",
   limit = 3,
 ): Promise<readonly BlogPost[]> {
-  const posts = await getAllBlogPosts();
+  const posts = await getAllBlogPosts(locale);
   const current = posts.find((post) => post.slug === slug);
 
   if (!current) {
@@ -83,8 +86,10 @@ export async function getRelatedBlogPosts(
     .slice(0, limit);
 }
 
-export function formatBlogDate(isoDate: string) {
-  return new Intl.DateTimeFormat("en-GB", {
+export function formatBlogDate(isoDate: string, locale: "en" | "et" = "en") {
+  const dateLocale = locale === "et" ? "et-EE" : "en-GB";
+
+  return new Intl.DateTimeFormat(dateLocale, {
     day: "numeric",
     month: "long",
     year: "numeric",

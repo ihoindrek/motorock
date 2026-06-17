@@ -3,7 +3,7 @@ import Link from "next/link";
 import type { CatalogProduct } from "@/types/catalog-product";
 import { BrandLogo } from "@/components/shop/brand-logo";
 import { InStoreNowBadge } from "@/components/shop/in-store-now-badge";
-import { formatPrice } from "@/lib/shop/category";
+import { Price } from "@/components/shop/price";
 
 type ProductCardProps = {
   product: CatalogProduct;
@@ -44,7 +44,7 @@ export function ProductCard({ product }: ProductCardProps) {
           ) : null}
 
           {product.isNew ? (
-            <span className="absolute left-3 top-3 z-10 bg-accent px-2.5 py-1 font-display text-[9px] font-bold uppercase tracking-aggressive text-paper">
+            <span className="absolute left-3 top-3 z-10 bg-accent px-2.5 py-1 font-body text-[9px] font-bold uppercase tracking-aggressive text-paper">
               New
             </span>
           ) : null}
@@ -52,7 +52,7 @@ export function ProductCard({ product }: ProductCardProps) {
             <InStoreNowBadge variant="overlay" />
           ) : null}
           {!product.inStock ? (
-            <span className="absolute right-3 top-3 z-10 bg-ink px-2.5 py-1 font-display text-[9px] font-bold uppercase tracking-aggressive text-paper">
+            <span className="absolute right-3 top-3 z-10 bg-ink px-2.5 py-1 font-body text-[9px] font-bold uppercase tracking-aggressive text-paper">
               Sold out
             </span>
           ) : null}
@@ -91,9 +91,11 @@ export function ProductCard({ product }: ProductCardProps) {
           >
             {product.name}
           </h3>
-          <p className="mt-auto font-display text-base font-extrabold text-ink transition-colors duration-200 group-hover:text-accent sm:text-lg">
-            {formatPrice(product.price)}
-          </p>
+          <Price
+            value={product.price}
+            as="p"
+            className="mt-auto transition-colors duration-200 group-hover:text-accent"
+          />
         </div>
       </Link>
     </article>

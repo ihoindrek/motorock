@@ -44,7 +44,7 @@ export function MotorcycleEnquiryForm({
   if (submitted) {
     return (
       <div>
-        <p className="font-display text-lg font-extrabold uppercase leading-snug tracking-tight text-ink">
+        <p className="font-body text-lg font-extrabold uppercase leading-snug tracking-tight text-ink">
           Message received
         </p>
         <p className="mt-2 text-sm text-ink/60">
@@ -58,7 +58,7 @@ export function MotorcycleEnquiryForm({
     <form className="space-y-8" onSubmit={handleSubmit}>
       <div>
         <p className={shopFieldLabelClassName}>Motorcycle</p>
-        <p className="mt-2 font-display text-lg font-extrabold uppercase leading-tight tracking-tight text-ink">
+        <p className="mt-2 font-body text-lg font-extrabold uppercase leading-tight tracking-tight text-ink">
           {displayName}
         </p>
         {color ? (
@@ -127,7 +127,7 @@ export function MotorcycleEnquiryForm({
 
       <button
         type="submit"
-        className="inline-flex min-h-12 w-full items-center justify-center rounded-full bg-ink px-7 py-3 font-display text-xs font-bold uppercase tracking-aggressive text-paper transition-colors duration-200 hover:bg-accent sm:w-auto"
+        className="inline-flex min-h-12 w-full items-center justify-center rounded-full bg-ink px-7 py-3 font-body text-xs font-bold uppercase tracking-aggressive text-paper transition-colors duration-200 hover:bg-accent sm:w-auto"
       >
         Send message →
       </button>

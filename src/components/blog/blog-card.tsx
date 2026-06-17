@@ -1,33 +1,49 @@
 import Image from "next/image";
 import Link from "next/link";
 import { formatBlogDate } from "@/lib/blog/posts";
+import type { Dictionary } from "@/i18n/dictionaries/en";
+import { localizedHref } from "@/i18n/paths";
 import type { BlogPost } from "@/types/blog-post";
 import { BlogBadge } from "@/components/blog/blog-badge";
 import { cn } from "@/lib/utils";
 
 type BlogCardProps = {
   post: BlogPost;
+  locale: "en" | "et";
+  copy: Dictionary["blog"];
   priority?: boolean;
   variant?: "feature" | "card" | "compact";
 };
 
 export function BlogCard({
   post,
+  locale,
+  copy,
   priority = false,
   variant = "card",
 }: BlogCardProps) {
+  const postHref = localizedHref(locale, `/blog/${post.slug}`);
+
   if (variant === "feature") {
-    return <BlogFeatureCard post={post} priority={priority} />;
+    return (
+      <BlogFeatureCard
+        post={post}
+        postHref={postHref}
+        locale={locale}
+        copy={copy}
+        priority={priority}
+      />
+    );
   }
 
   if (variant === "compact") {
-    return <BlogCompactCard post={post} />;
+    return <BlogCompactCard post={post} postHref={postHref} />;
   }
 
   return (
     <article className="group">
       <Link
-        href={`/blog/${post.slug}`}
+        href={postHref}
         className="block outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
       >
         <figure className="relative aspect-[4/5] overflow-hidden bg-ink">
@@ -47,7 +63,9 @@ export function BlogCard({
             <div className="flex flex-wrap items-center gap-2">
               <BlogBadge variant="accent">{post.category}</BlogBadge>
               <BlogBadge variant="on-dark">
-                <time dateTime={post.publishedAt}>{formatBlogDate(post.publishedAt)}</time>
+                <time dateTime={post.publishedAt}>
+                  {formatBlogDate(post.publishedAt, locale)}
+                </time>
               </BlogBadge>
             </div>
             <h2 className="mt-3 font-display text-xl font-extrabold uppercase leading-[1.05] tracking-tight text-paper transition-colors duration-200 group-hover:text-accent sm:text-2xl">
@@ -60,7 +78,7 @@ export function BlogCard({
         </p>
         <span className="mt-3 inline-flex">
           <BlogBadge className="transition-colors group-hover:bg-accent group-hover:text-paper group-hover:border-transparent">
-            Read →
+            {copy.read}
           </BlogBadge>
         </span>
       </Link>
@@ -70,15 +88,21 @@ export function BlogCard({
 
 function BlogFeatureCard({
   post,
+  postHref,
+  locale,
+  copy,
   priority,
 }: {
   post: BlogPost;
+  postHref: string;
+  locale: "en" | "et";
+  copy: Dictionary["blog"];
   priority?: boolean;
 }) {
   return (
     <article className="group">
       <Link
-        href={`/blog/${post.slug}`}
+        href={postHref}
         className="grid overflow-hidden border border-ink/10 bg-moto transition-colors duration-200 group-hover:border-ink/20 lg:grid-cols-12 lg:min-h-[28rem]"
       >
         <figure className="relative aspect-[16/10] overflow-hidden bg-detail lg:col-span-7 lg:aspect-auto lg:min-h-[28rem]">
@@ -102,10 +126,12 @@ function BlogFeatureCard({
 
         <div className="flex flex-col justify-end gap-5 bg-moto p-6 sm:p-8 lg:col-span-5 lg:p-10 xl:p-12">
           <div className="flex flex-wrap items-center gap-2">
-            <BlogBadge variant="accent">Featured</BlogBadge>
+            <BlogBadge variant="accent">{copy.featured}</BlogBadge>
             <BlogBadge>{post.category}</BlogBadge>
             <BlogBadge>
-              <time dateTime={post.publishedAt}>{formatBlogDate(post.publishedAt)}</time>
+              <time dateTime={post.publishedAt}>
+                {formatBlogDate(post.publishedAt, locale)}
+              </time>
             </BlogBadge>
           </div>
           <h2 className="font-display text-[clamp(1.5rem,3.25vw,2.25rem)] font-extrabold uppercase leading-[0.95] tracking-tight text-ink transition-colors duration-200 group-hover:text-accent">
@@ -116,7 +142,7 @@ function BlogFeatureCard({
           </p>
           <span className="inline-flex">
             <BlogBadge className="transition-colors group-hover:bg-accent group-hover:text-paper group-hover:border-transparent">
-              Read article →
+              {copy.readArticle}
             </BlogBadge>
           </span>
         </div>
@@ -125,11 +151,17 @@ function BlogFeatureCard({
   );
 }
 
-function BlogCompactCard({ post }: { post: BlogPost }) {
+function BlogCompactCard({
+  post,
+  postHref,
+}: {
+  post: BlogPost;
+  postHref: string;
+}) {
   return (
     <article className="group">
       <Link
-        href={`/blog/${post.slug}`}
+        href={postHref}
         className="flex gap-3 outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent sm:gap-3.5"
       >
         <figure className="relative aspect-square w-[4.5rem] shrink-0 overflow-hidden bg-ink sm:w-20">
@@ -156,16 +188,25 @@ function BlogCompactCard({ post }: { post: BlogPost }) {
 
 export function BlogCardGrid({
   posts,
+  locale,
+  copy,
   className,
 }: {
   posts: readonly BlogPost[];
+  locale: "en" | "et";
+  copy: Dictionary["blog"];
   className?: string;
 }) {
   return (
     <ul className={cn("grid grid-cols-1 gap-10 sm:grid-cols-2 lg:gap-12", className)}>
       {posts.map((post, index) => (
         <li key={post.slug}>
-          <BlogCard post={post} priority={index < 2} />
+          <BlogCard
+            post={post}
+            locale={locale}
+            copy={copy}
+            priority={index < 2}
+          />
         </li>
       ))}
     </ul>

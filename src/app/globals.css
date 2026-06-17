@@ -15,7 +15,7 @@
   --color-stock: #1fa855;
   --color-stock-hover: #178a46;
 
-  --font-display: var(--font-syne);
+  --font-display: var(--font-racing-sans-one);
   --font-body: var(--font-plus-jakarta);
 }
 
@@ -77,27 +77,27 @@
 }
 
 @utility link-nav {
-  @apply font-display text-sm font-extrabold uppercase tracking-aggressive text-ink/80 hover:text-accent;
+  @apply font-body text-sm font-semibold uppercase tracking-aggressive text-ink/80 hover:text-accent;
 }
 
 @utility link-nav-active {
-  @apply font-display text-xs font-bold uppercase tracking-aggressive text-accent;
+  @apply font-body text-xs font-bold uppercase tracking-aggressive text-accent;
 }
 
 @utility btn-accent {
-  @apply inline-flex items-center justify-center bg-accent px-6 py-3 font-display text-xs font-bold uppercase tracking-aggressive text-paper transition-colors duration-200 hover:bg-accent-hover active:scale-[0.98];
+  @apply inline-flex items-center justify-center bg-accent px-6 py-3 font-body text-xs font-bold uppercase tracking-aggressive text-paper transition-colors duration-200 hover:bg-accent-hover active:scale-[0.98];
 }
 
 @utility btn-ghost {
-  @apply inline-flex items-center justify-center border border-ink/20 bg-transparent px-6 py-3 font-display text-xs font-bold uppercase tracking-aggressive text-ink transition-colors duration-200 hover:border-accent hover:text-accent;
+  @apply inline-flex items-center justify-center border border-ink/20 bg-transparent px-6 py-3 font-body text-xs font-bold uppercase tracking-aggressive text-ink transition-colors duration-200 hover:border-accent hover:text-accent;
 }
 
 @utility section-eyebrow {
-  @apply inline-flex items-center gap-2.5 font-display text-xs font-bold uppercase tracking-aggressive text-accent;
+  @apply inline-flex items-center gap-2.5 font-body text-xs font-bold uppercase tracking-aggressive text-accent;
 }
 
 @utility heading-section {
-  @apply font-display text-xs font-bold uppercase tracking-aggressive text-ink/50;
+  @apply font-body text-xs font-bold uppercase tracking-aggressive text-ink/50;
 }
 
 @utility heading-hero {
@@ -157,15 +157,15 @@
 }
 
 @utility sr-only-focusable {
-  @apply sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[100] focus:rounded-none focus:bg-accent focus:px-4 focus:py-2 focus:font-display focus:text-xs focus:font-bold focus:uppercase focus:tracking-aggressive focus:text-paper;
+  @apply sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[100] focus:rounded-none focus:bg-accent focus:px-4 focus:py-2 focus:font-body focus:text-xs focus:font-bold focus:uppercase focus:tracking-aggressive focus:text-paper;
 }
 
 @utility btn-hero-primary {
-  @apply inline-flex items-center justify-center border-2 border-accent bg-ink px-8 py-4 font-display text-xs font-bold uppercase tracking-aggressive text-paper transition-all duration-300 hover:bg-accent active:scale-[0.98];
+  @apply inline-flex items-center justify-center border-2 border-accent bg-ink px-8 py-4 font-body text-xs font-bold uppercase tracking-aggressive text-paper transition-all duration-300 hover:bg-accent active:scale-[0.98];
 }
 
 @utility btn-hero-ghost {
-  @apply inline-flex items-center justify-center border border-paper/40 bg-transparent px-8 py-4 font-display text-xs font-bold uppercase tracking-aggressive text-paper transition-all duration-300 hover:border-paper hover:bg-paper/10 active:scale-[0.98];
+  @apply inline-flex items-center justify-center border border-paper/40 bg-transparent px-8 py-4 font-body text-xs font-bold uppercase tracking-aggressive text-paper transition-all duration-300 hover:border-paper hover:bg-paper/10 active:scale-[0.98];
 }
 
 /* Motomad / WC HTML descriptions on product pages */

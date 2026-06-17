@@ -114,7 +114,7 @@ function GalleryThumb({
         aria-hidden="true"
       />
       <span
-        className={`pointer-events-none absolute left-1 top-1 font-display text-[8px] font-bold tabular-nums tracking-widest ${
+        className={`pointer-events-none absolute left-1 top-1 font-body text-[8px] font-bold tabular-nums tracking-widest ${
           theme === "dark" ? "text-paper/50" : "text-ink/40"
         } ${selected ? "text-accent" : ""}`}
         aria-hidden="true"
@@ -357,7 +357,7 @@ export function ProductImageGallery({
                     className="object-cover object-center transition-transform duration-500 group-hover/openable:scale-[1.01]"
                   />
                   {images.length > 1 ? (
-                    <span className="pointer-events-none absolute left-3 top-3 z-10 font-display text-[10px] font-bold tabular-nums tracking-aggressive text-ink">
+                    <span className="pointer-events-none absolute left-3 top-3 z-10 font-body text-[10px] font-bold tabular-nums tracking-aggressive text-ink">
                       {String(resolvedIndex + 1).padStart(2, "0")}
                       <span className="text-ink/40">
                         {" "}
@@ -532,7 +532,7 @@ export function ProductImageGallery({
 
       {images.length > 1 ? (
         <span
-          className={`pointer-events-none absolute left-3 top-3 z-10 font-display text-[10px] font-bold uppercase tracking-aggressive ${
+          className={`pointer-events-none absolute left-3 top-3 z-10 font-body text-[10px] font-bold uppercase tracking-aggressive ${
             theme === "dark" ? "text-paper" : "text-ink"
           }`}
         >

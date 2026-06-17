@@ -5,9 +5,12 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useCart } from "@/context/cart-context";
+import { useDictionary, useLocale } from "@/context/locale-context";
+import { localizedHref } from "@/i18n/paths";
 import { getCartTotals, SHIPPING_THRESHOLD } from "@/lib/shop/cart-totals";
 import { cartLineThumbnailClass } from "@/lib/shop/cart-line-image";
 import { formatPrice } from "@/lib/shop/category";
+import { Price } from "@/components/shop/price";
 import { cn } from "@/lib/utils";
 import { CampaignCartPanels } from "@/components/campaigns/campaign-cart-panels";
 
@@ -38,6 +41,54 @@ export function CartDrawer() {
     updateQuantity,
     removeItem,
   } = useCart();
+  const locale = useLocale();
+  const dict = useDictionary();
+  const t =
+    locale === "et"
+      ? {
+          closeCart: "Sulge ostukorv",
+          shoppingCart: "Ostukorv",
+          item: "toode",
+          items: "toodet",
+          emptyTitle: "Sinu ostukorv on tühi",
+          emptyBody: "Lisa varustust või mootorratas — checkout võtab alla minuti.",
+          shopEquipment: "Vaata varustust",
+          shopMotorcycles: "Vaata mootorrattaid",
+          size: "Suurus",
+          color: "Värv",
+          remove: "Eemalda",
+          decreaseQty: "Vähenda kogust",
+          increaseQty: "Suurenda kogust",
+          subtotal: "Vahesumma",
+          shipping: "Tarne",
+          free: "Tasuta",
+          freeShippingOver: "Tasuta tarne alates",
+          total: "Kokku",
+          checkout: "Kassa",
+          continueShopping: "Jätka ostlemist",
+        }
+      : {
+          closeCart: "Close cart",
+          shoppingCart: "Shopping cart",
+          item: "item",
+          items: "items",
+          emptyTitle: "Your cart is empty",
+          emptyBody: "Add gear or a motorcycle — checkout takes under a minute.",
+          shopEquipment: "Shop equipment",
+          shopMotorcycles: "Shop motorcycles",
+          size: "Size",
+          color: "Colour",
+          remove: "Remove",
+          decreaseQty: "Decrease quantity",
+          increaseQty: "Increase quantity",
+          subtotal: "Subtotal",
+          shipping: "Shipping",
+          free: "Free",
+          freeShippingOver: "Free shipping over",
+          total: "Total",
+          checkout: "Checkout",
+          continueShopping: "Continue shopping",
+        };
   const [mounted, setMounted] = useState(false);
 
   const { shipping, total } = getCartTotals(subtotal);
@@ -75,7 +126,7 @@ export function CartDrawer() {
     <>
       <button
         type="button"
-        aria-label="Close cart"
+        aria-label={t.closeCart}
         aria-hidden={!drawerOpen}
         tabIndex={drawerOpen ? 0 : -1}
         className={cn(
@@ -91,7 +142,7 @@ export function CartDrawer() {
         id="cart-drawer"
         role="dialog"
         aria-modal="true"
-        aria-label="Shopping cart"
+        aria-label={t.shoppingCart}
         aria-hidden={!drawerOpen}
         className={cn(
           "fixed inset-y-0 right-0 z-[121] flex w-full max-w-md flex-col border-l border-ink/10 bg-paper shadow-[-24px_0_80px_rgb(11_11_11_/_0.12)] transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none",
@@ -100,9 +151,9 @@ export function CartDrawer() {
       >
         <div className="flex items-center justify-between border-b border-ink/10 px-5 py-5 sm:px-6">
           <div>
-            <p className="heading-section">Cart</p>
-            <p className="mt-2 font-display text-sm font-bold uppercase tracking-aggressive text-ink">
-              {itemCount} {itemCount === 1 ? "item" : "items"}
+            <p className="heading-section">{dict.checkout.yourCart}</p>
+            <p className="mt-2 font-body text-sm font-bold uppercase tracking-aggressive text-ink">
+              {itemCount} {itemCount === 1 ? t.item : t.items}
             </p>
           </div>
           <button
@@ -110,33 +161,33 @@ export function CartDrawer() {
             onClick={closeCart}
             className="inline-flex size-10 items-center justify-center text-ink/50 transition-colors hover:text-accent"
           >
-            <span className="sr-only">Close cart</span>
+            <span className="sr-only">{t.closeCart}</span>
             <CloseIcon />
           </button>
         </div>
 
         {itemCount === 0 ? (
           <div className="flex flex-1 flex-col items-center justify-center px-6 py-12 text-center">
-            <p className="font-display text-xl font-extrabold uppercase tracking-tight text-ink">
-              Your cart is empty
+            <p className="font-body text-xl font-extrabold uppercase tracking-tight text-ink">
+              {t.emptyTitle}
             </p>
             <p className="mt-3 max-w-xs text-sm text-ink/60">
-              Add gear or a motorcycle — checkout takes under a minute.
+              {t.emptyBody}
             </p>
             <div className="mt-8 flex w-full max-w-xs flex-col gap-3">
               <Link
-                href="/shop/equipment"
+                href={localizedHref(locale, "/shop/equipment")}
                 onClick={closeCart}
                 className="btn-accent justify-center"
               >
-                Shop equipment
+                {t.shopEquipment}
               </Link>
               <Link
-                href="/shop/motorcycles"
+                href={localizedHref(locale, "/shop/motorcycles")}
                 onClick={closeCart}
                 className="btn-ghost justify-center"
               >
-                Shop motorcycles
+                {t.shopMotorcycles}
               </Link>
             </div>
           </div>
@@ -157,7 +208,7 @@ export function CartDrawer() {
                     className="flex gap-4 py-5 first:pt-5"
                   >
                     <Link
-                      href={`/shop/product/${line.slug}`}
+                      href={localizedHref(locale, `/shop/product/${line.slug}`)}
                       onClick={closeCart}
                       className={cn(
                         "relative w-20 shrink-0 overflow-hidden rounded-sm border border-ink/10",
@@ -177,12 +228,12 @@ export function CartDrawer() {
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
                           {line.brand ? (
-                            <p className="font-display text-[10px] font-bold uppercase tracking-aggressive text-ink/45">
+                            <p className="font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/45">
                               {line.brand}
                             </p>
                           ) : null}
                           <Link
-                            href={`/shop/product/${line.slug}`}
+                            href={localizedHref(locale, `/shop/product/${line.slug}`)}
                             onClick={closeCart}
                             className="mt-1 block truncate text-sm font-bold leading-snug hover:text-accent"
                           >
@@ -190,25 +241,23 @@ export function CartDrawer() {
                           </Link>
                           {line.size ? (
                             <p className="mt-1 text-xs text-ink/55">
-                              Size: {line.size}
+                              {t.size}: {line.size}
                             </p>
                           ) : null}
                           {line.color ? (
                             <p className="text-xs text-ink/55">
-                              Colour: {line.color}
+                              {t.color}: {line.color}
                             </p>
                           ) : null}
                         </div>
-                        <p className="shrink-0 font-display text-sm font-bold tabular-nums">
-                          {formatPrice(lineTotal)}
-                        </p>
+                        <Price value={lineTotal} variant="sm" as="p" className="shrink-0" />
                       </div>
 
                       <div className="mt-3 flex items-center gap-3">
                         <div className="flex items-center border border-ink/15">
                           <button
                             type="button"
-                            aria-label="Decrease quantity"
+                            aria-label={t.decreaseQty}
                             onClick={() =>
                               updateQuantity(
                                 line.slug,
@@ -225,7 +274,7 @@ export function CartDrawer() {
                           </span>
                           <button
                             type="button"
-                            aria-label="Increase quantity"
+                            aria-label={t.increaseQty}
                             onClick={() =>
                               updateQuantity(
                                 line.slug,
@@ -243,7 +292,7 @@ export function CartDrawer() {
                           onClick={() => removeItem(line.slug, line.size)}
                           className="text-xs text-ink/45 underline-offset-2 hover:text-accent hover:underline"
                         >
-                          Remove
+                          {t.remove}
                         </button>
                       </div>
                     </div>
@@ -261,43 +310,43 @@ export function CartDrawer() {
             <div className="border-t border-ink/10 bg-surface/50 px-5 py-5 sm:px-6">
               <dl className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <dt className="text-ink/65">Subtotal</dt>
-                  <dd className="font-bold tabular-nums">
+                  <dt className="text-ink/65">{t.subtotal}</dt>
+                  <dd className="font-body font-extrabold tabular-nums">
                     {formatPrice(subtotal)}
                   </dd>
                 </div>
                 <div className="flex justify-between">
-                  <dt className="text-ink/65">Shipping</dt>
-                  <dd className="font-bold tabular-nums">
-                    {shipping === 0 ? "Free" : formatPrice(shipping)}
+                  <dt className="text-ink/65">{t.shipping}</dt>
+                  <dd className="font-body font-extrabold tabular-nums">
+                    {shipping === 0 ? t.free : formatPrice(shipping)}
                   </dd>
                 </div>
                 {subtotal > 0 && subtotal < SHIPPING_THRESHOLD ? (
                   <p className="text-xs text-ink/50">
-                    Free shipping over {formatPrice(SHIPPING_THRESHOLD)}
+                    {t.freeShippingOver} {formatPrice(SHIPPING_THRESHOLD)}
                   </p>
                 ) : null}
                 <div className="flex justify-between border-t border-ink/10 pt-3 text-base">
-                  <dt className="font-bold">Total</dt>
-                  <dd className="font-display font-bold tabular-nums">
-                    {formatPrice(total)}
+                  <dt className="font-bold">{t.total}</dt>
+                  <dd className="font-body font-bold tabular-nums">
+                    <Price value={total} variant="md" />
                   </dd>
                 </div>
               </dl>
 
               <Link
-                href="/cart"
+                href={localizedHref(locale, "/cart")}
                 onClick={closeCart}
                 className="btn-accent mt-5 w-full justify-center"
               >
-                Checkout
+                {t.checkout}
               </Link>
               <Link
-                href="/shop/equipment"
+                href={localizedHref(locale, "/shop/equipment")}
                 onClick={closeCart}
-                className="mt-3 block text-center font-display text-[10px] font-bold uppercase tracking-aggressive text-ink/50 transition-colors hover:text-accent"
+                className="mt-3 block text-center font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/50 transition-colors hover:text-accent"
               >
-                Continue shopping
+                {t.continueShopping}
               </Link>
             </div>
           </>

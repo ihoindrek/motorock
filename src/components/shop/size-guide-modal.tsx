@@ -98,12 +98,12 @@ export function SizeGuideModal({
       >
         <div className="flex items-start justify-between gap-4 border-b border-ink/10 px-5 py-5 sm:px-6">
           <div>
-            <p className="font-display text-[10px] font-bold uppercase tracking-aggressive text-accent">
+            <p className="font-body text-[10px] font-bold uppercase tracking-aggressive text-accent">
               Size guide
             </p>
             <h2
               id="size-guide-title"
-              className="mt-2 font-display text-lg font-extrabold uppercase leading-tight tracking-tight text-ink"
+              className="mt-2 text-lg font-extrabold uppercase leading-tight tracking-tight text-ink"
             >
               {guide.title}
             </h2>
@@ -129,7 +129,7 @@ export function SizeGuideModal({
               <tr className="border-b border-ink/10">
                 <th
                   scope="col"
-                  className="pb-3 pr-4 font-display text-[10px] font-bold uppercase tracking-aggressive text-ink/45"
+                  className="pb-3 pr-4 font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/45"
                 >
                   Size
                 </th>
@@ -137,7 +137,7 @@ export function SizeGuideModal({
                   <th
                     key={column.key}
                     scope="col"
-                    className="pb-3 pr-4 font-display text-[10px] font-bold uppercase tracking-aggressive text-ink/45 last:pr-0"
+                    className="pb-3 pr-4 font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/45 last:pr-0"
                   >
                     {column.label}
                     <span className="ml-1 font-normal normal-case text-ink/35">
@@ -163,7 +163,7 @@ export function SizeGuideModal({
                     <th
                       scope="row"
                       className={cn(
-                        "py-3 pr-4 font-display text-xs font-bold uppercase tracking-aggressive",
+                        "py-3 pr-4 font-body text-xs font-bold uppercase tracking-aggressive",
                         isSelected ? "text-accent" : "text-ink",
                       )}
                     >

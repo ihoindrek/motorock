@@ -67,13 +67,13 @@ function CatalogSortSelect({
 }) {
   return (
     <label className="flex shrink-0 items-center gap-2">
-      <span className="font-display text-xs font-bold uppercase tracking-aggressive text-ink/50">
+      <span className="font-body text-xs font-bold uppercase tracking-aggressive text-ink/50">
         Sort
       </span>
       <select
         value={value}
         onChange={(event) => onChange(event.target.value as SortOption)}
-        className="min-h-12 border border-ink/15 bg-paper px-4 py-3 font-display text-xs font-bold uppercase tracking-aggressive text-ink focus:border-accent focus:outline-none"
+        className="min-h-12 border border-ink/15 bg-paper px-4 py-3 font-body text-xs font-bold uppercase tracking-aggressive text-ink focus:border-accent focus:outline-none"
       >
         {showMidRangeSort ? (
           <option value="price-mid">Mid-range</option>
@@ -271,7 +271,7 @@ export function CategoryView({
     >
       <div className="site-container relative z-10 py-8 lg:py-12">
       <nav aria-label="Breadcrumb" className="mb-6">
-        <ol className="flex flex-wrap items-center gap-2 font-display text-[10px] font-bold uppercase tracking-aggressive text-ink/50">
+        <ol className="flex flex-wrap items-center gap-2 font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/50">
           {route.breadcrumbs.map((crumb, index) => (
             <li key={crumb.href} className="flex items-center gap-2">
               {index > 0 ? <span aria-hidden="true">/</span> : null}
@@ -311,7 +311,7 @@ export function CategoryView({
           >
             {route.title}
           </h1>
-          <p className="font-display text-sm text-ink/50">
+          <p className="font-body text-sm text-ink/50">
             <span className="font-bold text-ink">{filteredProducts.length}</span>{" "}
             {filteredProducts.length === 1 ? "product" : "products"}
           </p>
@@ -333,7 +333,7 @@ export function CategoryView({
       <div className="mb-6 flex items-center justify-end gap-3 lg:hidden">
         <button
           type="button"
-          className={`inline-flex min-h-12 items-center gap-2.5 border border-ink/15 px-5 py-3 font-display text-xs font-bold uppercase tracking-aggressive text-ink transition-colors hover:border-accent hover:text-accent ${
+          className={`inline-flex min-h-12 items-center gap-2.5 border border-ink/15 px-5 py-3 font-body text-xs font-bold uppercase tracking-aggressive text-ink transition-colors hover:border-accent hover:text-accent ${
             useBrandLogos ? "" : "bg-paper"
           }`}
           onClick={() => setMobileFiltersOpen(true)}
@@ -404,7 +404,7 @@ export function CategoryView({
         </>
       ) : (
         <div className="flex min-h-[20rem] flex-col items-start justify-center border border-dashed border-ink/15 bg-surface/50 p-8">
-          <p className="font-display text-sm font-bold uppercase tracking-aggressive text-ink">
+          <p className="font-body text-sm font-bold uppercase tracking-aggressive text-ink">
             No products found
           </p>
           <p className="mt-2 max-w-sm text-sm text-ink/60">
@@ -413,7 +413,7 @@ export function CategoryView({
           <button
             type="button"
             onClick={clearFilters}
-            className="mt-4 font-display text-[10px] font-bold uppercase tracking-aggressive text-accent"
+            className="mt-4 font-body text-[10px] font-bold uppercase tracking-aggressive text-accent"
           >
             Clear filters
           </button>

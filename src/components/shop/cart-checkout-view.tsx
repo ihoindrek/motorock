@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useCart, type CartLine } from "@/context/cart-context";
 import { useCheckoutStep } from "@/context/checkout-step-context";
+import { useDictionary, useLocale } from "@/context/locale-context";
+import { localizedHref } from "@/i18n/paths";
 import {
   countryLabel,
   useCheckoutShipping,
@@ -26,6 +28,7 @@ import {
 } from "@/components/shop/checkout-shipping-options";
 import { cartLineThumbnailClass } from "@/lib/shop/cart-line-image";
 import { formatPrice } from "@/lib/shop/category";
+import { Price } from "@/components/shop/price";
 import { cartHasEquipment } from "@/lib/shop/cart-has-equipment";
 import { defaultLocationForCountry } from "@/lib/shop/countries";
 import { cn } from "@/lib/utils";
@@ -40,9 +43,9 @@ const inputClassName =
   "mt-2 w-full border border-ink/15 bg-paper px-4 py-3 text-base focus:border-accent focus:outline-none";
 
 const labelClassName =
-  "font-display text-[10px] font-bold uppercase tracking-aggressive text-ink/50";
+  "font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/50";
 
-function friendlyCheckoutError(message: string | null) {
+function friendlyCheckoutError(message: string | null, fallback: string) {
   if (!message) {
     return null;
   }
@@ -52,7 +55,7 @@ function friendlyCheckoutError(message: string | null) {
     message.includes("HTTP") ||
     message.includes("Internal server")
   ) {
-    return "Something went wrong loading delivery options. Please try again.";
+    return fallback;
   }
 
   return message;
@@ -70,7 +73,7 @@ function CheckoutBlock({
   return (
     <section className="border-t border-ink/10 py-8 first:border-t-0 first:pt-0 lg:py-10">
       <div className="mb-5 flex items-end justify-between gap-4">
-        <h2 className="font-display text-lg font-extrabold uppercase tracking-tight text-ink sm:text-xl">
+        <h2 className="font-body text-lg font-extrabold uppercase tracking-tight text-ink sm:text-xl">
           {title}
         </h2>
         {action}
@@ -85,11 +88,15 @@ function CartQuantityControl({
   onDecrease,
   onIncrease,
   compact = false,
+  decreaseLabel,
+  increaseLabel,
 }: {
   value: number;
   onDecrease: () => void;
   onIncrease: () => void;
   compact?: boolean;
+  decreaseLabel: string;
+  increaseLabel: string;
 }) {
   return (
     <div
@@ -100,7 +107,7 @@ function CartQuantityControl({
     >
       <button
         type="button"
-        aria-label="Decrease quantity"
+        aria-label={decreaseLabel}
         onClick={onDecrease}
         className={cn(
           "absolute left-4 top-1/2 z-[2] -translate-y-1/2 leading-none text-ink transition-colors hover:text-accent",
@@ -119,7 +126,7 @@ function CartQuantityControl({
       </div>
       <button
         type="button"
-        aria-label="Increase quantity"
+        aria-label={increaseLabel}
         onClick={onIncrease}
         className={cn(
           "absolute right-4 top-1/2 z-[2] -translate-y-1/2 leading-none text-ink transition-colors hover:text-accent",
@@ -132,10 +139,14 @@ function CartQuantityControl({
   );
 }
 
-function CartLineMeta({ line }: { line: CartLine }) {
+function CartLineMeta({ line, locale }: { line: CartLine; locale: "en" | "et" }) {
+  const labels =
+    locale === "et"
+      ? { size: "Suurus", color: "Värv" }
+      : { size: "Size", color: "Colour" };
   const parts = [
-    line.size ? `Size: ${line.size}` : null,
-    line.color ? `Colour: ${line.color}` : null,
+    line.size ? `${labels.size}: ${line.size}` : null,
+    line.color ? `${labels.color}: ${line.color}` : null,
   ].filter(Boolean);
 
   if (parts.length === 0) {
@@ -150,11 +161,23 @@ function CheckoutCartTable({
   onDecrease,
   onIncrease,
   onRemove,
+  locale,
+  labels,
 }: {
   lines: CartLine[];
   onDecrease: (line: CartLine) => void;
   onIncrease: (line: CartLine) => void;
   onRemove: (line: CartLine) => void;
+  locale: "en" | "et";
+  labels: {
+    remove: string;
+    image: string;
+    product: string;
+    quantity: string;
+    sum: string;
+    decrease: string;
+    increase: string;
+  };
 }) {
   return (
     <>
@@ -192,7 +215,7 @@ function CheckoutCartTable({
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
                     {line.brand ? (
-                      <p className="font-display text-[10px] font-bold uppercase tracking-aggressive text-ink/45">
+                      <p className="font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/45">
                         {line.brand}
                       </p>
                     ) : null}
@@ -202,11 +225,9 @@ function CheckoutCartTable({
                     >
                       {line.name}
                     </Link>
-                    <CartLineMeta line={line} />
+                    <CartLineMeta line={line} locale={locale} />
                   </div>
-                  <p className="shrink-0 font-display text-sm font-extrabold tabular-nums">
-                    {formatPrice(lineTotal)}
-                  </p>
+                  <Price value={lineTotal} variant="sm" as="p" className="shrink-0" />
                 </div>
 
                 <div className="mt-3 flex items-center justify-between gap-3">
@@ -215,13 +236,15 @@ function CheckoutCartTable({
                     value={line.quantity}
                     onDecrease={() => onDecrease(line)}
                     onIncrease={() => onIncrease(line)}
+                    decreaseLabel={labels.decrease}
+                    increaseLabel={labels.increase}
                   />
                   <button
                     type="button"
                     onClick={() => onRemove(line)}
                     className="text-xs text-ink/45 hover:text-accent"
                   >
-                    Remove
+                    {labels.remove}
                   </button>
                 </div>
               </div>
@@ -232,12 +255,12 @@ function CheckoutCartTable({
 
       <div className="hidden overflow-hidden bg-surface/80 md:block">
         <div className="grid grid-cols-[120px_minmax(0,1fr)_120px_100px] items-end gap-x-6 border-b border-ink/10 px-5 py-4">
-          <span className="sr-only">Image</span>
-          <span className="text-sm font-semibold text-ink/55">Product</span>
+          <span className="sr-only">{labels.image}</span>
+          <span className="text-sm font-semibold text-ink/55">{labels.product}</span>
           <span className="text-center text-sm font-semibold text-ink/55">
-            Quantity
+            {labels.quantity}
           </span>
-          <span className="text-right text-sm font-semibold text-ink/55">Sum</span>
+          <span className="text-right text-sm font-semibold text-ink/55">{labels.sum}</span>
         </div>
 
         <ul className="divide-y divide-ink/10">
@@ -272,7 +295,7 @@ function CheckoutCartTable({
 
                 <div className="min-w-0">
                   {line.brand ? (
-                    <p className="font-display text-[10px] font-bold uppercase tracking-aggressive text-ink/45">
+                    <p className="font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/45">
                       {line.brand}
                     </p>
                   ) : null}
@@ -282,13 +305,13 @@ function CheckoutCartTable({
                   >
                     {line.name}
                   </Link>
-                  <CartLineMeta line={line} />
+                  <CartLineMeta line={line} locale={locale} />
                   <button
                     type="button"
                     onClick={() => onRemove(line)}
                     className="mt-2 text-sm font-medium text-ink/50 transition-colors hover:text-accent"
                   >
-                    Remove
+                    {labels.remove}
                   </button>
                 </div>
 
@@ -296,11 +319,11 @@ function CheckoutCartTable({
                   value={line.quantity}
                   onDecrease={() => onDecrease(line)}
                   onIncrease={() => onIncrease(line)}
+                  decreaseLabel={labels.decrease}
+                  increaseLabel={labels.increase}
                 />
 
-                <p className="text-right font-display text-lg font-extrabold tabular-nums text-ink">
-                  {formatPrice(lineTotal)}
-                </p>
+                <Price value={lineTotal} variant="lg" as="p" className="text-right" />
               </li>
             );
           })}
@@ -311,6 +334,90 @@ function CheckoutCartTable({
 }
 
 export function CartCheckoutView() {
+  const dict = useDictionary();
+  const locale = useLocale();
+  const t =
+    locale === "et"
+      ? {
+          orderConfirmed: "Tellimus kinnitatud",
+          thankYou: "Aitäh",
+          deliveryChosen: "sinu valitud tarnega",
+          confirmationSent: "Saatsime kinnituse aadressile",
+          demoNotice:
+            "Ainult demo checkout — tellimust ei loodud ja makset ei võetud.",
+          backToHome: "Tagasi avalehele",
+          emptyCart: "Sinu ostukorv on hetkel tühi.",
+          backToShop: "Tagasi poodi",
+          browseMotorcycles: "Sirvi mootorrattaid",
+          checkout: "Kassa",
+          item: "toode",
+          items: "toodet",
+          total: "kokku",
+          continueShopping: "Jätka ostlemist",
+          haveDiscountCode: "Kas sul on sooduskood?",
+          apply: "Rakenda",
+          email: "E-post",
+          country: "Riik",
+          deliveryMethod: "Tarneviis",
+          noDeliveryOptions: "Sellesse riiki tarneviisid puuduvad:",
+          updatingPrices: "Uuendan hindu…",
+          pickupAtPayment: "Pakiautomaadi valik tehakse turvaliselt makses.",
+          streetAddress: "Tänava aadress",
+          city: "Linn",
+          postcode: "Postiindeks",
+          firstName: "Eesnimi",
+          lastName: "Perekonnanimi",
+          phone: "Telefon",
+          remove: "Eemalda",
+          product: "Toode",
+          quantity: "Kogus",
+          sum: "Summa",
+          image: "Pilt",
+          termsPrefix: "Nõustun",
+          termsLink: "tingimustega",
+          securePayment:
+            "Turvaline makse Montonioga — pank, kaart, maksa hiljem ja järelmaks",
+        }
+      : {
+          orderConfirmed: "Order confirmed",
+          thankYou: "Thank you",
+          deliveryChosen: "your chosen delivery",
+          confirmationSent: "We sent a confirmation to",
+          demoNotice:
+            "Demo checkout only — no order was placed and no payment was taken.",
+          backToHome: "Back to home",
+          emptyCart: "Your cart is currently empty.",
+          backToShop: "Back to shop",
+          browseMotorcycles: "Browse motorcycles",
+          checkout: "Checkout",
+          item: "item",
+          items: "items",
+          total: "total",
+          continueShopping: "Continue shopping",
+          haveDiscountCode: "Have a discount code?",
+          apply: "Apply",
+          email: "Email",
+          country: "Country",
+          deliveryMethod: "Delivery method",
+          noDeliveryOptions: "No delivery options for",
+          updatingPrices: "Updating prices…",
+          pickupAtPayment: "Pickup point is selected securely at payment.",
+          streetAddress: "Street address",
+          city: "City",
+          postcode: "Postcode",
+          firstName: "First name",
+          lastName: "Last name",
+          phone: "Phone",
+          remove: "Remove",
+          product: "Product",
+          quantity: "Quantity",
+          sum: "Sum",
+          image: "Image",
+          termsPrefix: "I agree to the",
+          termsLink: "terms & conditions",
+          securePayment:
+            "Secure payment via Montonio — bank, card, pay later & järelmaks",
+        };
   const { lines, itemCount, subtotal, updateQuantity, removeItem, clearCart } =
     useCart();
   const [firstName, setFirstName] = useState("");
@@ -373,7 +480,10 @@ export function CartCheckoutView() {
   ]);
 
   const canSubmit = termsAccepted && deliveryReady;
-  const shippingError = friendlyCheckoutError(shipping.error);
+  const shippingError = friendlyCheckoutError(
+    shipping.error,
+    dict.checkout.shippingError,
+  );
 
   useEffect(() => {
     if (itemCount === 0 || orderId) {
@@ -436,8 +546,9 @@ export function CartCheckoutView() {
     } catch (cause) {
       setSubmitError(
         cause instanceof Error
-          ? friendlyCheckoutError(cause.message) ?? cause.message
-          : "Payment could not be started. Please try again.",
+          ? friendlyCheckoutError(cause.message, dict.checkout.paymentError) ??
+            cause.message
+          : dict.checkout.paymentError,
       );
     } finally {
       setSubmitting(false);
@@ -447,22 +558,22 @@ export function CartCheckoutView() {
   if (orderId) {
     return (
       <div className="site-container py-16 text-center lg:py-24">
-        <p className="section-eyebrow text-accent">Order confirmed</p>
+        <p className="section-eyebrow text-accent">{t.orderConfirmed}</p>
         <h1 className="mt-2 text-3xl font-extrabold uppercase sm:text-4xl">
-          Thank you
+          {t.thankYou}
         </h1>
         <p className="mx-auto mt-4 max-w-lg text-ink/70">
           Order <span className="font-bold text-ink">{orderId}</span> is on its
-          way via {shipping.selectedRate?.label ?? "your chosen delivery"}.
-          We sent a confirmation to {email}.
+          way via {shipping.selectedRate?.label ?? t.deliveryChosen}.{" "}
+          {t.confirmationSent} {email}.
         </p>
         {!isLiveCheckoutEnabled() ? (
           <p className="mx-auto mt-3 max-w-lg text-sm text-ink/55">
-            Demo checkout only — no order was placed and no payment was taken.
+            {t.demoNotice}
           </p>
         ) : null}
-        <Link href="/" className="btn-accent mt-10 inline-flex">
-          Back to home
+        <Link href={localizedHref(locale, "/")} className="btn-accent mt-10 inline-flex">
+          {t.backToHome}
         </Link>
       </div>
     );
@@ -473,14 +584,14 @@ export function CartCheckoutView() {
       <div className="site-container py-16 lg:py-24">
         <div className="mx-auto max-w-3xl rounded-sm border border-ink/10 bg-surface/50 p-7 sm:p-8">
           <p className="text-lg font-semibold text-ink">
-            Your cart is currently empty.
+            {t.emptyCart}
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
-            <Link href="/shop/equipment" className="btn-accent">
-              Back to shop
+            <Link href={localizedHref(locale, "/shop/equipment")} className="btn-accent">
+              {t.backToShop}
             </Link>
-            <Link href="/shop/motorcycles" className="btn-ghost">
-              Browse motorcycles
+            <Link href={localizedHref(locale, "/shop/motorcycles")} className="btn-ghost">
+              {t.browseMotorcycles}
             </Link>
           </div>
         </div>
@@ -507,24 +618,27 @@ export function CartCheckoutView() {
     <div className="site-container pb-28 pt-8 lg:pb-14 lg:pt-10">
       <header className="mb-6 max-w-2xl">
         <h1 className="text-3xl font-extrabold uppercase sm:text-4xl">
-          Checkout
+          {t.checkout}
         </h1>
         <p className="mt-2 text-sm text-ink/60">
-          {itemCount} {itemCount === 1 ? "item" : "items"} ·{" "}
-          {formatPrice(displayTotal)} total
+          {itemCount} {itemCount === 1 ? t.item : t.items} ·{" "}
+          <span className="font-body font-extrabold tabular-nums text-ink">
+            {formatPrice(displayTotal)}
+          </span>{" "}
+          {t.total}
         </p>
       </header>
 
       <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(18rem,22rem)] lg:items-start lg:gap-12 xl:gap-16">
         <div className="min-w-0">
           <CheckoutBlock
-            title="Your cart"
+            title={dict.checkout.yourCart}
             action={
               <Link
-                href="/shop/equipment"
+                href={localizedHref(locale, "/shop/equipment")}
                 className="text-xs font-medium text-ink/45 hover:text-accent"
               >
-                Continue shopping
+                {t.continueShopping}
               </Link>
             }
           >
@@ -537,28 +651,38 @@ export function CartCheckoutView() {
                 updateQuantity(line.slug, line.quantity + 1, line.size)
               }
               onRemove={(line) => removeItem(line.slug, line.size)}
+              locale={locale}
+              labels={{
+                remove: t.remove,
+                image: t.image,
+                product: t.product,
+                quantity: t.quantity,
+                sum: t.sum,
+                decrease: dict.checkout.decreaseQty,
+                increase: dict.checkout.increaseQty,
+              }}
             />
             <details className="mt-6 border-t border-ink/10 pt-5">
               <summary className="cursor-pointer text-sm font-medium text-ink/55 hover:text-ink">
-                Have a discount code?
+                {t.haveDiscountCode}
               </summary>
               <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center">
                 <label className="sr-only" htmlFor="coupon_code">
-                  Discount code
+                  {dict.checkout.discountCode}
                 </label>
                 <input
                   id="coupon_code"
                   type="text"
                   value={couponCode}
                   onChange={(event) => setCouponCode(event.target.value)}
-                  placeholder="Discount code"
+                  placeholder={dict.checkout.discountCode}
                   className="w-full border border-ink/15 bg-paper px-4 py-3 text-base focus:border-accent focus:outline-none sm:max-w-xs"
                 />
                 <button
                   type="button"
                   className="inline-flex min-h-11 items-center justify-center border border-ink/20 px-5 text-xs font-bold uppercase tracking-aggressive text-ink/70"
                 >
-                  Apply
+                  {t.apply}
                 </button>
               </div>
             </details>
@@ -575,11 +699,11 @@ export function CartCheckoutView() {
           </CheckoutBlock>
 
           <form id={FORM_ID} onSubmit={handleSubmit}>
-            <CheckoutBlock title="Delivery & contact">
+            <CheckoutBlock title={dict.checkout.deliveryContact}>
               <div className="space-y-6">
                 <div className="grid gap-4 sm:grid-cols-2">
                   <label className="block">
-                    <span className={labelClassName}>Email</span>
+                    <span className={labelClassName}>{t.email}</span>
                     <input
                       type="email"
                       name="email"
@@ -592,7 +716,7 @@ export function CartCheckoutView() {
                   </label>
 
                   <label className="block">
-                    <span className={labelClassName}>Country</span>
+                    <span className={labelClassName}>{t.country}</span>
                     <select
                       name="country"
                       required
@@ -618,7 +742,7 @@ export function CartCheckoutView() {
                 ) : null}
 
                 <div>
-                  <p className={labelClassName}>Delivery method</p>
+                  <p className={labelClassName}>{t.deliveryMethod}</p>
                   <div className="mt-2">
                     {shipping.loading ? (
                       <CheckoutShippingOptionsSkeleton />
@@ -626,7 +750,7 @@ export function CartCheckoutView() {
                       <p className="text-sm text-accent">{shippingError}</p>
                     ) : shipping.rates.length === 0 ? (
                       <p className="text-sm text-ink/60">
-                        No delivery options for {countryLabel(shipping.country)}.
+                        {t.noDeliveryOptions} {countryLabel(shipping.country)}.
                       </p>
                     ) : (
                       <CheckoutShippingOptions
@@ -638,12 +762,12 @@ export function CartCheckoutView() {
                   </div>
                   {shipping.syncing && !shipping.loading ? (
                     <p className="mt-2 text-xs text-ink/40" aria-live="polite">
-                      Updating prices…
+                      {t.updatingPrices}
                     </p>
                   ) : null}
                   {!shipping.needsAddress && shipping.selectedRate ? (
                     <p className="mt-3 text-xs text-ink/50">
-                      Pickup point is selected securely at payment.
+                      {t.pickupAtPayment}
                     </p>
                   ) : null}
                 </div>
@@ -651,7 +775,7 @@ export function CartCheckoutView() {
                 {shipping.needsAddress ? (
                   <div className="grid gap-4 border-t border-ink/10 pt-5 sm:grid-cols-2">
                     <label className="block sm:col-span-2">
-                      <span className={labelClassName}>Street address</span>
+                      <span className={labelClassName}>{t.streetAddress}</span>
                       <input
                         type="text"
                         name="address-line1"
@@ -663,7 +787,7 @@ export function CartCheckoutView() {
                       />
                     </label>
                     <label className="block">
-                      <span className={labelClassName}>City</span>
+                      <span className={labelClassName}>{t.city}</span>
                       <input
                         type="text"
                         name="address-level2"
@@ -675,7 +799,7 @@ export function CartCheckoutView() {
                       />
                     </label>
                     <label className="block">
-                      <span className={labelClassName}>Postcode</span>
+                      <span className={labelClassName}>{t.postcode}</span>
                       <input
                         type="text"
                         name="postal-code"
@@ -691,7 +815,7 @@ export function CartCheckoutView() {
 
                 <div className="grid gap-4 border-t border-ink/10 pt-5 sm:grid-cols-2">
                   <label className="block">
-                    <span className={labelClassName}>First name</span>
+                    <span className={labelClassName}>{t.firstName}</span>
                     <input
                       type="text"
                       name="given-name"
@@ -703,7 +827,7 @@ export function CartCheckoutView() {
                     />
                   </label>
                   <label className="block">
-                    <span className={labelClassName}>Last name</span>
+                    <span className={labelClassName}>{t.lastName}</span>
                     <input
                       type="text"
                       name="family-name"
@@ -715,7 +839,7 @@ export function CartCheckoutView() {
                     />
                   </label>
                   <label className="block sm:col-span-2">
-                    <span className={labelClassName}>Phone</span>
+                    <span className={labelClassName}>{t.phone}</span>
                     <input
                       type="tel"
                       name="phone"
@@ -749,14 +873,14 @@ export function CartCheckoutView() {
                 form={FORM_ID}
               />
               <span>
-                I agree to the{" "}
-                <Link href="/terms" className="text-ink hover:text-accent">
-                  terms & conditions
+                {t.termsPrefix}{" "}
+                <Link href={localizedHref(locale, "/terms")} className="text-ink hover:text-accent">
+                  {t.termsLink}
                 </Link>
               </span>
             </label>
             <ul className="mt-4 space-y-1 text-xs text-ink/55">
-              <li>Secure payment via Montonio — bank, card, pay later & järelmaks</li>
+              <li>{t.securePayment}</li>
               <li className="text-xs text-ink/60">
                 {EQUIPMENT_RETURN_PROMISE.headline}
               </li>

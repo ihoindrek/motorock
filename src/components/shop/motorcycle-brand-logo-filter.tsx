@@ -57,7 +57,7 @@ function BrandLogoButton({
       ) : (
         <span
           className={cn(
-            "relative z-10 font-display text-[10px] font-bold uppercase tracking-aggressive sm:text-xs",
+            "relative z-10 font-body text-[10px] font-bold uppercase tracking-aggressive sm:text-xs",
             selected ? "text-paper" : "text-ink",
           )}
         >
@@ -84,7 +84,7 @@ export function MotorcycleBrandLogoFilter({
   return (
     <div className={isInline ? className : `mb-8 ${className}`.trim()}>
       {!isInline ? (
-        <p className="font-display text-xs font-bold uppercase tracking-aggressive text-ink/45">
+        <p className="font-body text-xs font-bold uppercase tracking-aggressive text-ink/45">
           Brand
         </p>
       ) : null}
@@ -99,7 +99,7 @@ export function MotorcycleBrandLogoFilter({
             onClick={() => onSelectBrand(null)}
             aria-pressed={selectedBrand === null}
             className={cn(
-              "relative flex items-center justify-center overflow-hidden rounded-xl font-display text-[10px] font-bold uppercase tracking-aggressive transition-all duration-200 sm:text-xs",
+              "relative flex items-center justify-center overflow-hidden rounded-xl font-body text-[10px] font-bold uppercase tracking-aggressive transition-all duration-200 sm:text-xs",
               isInline
                 ? "h-12 min-w-[4.75rem] px-3"
                 : "h-14 min-w-[5.5rem] px-4 sm:h-16 sm:min-w-[6.5rem]",

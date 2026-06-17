@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState, useEffect, type ReactNode } from "react";
 import type { CatalogProduct } from "@/types/catalog-product";
 import { useCart } from "@/context/cart-context";
+import { useDictionary, useLocale } from "@/context/locale-context";
+import { localizedHref } from "@/i18n/paths";
 import { formatPrice } from "@/lib/shop/category";
 import { sortProductSizes } from "@/lib/shop/sort-sizes";
 import { SHIPPING_THRESHOLD } from "@/lib/shop/cart-totals";
@@ -47,7 +49,7 @@ function CraftAccordion({
       className="group border-t border-ink/10"
       open={defaultOpen || undefined}
     >
-      <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-4 font-display text-[11px] font-bold uppercase tracking-aggressive text-ink [&::-webkit-details-marker]:hidden">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-4 font-body text-[11px] font-bold uppercase tracking-aggressive text-ink [&::-webkit-details-marker]:hidden">
         {title}
         <span
           className="text-lg font-normal leading-none text-ink/40 transition-transform duration-200 group-open:rotate-45"
@@ -66,6 +68,8 @@ export function EquipmentProductView({
   relatedProducts = [],
 }: EquipmentProductViewProps) {
   const router = useRouter();
+  const locale = useLocale();
+  const dict = useDictionary();
   const { addItem, openCart } = useCart();
   const sizes = useMemo(
     () => sortProductSizes(product.sizes),
@@ -145,12 +149,12 @@ export function EquipmentProductView({
 
   const handleBuyNow = () => {
     addItem(cartPayload);
-    router.push("/cart");
+    router.push(localizedHref(locale, "/cart"));
   };
 
   const handleCheckoutFinancing = () => {
     addItem(cartPayload);
-    router.push("/checkout");
+    router.push(localizedHref(locale, "/checkout"));
   };
 
   return (
@@ -161,8 +165,8 @@ export function EquipmentProductView({
         <nav aria-label="Breadcrumb" className="order-1 max-lg:order-2 lg:hidden">
           <ol className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-ink/45">
             <li>
-              <Link href="/" className="transition-colors hover:text-ink">
-                Home
+              <Link href={localizedHref(locale, "/")} className="transition-colors hover:text-ink">
+                {dict.pdp.breadcrumbHome}
               </Link>
             </li>
             <li aria-hidden="true">/</li>
@@ -181,8 +185,8 @@ export function EquipmentProductView({
           <nav aria-label="Breadcrumb" className="hidden lg:block">
             <ol className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-ink/45">
               <li>
-                <Link href="/" className="transition-colors hover:text-ink">
-                  Home
+                <Link href={localizedHref(locale, "/")} className="transition-colors hover:text-ink">
+                  {dict.pdp.breadcrumbHome}
                 </Link>
               </li>
               <li aria-hidden="true">/</li>
@@ -215,6 +219,7 @@ export function EquipmentProductView({
               productType="equipment"
               productName={product.name}
               variant="compact"
+              priceVariant="xl"
               onCheckout={handleCheckoutFinancing}
             />
             {product.inStock ? (
@@ -223,10 +228,10 @@ export function EquipmentProductView({
                   className="size-1.5 shrink-0 rounded-full bg-emerald-600"
                   aria-hidden="true"
                 />
-                In stock
+                {dict.pdp.inStock}
               </p>
             ) : (
-              <p className="text-xs text-ink/50">Contact us for availability</p>
+              <p className="text-xs text-ink/50">{dict.pdp.contactAvailability}</p>
             )}
           </div>
 
@@ -241,14 +246,14 @@ export function EquipmentProductView({
           {sizes.length > 1 || sizes[0] !== "One size" ? (
             <div>
               <div className="flex items-center justify-between gap-3">
-                <p className="text-xs font-medium text-ink">Size</p>
+                <p className="text-xs font-medium text-ink">{dict.pdp.size}</p>
                 {sizeGuide ? (
                   <button
                     type="button"
                     onClick={() => setSizeGuideOpen(true)}
-                    className="font-display text-[10px] font-bold uppercase tracking-aggressive text-ink/45 underline-offset-2 transition-colors hover:text-accent hover:underline"
+                    className="font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/45 underline-offset-2 transition-colors hover:text-accent hover:underline"
                   >
-                    Size guide
+                    {dict.pdp.sizeGuide}
                   </button>
                 ) : null}
               </div>
@@ -258,7 +263,7 @@ export function EquipmentProductView({
                     key={option}
                     type="button"
                     onClick={() => setSize(option)}
-                    className={`min-h-11 border px-1 py-2 text-center font-display text-xs font-bold uppercase tracking-aggressive transition-colors ${
+                    className={`min-h-11 border px-1 py-2 text-center font-body text-xs font-bold uppercase tracking-aggressive transition-colors ${
                       size === option
                         ? "border-ink bg-ink text-paper"
                         : "border-ink/20 text-ink hover:border-ink"
@@ -279,13 +284,13 @@ export function EquipmentProductView({
               type="button"
               disabled={!product.inStock}
               onClick={handleAdd}
-              className="flex min-h-12 w-full items-center justify-center bg-ink px-6 font-display text-[11px] font-bold uppercase tracking-aggressive text-paper transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-40"
+              className="flex min-h-12 w-full items-center justify-center bg-ink px-6 font-body text-[11px] font-bold uppercase tracking-aggressive text-paper transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-40"
             >
               {product.inStock
                 ? added
-                  ? "Added to cart"
-                  : "Add to cart"
-                : "Sold out"}
+                  ? dict.pdp.addedToCart
+                  : dict.pdp.addToCart
+                : dict.search.soldOut}
             </button>
             {product.inStock ? (
               <button
@@ -337,9 +342,9 @@ export function EquipmentProductView({
             <section aria-labelledby="product-description-heading">
               <h2
                 id="product-description-heading"
-                className="font-display text-[11px] font-bold uppercase tracking-aggressive text-ink"
+                className="font-body text-[11px] font-bold uppercase tracking-aggressive text-ink"
               >
-                Product description
+                {dict.pdp.description}
               </h2>
               {product.descriptionHtml ? (
                 <div
@@ -367,7 +372,7 @@ export function EquipmentProductView({
                   onClick={() => setDescriptionExpanded((open) => !open)}
                   className="mt-3 text-xs font-medium text-ink underline-offset-2 hover:underline"
                 >
-                  {descriptionExpanded ? "Show less" : "Show more"}
+                  {descriptionExpanded ? dict.pdp.readLess : dict.pdp.readMore}
                 </button>
               ) : null}
             </section>
@@ -390,12 +395,12 @@ export function EquipmentProductView({
             ) : null}
 
             {product.specs.length > 0 ? (
-              <CraftAccordion title="Specifications">
+              <CraftAccordion title={dict.pdp.specifications}>
                 <ProductSpecs specs={product.specs} />
               </CraftAccordion>
             ) : null}
 
-            <CraftAccordion title="Delivery & returns">
+            <CraftAccordion title={dict.pdp.shippingReturns}>
               <p className="text-sm leading-relaxed text-ink/65">
                 Standard delivery across Estonia and the EU. Returns accepted on
                 unworn items within 14 days — contact us to arrange a return.

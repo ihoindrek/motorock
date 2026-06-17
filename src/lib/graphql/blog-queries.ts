@@ -24,8 +24,8 @@ const BLOG_POST_CARD_FIELDS = `
 `;
 
 export const BLOG_POSTS_LIST = `
-  query BlogPostsList($first: Int!, $after: String) {
-    contentNodes(first: $first, after: $after, where: { contentTypes: POST }) {
+  query BlogPostsList($first: Int!, $after: String, $language: LanguageCodeFilterEnum) {
+    contentNodes(first: $first, after: $after, where: { contentTypes: POST, language: $language }) {
       pageInfo {
         hasNextPage
         endCursor

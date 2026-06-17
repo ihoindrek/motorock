@@ -75,7 +75,7 @@ export function ProductSpecs({
         >
           <SpecIcon id={spec.id} />
           <p
-            className={`mt-3 font-display text-[10px] font-bold uppercase tracking-aggressive ${
+            className={`mt-3 font-body text-[10px] font-bold uppercase tracking-aggressive ${
               isDark ? "text-paper/40" : "text-ink/50"
             }`}
           >

@@ -378,10 +378,14 @@ export function sortProducts(
   }
 }
 
-export function formatPrice(price: number) {
-  return new Intl.NumberFormat("et-EE", {
+export function formatPrice(price: number, locale: "en" | "et" = "et") {
+  const intlLocale = locale === "et" ? "et-EE" : "en-GB";
+
+  return new Intl.NumberFormat(intlLocale, {
     style: "currency",
     currency: "EUR",
     maximumFractionDigits: 0,
-  }).format(price);
+  })
+    .format(price)
+    .replace(/ /g, "\u00a0");
 }

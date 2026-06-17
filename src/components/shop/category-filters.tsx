@@ -39,7 +39,7 @@ type CategoryFiltersProps = {
 type OpenFilter = "category" | "brand" | "size" | "price" | null;
 
 const filterTriggerBase =
-  "inline-flex min-h-12 items-center gap-2.5 border px-5 py-3 font-display text-xs font-bold uppercase tracking-aggressive transition-colors";
+  "inline-flex min-h-12 items-center gap-2.5 border px-5 py-3 font-body text-xs font-bold uppercase tracking-aggressive transition-colors";
 
 function ChevronIcon({ open }: { open: boolean }) {
   return (
@@ -121,7 +121,7 @@ function FilterSection({
 }) {
   return (
     <section className="border-b border-ink/10 py-6">
-      <h3 className="font-display text-xs font-bold uppercase tracking-aggressive text-ink/50">
+      <h3 className="font-body text-xs font-bold uppercase tracking-aggressive text-ink/50">
         {title}
       </h3>
       <div className="mt-4">{children}</div>
@@ -174,7 +174,7 @@ function SizeControls({
             key={size}
             type="button"
             onClick={() => onToggleSize(size)}
-            className={`min-h-11 min-w-11 border px-3 py-2.5 font-display text-xs font-bold uppercase tracking-wide transition-colors ${
+            className={`min-h-11 min-w-11 border px-3 py-2.5 font-body text-xs font-bold uppercase tracking-wide transition-colors ${
               selected
                 ? "border-accent bg-accent text-paper"
                 : "border-ink/15 bg-white text-ink hover:border-accent hover:text-accent"
@@ -202,7 +202,7 @@ function PriceControls({
   onPriceMaxChange: (value: number) => void;
 }) {
   const inputClassName =
-    "w-full border border-ink/15 bg-white px-4 py-3 font-display text-sm font-bold text-ink transition-colors focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20";
+    "w-full border border-ink/15 bg-white px-4 py-3 font-body text-sm font-bold text-ink transition-colors focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20";
 
   const clampMin = (value: number) =>
     Math.min(Math.max(value, priceBounds.min), activeFilters.priceMax);
@@ -235,7 +235,7 @@ function PriceControls({
           }
           className={inputClassName}
         />
-        <span className="font-display text-xs font-bold text-ink/25" aria-hidden="true">
+        <span className="font-body text-xs font-bold text-ink/25" aria-hidden="true">
           —
         </span>
         <label className="sr-only" htmlFor={`price-max-${variant}`}>
@@ -484,7 +484,7 @@ export function CategoryFilters({
               onClear();
               setOpenFilter(null);
             }}
-            className="min-h-12 font-display text-xs font-bold uppercase tracking-aggressive text-ink/50 transition-colors hover:text-accent"
+            className="min-h-12 font-body text-xs font-bold uppercase tracking-aggressive text-ink/50 transition-colors hover:text-accent"
           >
             Clear all ({activeFilterCount})
           </button>
@@ -496,13 +496,13 @@ export function CategoryFilters({
   return (
     <div className="flex flex-col">
       <div className="flex items-center justify-between border-b border-ink/10 pb-5">
-        <p className="font-display text-sm font-bold uppercase tracking-aggressive text-ink">
+        <p className="font-body text-sm font-bold uppercase tracking-aggressive text-ink">
           Filters
         </p>
         <button
           type="button"
           onClick={onClear}
-          className="font-display text-xs font-bold uppercase tracking-aggressive text-ink/50 transition-colors hover:text-accent"
+          className="font-body text-xs font-bold uppercase tracking-aggressive text-ink/50 transition-colors hover:text-accent"
         >
           Clear all
         </button>

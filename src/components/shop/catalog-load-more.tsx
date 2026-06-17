@@ -66,12 +66,12 @@ export function CatalogLoadMore({
           onClick={loadMore}
           disabled={isPending}
           aria-busy={isPending}
-          className="rounded-full border border-ink/20 bg-white px-8 py-3 font-display text-[10px] font-bold uppercase tracking-aggressive text-ink transition-[color,border-color,opacity,transform] duration-300 hover:border-accent hover:text-accent disabled:cursor-default disabled:opacity-60 motion-safe:active:scale-[0.98]"
+          className="rounded-full border border-ink/20 bg-white px-8 py-3 font-body text-[10px] font-bold uppercase tracking-aggressive text-ink transition-[color,border-color,opacity,transform] duration-300 hover:border-accent hover:text-accent disabled:cursor-default disabled:opacity-60 motion-safe:active:scale-[0.98]"
         >
           {isPending ? "Loading…" : "Load more products"}
         </button>
       ) : (
-        <p className="font-display text-[10px] font-bold uppercase tracking-aggressive text-ink/40">
+        <p className="font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/40">
           All products loaded
         </p>
       )}

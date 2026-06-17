@@ -3,11 +3,10 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { equipmentMegaMenu } from "@/data/navigation";
-
-const { columns, promo } = equipmentMegaMenu;
+import type { NavColumn, MegaMenu } from "@/data/navigation";
 
 type EquipmentMegaMenuProps = {
+  megaMenu: MegaMenu;
   open: boolean;
   onMouseEnter: () => void;
   onMouseLeave: () => void;
@@ -15,11 +14,13 @@ type EquipmentMegaMenuProps = {
 };
 
 export function EquipmentMegaMenu({
+  megaMenu,
   open,
   onMouseEnter,
   onMouseLeave,
   onNavigate,
 }: EquipmentMegaMenuProps) {
+  const { columns, promo } = megaMenu;
   const [contentKey, setContentKey] = useState(0);
 
   useEffect(() => {
@@ -76,7 +77,7 @@ export function EquipmentMegaMenu({
                         <Link
                           href={link.href}
                           onClick={onNavigate}
-                          className="font-display text-sm font-bold uppercase tracking-wide text-ink transition-colors hover:text-accent"
+                          className="font-body text-sm font-bold uppercase tracking-wide text-ink transition-colors hover:text-accent"
                         >
                           {link.label}
                         </Link>
@@ -86,7 +87,7 @@ export function EquipmentMegaMenu({
                   <Link
                     href={column.viewAll.href}
                     onClick={onNavigate}
-                    className="mt-4 inline-block font-display text-[10px] font-bold uppercase tracking-aggressive text-ink/50 transition-colors hover:text-accent"
+                    className="mt-4 inline-block font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/50 transition-colors hover:text-accent"
                   >
                     {column.viewAll.label} →
                   </Link>
@@ -116,10 +117,10 @@ export function EquipmentMegaMenu({
                 />
                 <div className="absolute inset-0 flex flex-col justify-end p-6">
                   <span className="section-eyebrow text-accent">{promo.tag}</span>
-                  <p className="mt-2 max-w-[15rem] font-display text-lg font-extrabold uppercase leading-tight tracking-tight text-paper">
+                  <p className="mt-2 max-w-[15rem] font-body text-lg font-extrabold uppercase leading-tight tracking-tight text-paper">
                     {promo.headline}
                   </p>
-                  <span className="mt-4 inline-flex w-fit border border-paper/40 px-4 py-2 font-display text-[10px] font-bold uppercase tracking-aggressive text-paper transition-colors group-hover/promo:border-accent group-hover/promo:text-accent">
+                  <span className="mt-4 inline-flex w-fit border border-paper/40 px-4 py-2 font-body text-[10px] font-bold uppercase tracking-aggressive text-paper transition-colors group-hover/promo:border-accent group-hover/promo:text-accent">
                     {promo.cta} →
                   </span>
                 </div>

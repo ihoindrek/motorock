@@ -73,7 +73,7 @@ export function MobileFilterDrawer({
         <div className="flex items-center justify-between border-b border-ink/10 px-6 py-5">
           <p
             id={labelId}
-            className="font-display text-sm font-bold uppercase tracking-aggressive text-ink"
+            className="font-body text-sm font-bold uppercase tracking-aggressive text-ink"
           >
             {title}
           </p>
@@ -81,7 +81,7 @@ export function MobileFilterDrawer({
             <button
               type="button"
               onClick={onClose}
-              className="inline-flex min-h-11 items-center px-2 font-display text-xs font-bold uppercase tracking-aggressive text-accent"
+              className="inline-flex min-h-11 items-center px-2 font-body text-xs font-bold uppercase tracking-aggressive text-accent"
             >
               Apply
             </button>

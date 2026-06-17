@@ -2,9 +2,12 @@
 
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { useLocale } from "@/context/locale-context";
 import { countryLabel } from "@/hooks/use-checkout-shipping";
+import { localizedHref } from "@/i18n/paths";
 import type { ShippingRate } from "@/lib/shop/shipping-method";
 import { formatPrice } from "@/lib/shop/category";
+import { Price } from "@/components/shop/price";
 import { cn } from "@/lib/utils";
 import { EQUIPMENT_RETURN_PROMISE } from "@/data/return-policy";
 
@@ -26,14 +29,28 @@ type CheckoutOrderSummaryProps = {
 };
 
 function TrustCopy() {
+  const locale = useLocale();
+  const t =
+    locale === "et"
+      ? {
+          securePayment:
+            "Turvaline makse Montonioga — pank, kaart, maksa hiljem ja järelmaks",
+          questions: "Küsimusi?",
+        }
+      : {
+          securePayment:
+            "Secure payment via Montonio — bank, card, pay later & järelmaks",
+          questions: "Questions?",
+        };
+
   return (
     <ul className="space-y-1.5 text-xs leading-relaxed text-ink/55">
-      <li>Secure payment via Montonio — bank, card, pay later & järelmaks</li>
+      <li>{t.securePayment}</li>
       <li className="text-xs text-ink/60">
         {EQUIPMENT_RETURN_PROMISE.headline}
       </li>
       <li>
-        Questions?{" "}
+        {t.questions}{" "}
         <a href="mailto:hello@motorock.eu" className="text-ink hover:text-accent">
           hello@motorock.eu
         </a>
@@ -58,7 +75,34 @@ export function CheckoutOrderSummary({
   className,
   variant = "sidebar",
 }: CheckoutOrderSummaryProps) {
+  const locale = useLocale();
   const isMobile = variant === "mobile";
+  const t =
+    locale === "et"
+      ? {
+          orderSummary: "Tellimuse kokkuvõte",
+          items: "Tooted",
+          shipping: "Tarne",
+          free: "Tasuta",
+          chooseDelivery: "Vali tarneviis",
+          total: "Kokku",
+          agreeTerms: "Nõustun",
+          terms: "tingimustega",
+          processing: "Töötlen…",
+          pay: "Maksa",
+        }
+      : {
+          orderSummary: "Order summary",
+          items: "Items",
+          shipping: "Shipping",
+          free: "Free",
+          chooseDelivery: "Choose a delivery option",
+          total: "Total",
+          agreeTerms: "I agree to the",
+          terms: "terms & conditions",
+          processing: "Processing…",
+          pay: "Pay",
+        };
 
   return (
     <div
@@ -69,20 +113,20 @@ export function CheckoutOrderSummary({
       )}
     >
       {!isMobile ? (
-        <h2 className="font-display text-sm font-extrabold uppercase tracking-aggressive text-ink">
-          Order summary
+        <h2 className="font-body text-sm font-extrabold uppercase tracking-aggressive text-ink">
+          {t.orderSummary}
         </h2>
       ) : null}
 
       <dl className={cn("space-y-2 text-sm", !isMobile && "mt-4")}>
         <div className="flex justify-between gap-4">
-          <dt className="text-ink/70">Items ({itemCount})</dt>
-          <dd className="font-bold tabular-nums">{formatPrice(subtotal)}</dd>
+          <dt className="text-ink/70">{t.items} ({itemCount})</dt>
+          <dd className="font-body font-extrabold tabular-nums">{formatPrice(subtotal)}</dd>
         </div>
         <div className="flex justify-between gap-4">
-          <dt className="text-ink/70">Shipping</dt>
-          <dd className="font-bold tabular-nums">
-            {shippingTotal === 0 ? "Free" : formatPrice(shippingTotal)}
+          <dt className="text-ink/70">{t.shipping}</dt>
+          <dd className="font-body font-extrabold tabular-nums">
+            {shippingTotal === 0 ? t.free : formatPrice(shippingTotal)}
           </dd>
         </div>
         {selectedRate ? (
@@ -90,12 +134,12 @@ export function CheckoutOrderSummary({
             {selectedRate.label} · {countryLabel(country)}
           </p>
         ) : (
-          <p className="text-xs text-ink/50">Choose a delivery option</p>
+          <p className="text-xs text-ink/50">{t.chooseDelivery}</p>
         )}
         <div className="flex justify-between gap-4 border-t border-ink/10 pt-3 text-lg">
-          <dt className="font-bold">Total</dt>
-          <dd className="font-display font-extrabold tabular-nums text-accent">
-            {formatPrice(total)}
+          <dt className="font-bold">{t.total}</dt>
+          <dd>
+            <Price value={total} variant="lg" className="text-accent" />
           </dd>
         </div>
       </dl>
@@ -112,9 +156,12 @@ export function CheckoutOrderSummary({
               form={formId}
             />
             <span>
-              I agree to the{" "}
-              <Link href="/terms" className="text-ink hover:text-accent">
-                terms & conditions
+              {t.agreeTerms}{" "}
+              <Link
+                href={localizedHref(locale, "/terms")}
+                className="text-ink hover:text-accent"
+              >
+                {t.terms}
               </Link>
             </span>
           </label>
@@ -125,7 +172,7 @@ export function CheckoutOrderSummary({
             disabled={submitting || !canSubmit || loading}
             className="btn-accent mt-5 w-full justify-center disabled:cursor-not-allowed disabled:opacity-40"
           >
-            {submitting ? "Processing…" : `Pay · ${formatPrice(total)}`}
+            {submitting ? t.processing : `${t.pay} · ${formatPrice(total)}`}
           </button>
 
           <div className="mt-5 border-t border-ink/10 pt-4">
@@ -150,16 +197,20 @@ export function CheckoutMobilePayBar({
   loading: boolean;
   formId: string;
 }) {
+  const locale = useLocale();
+  const t =
+    locale === "et"
+      ? { total: "Kokku", pay: "Maksa" }
+      : { total: "Total", pay: "Pay" };
+
   return (
     <div className="fixed inset-x-0 bottom-0 z-40 border-t border-ink/10 bg-paper/95 px-5 py-3 backdrop-blur-sm lg:hidden">
       <div className="mx-auto flex max-w-site items-center gap-3">
         <div className="min-w-0 flex-1">
           <p className="text-[10px] font-bold uppercase tracking-aggressive text-ink/45">
-            Total
+            {t.total}
           </p>
-          <p className="font-display text-xl font-extrabold tabular-nums text-accent">
-            {formatPrice(total)}
-          </p>
+          <Price value={total} variant="lg" className="text-accent" as="p" />
         </div>
         <button
           type="submit"
@@ -167,7 +218,7 @@ export function CheckoutMobilePayBar({
           disabled={submitting || !canSubmit || loading}
           className="btn-accent shrink-0 justify-center px-6 disabled:cursor-not-allowed disabled:opacity-40"
         >
-          {submitting ? "…" : "Pay"}
+          {submitting ? "…" : t.pay}
         </button>
       </div>
     </div>
