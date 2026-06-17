@@ -1,26 +1,452 @@
 @import "tailwindcss";
+@config "../../tailwind.config.ts";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* ── Motorock.eu design tokens ─────────────────────────────────────────── */
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-ink: #0b0b0b;
+  --color-paper: #faf8f6;
+  --color-surface: #f0ece6;
+  --color-moto: #c8c8c8;
+  --color-detail: #eeeeee;
+  --color-accent: #ff6813;
+  --color-accent-hover: #e65e12;
+  --color-accent-muted: rgb(255 104 19 / 0.14);
+  --color-stock: #1fa855;
+  --color-stock-hover: #178a46;
+
+  --font-display: var(--font-syne);
+  --font-body: var(--font-plus-jakarta);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* ── Base layer ────────────────────────────────────────────────────────── */
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    border-color: rgb(11 11 11 / 0.1);
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-paper font-body text-ink;
+    font-feature-settings: "kern" 1, "liga" 1;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-display font-bold uppercase tracking-tight text-balance;
+  }
+
+  p {
+    @apply text-pretty leading-relaxed;
+  }
+
+  a {
+    @apply transition-colors duration-200;
+  }
+
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-accent;
+  }
+
+  ::selection {
+    @apply bg-accent text-paper;
+  }
+
+  img,
+  video {
+    @apply max-w-full;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* ── Component utilities ───────────────────────────────────────────────── */
+
+@utility site-container {
+  @apply mx-auto w-full max-w-site px-5 sm:px-8 lg:px-12;
+}
+
+@utility link-nav {
+  @apply font-display text-sm font-extrabold uppercase tracking-aggressive text-ink/80 hover:text-accent;
+}
+
+@utility link-nav-active {
+  @apply font-display text-xs font-bold uppercase tracking-aggressive text-accent;
+}
+
+@utility btn-accent {
+  @apply inline-flex items-center justify-center bg-accent px-6 py-3 font-display text-xs font-bold uppercase tracking-aggressive text-paper transition-colors duration-200 hover:bg-accent-hover active:scale-[0.98];
+}
+
+@utility btn-ghost {
+  @apply inline-flex items-center justify-center border border-ink/20 bg-transparent px-6 py-3 font-display text-xs font-bold uppercase tracking-aggressive text-ink transition-colors duration-200 hover:border-accent hover:text-accent;
+}
+
+@utility section-eyebrow {
+  @apply inline-flex items-center gap-2.5 font-display text-xs font-bold uppercase tracking-aggressive text-accent;
+}
+
+@utility heading-section {
+  @apply font-display text-xs font-bold uppercase tracking-aggressive text-ink/50;
+}
+
+@utility heading-hero {
+  @apply font-display text-4xl font-extrabold uppercase leading-none tracking-tight sm:text-5xl lg:text-7xl;
+}
+
+@utility heading-category {
+  @apply inline-block origin-left font-display text-4xl font-extrabold uppercase leading-[0.92] tracking-tight sm:text-5xl lg:text-[3.5rem];
+  transform: scaleX(1.12);
+}
+
+@media (max-width: 639px) {
+  .heading-category {
+    transform: scaleX(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .heading-category {
+    transform: none;
+  }
+}
+
+@utility heading-product {
+  @apply block w-full max-w-full origin-left break-words font-display font-extrabold !normal-case leading-tight tracking-normal text-balance;
+  transform: scaleX(1.12);
+}
+
+@media (max-width: 639px) {
+  .heading-product {
+    transform: scaleX(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .heading-product {
+    transform: none;
+  }
+}
+
+@utility section-outline-heading {
+  @apply pointer-events-none select-none font-display font-extrabold uppercase leading-none tracking-tight;
+  color: transparent;
+  -webkit-text-stroke: 1px rgb(255 255 255 / 0.38);
+  paint-order: stroke fill;
+}
+
+@media (min-width: 1024px) {
+  .section-outline-heading {
+    -webkit-text-stroke-width: 1.25px;
+    -webkit-text-stroke-color: rgb(255 255 255 / 0.32);
+  }
+}
+
+@utility text-muted {
+  @apply text-ink/60;
+}
+
+@utility sr-only-focusable {
+  @apply sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[100] focus:rounded-none focus:bg-accent focus:px-4 focus:py-2 focus:font-display focus:text-xs focus:font-bold focus:uppercase focus:tracking-aggressive focus:text-paper;
+}
+
+@utility btn-hero-primary {
+  @apply inline-flex items-center justify-center border-2 border-accent bg-ink px-8 py-4 font-display text-xs font-bold uppercase tracking-aggressive text-paper transition-all duration-300 hover:bg-accent active:scale-[0.98];
+}
+
+@utility btn-hero-ghost {
+  @apply inline-flex items-center justify-center border border-paper/40 bg-transparent px-8 py-4 font-display text-xs font-bold uppercase tracking-aggressive text-paper transition-all duration-300 hover:border-paper hover:bg-paper/10 active:scale-[0.98];
+}
+
+/* Motomad / WC HTML descriptions on product pages */
+.product-description p {
+  @apply mb-4 last:mb-0;
+}
+
+.product-description table {
+  @apply mt-6 w-full border-collapse text-sm;
+}
+
+.product-description th,
+.product-description td {
+  @apply border border-ink/10 px-3 py-2.5 text-left align-top;
+}
+
+.product-description tr:nth-child(even) td {
+  @apply bg-surface/50;
+}
+
+.prose-invert.product-description th,
+.prose-invert.product-description td {
+  @apply border-paper/15;
+}
+
+.prose-invert.product-description tr:nth-child(even) td {
+  @apply bg-paper/5;
+}
+
+@layer components {
+  .grain-overlay {
+    pointer-events: none;
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-repeat: repeat;
+    background-size: 160px 160px;
+  }
+
+  .grain-overlay--light {
+    opacity: 0.04;
+    mix-blend-mode: multiply;
+  }
+
+  .grain-overlay--light-subtle {
+    opacity: 0.045;
+    mix-blend-mode: multiply;
+  }
+
+  .grain-overlay--light-moto {
+    opacity: 0.09;
+    mix-blend-mode: overlay;
+    background-size: 120px 120px;
+    filter: contrast(118%);
+  }
+
+  .grain-overlay--dark {
+    opacity: 0.075;
+    mix-blend-mode: overlay;
+  }
+
+  .grain-overlay--dark-subtle {
+    opacity: 0.055;
+    mix-blend-mode: overlay;
+  }
+
+  .grain-overlay--dark-emphasis {
+    opacity: 0.1;
+    mix-blend-mode: overlay;
+  }
+
+  .grain-overlay--footer {
+    z-index: 15;
+    opacity: 0.085;
+    mix-blend-mode: overlay;
+    background-size: 120px 120px;
+    filter: contrast(120%);
+  }
+
+  .grain-overlay--hero {
+    opacity: 0.085;
+    mix-blend-mode: overlay;
+    transition: opacity 0.5s ease-out;
+  }
+
+  .grain-overlay--hero-fade-up {
+    -webkit-mask-image: linear-gradient(
+      to top,
+      #000 0%,
+      #000 45%,
+      rgb(0 0 0 / 0.25) 72%,
+      transparent 100%
+    );
+    mask-image: linear-gradient(
+      to top,
+      #000 0%,
+      #000 45%,
+      rgb(0 0 0 / 0.25) 72%,
+      transparent 100%
+    );
+  }
+
+  @media (hover: hover) and (prefers-reduced-motion: no-preference) {
+    .group:hover .grain-overlay--hero {
+      opacity: 0;
+    }
+  }
+
+  .rebel-text {
+    isolation: isolate;
+  }
+
+  .rebel-text__base {
+    position: relative;
+    z-index: 1;
+  }
+
+  .rebel-text__video {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    height: 100%;
+    width: 100%;
+    object-fit: cover;
+    filter: saturate(1.15) contrast(1.05);
+  }
+
+  .rebel-text__shimmer {
+    z-index: 3;
+    color: transparent;
+    background-image: linear-gradient(
+      100deg,
+      transparent 0%,
+      transparent 38%,
+      rgb(255 104 19 / 0.75) 48%,
+      rgb(255 188 122 / 0.9) 50%,
+      rgb(255 104 19 / 0.7) 52%,
+      transparent 62%,
+      transparent 100%
+    );
+    background-size: 260% 100%;
+    background-clip: text;
+    -webkit-background-clip: text;
+    animation: rebel-text-shimmer 5s ease-in-out infinite;
+    opacity: 0.55;
+  }
+
+  @keyframes rebel-text-shimmer {
+    0%,
+    100% {
+      background-position: 120% center;
+    }
+
+    50% {
+      background-position: -20% center;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .rebel-text__shimmer {
+      animation: none;
+      opacity: 0;
+    }
+  }
+
+  .section-eyebrow::before {
+    content: "";
+    display: block;
+    width: 1.25rem;
+    height: 3px;
+    flex-shrink: 0;
+    background-color: var(--color-accent);
+  }
+
+  .heading-section::after {
+    content: "";
+    display: block;
+    width: 2rem;
+    height: 3px;
+    margin-top: 0.75rem;
+    background-color: var(--color-accent);
+  }
+
+  .gallery-play-glow {
+    animation: gallery-play-glow 3.2s ease-in-out infinite;
+  }
+}
+
+@keyframes gallery-play-glow {
+  0%,
+  100% {
+    box-shadow:
+      0 8px 24px rgb(11 11 11 / 0.12),
+      0 0 0 0 rgb(255 104 19 / 0);
+  }
+
+  50% {
+    box-shadow:
+      0 8px 24px rgb(11 11 11 / 0.12),
+      0 0 16px 3px rgb(255 104 19 / 0.18),
+      0 0 6px 1px rgb(255 104 19 / 0.22),
+      inset 0 0 10px rgb(255 104 19 / 0.06);
+  }
+}
+
+/* Footer grain — noise blended into surface (reliable on dark bg) */
+.site-footer-surface {
+  background-color: #0b0b0b;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.52'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 112px 112px;
+  background-blend-mode: overlay;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-spec-marquee {
+    animation: none !important;
+  }
+
+  .animate-search-in,
+  .animate-search-scan,
+  .animate-gallery-play-ping {
+    animation: none !important;
+  }
+
+  .gallery-play-glow {
+    animation: none !important;
+    box-shadow: 0 8px 24px rgb(11 11 11 / 0.12) !important;
+  }
+
+  .mega-menu-shell {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+  }
+
+  .contact-map-marker__ping {
+    animation: none !important;
+  }
+}
+
+/* ── Contact map marker ──────────────────────────────────────────────────── */
+
+.contact-map-marker__wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 5rem;
+  height: 5rem;
+}
+
+.contact-map-marker__ping {
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background: rgb(255 104 19 / 0.25);
+  animation: contact-map-ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+.contact-map-marker__ring {
+  position: absolute;
+  inset: 0.5rem;
+  border: 1px solid rgb(255 104 19 / 0.4);
+  border-radius: 9999px;
+}
+
+.contact-map-marker__dot {
+  position: relative;
+  z-index: 1;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 9999px;
+  background: #ff6813;
+}
+
+@keyframes contact-map-ping {
+  75%,
+  100% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
 }
