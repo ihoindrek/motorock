@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useMemo, useState, type FormEvent } from "react";
+import { useDictionary } from "@/context/locale-context";
 import {
   shopFieldClassName,
   shopFieldLabelClassName,
@@ -17,13 +18,6 @@ type MotorcycleEnquiryFormProps = {
   idPrefix?: string;
 };
 
-const messagePlaceholders: Record<MotorcycleEnquiryIntent, string> = {
-  enquire:
-    "Interested in ordering or arranging a viewing — tell us what you need…",
-  question: "What's on your mind about this bike?",
-  availability: "Let us know what you're looking for and we'll follow up…",
-};
-
 export function MotorcycleEnquiryForm({
   bikeName,
   brand,
@@ -32,7 +26,17 @@ export function MotorcycleEnquiryForm({
   intent,
   idPrefix = "motorcycle-enquiry",
 }: MotorcycleEnquiryFormProps) {
+  const dict = useDictionary();
   const [submitted, setSubmitted] = useState(false);
+
+  const messagePlaceholders = useMemo(
+    () => ({
+      enquire: dict.forms.enquirePlaceholder,
+      question: dict.forms.questionPlaceholder,
+      availability: dict.forms.availabilityPlaceholder,
+    }),
+    [dict.forms],
+  );
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -45,11 +49,9 @@ export function MotorcycleEnquiryForm({
     return (
       <div>
         <p className="font-body text-lg font-extrabold uppercase leading-snug tracking-tight text-ink">
-          Message received
+          {dict.forms.messageReceived}
         </p>
-        <p className="mt-2 text-sm text-ink/60">
-          Thanks — we&apos;ll get back to you soon.
-        </p>
+        <p className="mt-2 text-sm text-ink/60">{dict.forms.thanksReply}</p>
       </div>
     );
   }
@@ -57,12 +59,14 @@ export function MotorcycleEnquiryForm({
   return (
     <form className="space-y-8" onSubmit={handleSubmit}>
       <div>
-        <p className={shopFieldLabelClassName}>Motorcycle</p>
+        <p className={shopFieldLabelClassName}>{dict.forms.motorcycle}</p>
         <p className="mt-2 font-body text-lg font-extrabold uppercase leading-tight tracking-tight text-ink">
           {displayName}
         </p>
         {color ? (
-          <p className="mt-1 text-sm text-ink/55">Finish · {color}</p>
+          <p className="mt-1 text-sm text-ink/55">
+            {dict.forms.finish} · {color}
+          </p>
         ) : null}
         <input type="hidden" name="bike" value={displayName} />
         <input type="hidden" name="slug" value={slug} />
@@ -72,7 +76,7 @@ export function MotorcycleEnquiryForm({
       <div className="grid gap-8 sm:grid-cols-2">
         <div>
           <label htmlFor={`${idPrefix}-name`} className={shopFieldLabelClassName}>
-            Name
+            {dict.forms.name}
           </label>
           <input
             id={`${idPrefix}-name`}
@@ -85,7 +89,7 @@ export function MotorcycleEnquiryForm({
         </div>
         <div>
           <label htmlFor={`${idPrefix}-email`} className={shopFieldLabelClassName}>
-            Email
+            {dict.forms.email}
           </label>
           <input
             id={`${idPrefix}-email`}
@@ -100,7 +104,10 @@ export function MotorcycleEnquiryForm({
 
       <div>
         <label htmlFor={`${idPrefix}-phone`} className={shopFieldLabelClassName}>
-          Phone <span className="font-normal normal-case text-ink/35">(optional)</span>
+          {dict.forms.phone}{" "}
+          <span className="font-normal normal-case text-ink/35">
+            ({dict.forms.phoneOptional})
+          </span>
         </label>
         <input
           id={`${idPrefix}-phone`}
@@ -113,7 +120,7 @@ export function MotorcycleEnquiryForm({
 
       <div>
         <label htmlFor={`${idPrefix}-message`} className={shopFieldLabelClassName}>
-          Message
+          {dict.forms.message}
         </label>
         <textarea
           id={`${idPrefix}-message`}
@@ -129,7 +136,7 @@ export function MotorcycleEnquiryForm({
         type="submit"
         className="inline-flex min-h-12 w-full items-center justify-center rounded-full bg-ink px-7 py-3 font-body text-xs font-bold uppercase tracking-aggressive text-paper transition-colors duration-200 hover:bg-accent sm:w-auto"
       >
-        Send message →
+        {dict.forms.sendMessage}
       </button>
     </form>
   );

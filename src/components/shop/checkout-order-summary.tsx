@@ -2,14 +2,12 @@
 
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { useLocale } from "@/context/locale-context";
+import { useDictionary, useLocale } from "@/context/locale-context";
 import { countryLabel } from "@/hooks/use-checkout-shipping";
 import { localizedHref } from "@/i18n/paths";
 import type { ShippingRate } from "@/lib/shop/shipping-method";
-import { formatPrice } from "@/lib/shop/category";
-import { Price } from "@/components/shop/price";
+import { formatCheckoutPrice } from "@/lib/shop/category";
 import { cn } from "@/lib/utils";
-import { EQUIPMENT_RETURN_PROMISE } from "@/data/return-policy";
 
 type CheckoutOrderSummaryProps = {
   itemCount: number;
@@ -24,12 +22,14 @@ type CheckoutOrderSummaryProps = {
   submitting: boolean;
   loading: boolean;
   formId: string;
+  payLabel?: string;
   className?: string;
   variant?: "sidebar" | "mobile";
 };
 
 function TrustCopy() {
   const locale = useLocale();
+  const dict = useDictionary();
   const t =
     locale === "et"
       ? {
@@ -46,9 +46,7 @@ function TrustCopy() {
   return (
     <ul className="space-y-1.5 text-xs leading-relaxed text-ink/55">
       <li>{t.securePayment}</li>
-      <li className="text-xs text-ink/60">
-        {EQUIPMENT_RETURN_PROMISE.headline}
-      </li>
+      <li className="text-xs text-ink/60">{dict.returns.headline}</li>
       <li>
         {t.questions}{" "}
         <a href="mailto:hello@motorock.eu" className="text-ink hover:text-accent">
@@ -72,6 +70,7 @@ export function CheckoutOrderSummary({
   submitting,
   loading,
   formId,
+  payLabel,
   className,
   variant = "sidebar",
 }: CheckoutOrderSummaryProps) {
@@ -121,12 +120,12 @@ export function CheckoutOrderSummary({
       <dl className={cn("space-y-2 text-sm", !isMobile && "mt-4")}>
         <div className="flex justify-between gap-4">
           <dt className="text-ink/70">{t.items} ({itemCount})</dt>
-          <dd className="font-body font-extrabold tabular-nums">{formatPrice(subtotal)}</dd>
+          <dd className="font-body font-extrabold tabular-nums">{formatCheckoutPrice(subtotal, locale)}</dd>
         </div>
         <div className="flex justify-between gap-4">
           <dt className="text-ink/70">{t.shipping}</dt>
           <dd className="font-body font-extrabold tabular-nums">
-            {shippingTotal === 0 ? t.free : formatPrice(shippingTotal)}
+            {shippingTotal === 0 ? t.free : formatCheckoutPrice(shippingTotal, locale)}
           </dd>
         </div>
         {selectedRate ? (
@@ -139,7 +138,9 @@ export function CheckoutOrderSummary({
         <div className="flex justify-between gap-4 border-t border-ink/10 pt-3 text-lg">
           <dt className="font-bold">{t.total}</dt>
           <dd>
-            <Price value={total} variant="lg" className="text-accent" />
+            <span className="font-body text-lg font-extrabold tabular-nums tracking-normal text-accent">
+              {formatCheckoutPrice(total, locale)}
+            </span>
           </dd>
         </div>
       </dl>
@@ -172,7 +173,9 @@ export function CheckoutOrderSummary({
             disabled={submitting || !canSubmit || loading}
             className="btn-accent mt-5 w-full justify-center disabled:cursor-not-allowed disabled:opacity-40"
           >
-            {submitting ? t.processing : `${t.pay} · ${formatPrice(total)}`}
+            {submitting
+              ? t.processing
+              : `${payLabel ?? t.pay} · ${formatCheckoutPrice(total, locale)}`}
           </button>
 
           <div className="mt-5 border-t border-ink/10 pt-4">
@@ -190,18 +193,21 @@ export function CheckoutMobilePayBar({
   submitting,
   loading,
   formId,
+  payLabel,
 }: {
   total: number;
   canSubmit: boolean;
   submitting: boolean;
   loading: boolean;
   formId: string;
+  payLabel?: string;
 }) {
   const locale = useLocale();
   const t =
     locale === "et"
       ? { total: "Kokku", pay: "Maksa" }
       : { total: "Total", pay: "Pay" };
+  const label = payLabel ?? t.pay;
 
   return (
     <div className="fixed inset-x-0 bottom-0 z-40 border-t border-ink/10 bg-paper/95 px-5 py-3 backdrop-blur-sm lg:hidden">
@@ -210,7 +216,9 @@ export function CheckoutMobilePayBar({
           <p className="text-[10px] font-bold uppercase tracking-aggressive text-ink/45">
             {t.total}
           </p>
-          <Price value={total} variant="lg" className="text-accent" as="p" />
+          <p className="font-body text-lg font-extrabold tabular-nums tracking-normal text-accent">
+            {formatCheckoutPrice(total, locale)}
+          </p>
         </div>
         <button
           type="submit"
@@ -218,7 +226,7 @@ export function CheckoutMobilePayBar({
           disabled={submitting || !canSubmit || loading}
           className="btn-accent shrink-0 justify-center px-6 disabled:cursor-not-allowed disabled:opacity-40"
         >
-          {submitting ? "…" : t.pay}
+          {submitting ? "…" : label}
         </button>
       </div>
     </div>

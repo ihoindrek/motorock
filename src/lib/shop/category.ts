@@ -5,9 +5,9 @@ import type {
 } from "@/types/catalog-product";
 import {
   ACCESSORY_CATEGORIES,
-  CATEGORY_TO_WC_SLUG,
   PROTECTION_CATEGORIES,
 } from "@/lib/shop/wc-categories";
+import { productMatchesRouteCategory } from "@/lib/shop/equipment-route";
 
 export type EquipmentCatalogWhere = {
   category?: string;
@@ -21,27 +21,12 @@ export function resolveEquipmentCatalogWhere(
     return { categoryNotIn: ["motorcycles", "tools-maintenance"] };
   }
 
-  if (route.gender === "men") {
-    return { category: "for-men" };
-  }
-
-  if (route.gender === "women") {
-    return { category: "for-women" };
-  }
-
-  if (route.accessoriesOnly) {
-    return { category: "accessories" };
+  if (route.wcCategorySlug) {
+    return { category: route.wcCategorySlug };
   }
 
   if (route.protectionOnly) {
     return { categoryNotIn: ["motorcycles", "tools-maintenance"] };
-  }
-
-  if (route.category) {
-    const wcSlug = CATEGORY_TO_WC_SLUG[route.category];
-    if (wcSlug) {
-      return { category: wcSlug };
-    }
   }
 
   return { categoryNotIn: ["motorcycles", "tools-maintenance"] };
@@ -56,6 +41,9 @@ export type CategoryRoute = {
   title: string;
   description: string;
   breadcrumbs: Breadcrumb[];
+  /** WooCommerce category slug used for GraphQL catalog filter. */
+  wcCategorySlug?: string;
+  wcCategoryPath?: readonly string[];
   gender?: ProductGender;
   category?: ProductCategory;
   brand?: string;
@@ -285,6 +273,10 @@ export function filterProductsByRoute(
       return false;
     }
 
+    if (route.wcCategorySlug && !productMatchesRouteCategory(product.wcCategorySlugs, route)) {
+      return false;
+    }
+
     if (
       route.protectionOnly &&
       !PROTECTION_CATEGORIES.includes(product.category)
@@ -385,6 +377,20 @@ export function formatPrice(price: number, locale: "en" | "et" = "et") {
     style: "currency",
     currency: "EUR",
     maximumFractionDigits: 0,
+  })
+    .format(price)
+    .replace(/ /g, "\u00a0");
+}
+
+/** Checkout / Woo totals — keep cents like the classic WooCommerce checkout. */
+export function formatCheckoutPrice(price: number, locale: "en" | "et" = "et") {
+  const intlLocale = locale === "et" ? "et-EE" : "en-GB";
+
+  return new Intl.NumberFormat(intlLocale, {
+    style: "currency",
+    currency: "EUR",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   })
     .format(price)
     .replace(/ /g, "\u00a0");

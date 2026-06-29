@@ -2,6 +2,7 @@
 
 import { ChevronRight } from "lucide-react";
 import { useMemo, useState } from "react";
+import { useDictionary } from "@/context/locale-context";
 import type { FinancingProductType } from "@/data/financing";
 import { Price } from "@/components/shop/price";
 import type { ComponentProps } from "react";
@@ -32,6 +33,7 @@ export function FinancingPriceTeaser({
   onCheckout,
   onEnquire,
 }: FinancingPriceTeaserProps) {
+  const dict = useDictionary();
   const [open, setOpen] = useState(false);
   const lowestQuote = useMemo(
     () => getLowestFinancingQuote(price, productType),
@@ -49,7 +51,7 @@ export function FinancingPriceTeaser({
           <div className="flex flex-wrap items-end gap-x-5 gap-y-4 sm:flex-nowrap sm:gap-x-6">
             <div className="shrink-0">
               <p className="font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/45">
-                Retail
+                {dict.financing.retail}
               </p>
               <p className="mt-1">
                 <Price value={price} variant={resolvedPriceVariant} />
@@ -67,13 +69,14 @@ export function FinancingPriceTeaser({
                   className="group min-w-0 shrink cursor-pointer text-left"
                 >
                   <p className="font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/45">
-                    Finance
+                    {dict.financing.finance}
                   </p>
                   <p className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-sm text-ink/65">
                     <span className="font-bold text-ink transition-colors group-hover:text-accent">
-                      {formatMonthlyPrice(lowestQuote.monthlyPayment)}/mo
+                      {formatMonthlyPrice(lowestQuote.monthlyPayment)}
+                      {dict.financing.perMonth}
                     </span>
-                    <span>· indicative</span>
+                    <span>· {dict.financing.indicative}</span>
                     <ChevronRight
                       className="size-4 shrink-0 text-ink/35 transition-[color,transform] group-hover:translate-x-0.5 group-hover:text-accent"
                       aria-hidden="true"
@@ -93,7 +96,9 @@ export function FinancingPriceTeaser({
               <Price value={price} variant={resolvedPriceVariant} />
               <span className="text-ink/35">·</span>
               <span className="font-body text-sm font-bold text-accent transition-colors group-hover:text-ink">
-                or from {formatMonthlyPrice(lowestQuote.monthlyPayment)}/mo
+                {dict.financing.fromMonthlyPrefix}{" "}
+                {formatMonthlyPrice(lowestQuote.monthlyPayment)}
+                {dict.financing.perMonth}
               </span>
               <ChevronRight
                 className="size-4 shrink-0 text-accent/70 transition-[color,transform] group-hover:translate-x-0.5 group-hover:text-ink"

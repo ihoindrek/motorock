@@ -1,9 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useCategoryTree } from "@/context/category-tree-context";
+import { useDictionary, useLocale } from "@/context/locale-context";
 import { PriceRangeSlider } from "@/components/shop/price-range-slider";
-import { equipmentMegaMenu } from "@/data/navigation";
+import { getEquipmentMegaMenu } from "@/i18n/navigation";
+import { buildEquipmentCategoryHref } from "@/lib/shop/equipment-route";
+import { localizedHref } from "@/i18n/paths";
 import { allSizes } from "@/types/catalog-product";
 import type { CategoryRoute } from "@/lib/shop/category";
 
@@ -201,6 +205,7 @@ function PriceControls({
   onPriceMinChange: (value: number) => void;
   onPriceMaxChange: (value: number) => void;
 }) {
+  const dict = useDictionary();
   const inputClassName =
     "w-full border border-ink/15 bg-white px-4 py-3 font-body text-sm font-bold text-ink transition-colors focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20";
 
@@ -222,7 +227,7 @@ function PriceControls({
 
       <div className="flex items-center gap-3">
         <label className="sr-only" htmlFor={`price-min-${variant}`}>
-          Minimum price
+          {dict.catalog.minPrice}
         </label>
         <input
           id={`price-min-${variant}`}
@@ -239,7 +244,7 @@ function PriceControls({
           —
         </span>
         <label className="sr-only" htmlFor={`price-max-${variant}`}>
-          Maximum price
+          {dict.catalog.maxPrice}
         </label>
         <input
           id={`price-max-${variant}`}
@@ -277,6 +282,13 @@ export function CategoryFilters({
   onPriceMaxChange,
   onClear,
 }: CategoryFiltersProps) {
+  const dict = useDictionary();
+  const locale = useLocale();
+  const categoryTree = useCategoryTree();
+  const equipmentMegaMenu = useMemo(
+    () => getEquipmentMegaMenu(locale, dict, categoryTree),
+    [locale, dict, categoryTree],
+  );
   const barRef = useRef<HTMLDivElement>(null);
   const [openFilter, setOpenFilter] = useState<OpenFilter>(null);
 
@@ -286,10 +298,12 @@ export function CategoryFilters({
     !route.protectionOnly &&
     !route.accessoriesOnly;
   const isMotorcycleCatalog = route.category === "motorcycles";
-  const availabilityFilterLabel = isMotorcycleCatalog ? "In store" : "In stock";
+  const availabilityFilterLabel = isMotorcycleCatalog
+    ? dict.catalog.inStore
+    : dict.catalog.inStock;
   const availabilityFilterDrawerLabel = isMotorcycleCatalog
-    ? "In store only"
-    : "In stock only";
+    ? dict.catalog.inStoreOnly
+    : dict.catalog.inStockOnly;
   const showSubcategoryNav = !route.category && route.gender;
   const showCategoryDropdown =
     showCategoryFilter && (showGenderNav || showSubcategoryNav);
@@ -349,31 +363,27 @@ export function CategoryFilters({
       ))}
       <li>
         <Link
-          href="/shop/equipment/protection"
+          href={localizedHref(locale, buildEquipmentCategoryHref("protection"))}
           className="block py-1 text-base font-medium text-ink transition-colors hover:text-accent"
           onClick={() => setOpenFilter(null)}
         >
-          Protection & safety
+          {dict.catalog.protectionSafety}
         </Link>
       </li>
       <li>
         <Link
-          href="/shop/equipment/accessories"
+          href={localizedHref(locale, buildEquipmentCategoryHref("accessories"))}
           className="block py-1 text-base font-medium text-ink transition-colors hover:text-accent"
           onClick={() => setOpenFilter(null)}
         >
-          Accessories
+          {dict.nav.accessories}
         </Link>
       </li>
     </ul>
   ) : (
     <ul className="min-w-[14rem] space-y-3">
       {equipmentMegaMenu.columns
-        .find((column) =>
-          route.gender === "men"
-            ? column.title === "For men"
-            : column.title === "For women",
-        )
+        .find((column) => column.id === (route.gender === "men" ? "men" : "women"))
         ?.links.map((link) => (
           <li key={link.href}>
             <Link
@@ -405,7 +415,7 @@ export function CategoryFilters({
         <div className="flex flex-wrap items-center gap-3">
           {showCategoryDropdown ? (
             <FilterDropdown
-              label="Category"
+              label={dict.catalog.category}
               open={openFilter === "category"}
               onToggle={() => toggleFilter("category")}
               whiteBackground={triggerWhiteBackground}
@@ -416,7 +426,7 @@ export function CategoryFilters({
 
           {showBrandFilter ? (
             <FilterDropdown
-              label="Brand"
+              label={dict.catalog.brand}
               activeCount={activeFilters.brands.length}
               open={openFilter === "brand"}
               onToggle={() => toggleFilter("brand")}
@@ -432,7 +442,7 @@ export function CategoryFilters({
 
           {showSizeFilter ? (
             <FilterDropdown
-              label="Size"
+              label={dict.catalog.size}
               activeCount={activeFilters.sizes.length}
               open={openFilter === "size"}
               onToggle={() => toggleFilter("size")}
@@ -447,7 +457,7 @@ export function CategoryFilters({
           ) : null}
 
           <FilterDropdown
-            label="Price"
+            label={dict.catalog.price}
             activeCount={priceIsActive ? 1 : 0}
             open={openFilter === "price"}
             onToggle={() => toggleFilter("price")}
@@ -486,7 +496,7 @@ export function CategoryFilters({
             }}
             className="min-h-12 font-body text-xs font-bold uppercase tracking-aggressive text-ink/50 transition-colors hover:text-accent"
           >
-            Clear all ({activeFilterCount})
+            {dict.catalog.clearAll} ({activeFilterCount})
           </button>
         ) : null}
       </div>
@@ -497,23 +507,23 @@ export function CategoryFilters({
     <div className="flex flex-col">
       <div className="flex items-center justify-between border-b border-ink/10 pb-5">
         <p className="font-body text-sm font-bold uppercase tracking-aggressive text-ink">
-          Filters
+          {dict.catalog.filters}
         </p>
         <button
           type="button"
           onClick={onClear}
           className="font-body text-xs font-bold uppercase tracking-aggressive text-ink/50 transition-colors hover:text-accent"
         >
-          Clear all
+          {dict.catalog.clearAll}
         </button>
       </div>
 
       {showCategoryDropdown ? (
-        <FilterSection title="Category">{categoryLinks}</FilterSection>
+        <FilterSection title={dict.catalog.category}>{categoryLinks}</FilterSection>
       ) : null}
 
       {showBrandFilter ? (
-        <FilterSection title="Brand">
+        <FilterSection title={dict.catalog.brand}>
           <BrandControls
             brands={availableBrands}
             activeFilters={activeFilters}
@@ -523,7 +533,7 @@ export function CategoryFilters({
       ) : null}
 
       {showSizeFilter ? (
-        <FilterSection title="Size">
+        <FilterSection title={dict.catalog.size}>
           <SizeControls
             activeFilters={activeFilters}
             onToggleSize={onToggleSize}
@@ -531,7 +541,7 @@ export function CategoryFilters({
         </FilterSection>
       ) : null}
 
-      <FilterSection title="Price">
+      <FilterSection title={dict.catalog.price}>
         <PriceControls
           variant="drawer"
           activeFilters={activeFilters}
@@ -541,7 +551,7 @@ export function CategoryFilters({
         />
       </FilterSection>
 
-      <FilterSection title="Availability">
+      <FilterSection title={dict.catalog.availability}>
         <label className="flex min-h-11 cursor-pointer items-center gap-3 text-base text-ink">
           <input
             type="checkbox"

@@ -46,6 +46,21 @@ export function sortShippingRates(rates: readonly ShippingRate[]) {
   });
 }
 
+export function groupShippingRatesForCheckout(rates: readonly ShippingRate[]) {
+  const pickup: ShippingRate[] = [];
+  const courier: ShippingRate[] = [];
+
+  for (const rate of sortShippingRates(rates)) {
+    if (shippingMethodNeedsAddress(rate)) {
+      courier.push(rate);
+    } else {
+      pickup.push(rate);
+    }
+  }
+
+  return { pickup, courier };
+}
+
 export function pickDefaultShippingRateId(rates: readonly ShippingRate[]) {
   return sortShippingRates(rates)[0]?.id ?? null;
 }
@@ -78,6 +93,16 @@ export function shippingGroupLabel(rate: ShippingRate) {
 
   if (haystack.includes("flat_rate") || haystack.includes("by agreement")) {
     return "Other";
+  }
+
+  if (haystack.includes("international_shipping")) {
+    if (haystack.includes("locker")) {
+      return "Parcel locker";
+    }
+    if (haystack.includes("shop")) {
+      return "Parcel shop";
+    }
+    return "International";
   }
 
   return "Parcel locker";

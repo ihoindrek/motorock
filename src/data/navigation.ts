@@ -3,7 +3,10 @@ export type NavLink = {
   label: string;
 };
 
+export type NavColumnId = "men" | "women" | "accessories" | "brands";
+
 export type NavColumn = {
+  id: NavColumnId;
   title: string;
   viewAll: NavLink;
   links: readonly NavLink[];
@@ -49,16 +52,19 @@ const equipmentBrandLinks = equipmentBrandSlugs.map(({ slug, label }) => ({
 export const equipmentMegaMenu = {
   columns: [
     {
+      id: "men" as const,
       title: "For men",
       viewAll: { href: "/shop/equipment/men", label: "View all men's gear" },
       links: menGearLinks,
     },
     {
+      id: "women" as const,
       title: "For women",
       viewAll: { href: "/shop/equipment/women", label: "View all women's gear" },
       links: womenGearLinks,
     },
     {
+      id: "accessories" as const,
       title: "Accessories & protection",
       viewAll: {
         href: "/shop/equipment/accessories",
@@ -74,6 +80,7 @@ export const equipmentMegaMenu = {
       ],
     },
     {
+      id: "brands" as const,
       title: "Brands",
       viewAll: { href: "/shop/equipment", label: "Shop all equipment" },
       links: equipmentBrandLinks,

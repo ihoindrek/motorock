@@ -1,4 +1,5 @@
 import { brands } from "@/data/brands";
+import type { Locale } from "@/i18n/config";
 import type {
   CatalogProduct,
   ProductCategory,
@@ -19,10 +20,12 @@ import { parseGraphqlPrice } from "@/lib/shop/parse-graphql-price";
 import { getCanonicalBrandName } from "@/lib/shop/brands";
 import { parseSpecsFromDescriptionHtml } from "@/lib/shop/parse-product-description";
 import { resolveCategoryFromWcNodes } from "@/lib/shop/wc-categories";
+import { formatSizeLabel } from "@/lib/shop/size-label";
 import { sortProductSizes } from "@/lib/shop/sort-sizes";
 import { resolveShowroomAvailable } from "@/lib/shop/resolve-showroom-available";
 import { normalizeMotorcycleContent } from "@/lib/shop/normalize-motorcycle-content";
 import { resolveProductVimeoIdFromMeta } from "@/lib/shop/parse-product-video";
+import { resolveLocalizedProductFields } from "@/lib/graphql/wpml";
 
 const COLOR_ATTR_NAMES = new Set(["color", "colour", "värv", "finish"]);
 const SIZE_ATTR_NAMES = new Set(["size", "suurus"]);
@@ -41,11 +44,6 @@ function isSizeAttributeName(name: string) {
   return SIZE_ATTR_NAMES.has(normalized) || normalized.includes("size");
 }
 
-function formatSizeLabel(value: string) {
-  return value
-    .replace(/^w(\d+)-l(\d+)$/i, "W$1/L$2")
-    .replace(/^(\d+)$/, (_, digits: string) => digits.toUpperCase());
-}
 const MOTORCYCLE_BRAND_SLUGS = new Set(["brixton", "mutt", "motron", "malaguti"]);
 
 function isMotorcycleProduct(categories: GraphQLProduct["productCategories"]) {
@@ -359,6 +357,9 @@ export function mapGraphqlToCatalogProduct(product: GraphQLProduct): CatalogProd
   const shopAudiences = isMotorcycle
     ? undefined
     : resolveShopAudiences(product.productCategories?.nodes ?? []);
+  const wcCategorySlugs = (product.productCategories?.nodes ?? []).map(
+    (node) => node.slug,
+  );
   const galleryUrls = (product.galleryImages?.nodes ?? []).map(
     (image) => image.sourceUrl,
   );
@@ -408,6 +409,7 @@ export function mapGraphqlToCatalogProduct(product: GraphQLProduct): CatalogProd
     type: isMotorcycle ? "motorcycle" : "equipment",
     gender: equipmentMeta.gender,
     shopAudiences,
+    wcCategorySlugs,
     category: equipmentMeta.category,
     sizes: sizes.length > 0 ? sizes : ["One size"],
     colors: colors.length > 0 ? colors : ["—"],
@@ -435,7 +437,9 @@ export function mapGraphqlToCatalogProduct(product: GraphQLProduct): CatalogProd
 
 export function mapGraphqlCardToCatalogProduct(
   product: GraphQLProductCard,
+  locale: Locale = "en",
 ): CatalogProduct {
+  const localized = resolveLocalizedProductFields(product, locale);
   const isMotorcycle = isMotorcycleProduct(product.productCategories);
   const isVariable = product.__typename === "VariableProduct";
   const variableProduct = isVariable
@@ -443,13 +447,16 @@ export function mapGraphqlCardToCatalogProduct(
     : null;
   const brand = isMotorcycle
     ? resolveMotorcycleBrand(product.productCategories)
-    : resolveEquipmentBrand(product.name, product.attributes);
+    : resolveEquipmentBrand(localized.name, product.attributes);
   const equipmentMeta = isMotorcycle
     ? { gender: "unisex" as const, category: "motorcycles" as const }
-    : resolveEquipmentMeta(product.productCategories, product.name);
+    : resolveEquipmentMeta(product.productCategories, localized.name);
   const shopAudiences = isMotorcycle
     ? undefined
     : resolveShopAudiences(product.productCategories?.nodes ?? []);
+  const wcCategorySlugs = (product.productCategories?.nodes ?? []).map(
+    (node) => node.slug,
+  );
   const image = product.image?.sourceUrl ?? "/brixton-image.webp";
   const price = parseCardPrice(product);
   const colors = variableProduct
@@ -463,20 +470,21 @@ export function mapGraphqlCardToCatalogProduct(
     : undefined;
 
   return {
-    slug: product.slug,
+    slug: localized.slug,
     databaseId: product.databaseId,
     variationIds: variableProduct
       ? variationIdsFromProduct(variableProduct)
       : undefined,
-    name: isMotorcycle ? displayName(product.name, brand) : product.name,
+    name: isMotorcycle ? displayName(localized.name, brand) : localized.name,
     brand,
     price,
-    sku: product.sku ?? product.slug,
+    sku: product.sku ?? localized.slug,
     image,
     lifestyleImage: image,
     type: isMotorcycle ? "motorcycle" : "equipment",
     gender: equipmentMeta.gender,
     shopAudiences,
+    wcCategorySlugs,
     category: equipmentMeta.category,
     sizes: sizes.length > 0 ? sizes : ["One size"],
     colors: colors.length > 0 ? colors : ["—"],

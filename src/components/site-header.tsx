@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useCart } from "@/context/cart-context";
 import { useCheckoutStep } from "@/context/checkout-step-context";
+import { useCategoryTree } from "@/context/category-tree-context";
 import { useDictionary, useLocale } from "@/context/locale-context";
 import { useLocaleAlternates } from "@/context/locale-alternates-context";
 import type { Locale } from "@/i18n/config";
@@ -120,10 +121,11 @@ export function SiteHeader() {
   const router = useRouter();
   const locale = useLocale();
   const dictionary = useDictionary();
+  const categoryTree = useCategoryTree();
   const localeAlternates = useLocaleAlternates();
   const shopNav = useMemo(
-    () => getShopNav(locale, dictionary),
-    [locale, dictionary],
+    () => getShopNav(locale, dictionary, categoryTree),
+    [locale, dictionary, categoryTree],
   );
   const siteNav = useMemo(
     () => getSiteNav(locale, dictionary),
@@ -392,6 +394,7 @@ export function SiteHeader() {
       {equipmentMegaMenu ? (
         <EquipmentMegaMenu
           megaMenu={equipmentMegaMenu}
+          ariaLabel={dictionary.nav.equipment}
           open={equipmentOpen}
           onMouseEnter={openEquipmentMenu}
           onMouseLeave={closeEquipmentMenu}

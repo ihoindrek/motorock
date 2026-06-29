@@ -7,6 +7,7 @@ import type { NavColumn, MegaMenu } from "@/data/navigation";
 
 type EquipmentMegaMenuProps = {
   megaMenu: MegaMenu;
+  ariaLabel: string;
   open: boolean;
   onMouseEnter: () => void;
   onMouseLeave: () => void;
@@ -15,6 +16,7 @@ type EquipmentMegaMenuProps = {
 
 export function EquipmentMegaMenu({
   megaMenu,
+  ariaLabel,
   open,
   onMouseEnter,
   onMouseLeave,
@@ -33,7 +35,7 @@ export function EquipmentMegaMenu({
     <div
       id="mega-menu-equipment"
       role="region"
-      aria-label="Driving Equipment"
+      aria-label={ariaLabel}
       aria-hidden={!open}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}

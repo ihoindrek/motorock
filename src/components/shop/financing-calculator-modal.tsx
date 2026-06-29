@@ -1,8 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useDictionary } from "@/context/locale-context";
 import { ShopModal } from "@/components/ui/shop-modal";
-import { FINANCING_DISCLAIMER } from "@/data/financing";
 import type { FinancingProductType } from "@/data/financing";
 import { formatPrice } from "@/lib/shop/category";
 import {
@@ -33,6 +33,7 @@ export function FinancingCalculatorModal({
   onCheckout,
   onEnquire,
 }: FinancingCalculatorModalProps) {
+  const dict = useDictionary();
   const providers = useMemo(
     () => getEligibleProviders(price, productType),
     [price, productType],
@@ -62,9 +63,9 @@ export function FinancingCalculatorModal({
       <ShopModal
         open={open}
         onClose={onClose}
-        eyebrow="Financing"
-        title="Not available online"
-        description="This item may still qualify in-store — get in touch and we'll walk you through options."
+        eyebrow={dict.financing.eyebrow}
+        title={dict.financing.notAvailableTitle}
+        description={dict.financing.notAvailableDescription}
       >
         {onEnquire ? (
           <button
@@ -75,7 +76,7 @@ export function FinancingCalculatorModal({
             }}
             className="inline-flex items-center rounded-full bg-ink px-7 py-3 font-body text-xs font-bold uppercase tracking-aggressive text-paper transition-colors duration-200 hover:bg-accent"
           >
-            Ask about financing →
+            {dict.financing.askFinancing}
           </button>
         ) : null}
       </ShopModal>
@@ -88,8 +89,8 @@ export function FinancingCalculatorModal({
     <ShopModal
       open={open}
       onClose={onClose}
-      eyebrow="Financing"
-      title="Monthly payment"
+      eyebrow={dict.financing.eyebrow}
+      title={dict.financing.monthlyPayment}
       description={
         productName
           ? `${productName} · ${formatPrice(price)}`
@@ -133,7 +134,7 @@ export function FinancingCalculatorModal({
 
         <div>
           <p className="font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/40">
-            Term
+            {dict.financing.term}
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             {availableTerms.map((term) => (
@@ -148,7 +149,7 @@ export function FinancingCalculatorModal({
                     : "border-ink/15 text-ink/60 hover:border-ink/30 hover:text-ink",
                 )}
               >
-                {term} mo
+                {term} {dict.financing.monthsShort}
               </button>
             ))}
           </div>
@@ -157,33 +158,35 @@ export function FinancingCalculatorModal({
         {quote ? (
           <div className="border border-ink/10 bg-moto/50 p-5 sm:p-6">
             <p className="font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/40">
-              Estimated monthly
+              {dict.financing.estimatedMonthly}
             </p>
             <p className="mt-2 font-body text-4xl font-extrabold tracking-tight text-accent sm:text-5xl">
               {formatMonthlyPrice(quote.monthlyPayment)}
-              <span className="ml-1 text-lg font-bold text-ink/45">/mo</span>
+              <span className="ml-1 text-lg font-bold text-ink/45">
+                {dict.financing.perMonth}
+              </span>
             </p>
             <dl className="mt-5 grid gap-3 text-sm sm:grid-cols-2">
               <div>
-                <dt className="text-ink/45">Purchase price</dt>
+                <dt className="text-ink/45">{dict.financing.purchasePrice}</dt>
                 <dd className="font-medium text-ink">{formatPrice(price)}</dd>
               </div>
               <div>
-                <dt className="text-ink/45">Indicative interest</dt>
+                <dt className="text-ink/45">{dict.financing.indicativeInterest}</dt>
                 <dd className="font-medium text-ink">
                   {quote.annualInterestRate <= 0
-                    ? "0% (promo)"
+                    ? dict.financing.promoZero
                     : formatInterestRate(quote.annualInterestRate)}
                 </dd>
               </div>
               <div>
-                <dt className="text-ink/45">Total payable</dt>
+                <dt className="text-ink/45">{dict.financing.totalPayable}</dt>
                 <dd className="font-medium text-ink">
                   {formatPrice(Math.ceil(quote.totalPayable))}
                 </dd>
               </div>
               <div>
-                <dt className="text-ink/45">Interest & fees</dt>
+                <dt className="text-ink/45">{dict.financing.interestFees}</dt>
                 <dd className="font-medium text-ink">
                   {quote.interestAmount <= 0
                     ? "—"
@@ -197,8 +200,7 @@ export function FinancingCalculatorModal({
         {activeProvider?.availableAtCheckout ? (
           <div className="space-y-4">
             <p className="text-sm leading-relaxed text-ink/60">
-              Choose <strong className="font-medium text-ink">Montonio</strong> at
-              checkout for pay later and järelmaks — same flow as on motorock.eu.
+              {dict.financing.checkoutMontonio}
             </p>
             {onCheckout ? (
               <button
@@ -210,15 +212,14 @@ export function FinancingCalculatorModal({
                 className="inline-flex items-center rounded-full bg-ink px-7 py-3 font-body text-xs font-bold uppercase tracking-aggressive text-paper transition-colors duration-200 hover:bg-accent"
               >
                 {productType === "equipment"
-                  ? "Continue to checkout →"
-                  : "Discuss at checkout →"}
+                  ? dict.financing.continueCheckout
+                  : dict.financing.discussCheckout}
               </button>
             ) : null}
           </div>
         ) : (
           <p className="text-sm leading-relaxed text-ink/60">
-            {activeProvider?.name} applications are handled with our team — we can
-            prepare an offer when you order or visit the showroom.
+            {activeProvider?.name} {dict.financing.handledInStore}
           </p>
         )}
 
@@ -231,11 +232,14 @@ export function FinancingCalculatorModal({
             }}
             className="inline-flex items-center font-body text-xs font-bold uppercase tracking-aggressive text-ink/55 transition-colors hover:text-accent"
           >
-            Ask about {activeProvider?.name ?? "financing"} →
+            {dict.financing.askProvider}{" "}
+            {activeProvider?.name ?? dict.financing.eyebrow} →
           </button>
         ) : null}
 
-        <p className="text-[11px] leading-relaxed text-ink/40">{FINANCING_DISCLAIMER}</p>
+        <p className="text-[11px] leading-relaxed text-ink/40">
+          {dict.financing.disclaimer}
+        </p>
       </div>
     </ShopModal>
   );

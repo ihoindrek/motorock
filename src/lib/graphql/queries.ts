@@ -8,6 +8,7 @@ const CATALOG_LIST_FIELDS = `
     languageCode
     translations {
       slug
+      name
       language {
         code
       }
@@ -70,6 +71,7 @@ export const PRODUCT_BY_SLUG = `
       languageCode
       translations {
         slug
+        name
         language {
           code
         }

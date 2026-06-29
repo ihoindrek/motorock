@@ -2,8 +2,10 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { CategoryView } from "@/components/shop/category-view";
 import { isLocale } from "@/i18n/config";
+import { getDictionary } from "@/i18n/get-dictionary";
+import { fetchEquipmentCategoryIndex } from "@/lib/graphql/categories";
 import { getEquipmentCatalogForRoute } from "@/lib/graphql/products";
-import { parseEquipmentSlug } from "@/lib/shop/category";
+import { resolveEquipmentRoute } from "@/lib/shop/equipment-route";
 
 export const revalidate = 300;
 
@@ -14,8 +16,19 @@ type EquipmentCategoryPageProps = {
 export async function generateMetadata({
   params,
 }: EquipmentCategoryPageProps): Promise<Metadata> {
-  const { slug } = await params;
-  const route = parseEquipmentSlug(slug);
+  const { locale: localeParam, slug } = await params;
+
+  if (!isLocale(localeParam)) {
+    return { title: "Category not found" };
+  }
+
+  const dictionary = getDictionary(localeParam);
+  const index = await fetchEquipmentCategoryIndex(localeParam);
+  const route = resolveEquipmentRoute(slug, index, localeParam, dictionary);
+
+  if (!route) {
+    return { title: "Category not found" };
+  }
 
   return {
     title: route.title,
@@ -32,7 +45,14 @@ export default async function EquipmentCategoryPage({
     notFound();
   }
 
-  const route = parseEquipmentSlug(slug);
+  const dictionary = getDictionary(localeParam);
+  const index = await fetchEquipmentCategoryIndex(localeParam);
+  const route = resolveEquipmentRoute(slug, index, localeParam, dictionary);
+
+  if (!route) {
+    notFound();
+  }
+
   const products = await getEquipmentCatalogForRoute(route, localeParam);
 
   return (

@@ -34,4 +34,6 @@ export type CampaignStatus = {
   progress: number;
   progressMessage: string;
   eligibleMessage: string;
+  displayTitle: string;
+  ctaLabel: string;
 };

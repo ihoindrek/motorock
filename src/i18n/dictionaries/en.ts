@@ -23,6 +23,22 @@ export type Dictionary = {
     promoTag: string;
     promoHeadline: string;
   };
+  equipmentMenu: {
+    jackets: string;
+    vests: string;
+    pants: string;
+    gloves: string;
+    footwear: string;
+    hoodies: string;
+    tshirts: string;
+    baseLayers: string;
+    helmets: string;
+    goggles: string;
+    headwear: string;
+    bags: string;
+    safety: string;
+    scarves: string;
+  };
   footer: {
     shop: string;
     quickLinks: string;
@@ -49,6 +65,7 @@ export type Dictionary = {
     shop: string;
     close: string;
     contactUs: string;
+    loading: string;
   };
   hero: {
     motorcycles: string;
@@ -104,6 +121,7 @@ export type Dictionary = {
     paymentError: string;
     decreaseQty: string;
     increaseQty: string;
+    phoneCountry: string;
   };
   pdp: {
     breadcrumbHome: string;
@@ -124,6 +142,143 @@ export type Dictionary = {
     specifications: string;
     shippingReturns: string;
     relatedProducts: string;
+    features: string;
+    oneSize: string;
+    shippingReturnsBody: string;
+  };
+  catalog: {
+    sort: string;
+    featured: string;
+    midRange: string;
+    newest: string;
+    priceLowHigh: string;
+    priceHighLow: string;
+    filters: string;
+    clearAll: string;
+    category: string;
+    brand: string;
+    size: string;
+    price: string;
+    availability: string;
+    inStock: string;
+    inStore: string;
+    inStockOnly: string;
+    inStoreOnly: string;
+    protectionSafety: string;
+    minPrice: string;
+    maxPrice: string;
+    loadMore: string;
+    loadingMore: string;
+    allLoaded: string;
+    productsProgress: string;
+    clearFilters: string;
+  };
+  showroom: {
+    pickupTitle: string;
+    pickupDescription: string;
+    pickupSelected: string;
+    usePickup: string;
+    directions: string;
+    pickupFallback: string;
+    tryBeforeBuy: string;
+    visitUs: string;
+    pickupNote: string;
+  };
+  returns: {
+    headline: string;
+    detail: string;
+  };
+  financing: {
+    retail: string;
+    finance: string;
+    perMonth: string;
+    indicative: string;
+    eyebrow: string;
+    monthlyPayment: string;
+    notAvailableTitle: string;
+    notAvailableDescription: string;
+    askFinancing: string;
+    term: string;
+    monthsShort: string;
+    estimatedMonthly: string;
+    purchasePrice: string;
+    indicativeInterest: string;
+    promoZero: string;
+    totalPayable: string;
+    interestFees: string;
+    checkoutMontonio: string;
+    continueCheckout: string;
+    discussCheckout: string;
+    handledInStore: string;
+    askProvider: string;
+    disclaimer: string;
+    fromMonthlyPrefix: string;
+  };
+  notFound: {
+    title: string;
+    description: string;
+    shopEquipment: string;
+    search: string;
+  };
+  testRide: {
+    eyebrow: string;
+    title: string;
+    accent: string;
+    description: string;
+    showroom: string;
+    openMaps: string;
+    confirmNote: string;
+  };
+  forms: {
+    messageReceived: string;
+    thanksReply: string;
+    name: string;
+    email: string;
+    phone: string;
+    phoneOptional: string;
+    message: string;
+    sendMessage: string;
+    motorcycle: string;
+    preferredDate: string;
+    bookTestRide: string;
+    optional: string;
+    requestReceived: string;
+    testRideThanks: string;
+    notes: string;
+    finish: string;
+    bikePlaceholder: string;
+    notesPlaceholder: string;
+    sendRequest: string;
+    enquirePlaceholder: string;
+    questionPlaceholder: string;
+    availabilityPlaceholder: string;
+  };
+  pages: {
+    cartTitle: string;
+    cartDescription: string;
+    motorcyclesTitle: string;
+    motorcyclesDescription: string;
+    testRideTitle: string;
+    testRideDescription: string;
+  };
+  giveaway: {
+    drawClosed: string;
+    timeLeft: string;
+    drawEndedAria: string;
+    timeRemainingAria: string;
+    days: string;
+    hours: string;
+    minutes: string;
+    seconds: string;
+    activeCampaign: string;
+    progress: string;
+    entryWithOrder: string;
+    campaignProgressAria: string;
+    rules: string;
+    giveaway2026Title: string;
+    giveaway2026ShortTitle: string;
+    progressMessage: string;
+    eligibleMessage: string;
   };
   legal: {
     eyebrow: string;
@@ -191,6 +346,22 @@ export const en: Dictionary = {
     promoTag: "New in",
     promoHeadline: "Pando Moto 2026 collection in stock",
   },
+  equipmentMenu: {
+    jackets: "Jackets & tags",
+    vests: "Vests",
+    pants: "Pants & jeans",
+    gloves: "Gloves",
+    footwear: "Footwear",
+    hoodies: "Hoodies & sweaters",
+    tshirts: "T-shirts & jerseys",
+    baseLayers: "Base layers",
+    helmets: "Helmets",
+    goggles: "Goggles",
+    headwear: "Headwear",
+    bags: "Bags & backpacks",
+    safety: "Safety & protection",
+    scarves: "Scarves & tubulars",
+  },
   footer: {
     shop: "Shop",
     quickLinks: "Quick links",
@@ -219,6 +390,7 @@ export const en: Dictionary = {
     shop: "Shop",
     close: "Close",
     contactUs: "Contact us",
+    loading: "Loading",
   },
   hero: {
     motorcycles: "Motorcycles",
@@ -275,6 +447,7 @@ export const en: Dictionary = {
     paymentError: "Payment could not be started. Please try again.",
     decreaseQty: "Decrease quantity",
     increaseQty: "Increase quantity",
+    phoneCountry: "Phone country",
   },
   pdp: {
     breadcrumbHome: "Home",
@@ -295,6 +468,159 @@ export const en: Dictionary = {
     specifications: "Specifications",
     shippingReturns: "Shipping & returns",
     relatedProducts: "You may also like",
+    features: "Features",
+    oneSize: "One size",
+    shippingReturnsBody:
+      "Standard delivery across Estonia and the EU. Returns accepted on unworn items within 14 days — contact us to arrange a return.",
+  },
+  catalog: {
+    sort: "Sort",
+    featured: "Featured",
+    midRange: "Mid-range",
+    newest: "Newest",
+    priceLowHigh: "Price: low to high",
+    priceHighLow: "Price: high to low",
+    filters: "Filters",
+    clearAll: "Clear all",
+    category: "Category",
+    brand: "Brand",
+    size: "Size",
+    price: "Price",
+    availability: "Availability",
+    inStock: "In stock",
+    inStore: "In store",
+    inStockOnly: "In stock only",
+    inStoreOnly: "In store only",
+    protectionSafety: "Protection & safety",
+    minPrice: "Minimum price",
+    maxPrice: "Maximum price",
+    loadMore: "Load more products",
+    loadingMore: "Loading…",
+    allLoaded: "All products loaded",
+    productsProgress: "Products loaded",
+    clearFilters: "Clear filters",
+  },
+  showroom: {
+    pickupTitle: "Pick up at showroom & try on",
+    pickupDescription:
+      "Reserve online, try gear or see bikes in person before you commit.",
+    pickupSelected: "Showroom pickup selected",
+    usePickup: "Use showroom pickup",
+    directions: "Directions →",
+    pickupFallback:
+      "Mention showroom pickup in your order notes or choose the closest pickup option below — we'll hold items for you.",
+    tryBeforeBuy: "Try before you buy.",
+    visitUs: "Visit us",
+    pickupNote: "Pick up at our Tallinn showroom —",
+  },
+  returns: {
+    headline: "Free exchange or returns within 14 days",
+    detail: "Wrong size? Exchange it or send it back — no hassle.",
+  },
+  financing: {
+    retail: "Retail",
+    finance: "Finance",
+    perMonth: "/mo",
+    indicative: "indicative",
+    eyebrow: "Financing",
+    monthlyPayment: "Monthly payment",
+    notAvailableTitle: "Not available online",
+    notAvailableDescription:
+      "This item may still qualify in-store — get in touch and we'll walk you through options.",
+    askFinancing: "Ask about financing →",
+    term: "Term",
+    monthsShort: "mo",
+    estimatedMonthly: "Estimated monthly",
+    purchasePrice: "Purchase price",
+    indicativeInterest: "Indicative interest",
+    promoZero: "0% (promo)",
+    totalPayable: "Total payable",
+    interestFees: "Interest & fees",
+    checkoutMontonio:
+      "Choose Montonio at checkout for pay later and järelmaks — same flow as on motorock.eu.",
+    continueCheckout: "Continue to checkout →",
+    discussCheckout: "Discuss at checkout →",
+    handledInStore:
+      "applications are handled with our team — we can prepare an offer when you order or visit the showroom.",
+    askProvider: "Ask about",
+    disclaimer:
+      "Indicative monthly payment. Final terms, interest, and eligibility are confirmed by the provider at checkout or when you apply.",
+    fromMonthlyPrefix: "or from",
+  },
+  notFound: {
+    title: "Page not found",
+    description:
+      "This page does not exist or has moved. Try the shop or search instead.",
+    shopEquipment: "Shop equipment",
+    search: "Search",
+  },
+  testRide: {
+    eyebrow: "Test ride",
+    title: "Book a",
+    accent: "test ride.",
+    description:
+      "Pick a time, we'll have the bike ready. Most riders decide in the saddle — we'll take care of the rest.",
+    showroom: "Showroom",
+    openMaps: "Open in Google Maps →",
+    confirmNote:
+      "We'll confirm your slot by email — usually within one business day. Bring your licence and gear if you want to ride.",
+  },
+  forms: {
+    messageReceived: "Message received",
+    thanksReply: "Thanks — we'll get back to you soon.",
+    name: "Name",
+    email: "Email",
+    phone: "Phone",
+    phoneOptional: "optional",
+    message: "Message",
+    sendMessage: "Send message →",
+    motorcycle: "Motorcycle",
+    preferredDate: "Preferred date",
+    bookTestRide: "Book test ride →",
+    optional: "optional",
+    requestReceived: "Request received",
+    testRideThanks: "Thanks — we'll be in touch to confirm your test ride.",
+    notes: "Notes",
+    finish: "Finish",
+    bikePlaceholder: "Which model interests you?",
+    notesPlaceholder: "Licence type, experience, questions…",
+    sendRequest: "Send request →",
+    enquirePlaceholder:
+      "Interested in ordering or arranging a viewing — tell us what you need…",
+    questionPlaceholder: "What's on your mind about this bike?",
+    availabilityPlaceholder:
+      "Let us know what you're looking for and we'll follow up…",
+  },
+  pages: {
+    cartTitle: "Cart",
+    cartDescription:
+      "Review your order, choose delivery, and checkout at Motorock.eu.",
+    motorcyclesTitle: "Motorcycles",
+    motorcyclesDescription:
+      "Premium motorcycles from Brixton, Mutt, Motron and Malaguti.",
+    testRideTitle: "Book a test ride",
+    testRideDescription:
+      "Book a motorcycle test ride at Motorock showroom in Tallinn.",
+  },
+  giveaway: {
+    drawClosed: "Draw closed",
+    timeLeft: "Time left to enter",
+    drawEndedAria: "Giveaway draw has ended",
+    timeRemainingAria:
+      "{days} days, {hours} hours, {minutes} minutes, {seconds} seconds remaining",
+    days: "Days",
+    hours: "Hours",
+    minutes: "Minutes",
+    seconds: "Seconds",
+    activeCampaign: "Active campaign",
+    progress: "Progress",
+    entryWithOrder: "1 giveaway entry with this order",
+    campaignProgressAria: "Campaign entry progress",
+    rules: "Rules",
+    giveaway2026Title: "MotoRock Giveaway 2026",
+    giveaway2026ShortTitle: "Win a Brixton Crossfire 500",
+    progressMessage: "Add {remaining} more in gear to enter the {title} draw",
+    eligibleMessage: "You're in the {title} draw — 1 entry with this order",
   },
   legal: {
     eyebrow: "Legal",

@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useCart, type CartLine } from "@/context/cart-context";
 import { useCheckoutStep } from "@/context/checkout-step-context";
 import { useDictionary, useLocale } from "@/context/locale-context";
@@ -11,6 +11,8 @@ import {
   countryLabel,
   useCheckoutShipping,
 } from "@/hooks/use-checkout-shipping";
+import { useCheckoutPayment } from "@/hooks/use-checkout-payment";
+import { useMontonioPaymentOptions } from "@/hooks/use-montonio-payment-options";
 import { isLiveCheckoutEnabled } from "@/lib/checkout-mode";
 import {
   submitCheckout,
@@ -27,15 +29,29 @@ import {
   CheckoutShippingOptionsSkeleton,
 } from "@/components/shop/checkout-shipping-options";
 import { cartLineThumbnailClass } from "@/lib/shop/cart-line-image";
-import { formatPrice } from "@/lib/shop/category";
+import { formatCheckoutPrice } from "@/lib/shop/category";
 import { Price } from "@/components/shop/price";
 import { cartHasEquipment } from "@/lib/shop/cart-has-equipment";
 import { defaultLocationForCountry } from "@/lib/shop/countries";
+import {
+  formatPhoneWithCountryCode,
+  isValidCheckoutPhone,
+  stripCountryDialCode,
+} from "@/lib/shop/phone";
 import { cn } from "@/lib/utils";
 import { EquipmentReturnPromise } from "@/components/shop/equipment-return-promise";
 import { CampaignCartPanels } from "@/components/campaigns/campaign-cart-panels";
 import { ShowroomPickupPanel } from "@/components/shop/showroom-pickup-panel";
-import { EQUIPMENT_RETURN_PROMISE } from "@/data/return-policy";
+import { CheckoutPickupPointSelector } from "@/components/shop/checkout-pickup-point-selector";
+import { CheckoutPhoneField } from "@/components/shop/checkout-phone-field";
+import { CheckoutPaymentOptions, filterMontonioOptionsForGateway } from "@/components/shop/checkout-payment-options";
+import {
+  resolvePickupPointSources,
+  shippingMethodNeedsPickupPoint,
+} from "@/lib/shipping/pickup-carrier";
+import type { PickupPoint } from "@/types/pickup-point";
+import type { MontonioPaymentOption } from "@/types/montonio-payment";
+import { montonioOptionKey, montonioOptionLabel } from "@/types/montonio-payment";
 
 const FORM_ID = "checkout-form";
 
@@ -359,7 +375,7 @@ export function CartCheckoutView() {
           email: "E-post",
           country: "Riik",
           deliveryMethod: "Tarneviis",
-          noDeliveryOptions: "Sellesse riiki tarneviisid puuduvad:",
+          noDeliveryOptions: "Tarneviisid puuduvad — tühjenda ostukorv ja lisa toode uuesti tootelehelt (vali suurus).",
           updatingPrices: "Uuendan hindu…",
           pickupAtPayment: "Pakiautomaadi valik tehakse turvaliselt makses.",
           streetAddress: "Tänava aadress",
@@ -377,6 +393,12 @@ export function CartCheckoutView() {
           termsLink: "tingimustega",
           securePayment:
             "Turvaline makse Montonioga — pank, kaart, maksa hiljem ja järelmaks",
+          paymentMethod: "Makseviis",
+          testPayment: "Testi makset",
+          testPaymentDone: "Makse test läbitud",
+          testPaymentBody:
+            "Valisid makseviisi „{method}“. WooCommerce'i tellimust ei loodud ja makset ei võetud.",
+          backToCheckout: "Tagasi kassasse",
         }
       : {
           orderConfirmed: "Order confirmed",
@@ -399,7 +421,8 @@ export function CartCheckoutView() {
           email: "Email",
           country: "Country",
           deliveryMethod: "Delivery method",
-          noDeliveryOptions: "No delivery options for",
+          noDeliveryOptions:
+            "No delivery options — clear your cart and re-add from the product page (choose a size).",
           updatingPrices: "Updating prices…",
           pickupAtPayment: "Pickup point is selected securely at payment.",
           streetAddress: "Street address",
@@ -417,6 +440,12 @@ export function CartCheckoutView() {
           termsLink: "terms & conditions",
           securePayment:
             "Secure payment via Montonio — bank, card, pay later & järelmaks",
+          paymentMethod: "Payment method",
+          testPayment: "Test payment",
+          testPaymentDone: "Payment test complete",
+          testPaymentBody:
+            'You selected "{method}". No WooCommerce order was created and no payment was taken.',
+          backToCheckout: "Back to checkout",
         };
   const { lines, itemCount, subtotal, updateQuantity, removeItem, clearCart } =
     useCart();
@@ -424,6 +453,8 @@ export function CartCheckoutView() {
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [phoneCountry, setPhoneCountry] = useState("EE");
+  const phoneCountryTouchedRef = useRef(false);
   const [address1, setAddress1] = useState("");
   const [city, setCity] = useState("");
   const [postcode, setPostcode] = useState("");
@@ -432,6 +463,12 @@ export function CartCheckoutView() {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [orderId, setOrderId] = useState<string | null>(null);
+  const [previewPaymentTitle, setPreviewPaymentTitle] = useState<string | null>(
+    null,
+  );
+  const [pickupPoint, setPickupPoint] = useState<PickupPoint | null>(null);
+  const [selectedMontonioOption, setSelectedMontonioOption] =
+    useState<MontonioPaymentOption | null>(null);
 
   const customer = useMemo(
     () => ({
@@ -439,15 +476,56 @@ export function CartCheckoutView() {
       firstName,
       lastName,
       phone,
+      phoneCountry,
       address1,
       city,
       postcode,
     }),
-    [email, firstName, lastName, phone, address1, city, postcode],
+    [email, firstName, lastName, phone, phoneCountry, address1, city, postcode],
   );
 
   const shipping = useCheckoutShipping(lines, customer);
+  const paymentReady =
+    !shipping.loading && shipping.rates.length > 0 && !shipping.syncing;
+  const paymentRefreshKey = `${shipping.country}:${shipping.selectedRateId ?? ""}:${shipping.rates.map((rate) => rate.id).join("|")}`;
+  const payment = useCheckoutPayment(paymentReady, paymentRefreshKey);
+  const paymentWaiting =
+    !shipping.loading && !shipping.syncing && shipping.rates.length === 0;
+  const montonioSelected = Boolean(
+    payment.selectedGateway?.id?.toLowerCase().includes("montonio"),
+  );
+  const montonio = useMontonioPaymentOptions(
+    shipping.country,
+    montonioSelected && paymentReady,
+  );
+  const montonioOptionsForGateway = useMemo(() => {
+    if (!payment.selectedGateway) {
+      return [];
+    }
+
+    return filterMontonioOptionsForGateway(
+      payment.selectedGateway,
+      montonio.options,
+    );
+  }, [montonio.options, payment.selectedGateway]);
+  const paymentLoading =
+    paymentReady &&
+    (payment.loading || (montonioSelected && montonio.loading));
+  const needsMontonioProvider =
+    montonioSelected &&
+    montonio.configured &&
+    !montonio.loading &&
+    montonioOptionsForGateway.length > 0;
   const { setCheckoutStep } = useCheckoutStep();
+
+  const needsPickupPoint = shippingMethodNeedsPickupPoint(shipping.selectedRate);
+  const pickupPointSources = useMemo(() => {
+    if (!shipping.selectedRate || !needsPickupPoint) {
+      return null;
+    }
+
+    return resolvePickupPointSources(shipping.selectedRate, shipping.country);
+  }, [needsPickupPoint, shipping.country, shipping.selectedRate]);
 
   const displaySubtotal = shipping.wcSubtotal ?? subtotal;
   const displayShipping = shipping.shippingTotal;
@@ -457,9 +535,10 @@ export function CartCheckoutView() {
     Boolean(email) &&
     Boolean(firstName) &&
     Boolean(lastName) &&
-    Boolean(phone) &&
+    isValidCheckoutPhone(phoneCountry, phone) &&
     Boolean(shipping.selectedRateId) &&
-    (!shipping.needsAddress || Boolean(address1 && city && postcode));
+    (!shipping.needsAddress || Boolean(address1 && city && postcode)) &&
+    (!needsPickupPoint || Boolean(pickupPoint));
 
   const checkoutStep = useMemo((): 1 | 2 | 3 => {
     if (deliveryReady) {
@@ -479,11 +558,47 @@ export function CartCheckoutView() {
     lastName,
   ]);
 
-  const canSubmit = termsAccepted && deliveryReady;
+  const canSubmit =
+    termsAccepted &&
+    deliveryReady &&
+    Boolean(payment.selectedId) &&
+    !paymentLoading &&
+    !payment.error &&
+    (!needsMontonioProvider || Boolean(selectedMontonioOption));
   const shippingError = friendlyCheckoutError(
     shipping.error,
     dict.checkout.shippingError,
   );
+
+  useEffect(() => {
+    setPickupPoint(null);
+    setSelectedMontonioOption(null);
+  }, [shipping.selectedRateId, shipping.country]);
+
+  useEffect(() => {
+    if (!phoneCountryTouchedRef.current) {
+      setPhoneCountry(shipping.country);
+      setPhone((current) => stripCountryDialCode(shipping.country, current));
+    }
+  }, [shipping.country]);
+
+  useEffect(() => {
+    setSelectedMontonioOption(null);
+  }, [payment.selectedId]);
+
+  useEffect(() => {
+    if (!selectedMontonioOption) {
+      return;
+    }
+
+    const stillValid = montonioOptionsForGateway.some(
+      (option) => montonioOptionKey(option) === montonioOptionKey(selectedMontonioOption),
+    );
+
+    if (!stillValid) {
+      setSelectedMontonioOption(null);
+    }
+  }, [montonioOptionsForGateway, selectedMontonioOption]);
 
   useEffect(() => {
     if (itemCount === 0 || orderId) {
@@ -511,13 +626,26 @@ export function CartCheckoutView() {
     try {
       if (!isLiveCheckoutEnabled()) {
         await new Promise((resolve) => window.setTimeout(resolve, 900));
-        setOrderId(`DEMO-${Date.now().toString(36).toUpperCase()}`);
-        clearCart();
+        setPreviewPaymentTitle(
+          selectedMontonioOption
+            ? `${payment.selectedGateway?.title ?? "Montonio"} — ${montonioOptionLabel(selectedMontonioOption, locale)}`
+            : payment.selectedGateway?.title ?? payment.selectedId ?? "—",
+        );
         return;
       }
 
       const sessionToken = readWooSessionToken();
       const fallbackLocation = defaultLocationForCountry(shipping.country);
+      const pickupNote = [
+        pickupPoint
+          ? `Pakiautomaat: ${pickupPoint.name} (${pickupPoint.address}, ${pickupPoint.city}) [${pickupPoint.carrier}:${pickupPoint.id}]`
+          : null,
+        selectedMontonioOption
+          ? `Montonio: ${selectedMontonioOption.systemName} / ${selectedMontonioOption.code}`
+          : null,
+      ]
+        .filter(Boolean)
+        .join("\n") || undefined;
 
       await updateCheckoutCustomerShipping(
         {
@@ -525,15 +653,27 @@ export function CartCheckoutView() {
           email,
           firstName,
           lastName,
-          phone,
-          postcode: shipping.needsAddress ? postcode : fallbackLocation.postcode,
-          city: shipping.needsAddress ? city : fallbackLocation.city,
-          address1: shipping.needsAddress ? address1 : undefined,
+          phone: formatPhoneWithCountryCode(phoneCountry, phone),
+          postcode: shipping.needsAddress
+            ? postcode
+            : pickupPoint?.postcode || fallbackLocation.postcode,
+          city: shipping.needsAddress
+            ? city
+            : pickupPoint?.city || fallbackLocation.city,
+          address1: shipping.needsAddress
+            ? address1
+            : pickupPoint?.name,
         },
         sessionToken,
       );
 
-      const result = await submitCheckout({}, readWooSessionToken());
+      const result = await submitCheckout(
+        {
+          paymentMethod: payment.selectedId ?? undefined,
+          ...(pickupNote ? { customerNote: pickupNote } : {}),
+        },
+        readWooSessionToken(),
+      );
 
       if (result.redirect) {
         clearCart();
@@ -554,6 +694,27 @@ export function CartCheckoutView() {
       setSubmitting(false);
     }
   };
+
+  if (previewPaymentTitle) {
+    return (
+      <div className="site-container py-16 text-center lg:py-24">
+        <p className="section-eyebrow text-accent">{t.testPaymentDone}</p>
+        <h1 className="mt-2 text-3xl font-extrabold uppercase sm:text-4xl">
+          {t.testPaymentDone}
+        </h1>
+        <p className="mx-auto mt-4 max-w-lg text-ink/70">
+          {t.testPaymentBody.replace("{method}", previewPaymentTitle)}
+        </p>
+        <button
+          type="button"
+          onClick={() => setPreviewPaymentTitle(null)}
+          className="btn-accent mt-10 inline-flex"
+        >
+          {t.backToCheckout}
+        </button>
+      </div>
+    );
+  }
 
   if (orderId) {
     return (
@@ -610,8 +771,9 @@ export function CartCheckoutView() {
     onTermsChange: setTermsAccepted,
     canSubmit,
     submitting,
-    loading: shipping.loading,
+    loading: shipping.loading || paymentLoading,
     formId: FORM_ID,
+    payLabel: isLiveCheckoutEnabled() ? undefined : t.testPayment,
   };
 
   return (
@@ -623,7 +785,7 @@ export function CartCheckoutView() {
         <p className="mt-2 text-sm text-ink/60">
           {itemCount} {itemCount === 1 ? t.item : t.items} ·{" "}
           <span className="font-body font-extrabold tabular-nums text-ink">
-            {formatPrice(displayTotal)}
+            {formatCheckoutPrice(displayTotal, locale)}
           </span>{" "}
           {t.total}
         </p>
@@ -744,31 +906,32 @@ export function CartCheckoutView() {
                 <div>
                   <p className={labelClassName}>{t.deliveryMethod}</p>
                   <div className="mt-2">
-                    {shipping.loading ? (
+                    {(shipping.loading || shipping.syncing) &&
+                    shipping.rates.length === 0 ? (
                       <CheckoutShippingOptionsSkeleton />
                     ) : shippingError ? (
                       <p className="text-sm text-accent">{shippingError}</p>
                     ) : shipping.rates.length === 0 ? (
-                      <p className="text-sm text-ink/60">
-                        {t.noDeliveryOptions} {countryLabel(shipping.country)}.
-                      </p>
+                      <p className="text-sm text-ink/60">{t.noDeliveryOptions}</p>
                     ) : (
                       <CheckoutShippingOptions
                         rates={shipping.rates}
                         selectedRateId={shipping.selectedRateId}
                         onSelect={shipping.setSelectedRateId}
+                        syncing={shipping.syncing}
                       />
                     )}
                   </div>
-                  {shipping.syncing && !shipping.loading ? (
-                    <p className="mt-2 text-xs text-ink/40" aria-live="polite">
-                      {t.updatingPrices}
-                    </p>
-                  ) : null}
-                  {!shipping.needsAddress && shipping.selectedRate ? (
-                    <p className="mt-3 text-xs text-ink/50">
-                      {t.pickupAtPayment}
-                    </p>
+                  {!shipping.needsAddress &&
+                  shipping.selectedRate &&
+                  pickupPointSources ? (
+                    <CheckoutPickupPointSelector
+                      shippingRate={shipping.selectedRate}
+                      country={shipping.country}
+                      locale={locale}
+                      selectedPoint={pickupPoint}
+                      onSelect={setPickupPoint}
+                    />
                   ) : null}
                 </div>
 
@@ -840,16 +1003,44 @@ export function CartCheckoutView() {
                   </label>
                   <label className="block sm:col-span-2">
                     <span className={labelClassName}>{t.phone}</span>
-                    <input
-                      type="tel"
-                      name="phone"
-                      required
-                      autoComplete="tel"
+                    <CheckoutPhoneField
+                      country={phoneCountry}
+                      onCountryChange={(code) => {
+                        phoneCountryTouchedRef.current = true;
+                        setPhoneCountry(code);
+                        setPhone((current) => stripCountryDialCode(code, current));
+                      }}
                       value={phone}
-                      onChange={(event) => setPhone(event.target.value)}
-                      className={inputClassName}
+                      onChange={setPhone}
+                      required
+                      inputClassName={inputClassName}
                     />
                   </label>
+                </div>
+
+                <div className="border-t border-ink/10 pt-5">
+                  <p className={labelClassName}>{t.paymentMethod}</p>
+                  <div className="mt-2">
+                    <CheckoutPaymentOptions
+                      gateways={payment.gateways}
+                      selectedId={payment.selectedId}
+                      onSelect={payment.setSelectedId}
+                      montonioOptions={montonio.options}
+                      montonioLoading={montonio.loading}
+                      montonioError={montonio.error}
+                      montonioConfigured={montonio.configured}
+                      selectedMontonioKey={
+                        selectedMontonioOption
+                          ? montonioOptionKey(selectedMontonioOption)
+                          : null
+                      }
+                      onSelectMontonioOption={setSelectedMontonioOption}
+                      loading={paymentLoading}
+                      waitingForDelivery={paymentWaiting}
+                      error={payment.error}
+                      locale={locale}
+                    />
+                  </div>
                 </div>
 
                 {submitError ? (
@@ -882,7 +1073,7 @@ export function CartCheckoutView() {
             <ul className="mt-4 space-y-1 text-xs text-ink/55">
               <li>{t.securePayment}</li>
               <li className="text-xs text-ink/60">
-                {EQUIPMENT_RETURN_PROMISE.headline}
+                {dict.returns.headline}
               </li>
             </ul>
           </div>
@@ -902,8 +1093,9 @@ export function CartCheckoutView() {
         total={displayTotal}
         canSubmit={canSubmit}
         submitting={submitting}
-        loading={shipping.loading}
+        loading={shipping.loading || paymentLoading}
         formId={FORM_ID}
+        payLabel={isLiveCheckoutEnabled() ? undefined : t.testPayment}
       />
     </div>
   );

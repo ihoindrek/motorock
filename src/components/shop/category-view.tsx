@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useDictionary, useLocale } from "@/context/locale-context";
 import type { CatalogProduct } from "@/types/catalog-product";
 import {
   defaultSortForRoute,
@@ -15,6 +16,8 @@ import { CatalogProductGrid } from "@/components/shop/catalog-product-grid";
 import { CategoryFilters, type ActiveFilters } from "@/components/shop/category-filters";
 import { MotorcycleBrandLogoFilter } from "@/components/shop/motorcycle-brand-logo-filter";
 import { MobileFilterDrawer } from "@/components/ui/mobile-filter-drawer";
+import { localizedHref } from "@/i18n/paths";
+import { buildEquipmentCategoryHref } from "@/lib/shop/equipment-route";
 import { cn } from "@/lib/utils";
 
 type CategoryViewProps = {
@@ -65,10 +68,12 @@ function CatalogSortSelect({
   onChange: (value: SortOption) => void;
   showMidRangeSort?: boolean;
 }) {
+  const dict = useDictionary();
+
   return (
     <label className="flex shrink-0 items-center gap-2">
       <span className="font-body text-xs font-bold uppercase tracking-aggressive text-ink/50">
-        Sort
+        {dict.catalog.sort}
       </span>
       <select
         value={value}
@@ -76,13 +81,13 @@ function CatalogSortSelect({
         className="min-h-12 border border-ink/15 bg-paper px-4 py-3 font-body text-xs font-bold uppercase tracking-aggressive text-ink focus:border-accent focus:outline-none"
       >
         {showMidRangeSort ? (
-          <option value="price-mid">Mid-range</option>
+          <option value="price-mid">{dict.catalog.midRange}</option>
         ) : (
-          <option value="featured">Featured</option>
+          <option value="featured">{dict.catalog.featured}</option>
         )}
-        <option value="newest">Newest</option>
-        <option value="price-asc">Price: low to high</option>
-        <option value="price-desc">Price: high to low</option>
+        <option value="newest">{dict.catalog.newest}</option>
+        <option value="price-asc">{dict.catalog.priceLowHigh}</option>
+        <option value="price-desc">{dict.catalog.priceHighLow}</option>
       </select>
     </label>
   );
@@ -141,6 +146,8 @@ export function CategoryView({
   motoBackground = false,
   footer,
 }: CategoryViewProps) {
+  const dict = useDictionary();
+  const locale = useLocale();
   const useBrandLogos = brandFilterVariant === "logos";
   const gridClassName = gridDividers
     ? gridColumns === 3
@@ -185,7 +192,7 @@ export function CategoryView({
   const isMotorcycleCatalog = route.category === "motorcycles";
   const isToolsCatalog = route.category === "tools";
   const isEquipmentCatalog = route.breadcrumbs.some(
-    (crumb) => crumb.href === "/shop/equipment",
+    (crumb) => crumb.href === buildEquipmentCategoryHref(),
   );
   const hasLongCategoryTitle =
     isMotorcycleCatalog ||
@@ -278,7 +285,10 @@ export function CategoryView({
               {index === route.breadcrumbs.length - 1 ? (
                 <span className="text-ink">{crumb.label}</span>
               ) : (
-                <Link href={crumb.href} className="transition-colors hover:text-accent">
+                <Link
+                  href={localizedHref(locale, crumb.href)}
+                  className="transition-colors hover:text-accent"
+                >
                   {crumb.label}
                 </Link>
               )}
@@ -338,7 +348,7 @@ export function CategoryView({
           }`}
           onClick={() => setMobileFiltersOpen(true)}
         >
-          Filters
+          {dict.catalog.filters}
         </button>
         <CatalogSortSelect
           value={sort}
@@ -415,7 +425,7 @@ export function CategoryView({
             onClick={clearFilters}
             className="mt-4 font-body text-[10px] font-bold uppercase tracking-aggressive text-accent"
           >
-            Clear filters
+            {dict.catalog.clearFilters}
           </button>
         </div>
       )}
@@ -423,6 +433,7 @@ export function CategoryView({
       <MobileFilterDrawer
         open={mobileFiltersOpen}
         onClose={() => setMobileFiltersOpen(false)}
+        title={dict.catalog.filters}
       >
         <CategoryFilters {...filterProps} variant="drawer" />
       </MobileFilterDrawer>

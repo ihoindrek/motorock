@@ -8,6 +8,8 @@ import { useCart } from "@/context/cart-context";
 import { useDictionary, useLocale } from "@/context/locale-context";
 import { localizedHref } from "@/i18n/paths";
 import { formatPrice } from "@/lib/shop/category";
+import { resolveLineVariationId } from "@/lib/shop/resolve-cart-variation";
+import { formatSizeLabel } from "@/lib/shop/size-label";
 import { sortProductSizes } from "@/lib/shop/sort-sizes";
 import { SHIPPING_THRESHOLD } from "@/lib/shop/cart-totals";
 import { BrandLogo } from "@/components/shop/brand-logo";
@@ -84,7 +86,9 @@ export function EquipmentProductView({
     () => buildProductColorOptions(product.colors, product.variations),
     [product.colors, product.variations],
   );
-  const [size, setSize] = useState(() => sortProductSizes(product.sizes)[0]);
+  const [size, setSize] = useState(() =>
+    formatSizeLabel(sortProductSizes(product.sizes)[0] ?? dict.pdp.oneSize),
+  );
   const [color, setColor] = useState(() => selectableColors[0] ?? "");
   const [added, setAdded] = useState(false);
   const [descriptionExpanded, setDescriptionExpanded] = useState(false);
@@ -93,7 +97,7 @@ export function EquipmentProductView({
   const sizeGuide = useMemo(() => resolveSizeGuide(product), [product]);
 
   useEffect(() => {
-    setSize(sizes[0]);
+    setSize(formatSizeLabel(sizes[0] ?? dict.pdp.oneSize));
   }, [product.slug, sizes]);
 
   useEffect(() => {
@@ -136,8 +140,7 @@ export function EquipmentProductView({
     size,
     color: showColorPicker ? color : undefined,
     productId: product.databaseId,
-    variationId:
-      product.variationIds?.[size] ?? product.variationIds?.[color],
+    variationId: resolveLineVariationId(product, size, showColorPicker ? color : undefined),
   };
 
   const handleAdd = () => {
@@ -243,7 +246,8 @@ export function EquipmentProductView({
             />
           ) : null}
 
-          {sizes.length > 1 || sizes[0] !== "One size" ? (
+          {sizes.length > 1 ||
+          (sizes[0] && sizes[0].toLowerCase() !== "one size") ? (
             <div>
               <div className="flex items-center justify-between gap-3">
                 <p className="text-xs font-medium text-ink">{dict.pdp.size}</p>
@@ -380,7 +384,7 @@ export function EquipmentProductView({
 
           <div className="border-b border-ink/10">
             {product.features.length > 0 ? (
-              <CraftAccordion title="Features">
+              <CraftAccordion title={dict.pdp.features}>
                 <ul className="flex flex-wrap gap-2">
                   {product.features.map((feature) => (
                     <li
@@ -402,8 +406,7 @@ export function EquipmentProductView({
 
             <CraftAccordion title={dict.pdp.shippingReturns}>
               <p className="text-sm leading-relaxed text-ink/65">
-                Standard delivery across Estonia and the EU. Returns accepted on
-                unworn items within 14 days — contact us to arrange a return.
+                {dict.pdp.shippingReturnsBody}
               </p>
             </CraftAccordion>
           </div>

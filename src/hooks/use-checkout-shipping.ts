@@ -16,11 +16,13 @@ import {
   defaultLocationForCountry,
   sortCountryCodes,
 } from "@/lib/shop/countries";
+import { formatPhoneWithCountryCode } from "@/lib/shop/phone";
 import {
   shippingMethodNeedsAddress,
   type ShippingRate,
 } from "@/lib/shop/shipping-method";
 import { pickDefaultShippingRateId } from "@/lib/shop/shipping-rate-priority";
+import { filterShippingRatesForCountry } from "@/lib/shop/shipping-showroom-pickup";
 
 type CheckoutShippingState = {
   loading: boolean;
@@ -47,6 +49,7 @@ export function useCheckoutShipping(
     firstName: string;
     lastName: string;
     phone: string;
+    phoneCountry: string;
     address1: string;
     city: string;
     postcode: string;
@@ -67,9 +70,13 @@ export function useCheckoutShipping(
   const sessionRef = useRef<string | null>(null);
   const bootstrapReadyRef = useRef(false);
   const syncedLinesKeyRef = useRef("");
+  const countryRef = useRef("EE");
+  const linesRef = useRef(lines);
   const customerRef = useRef(customer);
 
   customerRef.current = customer;
+  countryRef.current = country;
+  linesRef.current = lines;
 
   const rememberSession = useCallback((token: string | null | undefined) => {
     if (token) {
@@ -102,19 +109,37 @@ export function useCheckoutShipping(
     [lines],
   );
 
-  const applyCart = useCallback((cart: Awaited<ReturnType<typeof fetchCartShipping>>) => {
-    rememberSession(cart.sessionToken);
-    setRates(cart.rates);
-    setShippingTotal(parseCartMoney(cart.cart.shippingTotal));
-    setWcSubtotal(parseCartMoney(cart.cart.subtotal));
-    setWcTotal(parseCartMoney(cart.cart.total));
+  const applyCart = useCallback(
+    (
+      cart: Awaited<ReturnType<typeof fetchCartShipping>>,
+      options?: { country?: string },
+    ) => {
+      const shipCountry = options?.country ?? countryRef.current;
+      const nextRates = filterShippingRatesForCountry(cart.rates, shipCountry);
 
-    const chosen =
-      cart.cart.chosenShippingMethods[0] ??
-      pickDefaultShippingRateId(cart.rates) ??
-      null;
-    setSelectedRateIdState((current) => current ?? chosen);
-  }, [rememberSession]);
+      rememberSession(cart.sessionToken);
+      setRates(nextRates);
+      setShippingTotal(parseCartMoney(cart.cart.shippingTotal));
+      setWcSubtotal(parseCartMoney(cart.cart.subtotal));
+      setWcTotal(parseCartMoney(cart.cart.total));
+
+      const chosen =
+        cart.cart.chosenShippingMethods.find((rateId) =>
+          nextRates.some((rate) => rate.id === rateId),
+        ) ??
+        pickDefaultShippingRateId(nextRates) ??
+        null;
+
+      setSelectedRateIdState((current) => {
+        if (current && nextRates.some((rate) => rate.id === current)) {
+          return current;
+        }
+
+        return chosen;
+      });
+    },
+    [rememberSession],
+  );
 
   const refreshShipping = useCallback(async () => {
     const cart = await fetchCartShipping(activeSession());
@@ -132,7 +157,12 @@ export function useCheckoutShipping(
           email: current.email || undefined,
           firstName: current.firstName || undefined,
           lastName: current.lastName || undefined,
-          phone: current.phone || undefined,
+          phone: current.phone
+            ? formatPhoneWithCountryCode(
+                current.phoneCountry || nextCountry,
+                current.phone,
+              )
+            : undefined,
           postcode:
             withAddress && current.postcode
               ? current.postcode
@@ -146,13 +176,15 @@ export function useCheckoutShipping(
       );
 
       rememberSession(sessionToken);
-      await refreshShipping();
+      const cart = await fetchCartShipping(activeSession());
+      applyCart(cart, { country: nextCountry });
     },
-    [activeSession, refreshShipping, rememberSession],
+    [activeSession, applyCart, rememberSession],
   );
 
   const setCountry = useCallback(
     (nextCountry: string) => {
+      countryRef.current = nextCountry;
       setCountryState(nextCountry);
       setSelectedRateIdState(null);
       setSyncing(true);
@@ -174,16 +206,24 @@ export function useCheckoutShipping(
   );
 
   const setSelectedRateId = useCallback((rateId: string) => {
-    setSelectedRateIdState(rateId);
     setSyncing(true);
     setError(null);
 
     void selectShippingRate(rateId, activeSession())
       .then((result) => {
         rememberSession(result.sessionToken);
-        setRates(result.rates);
+        setRates(filterShippingRatesForCountry(result.rates, countryRef.current));
         setShippingTotal(parseCartMoney(result.cart.shippingTotal));
         setWcTotal(parseCartMoney(result.cart.total));
+
+        const appliedRateId = result.chosenRateId ?? rateId;
+        if (result.chosenRateId && result.chosenRateId !== rateId) {
+          setSelectedRateIdState(result.chosenRateId);
+          setError("This delivery option could not be applied. Please choose another method.");
+          return;
+        }
+
+        setSelectedRateIdState(appliedRateId);
       })
       .catch((cause) => {
         setError(
@@ -196,7 +236,13 @@ export function useCheckoutShipping(
   }, [activeSession, rememberSession]);
 
   useEffect(() => {
-    if (!bootstrapReadyRef.current || loading || rates.length === 0 || selectedRateId) {
+    if (
+      !bootstrapReadyRef.current ||
+      loading ||
+      syncing ||
+      rates.length === 0 ||
+      selectedRateId
+    ) {
       return;
     }
 
@@ -204,10 +250,12 @@ export function useCheckoutShipping(
     if (defaultId) {
       setSelectedRateId(defaultId);
     }
-  }, [rates, selectedRateId, loading, setSelectedRateId]);
+  }, [rates, selectedRateId, loading, syncing, setSelectedRateId]);
 
   useEffect(() => {
-    if (lines.length === 0) {
+    const currentLines = linesRef.current;
+
+    if (currentLines.length === 0) {
       bootstrapReadyRef.current = false;
       syncedLinesKeyRef.current = "";
       setRates([]);
@@ -225,7 +273,7 @@ export function useCheckoutShipping(
       try {
         const [allowedCountries, session] = await Promise.all([
           fetchAllowedCountries(),
-          syncLocalCartToWoo(lines),
+          syncLocalCartToWoo(currentLines, { linesKey }),
         ]);
 
         if (cancelled) {
@@ -236,10 +284,17 @@ export function useCheckoutShipping(
         const sorted = sortCountryCodes(allowedCountries);
         setCountries(sorted);
 
-        const initialCountry = sorted.includes("EE") ? "EE" : sorted[0];
-        setCountryState(initialCountry);
+        const defaultCountry = sorted.includes("EE") ? "EE" : sorted[0];
+        const shipCountry = bootstrapReadyRef.current
+          ? countryRef.current
+          : defaultCountry;
 
-        await pushCustomerShipping(initialCountry, false);
+        if (!bootstrapReadyRef.current) {
+          countryRef.current = shipCountry;
+          setCountryState(shipCountry);
+        }
+
+        await pushCustomerShipping(shipCountry, false);
         syncedLinesKeyRef.current = linesKey;
 
         if (!cancelled) {
@@ -263,7 +318,7 @@ export function useCheckoutShipping(
     return () => {
       cancelled = true;
     };
-  }, [lines, linesKey, pushCustomerShipping, rememberSession]);
+  }, [linesKey, pushCustomerShipping, rememberSession]);
 
   useEffect(() => {
     if (!bootstrapReadyRef.current || loading || syncedLinesKeyRef.current === linesKey) {
@@ -274,11 +329,11 @@ export function useCheckoutShipping(
     setSyncing(true);
     setError(null);
 
-    void syncLocalCartToWoo(lines)
+    void syncLocalCartToWoo(linesRef.current, { linesKey })
       .then(async (session) => {
         rememberSession(session);
         await pushCustomerShipping(
-          country,
+          countryRef.current,
           needsAddress && Boolean(customerRef.current.address1),
         );
         syncedLinesKeyRef.current = linesKey;
@@ -299,7 +354,7 @@ export function useCheckoutShipping(
     return () => {
       cancelled = true;
     };
-  }, [linesKey, country, needsAddress, loading, pushCustomerShipping, lines, rememberSession]);
+  }, [linesKey, needsAddress, loading, pushCustomerShipping, rememberSession]);
 
   useEffect(() => {
     if (!bootstrapReadyRef.current || loading || !needsAddress) {
@@ -313,7 +368,7 @@ export function useCheckoutShipping(
 
     const timeout = window.setTimeout(() => {
       setSyncing(true);
-      void pushCustomerShipping(country, true)
+      void pushCustomerShipping(countryRef.current, true)
         .catch((cause) => {
           setError(
             cause instanceof Error
@@ -330,7 +385,6 @@ export function useCheckoutShipping(
       window.clearTimeout(timeout);
     };
   }, [
-    country,
     needsAddress,
     customer.address1,
     customer.city,

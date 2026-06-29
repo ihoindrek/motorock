@@ -1,12 +1,28 @@
 import { TestRideView } from "@/components/shop/test-ride-view";
+import { isLocale } from "@/i18n/config";
+import { getDictionary } from "@/i18n/get-dictionary";
 
-export const metadata = {
-  title: "Book a test ride",
-  description:
-    "Book a motorcycle test ride at Motorock showroom in Tallinn.",
-};
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale: localeParam } = await params;
+
+  if (!isLocale(localeParam)) {
+    return {};
+  }
+
+  const dict = getDictionary(localeParam);
+
+  return {
+    title: dict.pages.testRideTitle,
+    description: dict.pages.testRideDescription,
+  };
+}
 
 type TestRidePageProps = {
+  params: Promise<{ locale: string }>;
   searchParams: Promise<{
     slug?: string;
     bike?: string;
@@ -15,7 +31,9 @@ type TestRidePageProps = {
   }>;
 };
 
-export default async function TestRidePage({ searchParams }: TestRidePageProps) {
+export default async function TestRidePage({
+  searchParams,
+}: TestRidePageProps) {
   const params = await searchParams;
 
   return (

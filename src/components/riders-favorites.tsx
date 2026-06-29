@@ -12,7 +12,6 @@ import {
   getEquipmentCatalogForRoute,
   getMotorcycleCatalog,
 } from "@/lib/graphql/products";
-import { parseEquipmentSlug } from "@/lib/shop/category";
 import {
   partitionPopularGearByAudience,
   pickFavoriteProducts,
@@ -191,9 +190,24 @@ export async function RidersFavorites({ locale }: { locale: Locale }) {
   const [motorcycles, menEquipment, womenEquipment, accessoriesEquipment] =
     await Promise.all([
       getMotorcycleCatalog(locale),
-      getEquipmentCatalogForRoute(parseEquipmentSlug(["men"]), locale),
-      getEquipmentCatalogForRoute(parseEquipmentSlug(["women"]), locale),
-      getEquipmentCatalogForRoute(parseEquipmentSlug(["accessories"]), locale),
+      getEquipmentCatalogForRoute(
+        { title: "", description: "", breadcrumbs: [], wcCategorySlug: "for-men", gender: "men" },
+        locale,
+      ),
+      getEquipmentCatalogForRoute(
+        { title: "", description: "", breadcrumbs: [], wcCategorySlug: "for-women", gender: "women" },
+        locale,
+      ),
+      getEquipmentCatalogForRoute(
+        {
+          title: "",
+          description: "",
+          breadcrumbs: [],
+          wcCategorySlug: "accessories",
+          accessoriesOnly: true,
+        },
+        locale,
+      ),
     ]);
 
   const blockProducts: Record<string, FavoriteProduct[]> = {

@@ -1,4 +1,8 @@
+"use client";
+
 import Link from "next/link";
+import { useDictionary, useLocale } from "@/context/locale-context";
+import { localizedHref } from "@/i18n/paths";
 import { cn } from "@/lib/utils";
 import type { CampaignStatus } from "@/types/campaign";
 
@@ -12,9 +16,7 @@ function EligibleMessage({ message }: { message: string }) {
   const splitIndex = message.indexOf(" — ");
 
   if (splitIndex === -1) {
-    return (
-      <span className="font-bold text-ink">{message}</span>
-    );
+    return <span className="font-bold text-ink">{message}</span>;
   }
 
   return (
@@ -30,11 +32,14 @@ export function CampaignBanner({
   variant = "default",
   className,
 }: CampaignBannerProps) {
+  const locale = useLocale();
+  const dict = useDictionary();
   const { campaign, isEligible, progress, progressMessage, eligibleMessage } =
     status;
-  const title = campaign.shortTitle ?? campaign.title;
+  const title = status.displayTitle;
   const message = isEligible ? eligibleMessage : progressMessage;
-  const ctaLabel = campaign.content.ctaLabel ?? "Rules";
+  const ctaLabel = status.ctaLabel;
+  const ctaHref = localizedHref(locale, campaign.content.ctaHref);
 
   if (variant === "compact") {
     return (
@@ -49,7 +54,7 @@ export function CampaignBanner({
             {title}
           </p>
           <Link
-            href={campaign.content.ctaHref}
+            href={ctaHref}
             className="shrink-0 font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/45 transition-colors hover:text-accent"
           >
             {ctaLabel}
@@ -69,7 +74,7 @@ export function CampaignBanner({
             aria-valuenow={Math.round(progress)}
             aria-valuemin={0}
             aria-valuemax={100}
-            aria-label="Campaign entry progress"
+            aria-label={dict.giveaway.campaignProgressAria}
           >
             <div
               className="h-full rounded-full bg-accent transition-[width] duration-300 motion-reduce:transition-none"
@@ -91,14 +96,14 @@ export function CampaignBanner({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="font-body text-[10px] font-bold uppercase tracking-aggressive text-accent">
-            Active campaign
+            {dict.giveaway.activeCampaign}
           </p>
           <p className="mt-1 font-body text-base font-extrabold uppercase tracking-tight text-ink sm:text-lg">
             {title}
           </p>
         </div>
         <Link
-          href={campaign.content.ctaHref}
+          href={ctaHref}
           className="font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/45 transition-colors hover:text-accent"
         >
           {ctaLabel} →
@@ -114,7 +119,7 @@ export function CampaignBanner({
       {!isEligible ? (
         <div className="mt-4">
           <div className="mb-2 flex justify-between font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/45">
-            <span>Progress</span>
+            <span>{dict.giveaway.progress}</span>
             <span className="tabular-nums">{Math.round(progress)}%</span>
           </div>
           <div
@@ -123,7 +128,7 @@ export function CampaignBanner({
             aria-valuenow={Math.round(progress)}
             aria-valuemin={0}
             aria-valuemax={100}
-            aria-label="Campaign entry progress"
+            aria-label={dict.giveaway.campaignProgressAria}
           >
             <div
               className="h-full rounded-full bg-accent transition-[width] duration-300 motion-reduce:transition-none"
@@ -137,7 +142,7 @@ export function CampaignBanner({
             className="size-2 rounded-full bg-accent motion-safe:animate-pulse"
             aria-hidden="true"
           />
-          1 giveaway entry with this order
+          {dict.giveaway.entryWithOrder}
         </p>
       )}
     </div>

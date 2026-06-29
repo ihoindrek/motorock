@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import type { ProductType } from "@/types/catalog-product";
+import { formatSizeLabel } from "@/lib/shop/size-label";
 
 export type CartLine = {
   slug: string;
@@ -97,8 +98,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const addItem = useCallback(
     (line: Omit<CartLine, "quantity"> & { quantity?: number }) => {
+      const normalizedSize =
+        line.size && line.size !== "One size"
+          ? formatSizeLabel(line.size)
+          : line.size;
+
       setLines((current) => {
-        const key = lineKey(line.slug, line.size);
+        const key = lineKey(line.slug, normalizedSize);
         const existing = current.find(
           (item) => lineKey(item.slug, item.size) === key,
         );
@@ -120,7 +126,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
             image: line.image,
             brand: line.brand,
             type: line.type,
-            size: line.size,
+            size: normalizedSize,
             color: line.color,
             productId: line.productId,
             variationId: line.variationId,

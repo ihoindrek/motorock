@@ -8,6 +8,7 @@ import {
 } from "@/components/riders-favorites-carousel";
 import type { Locale } from "@/i18n/config";
 import { localizedHref } from "@/i18n/paths";
+import { buildEquipmentCategoryHref } from "@/lib/shop/equipment-route";
 import { cn } from "@/lib/utils";
 
 type GearAudience = "men" | "women" | "accessories";
@@ -29,9 +30,9 @@ const tabConfig: readonly {
   id: GearAudience;
   href: string;
 }[] = [
-  { id: "men", href: "/shop/equipment/men" },
-  { id: "women", href: "/shop/equipment/women" },
-  { id: "accessories", href: "/shop/equipment/accessories" },
+  { id: "men", href: buildEquipmentCategoryHref("for-men") },
+  { id: "women", href: buildEquipmentCategoryHref("for-women") },
+  { id: "accessories", href: buildEquipmentCategoryHref("accessories") },
 ];
 
 export function PopularGearSection({

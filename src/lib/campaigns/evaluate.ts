@@ -1,5 +1,11 @@
 import type { CartLine } from "@/context/cart-context";
 import { CAMPAIGNS } from "@/data/campaigns";
+import {
+  getLocalizedCampaignCopy,
+  interpolateCampaignMessage,
+  type CampaignLocale,
+} from "@/lib/campaigns/copy";
+import type { Dictionary } from "@/i18n/dictionaries/en";
 import { formatPrice } from "@/lib/shop/category";
 import type {
   Campaign,
@@ -19,13 +25,6 @@ function isLineEligible(
   return true;
 }
 
-function interpolate(
-  template: string,
-  vars: Record<string, string>,
-): string {
-  return template.replace(/\{(\w+)\}/g, (_, key: string) => vars[key] ?? "");
-}
-
 export function isCampaignActive(
   campaign: Campaign,
   now = Date.now(),
@@ -43,6 +42,8 @@ export function getActiveCampaigns(now = Date.now()): Campaign[] {
 export function evaluateCampaign(
   lines: readonly CartLine[],
   campaign: Campaign,
+  locale: CampaignLocale,
+  dict: Dictionary,
 ): CampaignStatus {
   const eligibleSubtotal = lines
     .filter((line) => isLineEligible(line, campaign.productRule))
@@ -61,11 +62,12 @@ export function evaluateCampaign(
           (eligibleSubtotal / campaign.minEligibleSubtotal) * 100,
         );
 
-  const title = campaign.shortTitle ?? campaign.title;
+  const copy = getLocalizedCampaignCopy(campaign, dict);
+  const title = copy.shortTitle;
   const vars = {
-    remaining: formatPrice(remaining),
+    remaining: formatPrice(remaining, locale),
     title,
-    min: formatPrice(campaign.minEligibleSubtotal),
+    min: formatPrice(campaign.minEligibleSubtotal, locale),
   };
 
   return {
@@ -74,17 +76,21 @@ export function evaluateCampaign(
     isEligible,
     remaining,
     progress,
-    progressMessage: interpolate(campaign.content.progressMessage, vars),
-    eligibleMessage: interpolate(campaign.content.eligibleMessage, vars),
+    progressMessage: interpolateCampaignMessage(copy.progressMessage, vars),
+    eligibleMessage: interpolateCampaignMessage(copy.eligibleMessage, vars),
+    displayTitle: copy.shortTitle,
+    ctaLabel: copy.ctaLabel,
   };
 }
 
 export function getCampaignStatuses(
   lines: readonly CartLine[],
   placement: CampaignPlacement,
+  locale: CampaignLocale,
+  dict: Dictionary,
   now = Date.now(),
 ): CampaignStatus[] {
   return getActiveCampaigns(now)
     .filter((campaign) => campaign.placements.includes(placement))
-    .map((campaign) => evaluateCampaign(lines, campaign));
+    .map((campaign) => evaluateCampaign(lines, campaign, locale, dict));
 }

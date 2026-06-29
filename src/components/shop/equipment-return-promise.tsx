@@ -1,4 +1,6 @@
-import { EQUIPMENT_RETURN_PROMISE } from "@/data/return-policy";
+"use client";
+
+import { useDictionary } from "@/context/locale-context";
 import { cn } from "@/lib/utils";
 
 type EquipmentReturnPromiseProps = {
@@ -10,10 +12,12 @@ export function EquipmentReturnPromise({
   variant = "product",
   className,
 }: EquipmentReturnPromiseProps) {
+  const dict = useDictionary();
+
   if (variant === "compact") {
     return (
       <p className={cn("text-xs text-ink/60", className)}>
-        {EQUIPMENT_RETURN_PROMISE.headline}
+        {dict.returns.headline}
       </p>
     );
   }
@@ -27,10 +31,10 @@ export function EquipmentReturnPromise({
         )}
       >
         <p className="text-sm font-semibold leading-snug text-ink">
-          {EQUIPMENT_RETURN_PROMISE.headline}
+          {dict.returns.headline}
         </p>
         <p className="mt-1 text-xs leading-relaxed text-ink/55">
-          {EQUIPMENT_RETURN_PROMISE.detail}
+          {dict.returns.detail}
         </p>
       </div>
     );
@@ -39,10 +43,10 @@ export function EquipmentReturnPromise({
   return (
     <div className={cn("border-l border-accent/60 pl-3", className)}>
       <p className="text-sm font-semibold leading-snug text-ink">
-        {EQUIPMENT_RETURN_PROMISE.headline}
+        {dict.returns.headline}
       </p>
       <p className="mt-1 text-xs leading-relaxed text-ink/55">
-        {EQUIPMENT_RETURN_PROMISE.detail}
+        {dict.returns.detail}
       </p>
     </div>
   );

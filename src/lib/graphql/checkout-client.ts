@@ -1,5 +1,6 @@
 const DEFAULT_ENDPOINT = "https://motorock.eu/graphql";
 const SESSION_STORAGE_KEY = "motorock-wc-session";
+const SYNCED_LINES_KEY = "motorock-wc-synced-lines";
 
 type GraphQLResponse<T> = {
   data?: T;
@@ -27,7 +28,24 @@ export function writeWooSessionToken(token: string | null) {
     window.sessionStorage.setItem(SESSION_STORAGE_KEY, token);
   } else {
     window.sessionStorage.removeItem(SESSION_STORAGE_KEY);
+    window.sessionStorage.removeItem(SYNCED_LINES_KEY);
   }
+}
+
+export function readSyncedCartLinesKey(): string | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  return window.sessionStorage.getItem(SYNCED_LINES_KEY);
+}
+
+export function writeSyncedCartLinesKey(linesKey: string) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.sessionStorage.setItem(SYNCED_LINES_KEY, linesKey);
 }
 
 export async function checkoutGraphqlRequest<

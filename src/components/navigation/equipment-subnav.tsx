@@ -2,43 +2,30 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useDictionary, useLocale } from "@/context/locale-context";
+import { localizedHref, stripLocaleFromPath } from "@/i18n/paths";
+import { buildEquipmentCategoryHref } from "@/lib/shop/equipment-route";
 import { cn } from "@/lib/utils";
 
-const equipmentSections = [
-  {
-    id: "men" as const,
-    label: "For men",
-    href: "/shop/equipment/men",
-  },
-  {
-    id: "women" as const,
-    label: "For women",
-    href: "/shop/equipment/women",
-  },
-  {
-    id: "accessories" as const,
-    label: "Accessories",
-    href: "/shop/equipment/accessories",
-  },
-] as const;
-
-type EquipmentSectionId = (typeof equipmentSections)[number]["id"];
+type EquipmentSectionId = "for-men" | "for-women" | "accessories";
 
 function resolveActiveSection(pathname: string): EquipmentSectionId | null {
-  if (!pathname.startsWith("/shop/equipment")) {
+  const basePath = stripLocaleFromPath(pathname);
+
+  if (!basePath.startsWith("/shop/equipment")) {
     return null;
   }
 
-  if (pathname === "/shop/equipment") {
+  if (basePath === "/shop/equipment") {
     return null;
   }
 
-  if (pathname.startsWith("/shop/equipment/men")) {
-    return "men";
+  if (basePath.startsWith(buildEquipmentCategoryHref("for-men"))) {
+    return "for-men";
   }
 
-  if (pathname.startsWith("/shop/equipment/women")) {
-    return "women";
+  if (basePath.startsWith(buildEquipmentCategoryHref("for-women"))) {
+    return "for-women";
   }
 
   return "accessories";
@@ -46,15 +33,35 @@ function resolveActiveSection(pathname: string): EquipmentSectionId | null {
 
 export function EquipmentSubnav() {
   const pathname = usePathname();
+  const locale = useLocale();
+  const dict = useDictionary();
   const activeSection = resolveActiveSection(pathname);
 
-  if (pathname === "/shop/equipment") {
+  const equipmentSections = [
+    {
+      id: "for-men" as const,
+      label: dict.nav.forMen,
+      href: localizedHref(locale, buildEquipmentCategoryHref("for-men")),
+    },
+    {
+      id: "for-women" as const,
+      label: dict.nav.forWomen,
+      href: localizedHref(locale, buildEquipmentCategoryHref("for-women")),
+    },
+    {
+      id: "accessories" as const,
+      label: dict.nav.accessories,
+      href: localizedHref(locale, buildEquipmentCategoryHref("accessories")),
+    },
+  ];
+
+  if (stripLocaleFromPath(pathname) === "/shop/equipment") {
     return null;
   }
 
   return (
     <nav
-      aria-label="Driving equipment"
+      aria-label={dict.nav.equipment}
       className="sticky top-16 z-40 border-b border-ink/10 bg-paper/95 backdrop-blur-sm sm:top-20 lg:hidden"
     >
       <div className="site-container">

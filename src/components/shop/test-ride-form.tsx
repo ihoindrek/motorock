@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { useDictionary } from "@/context/locale-context";
 import {
   shopFieldClassName,
   shopFieldLabelClassName,
@@ -19,6 +20,7 @@ type TestRideFormProps = {
 };
 
 export function TestRideForm({ initial, idPrefix = "test-ride" }: TestRideFormProps) {
+  const dict = useDictionary();
   const [submitted, setSubmitted] = useState(false);
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -35,11 +37,9 @@ export function TestRideForm({ initial, idPrefix = "test-ride" }: TestRideFormPr
     return (
       <div>
         <p className="font-body text-lg font-extrabold uppercase leading-snug tracking-tight text-ink">
-          Request received
+          {dict.forms.requestReceived}
         </p>
-        <p className="mt-2 text-sm text-ink/60">
-          Thanks — we&apos;ll be in touch to confirm your test ride.
-        </p>
+        <p className="mt-2 text-sm text-ink/60">{dict.forms.testRideThanks}</p>
       </div>
     );
   }
@@ -48,12 +48,14 @@ export function TestRideForm({ initial, idPrefix = "test-ride" }: TestRideFormPr
     <form className="space-y-8" onSubmit={handleSubmit}>
       {bikeLabel ? (
         <div>
-          <p className={shopFieldLabelClassName}>Motorcycle</p>
+          <p className={shopFieldLabelClassName}>{dict.forms.motorcycle}</p>
           <p className="mt-2 font-body text-lg font-extrabold uppercase leading-tight tracking-tight text-ink">
             {bikeLabel}
           </p>
           {initial.color ? (
-            <p className="mt-1 text-sm text-ink/55">Finish · {initial.color}</p>
+            <p className="mt-1 text-sm text-ink/55">
+              {dict.forms.finish} · {initial.color}
+            </p>
           ) : null}
           <input type="hidden" name="bike" value={bikeLabel} />
           {initial.slug ? (
@@ -63,14 +65,14 @@ export function TestRideForm({ initial, idPrefix = "test-ride" }: TestRideFormPr
       ) : (
         <div>
           <label htmlFor={`${idPrefix}-bike`} className={shopFieldLabelClassName}>
-            Motorcycle
+            {dict.forms.motorcycle}
           </label>
           <input
             id={`${idPrefix}-bike`}
             name="bike"
             type="text"
             required
-            placeholder="Which model interests you?"
+            placeholder={dict.forms.bikePlaceholder}
             className={`mt-2 ${shopFieldClassName}`}
           />
         </div>
@@ -79,7 +81,7 @@ export function TestRideForm({ initial, idPrefix = "test-ride" }: TestRideFormPr
       <div className="grid gap-8 sm:grid-cols-2">
         <div>
           <label htmlFor={`${idPrefix}-name`} className={shopFieldLabelClassName}>
-            Name
+            {dict.forms.name}
           </label>
           <input
             id={`${idPrefix}-name`}
@@ -92,7 +94,7 @@ export function TestRideForm({ initial, idPrefix = "test-ride" }: TestRideFormPr
         </div>
         <div>
           <label htmlFor={`${idPrefix}-phone`} className={shopFieldLabelClassName}>
-            Phone
+            {dict.forms.phone}
           </label>
           <input
             id={`${idPrefix}-phone`}
@@ -107,7 +109,7 @@ export function TestRideForm({ initial, idPrefix = "test-ride" }: TestRideFormPr
 
       <div>
         <label htmlFor={`${idPrefix}-email`} className={shopFieldLabelClassName}>
-          Email
+          {dict.forms.email}
         </label>
         <input
           id={`${idPrefix}-email`}
@@ -121,7 +123,7 @@ export function TestRideForm({ initial, idPrefix = "test-ride" }: TestRideFormPr
 
       <div>
         <label htmlFor={`${idPrefix}-date`} className={shopFieldLabelClassName}>
-          Preferred date
+          {dict.forms.preferredDate}
         </label>
         <input
           id={`${idPrefix}-date`}
@@ -134,13 +136,13 @@ export function TestRideForm({ initial, idPrefix = "test-ride" }: TestRideFormPr
 
       <div>
         <label htmlFor={`${idPrefix}-message`} className={shopFieldLabelClassName}>
-          Notes
+          {dict.forms.notes}
         </label>
         <textarea
           id={`${idPrefix}-message`}
           name="message"
           rows={3}
-          placeholder="Licence type, experience, questions…"
+          placeholder={dict.forms.notesPlaceholder}
           className={`mt-2 resize-y ${shopFieldClassName}`}
         />
       </div>
@@ -149,7 +151,7 @@ export function TestRideForm({ initial, idPrefix = "test-ride" }: TestRideFormPr
         type="submit"
         className="inline-flex min-h-12 w-full items-center justify-center rounded-full bg-ink px-7 py-3 font-body text-xs font-bold uppercase tracking-aggressive text-paper transition-colors duration-200 hover:bg-accent sm:w-auto"
       >
-        Send request →
+        {dict.forms.sendRequest}
       </button>
     </form>
   );

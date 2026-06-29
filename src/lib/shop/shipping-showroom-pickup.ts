@@ -18,3 +18,15 @@ export function isShowroomPickupRate(rate: ShippingRate) {
 export function findShowroomPickupRate(rates: readonly ShippingRate[]) {
   return rates.find(isShowroomPickupRate) ?? null;
 }
+
+/** Woo zones should already scope pickup; this guards against stale client state. */
+export function filterShippingRatesForCountry(
+  rates: readonly ShippingRate[],
+  country: string,
+) {
+  if (country === "EE") {
+    return [...rates];
+  }
+
+  return rates.filter((rate) => !isShowroomPickupRate(rate));
+}

@@ -50,6 +50,7 @@ export type GraphQLProductBase = {
   languageCode?: string | null;
   translations?: {
     slug?: string | null;
+    name?: string | null;
     language?: {
       code?: string | null;
     } | null;

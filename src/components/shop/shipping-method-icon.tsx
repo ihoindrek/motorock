@@ -1,4 +1,3 @@
-import Image from "next/image";
 import type { ShippingRate } from "@/lib/shop/shipping-method";
 import {
   resolveShippingMethodVisual,
@@ -108,18 +107,38 @@ export function ShippingMethodIcon({
   return (
     <span
       className={cn(
-        "flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-md border border-ink/10 bg-white text-ink/75",
-        visual.kind === "logo" ? "p-1.5" : "p-2",
+        "flex shrink-0 items-center justify-center",
+        visual.kind === "logo" || visual.kind === "logos"
+          ? "size-10"
+          : "size-10 overflow-hidden rounded-md border border-ink/10 bg-white p-2 text-ink/75",
         className,
       )}
     >
-      {visual.kind === "logo" ? (
-        <Image
+      {visual.kind === "logos" ? (
+        <span className="flex items-center gap-1.5">
+          {visual.items.map((logo) => (
+            <img
+              key={logo.src}
+              src={logo.src}
+              alt=""
+              width={50}
+              height={33}
+              className="h-6 w-auto max-w-[2.75rem] object-contain sm:h-7"
+              loading="lazy"
+              decoding="async"
+            />
+          ))}
+        </span>
+      ) : visual.kind === "logo" ? (
+        // Montonio ships rectangular SVG logos; plain img matches Woo checkout rendering.
+        <img
           src={visual.src}
           alt=""
-          width={32}
-          height={32}
+          width={50}
+          height={33}
           className="h-7 w-auto max-w-full object-contain"
+          loading="lazy"
+          decoding="async"
         />
       ) : (
         <FallbackIcon icon={visual} />

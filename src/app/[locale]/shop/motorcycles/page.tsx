@@ -1,13 +1,9 @@
 import { notFound } from "next/navigation";
 import { MotorcyclesCatalogView } from "@/components/shop/motorcycles-catalog-view";
 import { isLocale } from "@/i18n/config";
+import { getDictionary } from "@/i18n/get-dictionary";
 import { getMotorcycleCatalog } from "@/lib/graphql/products";
 import { resolveMotorcycleBrandFromSlug } from "@/lib/shop/brand-catalog-url";
-
-export const metadata = {
-  title: "Motorcycles",
-  description: "Premium motorcycles from Brixton, Mutt, Motron and Malaguti.",
-};
 
 export const revalidate = 300;
 
@@ -15,6 +11,21 @@ type MotorcyclesPageProps = {
   params: Promise<{ locale: string }>;
   searchParams: Promise<{ brand?: string }>;
 };
+
+export async function generateMetadata({ params }: MotorcyclesPageProps) {
+  const { locale: localeParam } = await params;
+
+  if (!isLocale(localeParam)) {
+    return {};
+  }
+
+  const dict = getDictionary(localeParam);
+
+  return {
+    title: dict.pages.motorcyclesTitle,
+    description: dict.pages.motorcyclesDescription,
+  };
+}
 
 export default async function MotorcyclesPage({
   params,

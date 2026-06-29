@@ -1,8 +1,12 @@
+"use client";
+
 import Link from "next/link";
+import { useDictionary, useLocale } from "@/context/locale-context";
 import {
   SHOWROOM,
   SHOWROOM_GOOGLE_MAPS_URL,
 } from "@/data/showroom";
+import { localizedHref } from "@/i18n/paths";
 import type { ShippingRate } from "@/lib/shop/shipping-method";
 import {
   findShowroomPickupRate,
@@ -23,6 +27,8 @@ export function ShowroomPickupPanel({
   onSelectRate,
   className,
 }: ShowroomPickupPanelProps) {
+  const locale = useLocale();
+  const dict = useDictionary();
   const pickupRate = findShowroomPickupRate(rates);
   const pickupSelected =
     selectedRateId !== null &&
@@ -38,11 +44,11 @@ export function ShowroomPickupPanel({
       )}
     >
       <p className="font-body text-sm font-extrabold uppercase leading-snug tracking-tight text-ink">
-        Pick up at showroom & try on
+        {dict.showroom.pickupTitle}
       </p>
       <p className="mt-2 text-sm leading-relaxed text-ink/65">
-        {SHOWROOM.name} — {SHOWROOM.addressLine}, {SHOWROOM.city}. Reserve online,
-        try gear or see bikes in person before you commit.
+        {SHOWROOM.name} — {SHOWROOM.addressLine}, {SHOWROOM.city}.{" "}
+        {dict.showroom.pickupDescription}
       </p>
       <div className="mt-4 flex flex-wrap items-center gap-3">
         {pickupRate ? (
@@ -56,7 +62,9 @@ export function ShowroomPickupPanel({
                 : "border border-ink/20 bg-paper text-ink hover:border-ink/40",
             )}
           >
-            {pickupSelected ? "Showroom pickup selected" : "Use showroom pickup"}
+            {pickupSelected
+              ? dict.showroom.pickupSelected
+              : dict.showroom.usePickup}
           </button>
         ) : null}
         <Link
@@ -65,14 +73,11 @@ export function ShowroomPickupPanel({
           rel="noopener noreferrer"
           className="font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/45 transition-colors hover:text-accent"
         >
-          Directions →
+          {dict.showroom.directions}
         </Link>
       </div>
       {!pickupRate ? (
-        <p className="mt-3 text-xs text-ink/50">
-          Mention showroom pickup in your order notes or choose the closest
-          pickup option below — we&apos;ll hold items for you.
-        </p>
+        <p className="mt-3 text-xs text-ink/50">{dict.showroom.pickupFallback}</p>
       ) : null}
     </div>
   );
@@ -83,12 +88,18 @@ type ShowroomPickupNoteProps = {
 };
 
 export function ShowroomPickupNote({ className }: ShowroomPickupNoteProps) {
+  const locale = useLocale();
+  const dict = useDictionary();
+
   return (
     <p className={cn("text-sm leading-relaxed text-ink/60", className)}>
-      <span className="font-semibold text-ink">Try before you buy.</span> Pick up
-      at our Tallinn showroom — {SHOWROOM.addressLine}.{" "}
-      <Link href="/contact" className="text-ink underline-offset-2 hover:text-accent hover:underline">
-        Visit us
+      <span className="font-semibold text-ink">{dict.showroom.tryBeforeBuy}</span>{" "}
+      {dict.showroom.pickupNote} {SHOWROOM.addressLine}.{" "}
+      <Link
+        href={localizedHref(locale, "/contact")}
+        className="text-ink underline-offset-2 hover:text-accent hover:underline"
+      >
+        {dict.showroom.visitUs}
       </Link>
     </p>
   );

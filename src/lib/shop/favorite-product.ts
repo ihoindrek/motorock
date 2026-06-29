@@ -1,14 +1,28 @@
 import type { FavoriteProduct } from "@/components/riders-favorites-carousel";
 import type { CatalogProduct, ProductCategory } from "@/types/catalog-product";
 import { getBrandByName } from "@/lib/shop/brands";
-import { filterProductsByRoute, parseEquipmentSlug } from "@/lib/shop/category";
+import type { CategoryRoute } from "@/lib/shop/category";
+import { filterProductsByRoute } from "@/lib/shop/category";
 
 export type PopularGearAudience = "men" | "women" | "accessories";
 
+function wcAudienceRoute(
+  wcCategorySlug: string,
+  options: Partial<CategoryRoute> = {},
+): CategoryRoute {
+  return {
+    title: "",
+    description: "",
+    breadcrumbs: [],
+    wcCategorySlug,
+    ...options,
+  };
+}
+
 const popularGearRoutes = {
-  men: parseEquipmentSlug(["men"]),
-  women: parseEquipmentSlug(["women"]),
-  accessories: parseEquipmentSlug(["accessories"]),
+  men: wcAudienceRoute("for-men", { gender: "men" }),
+  women: wcAudienceRoute("for-women", { gender: "women" }),
+  accessories: wcAudienceRoute("accessories", { accessoriesOnly: true }),
 } as const;
 
 const WOMEN_GEAR_CATEGORY_PRIORITY: readonly ProductCategory[] = [

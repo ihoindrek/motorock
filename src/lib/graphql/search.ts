@@ -4,7 +4,7 @@ import { graphqlRequest } from "@/lib/graphql/client";
 import { mapGraphqlCardToCatalogProduct } from "@/lib/graphql/map-graphql-product";
 import { PRODUCT_SEARCH } from "@/lib/graphql/queries";
 import type { GraphQLProductCard } from "@/lib/graphql/types";
-import { filterGraphqlNodesByLocale } from "@/lib/graphql/wpml";
+import { selectCatalogNodesForLocale } from "@/lib/graphql/wpml";
 
 export const HEADER_SEARCH_LIMIT = 5;
 
@@ -35,8 +35,8 @@ type ProductSearchVariables = {
   after: string | null;
 };
 
-function mapSearchNode(node: GraphQLProductCard): ProductSearchResult {
-  const product = mapGraphqlCardToCatalogProduct(node);
+function mapSearchNode(node: GraphQLProductCard, locale: Locale): ProductSearchResult {
+  const product = mapGraphqlCardToCatalogProduct(node, locale);
 
   return {
     slug: product.slug,
@@ -75,10 +75,10 @@ export async function searchProductsPage(
     { cache: "no-store" },
   );
 
-  const nodes = filterGraphqlNodesByLocale(data.products.nodes, locale);
+  const nodes = selectCatalogNodesForLocale(data.products.nodes, locale);
 
   return {
-    results: nodes.map(mapSearchNode),
+    results: nodes.map((node) => mapSearchNode(node, locale)),
     hasMore: data.products.pageInfo.hasNextPage,
     endCursor: data.products.pageInfo.endCursor,
   };
@@ -136,8 +136,8 @@ export async function getSearchCatalog(
       { cache: "no-store" },
     );
 
-    const nodes = filterGraphqlNodesByLocale(data.products.nodes, locale);
-    products.push(...nodes.map(mapGraphqlCardToCatalogProduct));
+    const nodes = selectCatalogNodesForLocale(data.products.nodes, locale);
+    products.push(...nodes.map((node) => mapGraphqlCardToCatalogProduct(node, locale)));
 
     if (!data.products.pageInfo.hasNextPage) {
       break;

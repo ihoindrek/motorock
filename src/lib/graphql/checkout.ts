@@ -1,7 +1,9 @@
 import type { CartLine } from "@/context/cart-context";
 import {
   checkoutGraphqlRequest,
+  readSyncedCartLinesKey,
   readWooSessionToken,
+  writeSyncedCartLinesKey,
 } from "@/lib/graphql/checkout-client";
 import {
   ADD_TO_CART,
@@ -10,10 +12,12 @@ import {
   CHECKOUT,
   EMPTY_CART,
   PAYMENT_GATEWAYS,
+  RESOLVE_PRODUCT_BY_ID,
   RESOLVE_PRODUCT_IDS,
   UPDATE_CUSTOMER,
   UPDATE_SHIPPING_METHOD,
 } from "@/lib/graphql/checkout-queries";
+import { sizesMatch } from "@/lib/shop/size-label";
 
 export const MONTONIO_PAYMENT_METHOD_ID = "wc_montonio_payments";
 import { parseGraphqlPrice } from "@/lib/shop/parse-graphql-price";
@@ -92,12 +96,6 @@ function isColorAttribute(name: string) {
   );
 }
 
-function formatSizeLabel(value: string) {
-  return value
-    .replace(/^w(\d+)-l(\d+)$/i, "W$1/L$2")
-    .replace(/^(\d+)$/, (_, digits: string) => digits.toUpperCase());
-}
-
 function lineCacheKey(line: CartLine) {
   return `${line.slug}:${line.size ?? ""}:${line.color ?? ""}`;
 }
@@ -118,27 +116,89 @@ export function flattenShippingRates(
   return rates;
 }
 
+const ALLOWED_COUNTRIES_TTL_MS = 60 * 60 * 1000;
+let allowedCountriesCache: { fetchedAt: number; countries: string[] } | null =
+  null;
+
 export async function fetchAllowedCountries() {
+  if (
+    allowedCountriesCache &&
+    Date.now() - allowedCountriesCache.fetchedAt < ALLOWED_COUNTRIES_TTL_MS
+  ) {
+    return allowedCountriesCache.countries;
+  }
+
   const { data } = await checkoutGraphqlRequest<AllowedCountriesResponse>(
     ALLOWED_COUNTRIES,
   );
+  allowedCountriesCache = {
+    fetchedAt: Date.now(),
+    countries: data.allowedCountries,
+  };
   return data.allowedCountries;
 }
 
-export async function resolveCartLineIds(line: CartLine): Promise<{
-  productId: number;
-  variationId?: number;
-}> {
-  if (line.productId) {
-    return {
-      productId: line.productId,
-      variationId: line.variationId,
-    };
+type AddToCartResponse = {
+  addToCart: {
+    cart: {
+      isEmpty: boolean;
+      contents: {
+        itemCount: number;
+      } | null;
+    } | null;
+  } | null;
+};
+
+function findVariationForLine(
+  product: NonNullable<ResolveProductResponse["product"]>,
+  line: CartLine,
+) {
+  if (product.__typename === "SimpleProduct") {
+    return undefined;
   }
 
-  const cached = productIdCache.get(lineCacheKey(line));
-  if (cached) {
-    return cached;
+  return (product.variations?.nodes ?? []).find((node) => {
+    const attributes = node.attributes?.nodes ?? [];
+    const size = attributes.find((attribute) => isSizeAttribute(attribute.name));
+    const color = attributes.find((attribute) => isColorAttribute(attribute.name));
+
+    const sizeMatches =
+      line.size &&
+      line.size !== "One size" &&
+      size &&
+      sizesMatch(size.value, line.size);
+    const colorMatches =
+      line.color &&
+      color &&
+      (color.value === line.color ||
+        color.value.toLowerCase() === line.color.toLowerCase());
+
+    if (sizeMatches && colorMatches) {
+      return true;
+    }
+
+    if (sizeMatches && !line.color) {
+      return true;
+    }
+
+    if (colorMatches && (!line.size || line.size === "One size")) {
+      return true;
+    }
+
+    return false;
+  });
+}
+
+async function fetchProductForLine(line: CartLine) {
+  if (line.productId) {
+    const { data } = await checkoutGraphqlRequest<
+      ResolveProductResponse,
+      { id: string }
+    >(RESOLVE_PRODUCT_BY_ID, { id: String(line.productId) });
+
+    if (data.product) {
+      return data.product;
+    }
   }
 
   const { data } = await checkoutGraphqlRequest<
@@ -146,7 +206,26 @@ export async function resolveCartLineIds(line: CartLine): Promise<{
     { slug: string }
   >(RESOLVE_PRODUCT_IDS, { slug: line.slug });
 
-  const product = data.product;
+  return data.product;
+}
+
+export async function resolveCartLineIds(line: CartLine): Promise<{
+  productId: number;
+  variationId?: number;
+}> {
+  if (line.productId && line.variationId) {
+    return {
+      productId: line.productId,
+      variationId: line.variationId,
+    };
+  }
+
+  const cached = productIdCache.get(lineCacheKey(line));
+  if (cached?.variationId || (cached && !line.size && !line.color)) {
+    return cached;
+  }
+
+  const product = await fetchProductForLine(line);
   if (!product) {
     throw new Error(`Product not found: ${line.name}`);
   }
@@ -157,41 +236,53 @@ export async function resolveCartLineIds(line: CartLine): Promise<{
     return resolved;
   }
 
-  const variation = (product.variations?.nodes ?? []).find((node) => {
-    const attributes = node.attributes?.nodes ?? [];
-    const size = attributes.find((attribute) => isSizeAttribute(attribute.name));
-    const color = attributes.find((attribute) => isColorAttribute(attribute.name));
-
-    if (line.size && size) {
-      return formatSizeLabel(size.value) === line.size;
-    }
-
-    if (line.color && color) {
-      return color.value === line.color;
-    }
-
-    return false;
-  });
+  const variation = findVariationForLine(product, line);
+  if (!variation?.databaseId) {
+    throw new Error(
+      `Choose a size or color for ${line.name} before checkout.`,
+    );
+  }
 
   const resolved = {
     productId: product.databaseId,
-    variationId: variation?.databaseId,
+    variationId: variation.databaseId,
   };
   productIdCache.set(lineCacheKey(line), resolved);
   return resolved;
 }
 
-export async function syncLocalCartToWoo(lines: CartLine[]) {
-  let session = readWooSessionToken();
+export async function syncLocalCartToWoo(
+  lines: CartLine[],
+  options?: { linesKey?: string },
+) {
+  const session = readWooSessionToken();
+  const linesKey = options?.linesKey;
+
+  if (
+    linesKey &&
+    session &&
+    readSyncedCartLinesKey() === linesKey
+  ) {
+    return session;
+  }
+
+  let activeSession = session;
 
   try {
-    await checkoutGraphqlRequest(EMPTY_CART, undefined, session);
+    await checkoutGraphqlRequest(EMPTY_CART, undefined, activeSession);
   } catch {
     // Cart may already be empty.
   }
 
-  for (const line of lines) {
-    const { productId, variationId } = await resolveCartLineIds(line);
+  const resolvedLines = await Promise.all(
+    lines.map((line) => resolveCartLineIds(line)),
+  );
+
+  let itemCount = 0;
+
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index];
+    const { productId, variationId } = resolvedLines[index];
     const input: Record<string, unknown> = {
       productId,
       quantity: line.quantity,
@@ -201,15 +292,26 @@ export async function syncLocalCartToWoo(lines: CartLine[]) {
       input.variationId = variationId;
     }
 
-    const result = await checkoutGraphqlRequest(
-      ADD_TO_CART,
-      { input },
-      session,
-    );
-    session = result.sessionToken;
+    const { data, sessionToken } = await checkoutGraphqlRequest<
+      AddToCartResponse,
+      { input: Record<string, unknown> }
+    >(ADD_TO_CART, { input }, activeSession);
+
+    activeSession = sessionToken;
+    itemCount = data.addToCart?.cart?.contents?.itemCount ?? 0;
   }
 
-  return session;
+  if (itemCount === 0 && lines.length > 0) {
+    throw new Error(
+      "Could not add items to checkout cart. Remove items and add them again from the product page.",
+    );
+  }
+
+  if (linesKey) {
+    writeSyncedCartLinesKey(linesKey);
+  }
+
+  return activeSession;
 }
 
 export async function updateCheckoutCustomerShipping(
@@ -300,6 +402,7 @@ export async function selectShippingRate(
     rates: flattenShippingRates(
       data.updateShippingMethod.cart.availableShippingMethods,
     ),
+    chosenRateId: data.updateShippingMethod.cart.chosenShippingMethods[0] ?? null,
     sessionToken: nextSession,
   };
 }
@@ -310,8 +413,15 @@ export function parseCartMoney(value: string | null | undefined) {
 
 type PaymentGatewaysResponse = {
   paymentGateways: {
-    nodes: Array<{ id: string; title: string }>;
+    nodes: PaymentGateway[];
   };
+};
+
+export type PaymentGateway = {
+  id: string;
+  title: string;
+  description?: string | null;
+  icon?: string | null;
 };
 
 type CheckoutResponse = {

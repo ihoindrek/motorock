@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { brands } from "@/data/brands";
 import type { NavColumn } from "@/data/navigation";
+import { useCategoryTree } from "@/context/category-tree-context";
 import { useDictionary, useLocale } from "@/context/locale-context";
 import type { Locale } from "@/i18n/config";
 import { getShopNav, getSiteNav } from "@/i18n/navigation";
@@ -148,7 +149,8 @@ function EquipmentAccordion({
 }) {
   const locale = useLocale();
   const dictionary = useDictionary();
-  const shopNav = getShopNav(locale, dictionary);
+  const categoryTree = useCategoryTree();
+  const shopNav = getShopNav(locale, dictionary, categoryTree);
   const item = shopNav.find((navItem) => navItem.megaMenu);
   const [open, setOpen] = useState(false);
   const [openColumn, setOpenColumn] = useState<string | null>(null);
@@ -283,7 +285,8 @@ export function MobileNav({
   onLocaleChange,
 }: MobileNavProps) {
   const dictionary = useDictionary();
-  const shopNav = getShopNav(locale, dictionary);
+  const categoryTree = useCategoryTree();
+  const shopNav = getShopNav(locale, dictionary, categoryTree);
   const siteNav = getSiteNav(locale, dictionary);
   const labelId = useId();
   const panelRef = useRef<HTMLElement>(null);

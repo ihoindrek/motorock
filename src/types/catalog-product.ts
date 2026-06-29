@@ -67,6 +67,8 @@ export type CatalogProduct = {
   gender: ProductGender;
   /** WooCommerce `for-men` / `for-women` membership for shop filters. */
   shopAudiences?: readonly ("men" | "women")[];
+  /** Raw WooCommerce `productCategories` slugs from GraphQL. */
+  wcCategorySlugs?: readonly string[];
   category: ProductCategory;
   sizes: readonly string[];
   colors: readonly string[];

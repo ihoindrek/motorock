@@ -16,10 +16,10 @@ import {
 import { PRODUCT_BY_SLUG, PRODUCT_CATALOG_PAGE } from "@/lib/graphql/queries";
 import type { GraphQLProduct, GraphQLProductCard } from "@/lib/graphql/types";
 import {
-  filterGraphqlNodesByLocale,
   getGraphqlLanguageCode,
   resolveProductSlugForLocale,
   buildProductSlugAlternates,
+  selectCatalogNodesForLocale,
 } from "@/lib/graphql/wpml";
 
 type ProductBySlugResponse = {
@@ -70,7 +70,7 @@ async function fetchAllCatalogNodes(
       variables,
     );
 
-    nodes.push(...filterGraphqlNodesByLocale(data.products.nodes, locale));
+    nodes.push(...selectCatalogNodesForLocale(data.products.nodes, locale));
 
     if (!data.products.pageInfo.hasNextPage) {
       break;
@@ -84,9 +84,10 @@ async function fetchAllCatalogNodes(
 
 function mapEquipmentCatalogNodes(
   nodes: GraphQLProductCard[],
+  locale: Locale,
 ): CatalogProduct[] {
   return nodes
-    .map(mapGraphqlCardToCatalogProduct)
+    .map((node) => mapGraphqlCardToCatalogProduct(node, locale))
     .filter(
       (product) =>
         product.type === "equipment" && product.category !== "tools",
@@ -126,6 +127,10 @@ export async function getProductBySlugForLocale(
     }
   }
 
+  if (locale === "et" && getGraphqlLanguageCode(remote) === "en") {
+    return mapGraphqlToCatalogProduct(remote);
+  }
+
   return undefined;
 }
 
@@ -146,6 +151,10 @@ export async function getMotorcycleProductBySlug(
       if (translated && isGraphqlMotorcycle(translated)) {
         return mapGraphqlToMotorcycleProduct(translated);
       }
+    }
+
+    if (locale === "et" && getGraphqlLanguageCode(remote) === "en") {
+      return mapGraphqlToMotorcycleProduct(remote);
     }
   }
 
@@ -176,7 +185,7 @@ export async function getMotorcycleCatalog(
 ): Promise<CatalogProduct[]> {
   try {
     const nodes = await fetchAllCatalogNodes({ category: "motorcycles" }, locale);
-    return nodes.map(mapGraphqlCardToCatalogProduct);
+    return nodes.map((node) => mapGraphqlCardToCatalogProduct(node, locale));
   } catch (error) {
     console.error("[motorcycles] GraphQL catalog fetch failed:", error);
     return [];
@@ -194,7 +203,7 @@ export async function getEquipmentCatalog(
       locale,
     );
 
-    return mapEquipmentCatalogNodes(nodes);
+    return mapEquipmentCatalogNodes(nodes, locale);
   } catch (error) {
     console.error("[equipment] GraphQL catalog fetch failed:", error);
     return [];
@@ -208,7 +217,7 @@ export async function getEquipmentCatalogForRoute(
   try {
     const where = resolveEquipmentCatalogWhere(route);
     const nodes = await fetchAllCatalogNodes(where, locale);
-    return mapEquipmentCatalogNodes(nodes);
+    return mapEquipmentCatalogNodes(nodes, locale);
   } catch (error) {
     console.error("[equipment] GraphQL catalog fetch failed:", error);
     return [];
@@ -231,7 +240,7 @@ export async function getToolsCatalog(
     );
 
     return nodes
-      .map(mapGraphqlCardToCatalogProduct)
+      .map((node) => mapGraphqlCardToCatalogProduct(node, locale))
       .filter((product) => product.category === "tools");
   } catch (error) {
     console.error("[tools] GraphQL catalog fetch failed:", error);

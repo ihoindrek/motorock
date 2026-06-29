@@ -38,9 +38,44 @@ export const CART_ITEM_KEYS = `
   }
 `;
 
+export const CART_ITEM_COUNT = `
+  query CartItemCount {
+    cart {
+      contents {
+        itemCount
+      }
+    }
+  }
+`;
+
 export const RESOLVE_PRODUCT_IDS = `
   query ResolveProductIds($slug: ID!) {
     product(id: $slug, idType: SLUG) {
+      databaseId
+      ... on SimpleProduct {
+        __typename
+      }
+      ... on VariableProduct {
+        __typename
+        variations(first: 100) {
+          nodes {
+            databaseId
+            attributes {
+              nodes {
+                name
+                value
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
+export const RESOLVE_PRODUCT_BY_ID = `
+  query ResolveProductById($id: ID!) {
+    product(id: $id, idType: DATABASE_ID) {
       databaseId
       ... on SimpleProduct {
         __typename
@@ -78,6 +113,9 @@ export const ADD_TO_CART = `
     addToCart(input: $input) {
       cart {
         isEmpty
+        contents {
+          itemCount
+        }
       }
     }
   }
@@ -125,6 +163,8 @@ export const PAYMENT_GATEWAYS = `
       nodes {
         id
         title
+        description
+        icon
       }
     }
   }

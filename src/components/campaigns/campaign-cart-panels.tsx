@@ -1,6 +1,7 @@
 "use client";
 
 import { useCart } from "@/context/cart-context";
+import { useDictionary, useLocale } from "@/context/locale-context";
 import { CampaignBanner } from "@/components/campaigns/campaign-banner";
 import { getCampaignStatuses } from "@/lib/campaigns/evaluate";
 import type { CampaignPlacement } from "@/types/campaign";
@@ -18,12 +19,14 @@ export function CampaignCartPanels({
   className,
 }: CampaignCartPanelsProps) {
   const { lines, itemCount } = useCart();
+  const locale = useLocale();
+  const dict = useDictionary();
 
   if (itemCount === 0) {
     return null;
   }
 
-  const statuses = getCampaignStatuses(lines, placement);
+  const statuses = getCampaignStatuses(lines, placement, locale, dict);
 
   if (statuses.length === 0) {
     return null;

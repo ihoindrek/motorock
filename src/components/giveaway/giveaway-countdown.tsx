@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useDictionary } from "@/context/locale-context";
+import { interpolateCampaignMessage } from "@/lib/campaigns/copy";
 
 type GiveawayCountdownProps = {
   targetDate: string;
@@ -27,18 +29,23 @@ function getTimeLeft(targetDate: string): TimeLeft {
   };
 }
 
-const segments: { key: keyof TimeLeft; label: string; pad: boolean }[] = [
-  { key: "days", label: "Days", pad: false },
-  { key: "hours", label: "Hours", pad: true },
-  { key: "minutes", label: "Minutes", pad: true },
-  { key: "seconds", label: "Seconds", pad: true },
-];
-
 export function GiveawayCountdown({
   targetDate,
   className = "",
 }: GiveawayCountdownProps) {
+  const dict = useDictionary();
   const [timeLeft, setTimeLeft] = useState<TimeLeft | null>(null);
+
+  const segments = useMemo(
+    () =>
+      [
+        { key: "days" as const, label: dict.giveaway.days, pad: false },
+        { key: "hours" as const, label: dict.giveaway.hours, pad: true },
+        { key: "minutes" as const, label: dict.giveaway.minutes, pad: true },
+        { key: "seconds" as const, label: dict.giveaway.seconds, pad: true },
+      ] as const,
+    [dict.giveaway],
+  );
 
   useEffect(() => {
     const update = () => setTimeLeft(getTimeLeft(targetDate));
@@ -63,20 +70,25 @@ export function GiveawayCountdown({
     timeLeft.minutes === 0 &&
     timeLeft.seconds === 0;
 
+  const ariaLabel = ended
+    ? dict.giveaway.drawEndedAria
+    : interpolateCampaignMessage(dict.giveaway.timeRemainingAria, {
+        days: String(timeLeft.days),
+        hours: String(timeLeft.hours),
+        minutes: String(timeLeft.minutes),
+        seconds: String(timeLeft.seconds),
+      });
+
   return (
     <div className={className}>
       <p className="font-body text-[10px] font-bold uppercase tracking-aggressive text-paper/45">
-        {ended ? "Draw closed" : "Time left to enter"}
+        {ended ? dict.giveaway.drawClosed : dict.giveaway.timeLeft}
       </p>
       <div
         className="mt-3 flex flex-wrap gap-x-5 gap-y-3 sm:gap-x-7"
         role="timer"
         aria-live="polite"
-        aria-label={
-          ended
-            ? "Giveaway draw has ended"
-            : `${timeLeft.days} days, ${timeLeft.hours} hours, ${timeLeft.minutes} minutes, ${timeLeft.seconds} seconds remaining`
-        }
+        aria-label={ariaLabel}
       >
         {segments.map(({ key, label, pad }) => (
           <div key={key} className="min-w-[3.25rem]">
