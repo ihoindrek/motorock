@@ -1,7 +1,6 @@
 import type { ContactTopic, FormType } from "@/lib/forms/types";
 
-/** Temporary: all form submissions while testing before go-live. */
-const FORMS_RECIPIENT = "indrek@webolution.ee";
+const FORMS_RECIPIENT = "info@motorock.eu";
 
 export function getFormFromAddress() {
   return (
