@@ -1,12 +1,10 @@
 import type { ContactTopic, FormType } from "@/lib/forms/types";
 
 const FORMS_RECIPIENT = "info@motorock.eu";
+const FORMS_FROM = "Motorock <info@motorock.eu>";
 
 export function getFormFromAddress() {
-  return (
-    process.env.FORM_FROM_EMAIL?.trim() ||
-    "Motorock Forms <onboarding@resend.dev>"
-  );
+  return process.env.FORM_FROM_EMAIL?.trim() || FORMS_FROM;
 }
 
 export function isResendConfigured() {
