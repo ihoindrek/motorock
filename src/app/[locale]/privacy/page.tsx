@@ -38,12 +38,13 @@ export default async function PrivacyPage({ params }: PrivacyPageProps) {
       eyebrow={dict.legal.eyebrow}
       title={dict.legal.privacyTitle}
       description={dict.legal.privacyDescription}
-      updated="17 June 2026"
+      updated="6 July 2026"
       sections={getPrivacySections(localeParam)}
       lastUpdatedLabel={dict.legal.lastUpdated}
       questionsLabel={dict.legal.questions}
       contactUsLabel={dict.common.contactUs}
       contactHref={localizedHref(localeParam, "/contact")}
+      emailPrompt={dict.legal.emailPrompt}
     />
   );
 }

@@ -2,8 +2,10 @@ import type { Locale } from "@/i18n/config";
 import type { CatalogProduct, ProductType } from "@/types/catalog-product";
 import { graphqlRequest } from "@/lib/graphql/client";
 import { mapGraphqlCardToCatalogProduct } from "@/lib/graphql/map-graphql-product";
+import { buildCatalogShowroomMetaSourcesMap } from "@/lib/graphql/products";
 import { PRODUCT_SEARCH } from "@/lib/graphql/queries";
 import type { GraphQLProductCard } from "@/lib/graphql/types";
+import { collectShowroomMetaSourcesFromSiblingProducts } from "@/lib/shop/resolve-showroom-available";
 import { selectCatalogNodesForLocale } from "@/lib/graphql/wpml";
 
 export const HEADER_SEARCH_LIMIT = 5;
@@ -35,8 +37,45 @@ type ProductSearchVariables = {
   after: string | null;
 };
 
-function mapSearchNode(node: GraphQLProductCard, locale: Locale): ProductSearchResult {
-  const product = mapGraphqlCardToCatalogProduct(node, locale);
+function isToolsProduct(node: GraphQLProductCard) {
+  return (node.productCategories?.nodes ?? []).some(
+    (category) => category.slug === "tools-maintenance",
+  );
+}
+
+function visibleSearchNodes(nodes: readonly GraphQLProductCard[], locale: Locale) {
+  const localized = selectCatalogNodesForLocale(nodes, locale);
+
+  if (locale === "et") {
+    return localized;
+  }
+
+  return localized.filter((node) => !isToolsProduct(node));
+}
+
+function indexSearchNodesById(nodes: readonly GraphQLProductCard[]) {
+  const nodesById = new Map<number, GraphQLProductCard>();
+
+  for (const node of nodes) {
+    if (node.databaseId) {
+      nodesById.set(node.databaseId, node);
+    }
+  }
+
+  return nodesById;
+}
+
+function mapSearchNode(
+  node: GraphQLProductCard,
+  locale: Locale,
+  nodesById: Map<number, GraphQLProductCard>,
+): ProductSearchResult {
+  const product = mapGraphqlCardToCatalogProduct(node, locale, {
+    showroomMetaSources: collectShowroomMetaSourcesFromSiblingProducts(
+      node,
+      nodesById,
+    ),
+  });
 
   return {
     slug: product.slug,
@@ -75,10 +114,11 @@ export async function searchProductsPage(
     { cache: "no-store" },
   );
 
-  const nodes = selectCatalogNodesForLocale(data.products.nodes, locale);
+  const nodesById = indexSearchNodesById(data.products.nodes);
+  const nodes = visibleSearchNodes(data.products.nodes, locale);
 
   return {
-    results: nodes.map((node) => mapSearchNode(node, locale)),
+    results: nodes.map((node) => mapSearchNode(node, locale, nodesById)),
     hasMore: data.products.pageInfo.hasNextPage,
     endCursor: data.products.pageInfo.endCursor,
   };
@@ -136,8 +176,22 @@ export async function getSearchCatalog(
       { cache: "no-store" },
     );
 
-    const nodes = selectCatalogNodesForLocale(data.products.nodes, locale);
-    products.push(...nodes.map((node) => mapGraphqlCardToCatalogProduct(node, locale)));
+    const nodesById = indexSearchNodesById(data.products.nodes);
+    const nodes = visibleSearchNodes(data.products.nodes, locale);
+    const showroomMetaSourcesByProductId =
+      await buildCatalogShowroomMetaSourcesMap(nodes, locale);
+
+    products.push(
+      ...nodes.map((node) =>
+        mapGraphqlCardToCatalogProduct(node, locale, {
+          showroomMetaSources:
+            (node.databaseId
+              ? showroomMetaSourcesByProductId.get(node.databaseId)
+              : undefined) ??
+            collectShowroomMetaSourcesFromSiblingProducts(node, nodesById),
+        }),
+      ),
+    );
 
     if (!data.products.pageInfo.hasNextPage) {
       break;

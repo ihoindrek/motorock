@@ -1,5 +1,6 @@
 "use client";
 
+import { useDictionary } from "@/context/locale-context";
 import { Price } from "@/components/shop/price";
 import { TestRideIcon } from "@/components/ui/test-ride-icon";
 
@@ -20,6 +21,8 @@ export function MotorcycleCtaBar({
   showroomAvailable,
   onPrimaryClick,
 }: MotorcycleCtaBarProps) {
+  const dict = useDictionary();
+
   if (!inStock) return null;
 
   return (
@@ -45,10 +48,10 @@ export function MotorcycleCtaBar({
             {showroomAvailable ? (
               <>
                 <TestRideIcon />
-                Book test ride
+                {dict.footer.testRide}
               </>
             ) : (
-              "Enquire"
+              dict.motorcycle.enquireShort
             )}
           </button>
         </div>

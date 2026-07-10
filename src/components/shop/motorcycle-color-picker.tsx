@@ -1,10 +1,12 @@
 import type { ProductColorOption } from "@/types/catalog-product";
+import { getColorSwatchStyle } from "@/lib/shop/product-color-swatches";
 
 type MotorcycleColorPickerProps = {
   options: readonly ProductColorOption[];
   value: string;
   onChange: (color: string) => void;
   heading?: string;
+  finishesAriaLabel?: string;
   theme?: "light" | "dark";
   variant?: "detailed" | "compact";
 };
@@ -18,6 +20,7 @@ export function MotorcycleColorPicker({
   value,
   onChange,
   heading = "Finish",
+  finishesAriaLabel = "Available finishes",
   theme = "light",
   variant = "detailed",
 }: MotorcycleColorPickerProps) {
@@ -47,7 +50,7 @@ export function MotorcycleColorPicker({
       </p>
       <ul
         className={`flex flex-wrap gap-2 ${isCompact ? "mt-2.5" : "mt-3"}`}
-        aria-label="Available finishes"
+        aria-label={finishesAriaLabel}
       >
         {options.map((option) => {
           const optionKey = optionValue(option);
@@ -72,9 +75,7 @@ export function MotorcycleColorPicker({
                 >
                   <span
                     className="block size-7 rounded-full border border-ink/10 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.25)] sm:size-8"
-                    style={{
-                      backgroundColor: option.hex ?? "#C5C5C5",
-                    }}
+                    style={getColorSwatchStyle(option)}
                   />
                 </button>
               </li>
@@ -103,9 +104,7 @@ export function MotorcycleColorPicker({
                         ? "border-paper/25"
                         : "border-ink/20"
                   }`}
-                  style={{
-                    backgroundColor: option.hex ?? "#c5c5c5",
-                  }}
+                  style={getColorSwatchStyle(option)}
                   aria-hidden="true"
                 />
                 <span

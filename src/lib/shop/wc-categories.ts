@@ -33,6 +33,58 @@ export const WC_SLUG_TO_CATEGORY: Record<string, ProductCategory> = {
   "tools-maintenance": "tools",
 };
 
+/** WPML ET category slugs → canonical EN slugs used for filters and matching. */
+export const WC_SLUG_CANONICAL: Record<string, string> = {
+  tarvikud: "accessories",
+  "kotid-ja-seljakotid": "bags-backpacks",
+  "aluskiht-soe-aluspesu-2": "base-layer-warm-underwear-2",
+  "aluskiht-soe-aluspesu": "base-layer-warm-underwear",
+  rihmad: "belts",
+  "jalatsid-2": "footwear-2",
+  jalatsid: "footwear",
+  meestele: "for-men",
+  naistele: "for-women",
+  "prillid-prillid": "goggles",
+  "kindad-2": "gloves-2",
+  kindad: "gloves",
+  peakatted: "headwear",
+  "kiivri-tarvikud": "helmet-accessories",
+  "koik-kiivrid": "all-helmets",
+  kiivrid: "helmets",
+  "kapuutsid-ja-kampsunid": "sweaters",
+  "kapuutsid-ja-dressipluusid": "hoodies-sweatshirts",
+  "jakid-ja-tagid": "jackets-and-tags-2",
+  "jakid-tagid": "jackets-and-tags",
+  ehted: "jewelry",
+  mootorrattad: "motorcycles",
+  muu: "other",
+  "puksid-ja-teksad": "pants-jeans",
+  "puksid-ja-teksad-2": "mens-pants",
+  turvalisus: "safety",
+  "sallid-ja-torukesed": "scarves-tubulars",
+  "vaikesed-tarvikud": "small-accessories",
+  sokid: "socks",
+  "t-sargid-ja-trikood": "t-shirts-jerseys",
+  "t-sargid-ja-sargid": "t-shirts",
+  "tooriistad-ja-hooldus": "tools-maintenance",
+  "vestid-2": "vests-3",
+  vestid: "vests-2",
+};
+
+export function canonicalizeWcCategorySlug(slug: string): string {
+  return WC_SLUG_CANONICAL[slug] ?? slug;
+}
+
+export function canonicalizeWcCategorySlugs(
+  slugs: readonly string[] | undefined,
+): readonly string[] {
+  if (!slugs?.length) {
+    return [];
+  }
+
+  return slugs.map(canonicalizeWcCategorySlug);
+}
+
 const WC_PARENT_SLUGS = new Set([
   "motorcycles",
   "for-men",
@@ -87,6 +139,59 @@ export const PROTECTION_CATEGORIES: readonly ProductCategory[] = [
   "helmet-accessories",
 ];
 
+/** Woo slugs used for protection / accessories branch filters (routing). */
+export const PROTECTION_WC_SLUGS = new Set([
+  "helmets",
+  "all-helmets",
+  "helmet-accessories",
+  "goggles",
+  "safety",
+]);
+
+export const ACCESSORIES_BRANCH_WC_SLUGS = new Set([
+  "accessories",
+  "goggles",
+  "headwear",
+  "bags-backpacks",
+  "belts",
+  "jewelry",
+  "scarves-tubulars",
+  "socks",
+  "safety",
+  "small-accessories",
+]);
+
+export const TOOLS_WC_SLUG = "tools-maintenance";
+
+export function productMatchesWcCategoryRoute(
+  wcCategorySlugs: readonly string[] | undefined,
+  routeWcCategorySlug: string | undefined,
+) {
+  if (!routeWcCategorySlug || !wcCategorySlugs?.length) {
+    return true;
+  }
+
+  return wcCategorySlugs.includes(routeWcCategorySlug);
+}
+
+export function productInProtectionBranch(
+  wcCategorySlugs: readonly string[] | undefined,
+) {
+  return wcCategorySlugs?.some((slug) => PROTECTION_WC_SLUGS.has(slug)) ?? false;
+}
+
+export function productInAccessoriesBranch(
+  wcCategorySlugs: readonly string[] | undefined,
+) {
+  return (
+    wcCategorySlugs?.some((slug) => ACCESSORIES_BRANCH_WC_SLUGS.has(slug)) ?? false
+  );
+}
+
+export function productInToolsCategory(wcCategorySlugs: readonly string[] | undefined) {
+  return wcCategorySlugs?.includes(TOOLS_WC_SLUG) ?? false;
+}
+
 /** Preferred WooCommerce category slug for GraphQL `where.category` filters. */
 export const CATEGORY_TO_WC_SLUG: Partial<
   Record<ProductCategory, string>
@@ -112,6 +217,67 @@ export const CATEGORY_TO_WC_SLUG: Partial<
   accessories: "small-accessories",
   tools: "tools-maintenance",
 };
+
+export function resolveProductSubcategorySlugs(
+  wcCategorySlugs: readonly string[] | undefined,
+): readonly string[] {
+  if (!wcCategorySlugs?.length) {
+    return [];
+  }
+
+  return wcCategorySlugs
+    .map(canonicalizeWcCategorySlug)
+    .filter((slug) => !WC_PARENT_SLUGS.has(slug));
+}
+
+function subcategoryMatchKeys(product: {
+  category: ProductCategory;
+  wcCategorySlugs?: readonly string[];
+}): Set<string> {
+  const slugs = resolveProductSubcategorySlugs(product.wcCategorySlugs);
+  if (slugs.length > 0) {
+    return new Set(slugs);
+  }
+
+  const fallback = CATEGORY_TO_WC_SLUG[product.category];
+  if (fallback) {
+    return new Set([fallback]);
+  }
+
+  return new Set([product.category]);
+}
+
+export function productsShareWcSubcategory(
+  a: {
+    type: "equipment" | "motorcycle";
+    category: ProductCategory;
+    wcCategorySlugs?: readonly string[];
+  },
+  b: {
+    type: "equipment" | "motorcycle";
+    category: ProductCategory;
+    wcCategorySlugs?: readonly string[];
+  },
+): boolean {
+  if (a.type !== b.type) {
+    return false;
+  }
+
+  if (a.type === "motorcycle") {
+    return a.category === b.category;
+  }
+
+  const aKeys = subcategoryMatchKeys(a);
+  const bKeys = subcategoryMatchKeys(b);
+
+  for (const key of aKeys) {
+    if (bKeys.has(key)) {
+      return true;
+    }
+  }
+
+  return false;
+}
 
 export function mapWcSlugToCategory(slug: string): ProductCategory | undefined {
   if (WC_PARENT_SLUGS.has(slug)) {
@@ -160,6 +326,7 @@ export function resolveCategoryFromWcNodes(
   productName: string,
 ): ProductCategory {
   const mapped = slugs
+    .map(canonicalizeWcCategorySlug)
     .map((slug) => mapWcSlugToCategory(slug))
     .filter((category): category is ProductCategory => category !== undefined);
 

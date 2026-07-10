@@ -1,5 +1,5 @@
 import type { CatalogProduct } from "@/types/catalog-product";
-import { formatSizeLabel } from "@/lib/shop/size-label";
+import { formatSizeLabel, isOneSizeLabel } from "@/lib/shop/size-label";
 
 export function resolveLineVariationId(
   product: Pick<CatalogProduct, "variationIds" | "sizes">,
@@ -11,7 +11,7 @@ export function resolveLineVariationId(
     return undefined;
   }
 
-  if (size && size !== "One size") {
+  if (size && !isOneSizeLabel(size)) {
     const normalizedSize = formatSizeLabel(size);
     const bySize =
       variationIds[normalizedSize] ??
@@ -42,7 +42,7 @@ export function resolveLineVariationId(
     return values[0];
   }
 
-  const sizeCount = product.sizes.filter((option) => option !== "One size").length;
+  const sizeCount = product.sizes.filter((option) => !isOneSizeLabel(option)).length;
   if (sizeCount <= 1 && values.length > 0) {
     return values[0];
   }

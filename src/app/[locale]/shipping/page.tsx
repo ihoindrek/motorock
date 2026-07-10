@@ -38,12 +38,13 @@ export default async function ShippingPage({ params }: ShippingPageProps) {
       eyebrow={dict.legal.eyebrow}
       title={dict.legal.shippingTitle}
       description={dict.legal.shippingDescription}
-      updated="17 June 2026"
+      updated="6 July 2026"
       sections={getShippingSections(localeParam)}
       lastUpdatedLabel={dict.legal.lastUpdated}
       questionsLabel={dict.legal.questions}
       contactUsLabel={dict.common.contactUs}
       contactHref={localizedHref(localeParam, "/contact")}
+      emailPrompt={dict.legal.emailPrompt}
     />
   );
 }

@@ -28,7 +28,57 @@ function isInternationalPickupRate(rate: ShippingRate) {
     .includes("international_shipping_pickup_points");
 }
 
+const INTERNATIONAL_CARRIER_BY_KEY: Record<
+  string,
+  { montonioCode: string; carrier: PickupCarrier }
+> = {
+  novapost: { montonioCode: "novaPost", carrier: "novapost" },
+  gls: { montonioCode: "gls", carrier: "gls" },
+  alzabox: { montonioCode: "alzabox", carrier: "alzabox" },
+  dpd: { montonioCode: "dpd", carrier: "dpd" },
+  smartpost: { montonioCode: "smartpost", carrier: "smartposti" },
+  omniva: { montonioCode: "omniva", carrier: "omniva" },
+};
+
+/** Woo rate ids look like `...:71:novaPost_parcelMachine`. */
+function parseInternationalPickupSource(rate: ShippingRate): PickupPointSource | null {
+  const suffix = rate.id.includes(":")
+    ? rate.id.split(":").slice(2).join(":")
+    : "";
+  const match = suffix.match(/^([a-z]+)_(parcelmachine|parcelshop|postoffice)$/i);
+
+  if (!match) {
+    return null;
+  }
+
+  const carrierKey = match[1].toLowerCase();
+  const mapping = INTERNATIONAL_CARRIER_BY_KEY[carrierKey];
+
+  if (!mapping) {
+    return null;
+  }
+
+  const subtype = match[2].toLowerCase();
+  const pickupType: MontonioPickupPointType =
+    subtype === "parcelshop"
+      ? "parcelShop"
+      : subtype === "postoffice"
+        ? "postOffice"
+        : "parcelMachine";
+
+  return {
+    montonioCode: mapping.montonioCode,
+    pickupType,
+    carrier: mapping.carrier,
+  };
+}
+
 function resolveInternationalPickupSources(rate: ShippingRate): PickupPointSource[] {
+  const parsed = parseInternationalPickupSource(rate);
+  if (parsed) {
+    return [parsed];
+  }
+
   const label = rate.label.toLowerCase();
   const rateId = rate.id.toLowerCase();
 
@@ -137,6 +187,7 @@ export function resolveMontonioPickupPointType(
   if (
     haystack.includes("parcel_shop") ||
     haystack.includes("parcel_shops") ||
+    haystack.includes("parcelshop") ||
     (haystack.includes("parcel shop") && !haystack.includes("locker"))
   ) {
     return "parcelShop";

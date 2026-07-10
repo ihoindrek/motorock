@@ -7,6 +7,7 @@ import type { CatalogProduct } from "@/types/catalog-product";
 import {
   defaultSortForRoute,
   filterProductsByRoute,
+  resolveCategoryFilterFacets,
   sortProducts,
   type CategoryRoute,
   type SortOption,
@@ -17,7 +18,7 @@ import { CategoryFilters, type ActiveFilters } from "@/components/shop/category-
 import { MotorcycleBrandLogoFilter } from "@/components/shop/motorcycle-brand-logo-filter";
 import { MobileFilterDrawer } from "@/components/ui/mobile-filter-drawer";
 import { localizedHref } from "@/i18n/paths";
-import { buildEquipmentCategoryHref } from "@/lib/shop/equipment-route";
+import { buildEquipmentHubHref } from "@/lib/shop/category-url";
 import { cn } from "@/lib/utils";
 
 type CategoryViewProps = {
@@ -166,6 +167,11 @@ export function CategoryView({
     [products, route],
   );
 
+  const filterFacets = useMemo(
+    () => resolveCategoryFilterFacets(route, routeProducts),
+    [route, routeProducts],
+  );
+
   const availableBrands = useMemo(() => {
     if (availableBrandsProp) {
       return [...availableBrandsProp].sort((a, b) => a.localeCompare(b));
@@ -192,7 +198,7 @@ export function CategoryView({
   const isMotorcycleCatalog = route.category === "motorcycles";
   const isToolsCatalog = route.category === "tools";
   const isEquipmentCatalog = route.breadcrumbs.some(
-    (crumb) => crumb.href === buildEquipmentCategoryHref(),
+    (crumb) => crumb.href === buildEquipmentHubHref(locale),
   );
   const hasLongCategoryTitle =
     isMotorcycleCatalog ||
@@ -255,8 +261,9 @@ export function CategoryView({
     activeFilters: filters,
     priceBounds,
     availableBrands,
-    showSizeFilter,
-    showBrandFilter: !useBrandLogos,
+    showSizeFilter: showSizeFilter && filterFacets.showSizeFilter,
+    showBrandFilter: !useBrandLogos && filterFacets.showBrandFilter,
+    showCategoryFilter: filterFacets.showCategoryFilter,
     whiteFilterTriggers: !useBrandLogos,
     onToggleBrand: toggleBrand,
     onToggleSize: toggleSize,
@@ -310,8 +317,8 @@ export function CategoryView({
         ) : null}
 
         <div className={`relative z-10 ${sectionBackgroundHeading ? "max-w-2xl" : ""}`}>
-        <p className="section-eyebrow">Shop</p>
-        <div className="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <p className="section-eyebrow">{dict.common.shop}</p>
+        <div className="mt-2">
           <h1
             className={cn(
               "heading-category",
@@ -321,12 +328,16 @@ export function CategoryView({
           >
             {route.title}
           </h1>
-          <p className="font-body text-sm text-ink/50">
+          <p className="mt-1 font-body text-sm text-ink/50">
             <span className="font-bold text-ink">{filteredProducts.length}</span>{" "}
-            {filteredProducts.length === 1 ? "product" : "products"}
+            {filteredProducts.length === 1
+              ? dict.catalog.productSingular
+              : dict.catalog.productPlural}
           </p>
         </div>
-        <p className="mt-3 text-base text-ink/70">{route.description}</p>
+        {route.description ? (
+          <p className="mt-3 text-base text-ink/70">{route.description}</p>
+        ) : null}
         </div>
       </header>
 
@@ -336,6 +347,7 @@ export function CategoryView({
             brands={availableBrands}
             selectedBrand={selectedBrand}
             onSelectBrand={selectBrand}
+            fadeTone={motoBackground ? "moto" : "paper"}
           />
         </div>
       ) : null}
@@ -405,6 +417,9 @@ export function CategoryView({
             visibleCount={visibleProducts.length}
             totalCount={filteredProducts.length}
             pageSize={pageSize}
+            loadMoreLabel={
+              isMotorcycleCatalog ? dict.catalog.loadMoreMotorcycles : undefined
+            }
             onLoadMore={() =>
               setVisibleCount((count) =>
                 Math.min(count + pageSize, filteredProducts.length),

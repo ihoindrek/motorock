@@ -2,6 +2,23 @@ const DEFAULT_ENDPOINT = "https://motorock.eu/graphql";
 const SESSION_STORAGE_KEY = "motorock-wc-session";
 const SYNCED_LINES_KEY = "motorock-wc-synced-lines";
 
+const HTML_ENTITY_MAP: Record<string, string> = {
+  "&nbsp;": " ",
+  "&amp;": "&",
+  "&lt;": "<",
+  "&gt;": ">",
+  "&quot;": '"',
+  "&#039;": "'",
+  "&#8217;": "'",
+  "&#8216;": "'",
+  "&#8220;": '"',
+  "&#8221;": '"',
+};
+
+function decodeGraphqlErrorMessage(message: string) {
+  return message.replace(/&(#?\w+);/g, (match) => HTML_ENTITY_MAP[match] ?? match);
+}
+
 type GraphQLResponse<T> = {
   data?: T;
   errors?: { message: string }[];
@@ -88,7 +105,11 @@ export async function checkoutGraphqlRequest<
   const payload = (await response.json()) as GraphQLResponse<TData>;
 
   if (payload.errors?.length) {
-    throw new Error(payload.errors.map((error) => error.message).join("; "));
+    throw new Error(
+      payload.errors
+        .map((error) => decodeGraphqlErrorMessage(error.message))
+        .join("; "),
+    );
   }
 
   if (!payload.data) {

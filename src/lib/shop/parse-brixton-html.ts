@@ -1,5 +1,11 @@
+import type { Locale } from "@/i18n/config";
 import type { ProductSpec } from "@/types/catalog-product";
 import { parseSpecsFromDescriptionHtml } from "@/lib/shop/parse-product-description";
+import {
+  localizeMotorcycleEditorialTitle,
+  localizeMotorcycleSpecs,
+  isHighlightSpecLabel,
+} from "@/lib/shop/motorcycle-spec-labels";
 
 function stripHtml(html: string) {
   return html
@@ -8,6 +14,11 @@ function stripHtml(html: string) {
     .replace(/<[^>]+>/g, " ")
     .replace(/&nbsp;/g, " ")
     .replace(/&amp;/g, "&")
+    .replace(/&#8217;/g, "'")
+    .replace(/&#8216;/g, "'")
+    .replace(/&rsquo;/g, "'")
+    .replace(/&lsquo;/g, "'")
+    .replace(/&quot;/g, '"')
     .replace(/&#215;/g, "×")
     .replace(/\s+/g, " ")
     .trim();
@@ -39,11 +50,19 @@ export type ParsedShortDescription = {
  */
 export function parseMotorcycleShortDescription(
   html: string,
+  locale: Locale = "en",
 ): ParsedShortDescription {
-  const tagline = stripHtml(
+  const h2Tagline = stripHtml(
+    html.match(/<h2[^>]*>([\s\S]*?)<\/h2>/i)?.[1] ?? "",
+  );
+  const h3Tagline = stripHtml(
     html.match(/<h3[^>]*>([\s\S]*?)<\/h3>/i)?.[1] ?? "",
   );
-  const editorialSections = parseShortDescriptionSections(html);
+  const brixtonSections = parseShortDescriptionSections(html, locale);
+  const h3Sections = parseH3EditorialSections(html, locale);
+  const editorialSections =
+    brixtonSections.length > 0 ? brixtonSections : h3Sections;
+  const tagline = h2Tagline || h3Tagline || undefined;
   const features = editorialSections
     .filter((section) => section.title.toLowerCase() === "equipment")
     .flatMap((section) => section.paragraphs);
@@ -60,13 +79,16 @@ export function parseMotorcycleShortDescription(
   };
 }
 
-function parseShortDescriptionSections(html: string): ParsedEditorialSection[] {
+function parseShortDescriptionSections(html: string, locale: Locale = "en") {
   const sections: ParsedEditorialSection[] = [];
   const headerPattern = /<p[^>]*>\s*<strong[^>]*>([\s\S]*?)<\/strong>\s*<\/p>/gi;
   const headers = [...html.matchAll(headerPattern)];
 
   for (let index = 0; index < headers.length; index += 1) {
-    const title = stripHtml(headers[index][1]);
+    const title = localizeMotorcycleEditorialTitle(
+      stripHtml(headers[index][1]),
+      locale,
+    );
     if (!title) {
       continue;
     }
@@ -75,21 +97,7 @@ function parseShortDescriptionSections(html: string): ParsedEditorialSection[] {
     const blockEnd =
       index + 1 < headers.length ? headers[index + 1].index! : html.length;
     const block = html.slice(blockStart, blockEnd);
-    const paragraphs: string[] = [];
-
-    for (const paragraphMatch of block.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi)) {
-      const text = stripHtml(paragraphMatch[1]);
-      if (text) {
-        paragraphs.push(text);
-      }
-    }
-
-    for (const listMatch of block.matchAll(/<li[^>]*>([\s\S]*?)<\/li>/gi)) {
-      const text = stripHtml(listMatch[1]);
-      if (text) {
-        paragraphs.push(text);
-      }
-    }
+    const paragraphs = collectParagraphsFromHtmlBlock(block);
 
     if (paragraphs.length > 0) {
       sections.push({ title, paragraphs });
@@ -97,6 +105,51 @@ function parseShortDescriptionSections(html: string): ParsedEditorialSection[] {
   }
 
   return sections;
+}
+
+/** Mutt-style short copy: `<h3>` section titles with following `<p>` blocks. */
+function parseH3EditorialSections(html: string, locale: Locale = "en") {
+  const sections: ParsedEditorialSection[] = [];
+  const blocks = html.split(/<h3\b[^>]*>/i).slice(1);
+
+  for (const block of blocks) {
+    const title = localizeMotorcycleEditorialTitle(
+      stripHtml(block.match(/^([\s\S]*?)<\/h3>/i)?.[1] ?? ""),
+      locale,
+    );
+    if (!title) {
+      continue;
+    }
+
+    const body = block.replace(/^[\s\S]*?<\/h3>/i, "");
+    const paragraphs = collectParagraphsFromHtmlBlock(body);
+
+    if (paragraphs.length > 0) {
+      sections.push({ title, paragraphs });
+    }
+  }
+
+  return sections;
+}
+
+function collectParagraphsFromHtmlBlock(block: string) {
+  const paragraphs: string[] = [];
+
+  for (const paragraphMatch of block.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi)) {
+    const text = stripHtml(paragraphMatch[1]);
+    if (text) {
+      paragraphs.push(text);
+    }
+  }
+
+  for (const listMatch of block.matchAll(/<li[^>]*>([\s\S]*?)<\/li>/gi)) {
+    const text = stripHtml(listMatch[1]);
+    if (text) {
+      paragraphs.push(text);
+    }
+  }
+
+  return paragraphs;
 }
 
 export type ParsedDescriptionSection = {
@@ -113,7 +166,59 @@ export function parseBrixtonDescriptionSections(
     return fromSections;
   }
 
-  return parseHeadingParagraphSpecs(html);
+  const fromHeadings = parseHeadingParagraphSpecs(html);
+  if (fromHeadings.length > 0) {
+    return fromHeadings;
+  }
+
+  const fromStrongParagraphs = parseStrongParagraphSpecs(html);
+  if (fromStrongParagraphs.length > 0) {
+    return [{ title: "Specifications", specs: fromStrongParagraphs }];
+  }
+
+  const fromAlternatingParagraphs = parseAlternatingParagraphSpecs(html);
+  if (fromAlternatingParagraphs.length > 0) {
+    return [{ title: "Specifications", specs: fromAlternatingParagraphs }];
+  }
+
+  const fromH5Lists = parseH5ListSpecs(html);
+  if (fromH5Lists.length > 0) {
+    return [{ title: "Specifications", specs: fromH5Lists }];
+  }
+
+  return [];
+}
+
+/** Mutt-style long description: `<h5>Label:</h5><ul><li>value</li></ul>`. */
+function parseH5ListSpecs(html: string): ProductSpec[] {
+  const specs: ProductSpec[] = [];
+  const pattern = /<h5[^>]*>([\s\S]*?)<\/h5>\s*<ul[^>]*>([\s\S]*?)<\/ul>/gi;
+
+  let match: RegExpExecArray | null;
+  while ((match = pattern.exec(html)) !== null) {
+    const label = stripHtml(match[1]).replace(/:+$/, "");
+    const values: string[] = [];
+
+    for (const listItem of match[2].matchAll(/<li[^>]*>([\s\S]*?)<\/li>/gi)) {
+      const text = stripHtml(listItem[1]);
+      if (text) {
+        values.push(text);
+      }
+    }
+
+    const value = values.join(", ");
+    if (!isValidProductSpec(label, value)) {
+      continue;
+    }
+
+    specs.push({
+      id: slugifyId(label),
+      label,
+      value,
+    });
+  }
+
+  return specs;
 }
 
 function parseSectionTagSpecs(html: string): ParsedDescriptionSection[] {
@@ -213,6 +318,76 @@ function parseSubSectionSpecsFromBlock(
   return specs;
 }
 
+/** Block editor / Rayburn style: `<p><strong>Label</strong></p><p>value</p>`. */
+function parseStrongParagraphSpecs(html: string): ProductSpec[] {
+  const specs: ProductSpec[] = [];
+  const pattern =
+    /<p[^>]*>\s*<strong[^>]*>([\s\S]*?)<\/strong>\s*<\/p>\s*<p[^>]*>([\s\S]*?)<\/p>/gi;
+
+  let match: RegExpExecArray | null;
+  while ((match = pattern.exec(html)) !== null) {
+    const label = stripHtml(match[1]);
+    const value = stripHtml(match[2]);
+
+    if (!isValidProductSpec(label, value)) {
+      continue;
+    }
+
+    specs.push({
+      id: slugifyId(label),
+      label,
+      value,
+    });
+  }
+
+  return specs;
+}
+
+function isLikelySpecLabel(label: string, value: string) {
+  if (!isValidProductSpec(label, value)) {
+    return false;
+  }
+
+  if (label.length > 80 || value.length <= label.length) {
+    return false;
+  }
+
+  return true;
+}
+
+/** Rayburn / classic Brixton: alternating label/value paragraphs (`p1`/`p2` or plain). */
+function parseAlternatingParagraphSpecs(html: string): ProductSpec[] {
+  const specs: ProductSpec[] = [];
+  const paragraphPattern = /<p([^>]*)>([\s\S]*?)<\/p>/gi;
+  const paragraphs = [...html.matchAll(paragraphPattern)];
+
+  for (let index = 0; index < paragraphs.length - 1; index += 1) {
+    const attrs = paragraphs[index][1];
+    const nextAttrs = paragraphs[index + 1][1];
+    const label = stripHtml(paragraphs[index][2]);
+    const value = stripHtml(paragraphs[index + 1][2]);
+    const isP1P2Pair =
+      /\bp1\b/i.test(attrs) && /\bp2\b/i.test(nextAttrs);
+
+    if (!isP1P2Pair && !isLikelySpecLabel(label, value)) {
+      continue;
+    }
+
+    if (!isValidProductSpec(label, value)) {
+      continue;
+    }
+
+    specs.push({
+      id: slugifyId(label),
+      label,
+      value,
+    });
+    index += 1;
+  }
+
+  return specs;
+}
+
 export function isValidProductSpec(label: string, value: string) {
   const normalizedLabel = label.trim();
   const normalizedValue = value.trim();
@@ -238,10 +413,19 @@ export function filterValidProductSpecs(
 export function stripMotorcycleSpecHtml(html: string) {
   return html
     .replace(/<section[^>]*>[\s\S]*?<\/section>/gi, "")
+    .replace(/<h5[^>]*>[\s\S]*?<\/h5>\s*<ul[^>]*>[\s\S]*?<\/ul>/gi, "")
     .replace(/<h3\b[^>]*>[\s\S]*?(?=<h3\b[^>]*>|$)/gi, (block) =>
       /<strong[\s\S]*?<\/strong>[\s\S]*?<ul\b/i.test(block) ? "" : block,
     )
     .replace(/<table[\s\S]*?<\/table>/gi, "")
+    .replace(
+      /<p[^>]*>\s*<strong[^>]*>[\s\S]*?<\/strong>\s*<\/p>\s*<p[^>]*>[\s\S]*?<\/p>/gi,
+      "",
+    )
+    .replace(
+      /<p[^>]*class="[^"]*\bp1\b[^"]*"[^>]*>[\s\S]*?<\/p>\s*<p[^>]*class="[^"]*\bp2\b[^"]*"[^>]*>[\s\S]*?<\/p>/gi,
+      "",
+    )
     .replace(/<p[^>]*>\s*<\/p>/gi, "")
     .replace(/<div[^>]*>\s*<\/div>/gi, "")
     .trim();
@@ -257,12 +441,15 @@ const HIGHLIGHT_LABELS = new Set([
   "max. torque",
   "mass in running order",
   "seat height",
+  "displacement",
 ]);
 
 export function pickHighlightSpecs(sections: ParsedDescriptionSection[]) {
   const all = sections.flatMap((section) => section.specs);
-  const picked = all.filter((spec) =>
-    HIGHLIGHT_LABELS.has(spec.label.toLowerCase()),
+  const picked = all.filter(
+    (spec) =>
+      HIGHLIGHT_LABELS.has(spec.label.toLowerCase()) ||
+      isHighlightSpecLabel(spec.label),
   );
 
   if (picked.length >= 2) {
@@ -282,11 +469,22 @@ export function splitSpecsBySection(sections: ParsedDescriptionSection[]) {
     const key = section.title.toLowerCase();
     const specs = filterValidProductSpecs(section.specs);
 
-    if (key.includes("engine") || key.includes("transmission") || key.includes("battery")) {
+    if (
+      key.includes("engine") ||
+      key.includes("transmission") ||
+      key.includes("battery") ||
+      key.includes("mootor") ||
+      key.includes("ulekanne")
+    ) {
       engineSpecs.push(...specs);
-    } else if (key.includes("chassis")) {
+    } else if (key.includes("chassis") || key.includes("raam")) {
       chassisSpecs.push(...specs);
-    } else if (key.includes("dimension") || key.includes("mass")) {
+    } else if (
+      key.includes("dimension") ||
+      key.includes("mass") ||
+      key.includes("mood") ||
+      key.includes("kaal")
+    ) {
       generalSpecs.push(...specs);
     } else if (key.includes("driving") || key.includes("performance")) {
       performanceSpecs.push(...specs);
@@ -300,7 +498,11 @@ export function splitSpecsBySection(sections: ParsedDescriptionSection[]) {
   };
 }
 
-export function resolveMotorcycleCatalogCopy(longHtml: string, shortHtml = "") {
+export function resolveMotorcycleCatalogCopy(
+  longHtml: string,
+  shortHtml = "",
+  locale: Locale = "en",
+) {
   const sections = parseBrixtonDescriptionSections(longHtml);
   const tableSpecs = filterValidProductSpecs(
     parseSpecsFromDescriptionHtml(longHtml),
@@ -310,7 +512,9 @@ export function resolveMotorcycleCatalogCopy(longHtml: string, shortHtml = "") {
   const hasStructuredSpecs =
     engineSpecs.length > 0 ||
     moreEngineSpecs.length > 0 ||
-    generalSpecs.length > 0;
+    generalSpecs.length > 0 ||
+    tableSpecs.length > 0 ||
+    sections.some((section) => section.specs.length > 0);
   const marketingHtml = stripMotorcycleSpecHtml(longHtml);
   const descriptionHtml = hasStructuredSpecs
     ? hasMeaningfulDescriptionHtml(marketingHtml)
@@ -326,11 +530,11 @@ export function resolveMotorcycleCatalogCopy(longHtml: string, shortHtml = "") {
 
   return {
     descriptionHtml,
-    parsedSpecs,
-    engineSpecs,
-    moreEngineSpecs,
-    generalSpecs,
-    highlightSpecs,
+    parsedSpecs: localizeMotorcycleSpecs(parsedSpecs, locale),
+    engineSpecs: localizeMotorcycleSpecs(engineSpecs, locale),
+    moreEngineSpecs: localizeMotorcycleSpecs(moreEngineSpecs, locale),
+    generalSpecs: localizeMotorcycleSpecs(generalSpecs, locale),
+    highlightSpecs: localizeMotorcycleSpecs(highlightSpecs, locale),
   };
 }
 

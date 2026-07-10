@@ -197,6 +197,23 @@ function pickWomenPopularGear(
   return picked;
 }
 
+export function pickHomepageWomenGear(
+  womenCatalog: readonly CatalogProduct[],
+  limit: number,
+): FavoriteProduct[] {
+  const fromWomenCategory = filterProductsByRoute(
+    womenCatalog,
+    popularGearRoutes.women,
+  ).filter(isEligibleFavorite);
+
+  const pool =
+    fromWomenCategory.length >= 4
+      ? fromWomenCategory
+      : womenCatalog.filter(isEligibleFavorite);
+
+  return pool.slice(0, limit).map(catalogToFavoriteProduct);
+}
+
 export function catalogToFavoriteProduct(
   product: CatalogProduct,
 ): FavoriteProduct {

@@ -1,3 +1,20 @@
+const ONE_SIZE_LABELS = new Set([
+  "one size",
+  "one-size",
+  "onesize",
+  "üks suurus",
+  "uks suurus",
+]);
+
+/** True when the cart/catalog size means “no size choice” (incl. ET copy). */
+export function isOneSizeLabel(value: string | undefined | null) {
+  if (!value?.trim()) {
+    return true;
+  }
+
+  return ONE_SIZE_LABELS.has(value.trim().toLowerCase());
+}
+
 /** Normalize WooCommerce size attribute values for display and cart keys. */
 export function formatSizeLabel(value: string) {
   const trimmed = value.trim();

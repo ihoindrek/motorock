@@ -6,6 +6,57 @@ import {
   type Locale,
 } from "@/i18n/config";
 import { resolveLegacyEquipmentRedirect } from "@/lib/shop/equipment-legacy-redirects";
+import { resolveEquipmentPathPrefixRedirect } from "@/lib/shop/category-url";
+import { resolveBrandPathPrefixRedirect } from "@/lib/shop/brand-url";
+import { resolveProductPathPrefixRedirect } from "@/lib/shop/product-url";
+
+function applyLocalePathRedirects(
+  request: NextRequest,
+  locale: Locale,
+  basePath: string,
+) {
+  let resolvedPath = basePath;
+  const legacyTarget = resolveLegacyEquipmentRedirect(basePath);
+
+  if (legacyTarget) {
+    resolvedPath = legacyTarget;
+  }
+
+  const prefixTarget = resolveEquipmentPathPrefixRedirect(resolvedPath, locale);
+
+  if (prefixTarget) {
+    resolvedPath = prefixTarget;
+  }
+
+  const brandPrefixTarget = resolveBrandPathPrefixRedirect(resolvedPath, locale);
+
+  if (brandPrefixTarget) {
+    resolvedPath = brandPrefixTarget;
+  }
+
+  const productPrefixTarget = resolveProductPathPrefixRedirect(
+    resolvedPath,
+    locale,
+  );
+
+  if (productPrefixTarget) {
+    resolvedPath = productPrefixTarget;
+  }
+
+  if (resolvedPath === basePath) {
+    return null;
+  }
+
+  const redirectUrl = request.nextUrl.clone();
+  redirectUrl.pathname = `/${locale}${resolvedPath}`;
+  const response = NextResponse.redirect(redirectUrl, 308);
+  response.cookies.set(localeCookieName, locale, {
+    path: "/",
+    maxAge: 60 * 60 * 24 * 365,
+    sameSite: "lax",
+  });
+  return withLocaleHeader(response, locale);
+}
 
 function resolveLocale(request: NextRequest, segment: string | undefined): Locale {
   if (isLocale(segment)) {
@@ -20,6 +71,11 @@ function resolveLocale(request: NextRequest, segment: string | undefined): Local
   return defaultLocale;
 }
 
+function withLocaleHeader(response: NextResponse, locale: Locale) {
+  response.headers.set("x-locale", locale);
+  return response;
+}
+
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -27,6 +83,7 @@ export function proxy(request: NextRequest) {
     pathname.startsWith("/api") ||
     pathname.startsWith("/_next") ||
     pathname === "/robots.txt" ||
+    pathname === "/sitemap.xml" ||
     pathname === "/favicon.ico" ||
     /\.[\w]+$/.test(pathname)
   ) {
@@ -38,18 +95,10 @@ export function proxy(request: NextRequest) {
   if (isLocale(segment)) {
     const basePath =
       pathname.slice(segment.length + 1) || "/";
-    const legacyTarget = resolveLegacyEquipmentRedirect(basePath);
+    const redirectResponse = applyLocalePathRedirects(request, segment, basePath);
 
-    if (legacyTarget) {
-      const redirectUrl = request.nextUrl.clone();
-      redirectUrl.pathname = `/${segment}${legacyTarget}`;
-      const response = NextResponse.redirect(redirectUrl, 308);
-      response.cookies.set(localeCookieName, segment, {
-        path: "/",
-        maxAge: 60 * 60 * 24 * 365,
-        sameSite: "lax",
-      });
-      return response;
+    if (redirectResponse) {
+      return redirectResponse;
     }
 
     const response = NextResponse.next();
@@ -58,22 +107,14 @@ export function proxy(request: NextRequest) {
       maxAge: 60 * 60 * 24 * 365,
       sameSite: "lax",
     });
-    return response;
+    return withLocaleHeader(response, segment);
   }
 
   const locale = resolveLocale(request, segment);
-  const legacyTarget = resolveLegacyEquipmentRedirect(pathname);
+  const redirectResponse = applyLocalePathRedirects(request, locale, pathname);
 
-  if (legacyTarget) {
-    const redirectUrl = request.nextUrl.clone();
-    redirectUrl.pathname = `/${locale}${legacyTarget}`;
-    const response = NextResponse.redirect(redirectUrl, 308);
-    response.cookies.set(localeCookieName, locale, {
-      path: "/",
-      maxAge: 60 * 60 * 24 * 365,
-      sameSite: "lax",
-    });
-    return response;
+  if (redirectResponse) {
+    return redirectResponse;
   }
 
   const redirectUrl = request.nextUrl.clone();
@@ -85,7 +126,7 @@ export function proxy(request: NextRequest) {
     maxAge: 60 * 60 * 24 * 365,
     sameSite: "lax",
   });
-  return response;
+  return withLocaleHeader(response, locale);
 }
 
 export const config = {

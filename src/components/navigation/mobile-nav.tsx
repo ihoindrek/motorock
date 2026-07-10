@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { brands } from "@/data/brands";
 import type { NavColumn } from "@/data/navigation";
-import { useCategoryTree } from "@/context/category-tree-context";
+import { useCategoryTree, useToolsCategory } from "@/context/category-tree-context";
 import { useDictionary, useLocale } from "@/context/locale-context";
 import type { Locale } from "@/i18n/config";
 import { getShopNav, getSiteNav } from "@/i18n/navigation";
@@ -15,8 +16,6 @@ import { localizedHref } from "@/i18n/paths";
 type MobileNavProps = {
   open: boolean;
   onClose: () => void;
-  locale: "en" | "et";
-  onLocaleChange: (locale: "en" | "et") => void;
 };
 
 function CloseIcon() {
@@ -150,7 +149,8 @@ function EquipmentAccordion({
   const locale = useLocale();
   const dictionary = useDictionary();
   const categoryTree = useCategoryTree();
-  const shopNav = getShopNav(locale, dictionary, categoryTree);
+  const toolsCategory = useToolsCategory();
+  const shopNav = getShopNav(locale, dictionary, categoryTree, toolsCategory);
   const item = shopNav.find((navItem) => navItem.megaMenu);
   const [open, setOpen] = useState(false);
   const [openColumn, setOpenColumn] = useState<string | null>(null);
@@ -264,7 +264,7 @@ function MotorcycleBrandsAccordion({
           {motorcycleBrands.map((brand) => (
             <li key={brand.slug}>
               <Link
-                href={localizedHref(locale, getBrandCatalogHref(brand.slug))}
+                href={localizedHref(locale, getBrandCatalogHref(brand.slug, locale))}
                 onClick={onNavigate}
                 className="block py-2.5 text-sm text-ink/75 transition-colors hover:text-accent"
               >
@@ -278,19 +278,21 @@ function MotorcycleBrandsAccordion({
   );
 }
 
-export function MobileNav({
-  open,
-  onClose,
-  locale,
-  onLocaleChange,
-}: MobileNavProps) {
+export function MobileNav({ open, onClose }: MobileNavProps) {
+  const locale = useLocale();
   const dictionary = useDictionary();
   const categoryTree = useCategoryTree();
-  const shopNav = getShopNav(locale, dictionary, categoryTree);
+  const toolsCategory = useToolsCategory();
+  const shopNav = getShopNav(locale, dictionary, categoryTree, toolsCategory);
   const siteNav = getSiteNav(locale, dictionary);
   const labelId = useId();
   const panelRef = useRef<HTMLElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useFocusTrap(panelRef, open, { onEscape: onClose, initialFocus: closeRef });
 
@@ -316,12 +318,14 @@ export function MobileNav({
     };
   }, [open, onClose]);
 
-  return (
+  if (!mounted || !open) {
+    return null;
+  }
+
+  return createPortal(
     <>
       <div
-        className={`fixed inset-0 z-40 bg-ink/40 transition-opacity duration-200 lg:hidden ${
-          open ? "visible opacity-100" : "invisible opacity-0"
-        }`}
+        className="fixed inset-0 z-[110] bg-ink/40 lg:hidden"
         aria-hidden="true"
         onClick={onClose}
       />
@@ -332,9 +336,7 @@ export function MobileNav({
         role="dialog"
         aria-modal="true"
         aria-labelledby={labelId}
-        className={`fixed inset-y-0 right-0 z-50 flex w-full max-w-sm flex-col bg-white transition-transform duration-200 ease-out lg:hidden ${
-          open ? "translate-x-0" : "translate-x-full"
-        }`}
+        className="fixed inset-y-0 right-0 z-[111] flex w-full max-w-sm translate-x-0 flex-col bg-white lg:hidden"
       >
         <div className="flex h-16 items-center justify-between border-b border-ink/10 px-5 sm:h-20">
           <p
@@ -394,31 +396,6 @@ export function MobileNav({
             </div>
           ))}
 
-          <div className="border-b border-ink/10 py-4">
-            <p className="font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/45">
-              {dictionary.nav.language}
-            </p>
-            <div className="mt-3 inline-grid grid-cols-2 rounded-sm border border-ink/15 p-0.5 font-body text-[11px] font-bold uppercase tracking-aggressive">
-              {([
-                { code: "en", label: "EN" },
-                { code: "et", label: "ET" },
-              ] as const).map(({ code, label }) => (
-                <button
-                  key={code}
-                  type="button"
-                  onClick={() => onLocaleChange(code)}
-                  aria-pressed={locale === code}
-                  className={`min-w-[2.75rem] px-3 py-2 transition-colors ${
-                    locale === code
-                      ? "bg-ink text-paper"
-                      : "text-ink/55 hover:text-ink"
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
         </div>
 
         <div className="shrink-0 border-t border-ink/10 px-5 py-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
@@ -426,13 +403,14 @@ export function MobileNav({
             {dictionary.nav.getInTouch}
           </p>
           <a
-            href="tel:+37255551234"
+            href="tel:+37256500400"
             className="mt-3 flex min-h-12 w-full items-center justify-center border border-ink/20 px-4 py-3 font-body text-sm font-bold tabular-nums tracking-tight text-ink transition-colors hover:border-accent hover:text-accent"
           >
-            +372 5555 1234
+            +372 56 500 400
           </a>
         </div>
       </nav>
-    </>
+    </>,
+    document.body,
   );
 }

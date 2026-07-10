@@ -2,8 +2,11 @@
 
 import Link from "next/link";
 import type { CatalogProduct } from "@/types/catalog-product";
+import { useDictionary, useLocale } from "@/context/locale-context";
 import { CategoryView } from "@/components/shop/category-view";
-import { motorcyclesCatalogRoute } from "@/lib/shop/category";
+import { buildMotorcyclesCatalogRoute } from "@/lib/shop/category";
+import { localizedHref } from "@/i18n/paths";
+import { buildEquipmentHubHref } from "@/lib/shop/category-url";
 
 type MotorcyclesCatalogViewProps = {
   products: readonly CatalogProduct[];
@@ -14,21 +17,9 @@ export function MotorcyclesCatalogView({
   products,
   initialBrand,
 }: MotorcyclesCatalogViewProps) {
-  const route = initialBrand
-    ? {
-        ...motorcyclesCatalogRoute,
-        brand: initialBrand,
-        title: `${initialBrand} motorcycles`,
-        description: `Explore ${initialBrand} motorcycles at Motorock — premium machines for riders who refuse to blend in.`,
-        breadcrumbs: [
-          ...motorcyclesCatalogRoute.breadcrumbs,
-          {
-            label: initialBrand,
-            href: `/shop/motorcycles?brand=${initialBrand.toLowerCase().replace(/\s+/g, "-")}`,
-          },
-        ],
-      }
-    : motorcyclesCatalogRoute;
+  const locale = useLocale();
+  const dict = useDictionary();
+  const route = buildMotorcyclesCatalogRoute(dict, initialBrand);
 
   return (
     <CategoryView
@@ -40,12 +31,14 @@ export function MotorcyclesCatalogView({
       pageSize={12}
       gridColumns={3}
       gridDividers
-      sectionBackgroundHeading
       footer={
         <p className="text-sm text-ink/60">
-          Looking for gear?{" "}
-          <Link href="/shop/equipment" className="text-accent hover:underline">
-            Shop driving equipment →
+          {dict.catalog.lookingForGear}{" "}
+          <Link
+            href={localizedHref(locale, buildEquipmentHubHref(locale))}
+            className="text-accent hover:underline"
+          >
+            {dict.catalog.shopEquipmentCta}
           </Link>
         </p>
       }

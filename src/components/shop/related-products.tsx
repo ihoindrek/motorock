@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { Swiper as SwiperInstance } from "swiper";
 import { A11y } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/react";
 import type { CatalogProduct } from "@/types/catalog-product";
 import { ProductCard } from "@/components/shop/product-card";
 import { CarouselArrow } from "@/components/ui/carousel-arrow";
+import { useDictionary } from "@/context/locale-context";
 
 import "swiper/css";
 
@@ -15,21 +16,48 @@ type RelatedProductsProps = {
   title?: string;
 };
 
+type CarouselNavState = {
+  show: boolean;
+  prev: boolean;
+  next: boolean;
+};
+
 export function RelatedProducts({
   products,
-  title = "Similar products",
+  title,
 }: RelatedProductsProps) {
+  const dict = useDictionary();
   const swiperRef = useRef<SwiperInstance | null>(null);
+  const heading = title ?? dict.pdp.relatedProducts;
+  const [navState, setNavState] = useState<CarouselNavState>({
+    show: false,
+    prev: false,
+    next: false,
+  });
+
+  const updateNavState = useCallback((swiper: SwiperInstance) => {
+    const hasOverflow = !swiper.isBeginning || !swiper.isEnd;
+
+    setNavState({
+      show: products.length > 1 && hasOverflow,
+      prev: !swiper.isBeginning,
+      next: !swiper.isEnd,
+    });
+  }, [products.length]);
 
   useEffect(() => {
-    swiperRef.current?.update();
-  }, [products]);
+    const swiper = swiperRef.current;
+    if (!swiper) {
+      return;
+    }
+
+    swiper.update();
+    updateNavState(swiper);
+  }, [products, updateNavState]);
 
   if (products.length === 0) {
     return null;
   }
-
-  const showNavigation = products.length > 1;
 
   return (
     <section
@@ -41,7 +69,7 @@ export function RelatedProducts({
           id="related-products-heading"
           className="mb-6 text-2xl font-extrabold uppercase text-ink sm:mb-5 sm:text-3xl"
         >
-          {title}
+          {heading}
         </h2>
 
         <div className="w-full overflow-visible">
@@ -49,20 +77,28 @@ export function RelatedProducts({
             modules={[A11y]}
             onSwiper={(swiper) => {
               swiperRef.current = swiper;
+              updateNavState(swiper);
             }}
+            onInit={updateNavState}
+            onSlideChange={updateNavState}
+            onResize={updateNavState}
+            onBreakpoint={updateNavState}
+            onReachBeginning={updateNavState}
+            onReachEnd={updateNavState}
             observer
             observeParents
             resizeObserver
             spaceBetween={16}
             slidesPerView={1.15}
+            slidesPerGroup={1}
             grabCursor
             speed={600}
             breakpoints={{
               640: { slidesPerView: 2, spaceBetween: 20 },
-              1024: { slidesPerView: 4, spaceBetween: 28 },
+              1024: { slidesPerView: 3, spaceBetween: 28 },
             }}
             className="w-full !overflow-visible"
-            aria-label="Similar products"
+            aria-label={dict.carousel.similarProducts}
           >
             {products.map((product) => (
               <SwiperSlide key={product.slug} className="!h-auto">
@@ -71,21 +107,25 @@ export function RelatedProducts({
             ))}
           </Swiper>
 
-          {showNavigation ? (
+          {navState.show ? (
             <nav
-              aria-label="Similar products navigation"
+              aria-label={dict.carousel.similarProductsNavigation}
               className="mt-8 flex items-center justify-between"
             >
               <CarouselArrow
                 direction="prev"
-                label="Previous product"
+                label={dict.carousel.previousProduct}
+                text={dict.carousel.previous}
                 onClick={() => swiperRef.current?.slidePrev()}
+                disabled={!navState.prev}
                 theme="light"
               />
               <CarouselArrow
                 direction="next"
-                label="Next product"
+                label={dict.carousel.nextProduct}
+                text={dict.carousel.next}
                 onClick={() => swiperRef.current?.slideNext()}
+                disabled={!navState.next}
                 theme="light"
               />
             </nav>

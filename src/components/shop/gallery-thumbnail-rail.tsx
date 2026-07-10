@@ -9,6 +9,7 @@ import {
   CarouselArrow,
   type CarouselArrowTheme,
 } from "@/components/ui/carousel-arrow";
+import { useDictionary } from "@/context/locale-context";
 
 import "swiper/css";
 
@@ -42,6 +43,7 @@ export function GalleryThumbnailRail({
   onThumbSelect,
   renderThumb,
 }: GalleryThumbnailRailProps) {
+  const dict = useDictionary();
   const swiperRef = useRef<SwiperInstance | null>(null);
   const [atStart, setAtStart] = useState(true);
   const [atEnd, setAtEnd] = useState(false);
@@ -111,12 +113,16 @@ export function GalleryThumbnailRail({
 
   const bindSelect = (index: number) => () => handleThumbSelect(index);
 
-  const prevLabel = isVertical ? "Scroll thumbnails up" : "Scroll thumbnails left";
-  const nextLabel = isVertical ? "Scroll thumbnails down" : "Scroll thumbnails right";
+  const prevLabel = isVertical
+    ? dict.carousel.scrollThumbnailsUp
+    : dict.carousel.scrollThumbnailsLeft;
+  const nextLabel = isVertical
+    ? dict.carousel.scrollThumbnailsDown
+    : dict.carousel.scrollThumbnailsRight;
   const verticalShellClass = className || "w-[4.25rem] sm:w-[5.25rem]";
   const verticalImageNavGapClass = imageNavigation ? "gap-3 sm:gap-4" : "";
   const verticalThumbViewportClass =
-    "h-[calc(5*5rem+4*0.5rem)] w-full shrink-0 sm:h-[calc(5*6rem+4*0.5rem)]";
+    "h-[calc(5*4.5rem+4*0.75rem)] w-full shrink-0 sm:h-[calc(5*5rem+4*0.75rem)]";
 
   const imageNavButtonClass =
     "relative flex h-11 w-full shrink-0 items-center justify-center transition-opacity duration-200 hover:opacity-80";
@@ -125,10 +131,10 @@ export function GalleryThumbnailRail({
     <ul
       className={
         isVertical
-          ? `flex w-full flex-col gap-2${scrollable ? " pb-1" : ""}`
-          : `flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden snap-x snap-mandatory ${className}`
+          ? `flex w-full flex-col gap-3${scrollable ? " pb-1" : ""}`
+          : `flex gap-3 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden snap-x snap-mandatory ${className}`
       }
-      aria-label="Product image thumbnails"
+      aria-label={dict.carousel.productThumbnails}
     >
         {items.map((src, index) => (
           <li key={src} className={isVertical ? undefined : "shrink-0 snap-start"}>
@@ -141,7 +147,11 @@ export function GalleryThumbnailRail({
   const imageNavButton = (direction: "prev" | "next") => (
     <CarouselArrow
       direction={direction}
-      label={direction === "prev" ? "Previous image" : "Next image"}
+      label={
+        direction === "prev"
+          ? dict.carousel.previousImage
+          : dict.carousel.nextImage
+      }
       onClick={
         direction === "prev"
           ? imageNavigation!.onPrevious
@@ -247,7 +257,7 @@ export function GalleryThumbnailRail({
       modules={[A11y]}
       direction={direction}
       slidesPerView={direction === "vertical" ? VISIBLE_THUMBS : 4.5}
-      spaceBetween={8}
+      spaceBetween={12}
       onSwiper={(instance) => {
         swiperRef.current = instance;
         updateEdges(instance);
@@ -255,7 +265,7 @@ export function GalleryThumbnailRail({
       onSlideChange={updateEdges}
       onResize={updateEdges}
       className={direction === "vertical" ? "size-full" : "w-full"}
-      aria-label="Product image thumbnails"
+      aria-label={dict.carousel.productThumbnails}
     >
       {items.map((src, index) => (
         <SwiperSlide
@@ -308,7 +318,7 @@ export function GalleryThumbnailRail({
       )
     ) : (
       <div className="w-full overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        <ul className="flex w-max gap-2" aria-label="Product image thumbnails">
+        <ul className="flex w-max gap-3" aria-label={dict.carousel.productThumbnails}>
           {items.map((src, index) => (
             <li key={src} className={`${horizontalSlideClass} shrink-0`}>
               {renderThumb(src, index, bindSelect(index))}
@@ -323,7 +333,7 @@ export function GalleryThumbnailRail({
         {thumbViewport}
         {needsThumbScroll ? (
           <nav
-            aria-label="Thumbnail navigation"
+            aria-label={dict.carousel.thumbnailNavigation}
             className="flex items-center justify-between"
           >
             {scrollNavButton("prev", atStart)}
@@ -354,7 +364,7 @@ export function GalleryThumbnailRail({
       modules={[A11y]}
       direction={isVertical ? "vertical" : "horizontal"}
       slidesPerView={isVertical ? "auto" : 5}
-      spaceBetween={8}
+      spaceBetween={12}
       onSwiper={(instance) => {
         swiperRef.current = instance;
         updateEdges(instance);
@@ -366,7 +376,7 @@ export function GalleryThumbnailRail({
           ? "max-h-[22rem] w-full sm:max-h-[24rem]"
           : "min-w-0 flex-1"
       }
-      aria-label="Product image thumbnails"
+      aria-label={dict.carousel.productThumbnails}
     >
       {items.map((src, index) => (
         <SwiperSlide
@@ -399,7 +409,7 @@ export function GalleryThumbnailRail({
     <div className={`flex min-w-0 flex-col gap-2 overflow-visible ${className}`}>
       {swiper}
       <nav
-        aria-label="Thumbnail navigation"
+        aria-label={dict.carousel.thumbnailNavigation}
         className="flex shrink-0 items-center justify-between"
       >
         {scrollNavButton("prev", atStart)}

@@ -1,8 +1,17 @@
 import type { Metadata, Viewport } from "next";
+import { headers } from "next/headers";
 import { Plus_Jakarta_Sans, Racing_Sans_One } from "next/font/google";
+import { ConsentScripts, GtmNoScript } from "@/components/consent/consent-scripts";
 import { Providers } from "@/components/providers";
+import { defaultLocale, isLocale } from "@/i18n/config";
 import { isSiteIndexable } from "@/lib/site-indexing";
+import { getStorefrontUrl } from "@/lib/storefront/url";
+import { getAssetVersion } from "@/lib/storefront/asset-version";
 import "./globals.css";
+
+const assetVersion = getAssetVersion();
+const favicon32Url = `/favicon-32.png?v=${assetVersion}`;
+const favicon192Url = `/favicon.png?v=${assetVersion}`;
 
 const displayFont = Racing_Sans_One({
   subsets: ["latin"],
@@ -33,18 +42,20 @@ const noIndexMetadata: Metadata = {
 
 export const metadata: Metadata = {
   title: {
-    default: "Motorock.eu — Premium Custom Motorcycles",
+    default: "Motorock.eu",
     template: "%s | Motorock.eu",
   },
-  description:
-    "Hand-built custom motorcycles, premium parts, and rebel engineering. Motorock.eu — ride loud, ride free.",
-  metadataBase: new URL("https://motorock.eu"),
+  metadataBase: new URL(getStorefrontUrl()),
+  icons: {
+    icon: [
+      { url: favicon32Url, sizes: "32x32", type: "image/png" },
+      { url: favicon192Url, sizes: "192x192", type: "image/png" },
+    ],
+    shortcut: [{ url: favicon32Url, type: "image/png" }],
+    apple: [{ url: favicon192Url, sizes: "180x180", type: "image/png" }],
+  },
   openGraph: {
-    title: "Motorock.eu — Premium Custom Motorcycles",
-    description:
-      "Hand-built custom motorcycles, premium parts, and rebel engineering.",
     siteName: "Motorock.eu",
-    locale: "en_EU",
     type: "website",
   },
   ...(isSiteIndexable() ? {} : noIndexMetadata),
@@ -55,18 +66,24 @@ export const viewport: Viewport = {
   colorScheme: "light",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const headersList = await headers();
+  const headerLocale = headersList.get("x-locale");
+  const lang = isLocale(headerLocale) ? headerLocale : defaultLocale;
+
   return (
     <html
-      lang="en"
+      lang={lang}
       className={`${displayFont.variable} ${plusJakarta.variable} h-full`}
       suppressHydrationWarning
     >
       <body className="flex min-h-full flex-col bg-paper font-body text-ink antialiased">
+        <GtmNoScript />
+        <ConsentScripts />
         <Providers>{children}</Providers>
       </body>
     </html>

@@ -6,7 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useCart } from "@/context/cart-context";
 import { useCheckoutStep } from "@/context/checkout-step-context";
-import { useCategoryTree } from "@/context/category-tree-context";
+import { useCategoryTree, useToolsCategory } from "@/context/category-tree-context";
 import { useDictionary, useLocale } from "@/context/locale-context";
 import { useLocaleAlternates } from "@/context/locale-alternates-context";
 import type { Locale } from "@/i18n/config";
@@ -15,6 +15,10 @@ import {
   getSiteNav,
 } from "@/i18n/navigation";
 import { localizedHref, stripLocaleFromPath, switchLocaleInPath } from "@/i18n/paths";
+import {
+  isProductPath,
+  resolveProductHrefForLocaleSwitch,
+} from "@/lib/shop/product-url";
 import type { PrimaryNavItem } from "@/data/navigation";
 import { CheckoutProgress } from "@/components/shop/checkout-progress";
 import { EquipmentMegaMenu } from "@/components/navigation/equipment-mega-menu";
@@ -62,7 +66,7 @@ function LanguageSwitcher({
       role="group"
       aria-label="Language"
       className={cn(
-        "relative inline-grid grid-cols-2 rounded-sm border p-0.5 font-body text-[10px] font-bold uppercase tracking-aggressive",
+        "relative inline-grid grid-cols-2 rounded-sm border p-0.5 font-body text-[9px] font-bold uppercase tracking-aggressive sm:text-[10px]",
         inverted ? "border-paper/20" : "border-ink/15",
       )}
     >
@@ -81,7 +85,7 @@ function LanguageSwitcher({
           onClick={() => onChange(code)}
           aria-pressed={locale === code}
           className={cn(
-            "relative z-[1] min-w-[2.35rem] px-2.5 py-1.5 transition-colors duration-200",
+            "relative z-[1] min-w-[2rem] px-2 py-1 transition-colors duration-200 sm:min-w-[2.35rem] sm:px-2.5 sm:py-1.5",
             locale === code
               ? inverted
                 ? "text-ink"
@@ -122,10 +126,11 @@ export function SiteHeader() {
   const locale = useLocale();
   const dictionary = useDictionary();
   const categoryTree = useCategoryTree();
+  const toolsCategory = useToolsCategory();
   const localeAlternates = useLocaleAlternates();
   const shopNav = useMemo(
-    () => getShopNav(locale, dictionary, categoryTree),
-    [locale, dictionary, categoryTree],
+    () => getShopNav(locale, dictionary, categoryTree, toolsCategory),
+    [locale, dictionary, categoryTree, toolsCategory],
   );
   const siteNav = useMemo(
     () => getSiteNav(locale, dictionary),
@@ -183,26 +188,51 @@ export function SiteHeader() {
   }, []);
 
   useEffect(() => {
+    let frame = 0;
+
     const onScroll = () => {
-      setScrolled(window.scrollY > 4);
+      if (frame) {
+        return;
+      }
+
+      frame = window.requestAnimationFrame(() => {
+        frame = 0;
+        setScrolled(window.scrollY > 4);
+      });
     };
 
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
 
     return () => {
+      if (frame) {
+        window.cancelAnimationFrame(frame);
+      }
       window.removeEventListener("scroll", onScroll);
     };
   }, []);
 
-  const isCheckoutHeader =
-    stripLocaleFromPath(pathname) === "/cart" && checkoutStep !== null;
+  const isCheckoutPage = stripLocaleFromPath(pathname) === "/cart";
+  const isCheckoutHeader = isCheckoutPage && checkoutStep !== null;
 
   const handleLocaleChange = (nextLocale: Locale) => {
     const translatedSlug = localeAlternates?.[nextLocale];
+    const basePath = stripLocaleFromPath(pathname);
 
-    if (translatedSlug && stripLocaleFromPath(pathname).startsWith("/shop/product/")) {
-      router.push(localizedHref(nextLocale, `/shop/product/${translatedSlug}`));
+    if (translatedSlug && isProductPath(basePath)) {
+      const productHref = resolveProductHrefForLocaleSwitch(
+        localeAlternates ?? {},
+        nextLocale,
+      );
+
+      if (productHref) {
+        router.push(productHref);
+        return;
+      }
+    }
+
+    if (translatedSlug && basePath.startsWith("/blog/")) {
+      router.push(localizedHref(nextLocale, `/blog/${translatedSlug}`));
       return;
     }
 
@@ -284,7 +314,7 @@ export function SiteHeader() {
         scrolled ? "bg-ink shadow-none" : "bg-white shadow-none",
       )}
     >
-      <div className="site-container flex h-16 items-center gap-4 sm:h-20 lg:gap-8">
+      <div className="site-container relative z-[1] flex h-16 items-center gap-4 sm:h-20 lg:gap-8">
         <Link
           href={localizedHref(locale, "/")}
           aria-label="Motorock.eu — Home"
@@ -325,14 +355,12 @@ export function SiteHeader() {
           </div>
         ) : null}
 
-        <div className="ml-auto flex items-center gap-1 sm:gap-2">
-          <div className="hidden sm:block">
-            <LanguageSwitcher
-              locale={locale}
-              onChange={handleLocaleChange}
-              inverted={scrolled}
-            />
-          </div>
+        <div className="ml-auto flex items-center gap-0.5 sm:gap-2">
+          <LanguageSwitcher
+            locale={locale}
+            onChange={handleLocaleChange}
+            inverted={scrolled}
+          />
 
           <HeaderSearch inverted={scrolled} />
 
@@ -402,12 +430,7 @@ export function SiteHeader() {
         />
       ) : null}
 
-      <MobileNav
-        open={mobileOpen}
-        onClose={() => setMobileOpen(false)}
-        locale={locale}
-        onLocaleChange={handleLocaleChange}
-      />
+      <MobileNav open={mobileOpen} onClose={() => setMobileOpen(false)} />
     </header>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useDictionary } from "@/context/locale-context";
+import { useCheckoutStep } from "@/context/checkout-step-context";
 import { cn } from "@/lib/utils";
 import type { CheckoutStep } from "@/context/checkout-step-context";
 
@@ -16,6 +17,7 @@ export function CheckoutProgress({
   className?: string;
 }) {
   const dict = useDictionary();
+  const { navigateToCheckoutStep } = useCheckoutStep();
   const steps = [
     { id: 1, label: dict.checkout.cart },
     { id: 2, label: dict.checkout.delivery },
@@ -40,13 +42,29 @@ export function CheckoutProgress({
         {steps.map((step, index) => {
           const done = step.id < currentStep;
           const active = step.id === currentStep;
+          const reachable = step.id <= currentStep;
 
           return (
             <li
               key={step.id}
               className="flex min-w-0 flex-1 items-center gap-2"
             >
-              <div className="flex min-w-0 items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  if (reachable) {
+                    navigateToCheckoutStep(step.id);
+                  }
+                }}
+                disabled={!reachable}
+                aria-current={active ? "step" : undefined}
+                className={cn(
+                  "flex min-w-0 items-center gap-2 text-left transition-opacity",
+                  reachable
+                    ? "cursor-pointer hover:opacity-80"
+                    : "cursor-default opacity-70",
+                )}
+              >
                 <span
                   className={cn(
                     "flex shrink-0 items-center justify-center rounded-full border font-bold tabular-nums",
@@ -82,7 +100,7 @@ export function CheckoutProgress({
                 >
                   {step.label}
                 </span>
-              </div>
+              </button>
               {index < steps.length - 1 ? (
                 <span
                   aria-hidden="true"

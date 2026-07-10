@@ -1,13 +1,18 @@
 import { notFound } from "next/navigation";
+import { CookieConsentUi } from "@/components/consent/cookie-consent-ui";
 import { CartDrawer } from "@/components/shop/cart-drawer";
 import { CategoryTreeProvider } from "@/context/category-tree-context";
+import { ConsentProvider } from "@/context/consent-context";
 import { LocaleAlternatesProvider } from "@/context/locale-alternates-context";
 import { LocaleProvider } from "@/context/locale-context";
+import { ScrollToTopOnNavigate } from "@/components/navigation/scroll-to-top-on-navigate";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
+import { MainContent } from "@/components/layout/main-content";
 import { isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/get-dictionary";
 import { fetchEquipmentCategoryIndex, navTreeFromIndex } from "@/lib/graphql/categories";
+import { TOOLS_WC_SLUG } from "@/lib/shop/wc-categories";
 
 type LocaleLayoutProps = {
   children: React.ReactNode;
@@ -29,26 +34,30 @@ export default async function LocaleLayout({
   const categoryTree = categoryIndex
     ? navTreeFromIndex(categoryIndex)
     : null;
+  const toolsCategory = categoryIndex?.nodes.get(TOOLS_WC_SLUG) ?? null;
 
   return (
     <LocaleProvider locale={localeParam} dictionary={dictionary}>
-      <CategoryTreeProvider tree={categoryTree}>
-        <LocaleAlternatesProvider>
-          <a href="#main-content" className="sr-only-focusable">
-            {dictionary.common.skipToContent}
-          </a>
+      <ConsentProvider>
+        <CategoryTreeProvider tree={categoryTree} toolsCategory={toolsCategory}>
+          <LocaleAlternatesProvider>
+            <a href="#main-content" className="sr-only-focusable">
+              {dictionary.common.skipToContent}
+            </a>
 
-          <SiteHeader />
+            <SiteHeader />
 
-          <main id="main-content" className="flex-1">
-            {children}
-          </main>
+            <ScrollToTopOnNavigate />
 
-          <SiteFooter />
+            <MainContent>{children}</MainContent>
 
-          <CartDrawer />
-        </LocaleAlternatesProvider>
-      </CategoryTreeProvider>
+            <SiteFooter />
+
+            <CartDrawer />
+            <CookieConsentUi />
+          </LocaleAlternatesProvider>
+        </CategoryTreeProvider>
+      </ConsentProvider>
     </LocaleProvider>
   );
 }

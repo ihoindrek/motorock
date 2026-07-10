@@ -8,16 +8,28 @@ import {
 import {
   ADD_TO_CART,
   ALLOWED_COUNTRIES,
+  APPLY_COUPON,
   CART_SHIPPING,
   CHECKOUT,
   EMPTY_CART,
   PAYMENT_GATEWAYS,
+  REMOVE_COUPONS,
   RESOLVE_PRODUCT_BY_ID,
   RESOLVE_PRODUCT_IDS,
   UPDATE_CUSTOMER,
   UPDATE_SHIPPING_METHOD,
 } from "@/lib/graphql/checkout-queries";
-import { sizesMatch } from "@/lib/shop/size-label";
+import {
+  fetchEnglishCheckoutProduct,
+  resolveCheckoutProductIds,
+  type CheckoutResolvableProduct,
+} from "@/lib/graphql/resolve-checkout-product-ids";
+import { isOneSizeLabel, sizesMatch } from "@/lib/shop/size-label";
+import { resolveStoreVariationId } from "@/lib/woocommerce/store-api-product";
+import {
+  type CheckoutMetaDataInput,
+  resolveMontonioCheckoutGatewayId,
+} from "@/lib/checkout/montonio-checkout";
 
 export const MONTONIO_PAYMENT_METHOD_ID = "wc_montonio_payments";
 import { parseGraphqlPrice } from "@/lib/shop/parse-graphql-price";
@@ -27,33 +39,34 @@ type AllowedCountriesResponse = {
   allowedCountries: string[];
 };
 
+export type AppliedCoupon = {
+  code: string;
+  discountAmount: number;
+};
+
+export type CheckoutCartTotals = {
+  subtotal: string;
+  shippingTotal: string;
+  total: string;
+  discountTotal: string;
+  needsShippingAddress: boolean;
+  chosenShippingMethods: string[];
+  appliedCoupons: Array<{
+    code: string;
+    discountAmount: string;
+  }> | null;
+  availableShippingMethods: Array<{
+    packageDetails: string | null;
+    rates: ShippingRate[] | null;
+  }>;
+};
+
 type CartShippingResponse = {
-  cart: {
-    subtotal: string;
-    shippingTotal: string;
-    total: string;
-    needsShippingAddress: boolean;
-    chosenShippingMethods: string[];
-    availableShippingMethods: Array<{
-      packageDetails: string | null;
-      rates: ShippingRate[] | null;
-    }>;
-  };
+  cart: CheckoutCartTotals;
 };
 
 type ResolveProductResponse = {
-  product: {
-    databaseId: number;
-    __typename: "SimpleProduct" | "VariableProduct";
-    variations?: {
-      nodes: Array<{
-        databaseId: number;
-        attributes?: {
-          nodes: Array<{ name: string; value: string }>;
-        } | null;
-      }>;
-    } | null;
-  } | null;
+  product: CheckoutResolvableProduct | null;
 };
 
 type UpdateCustomerResponse = {
@@ -76,25 +89,6 @@ type UpdateShippingMethodResponse = {
 };
 
 const productIdCache = new Map<string, { productId: number; variationId?: number }>();
-
-function normalizeAttributeName(name: string) {
-  return name.toLowerCase().replace(/^pa_/, "");
-}
-
-function isSizeAttribute(name: string) {
-  const normalized = normalizeAttributeName(name);
-  return normalized === "size" || normalized === "suurus" || normalized.includes("size");
-}
-
-function isColorAttribute(name: string) {
-  const normalized = normalizeAttributeName(name);
-  return (
-    normalized === "color" ||
-    normalized === "colour" ||
-    normalized === "värv" ||
-    normalized === "finish"
-  );
-}
 
 function lineCacheKey(line: CartLine) {
   return `${line.slug}:${line.size ?? ""}:${line.color ?? ""}`;
@@ -149,55 +143,20 @@ type AddToCartResponse = {
   } | null;
 };
 
-function findVariationForLine(
-  product: NonNullable<ResolveProductResponse["product"]>,
-  line: CartLine,
-) {
-  if (product.__typename === "SimpleProduct") {
-    return undefined;
-  }
+async function fetchProductByDatabaseId(databaseId: number) {
+  const { data } = await checkoutGraphqlRequest<
+    ResolveProductResponse,
+    { id: string }
+  >(RESOLVE_PRODUCT_BY_ID, { id: String(databaseId) });
 
-  return (product.variations?.nodes ?? []).find((node) => {
-    const attributes = node.attributes?.nodes ?? [];
-    const size = attributes.find((attribute) => isSizeAttribute(attribute.name));
-    const color = attributes.find((attribute) => isColorAttribute(attribute.name));
-
-    const sizeMatches =
-      line.size &&
-      line.size !== "One size" &&
-      size &&
-      sizesMatch(size.value, line.size);
-    const colorMatches =
-      line.color &&
-      color &&
-      (color.value === line.color ||
-        color.value.toLowerCase() === line.color.toLowerCase());
-
-    if (sizeMatches && colorMatches) {
-      return true;
-    }
-
-    if (sizeMatches && !line.color) {
-      return true;
-    }
-
-    if (colorMatches && (!line.size || line.size === "One size")) {
-      return true;
-    }
-
-    return false;
-  });
+  return data.product;
 }
 
 async function fetchProductForLine(line: CartLine) {
   if (line.productId) {
-    const { data } = await checkoutGraphqlRequest<
-      ResolveProductResponse,
-      { id: string }
-    >(RESOLVE_PRODUCT_BY_ID, { id: String(line.productId) });
-
-    if (data.product) {
-      return data.product;
+    const product = await fetchProductByDatabaseId(line.productId);
+    if (product) {
+      return product;
     }
   }
 
@@ -213,40 +172,51 @@ export async function resolveCartLineIds(line: CartLine): Promise<{
   productId: number;
   variationId?: number;
 }> {
-  if (line.productId && line.variationId) {
-    return {
-      productId: line.productId,
-      variationId: line.variationId,
-    };
-  }
-
   const cached = productIdCache.get(lineCacheKey(line));
-  if (cached?.variationId || (cached && !line.size && !line.color)) {
+  if (cached?.variationId) {
     return cached;
   }
 
-  const product = await fetchProductForLine(line);
-  if (!product) {
+  if (cached && !cached.variationId && !line.size && !line.color) {
+    return cached;
+  }
+
+  const localized = await fetchProductForLine(line);
+  if (!localized) {
     throw new Error(`Product not found: ${line.name}`);
   }
 
-  if (product.__typename === "SimpleProduct") {
-    const resolved = { productId: product.databaseId };
-    productIdCache.set(lineCacheKey(line), resolved);
-    return resolved;
+  const englishProduct = await fetchEnglishCheckoutProduct(
+    localized,
+    fetchProductByDatabaseId,
+  );
+
+  let resolved = resolveCheckoutProductIds(englishProduct, line, {
+    isOneSizeLabel,
+    sizesMatch,
+  });
+
+  if (
+    englishProduct.__typename === "VariableProduct" &&
+    !resolved.variationId
+  ) {
+    const variationId = await resolveStoreVariationId(englishProduct.databaseId, {
+      size: line.size,
+      color: line.color,
+    });
+
+    if (!variationId) {
+      throw new Error(
+        `Choose a size or color for ${line.name} before checkout.`,
+      );
+    }
+
+    resolved = {
+      productId: englishProduct.databaseId,
+      variationId,
+    };
   }
 
-  const variation = findVariationForLine(product, line);
-  if (!variation?.databaseId) {
-    throw new Error(
-      `Choose a size or color for ${line.name} before checkout.`,
-    );
-  }
-
-  const resolved = {
-    productId: product.databaseId,
-    variationId: variation.databaseId,
-  };
   productIdCache.set(lineCacheKey(line), resolved);
   return resolved;
 }
@@ -378,8 +348,7 @@ export async function fetchCartShipping(sessionToken?: string | null) {
     );
 
   return {
-    cart: data.cart,
-    rates: flattenShippingRates(data.cart.availableShippingMethods),
+    ...mapCheckoutCartResponse(data.cart),
     sessionToken: nextSession,
   };
 }
@@ -402,13 +371,84 @@ export async function selectShippingRate(
     rates: flattenShippingRates(
       data.updateShippingMethod.cart.availableShippingMethods,
     ),
+    discountTotal: parseCartMoney(data.updateShippingMethod.cart.discountTotal),
+    appliedCoupons: parseAppliedCoupons(
+      data.updateShippingMethod.cart.appliedCoupons,
+    ),
     chosenRateId: data.updateShippingMethod.cart.chosenShippingMethods[0] ?? null,
+    sessionToken: nextSession,
+  };
+}
+
+type CouponMutationResponse = {
+  applyCoupon?: { cart: CheckoutCartTotals } | null;
+  removeCoupons?: { cart: CheckoutCartTotals } | null;
+};
+
+export async function applyCheckoutCoupon(
+  code: string,
+  sessionToken?: string | null,
+) {
+  const { data, sessionToken: nextSession } = await checkoutGraphqlRequest<
+    CouponMutationResponse,
+    { input: { code: string } }
+  >(APPLY_COUPON, { input: { code: code.trim() } }, sessionToken);
+
+  const cart = data.applyCoupon?.cart;
+  if (!cart) {
+    throw new Error("Could not apply coupon");
+  }
+
+  return {
+    ...mapCheckoutCartResponse(cart),
+    sessionToken: nextSession,
+  };
+}
+
+export async function removeCheckoutCoupon(
+  code: string,
+  sessionToken?: string | null,
+) {
+  const { data, sessionToken: nextSession } = await checkoutGraphqlRequest<
+    CouponMutationResponse,
+    { input: { codes: string[] } }
+  >(
+    REMOVE_COUPONS,
+    { input: { codes: [code.trim()] } },
+    sessionToken,
+  );
+
+  const cart = data.removeCoupons?.cart;
+  if (!cart) {
+    throw new Error("Could not remove coupon");
+  }
+
+  return {
+    ...mapCheckoutCartResponse(cart),
     sessionToken: nextSession,
   };
 }
 
 export function parseCartMoney(value: string | null | undefined) {
   return parseGraphqlPrice(value);
+}
+
+export function parseAppliedCoupons(
+  coupons: CheckoutCartTotals["appliedCoupons"],
+): AppliedCoupon[] {
+  return (coupons ?? []).map((coupon) => ({
+    code: coupon.code,
+    discountAmount: parseCartMoney(coupon.discountAmount),
+  }));
+}
+
+export function mapCheckoutCartResponse(cart: CheckoutCartTotals) {
+  return {
+    cart,
+    rates: flattenShippingRates(cart.availableShippingMethods),
+    discountTotal: parseCartMoney(cart.discountTotal),
+    appliedCoupons: parseAppliedCoupons(cart.appliedCoupons),
+  };
 }
 
 type PaymentGatewaysResponse = {
@@ -442,7 +482,7 @@ export async function fetchPaymentGateways(sessionToken?: string | null) {
     sessionToken,
   );
 
-  return data.paymentGateways.nodes;
+  return data.paymentGateways?.nodes ?? [];
 }
 
 export async function resolveCheckoutPaymentMethod(
@@ -456,16 +496,73 @@ export async function resolveCheckoutPaymentMethod(
   return montonio?.id ?? gateways[0]?.id ?? MONTONIO_PAYMENT_METHOD_ID;
 }
 
+type CheckoutAddressInput = {
+  firstName: string;
+  lastName: string;
+  country: string;
+  postcode: string;
+  city: string;
+  address1: string;
+};
+
+type CheckoutBillingInput = CheckoutAddressInput & {
+  email: string;
+  phone: string;
+};
+
+export type CheckoutCustomerDetails = {
+  email: string;
+  firstName: string;
+  lastName: string;
+  phone: string;
+  country: string;
+  postcode: string;
+  city: string;
+  address1: string;
+};
+
+export function buildCheckoutInputAddresses(customer: CheckoutCustomerDetails): {
+  billing: CheckoutBillingInput;
+  shipping: CheckoutAddressInput;
+} {
+  return {
+    billing: {
+      email: customer.email,
+      firstName: customer.firstName,
+      lastName: customer.lastName,
+      phone: customer.phone,
+      country: customer.country,
+      postcode: customer.postcode,
+      city: customer.city,
+      address1: customer.address1,
+    },
+    shipping: {
+      firstName: customer.firstName,
+      lastName: customer.lastName,
+      country: customer.country,
+      postcode: customer.postcode,
+      city: customer.city,
+      address1: customer.address1,
+    },
+  };
+}
+
 export async function submitCheckout(
   input: {
     paymentMethod?: string;
     customerNote?: string;
+    metaData?: CheckoutMetaDataInput[];
+    billing?: CheckoutBillingInput;
+    shipping?: CheckoutAddressInput;
   },
   sessionToken?: string | null,
 ) {
-  const paymentMethod =
+  const selectedPaymentMethod =
     input.paymentMethod ??
     (await resolveCheckoutPaymentMethod(sessionToken));
+  const paymentMethod = resolveMontonioCheckoutGatewayId(
+    selectedPaymentMethod,
+  );
 
   const { data, sessionToken: nextSession } = await checkoutGraphqlRequest<
     CheckoutResponse,
@@ -473,6 +570,9 @@ export async function submitCheckout(
       input: {
         paymentMethod: string;
         customerNote?: string;
+        metaData?: CheckoutMetaDataInput[];
+        billing?: CheckoutBillingInput;
+        shipping?: CheckoutAddressInput;
       };
     }
   >(
@@ -481,6 +581,9 @@ export async function submitCheckout(
       input: {
         paymentMethod,
         ...(input.customerNote ? { customerNote: input.customerNote } : {}),
+        ...(input.metaData?.length ? { metaData: input.metaData } : {}),
+        ...(input.billing ? { billing: input.billing } : {}),
+        ...(input.shipping ? { shipping: input.shipping } : {}),
       },
     },
     sessionToken,
@@ -488,12 +591,15 @@ export async function submitCheckout(
 
   const checkout = data.checkout;
   if (!checkout || checkout.result !== "success") {
-    throw new Error("Checkout could not be completed. Please try again.");
+    throw new Error(
+      "Checkout could not be completed. Please verify delivery and payment details, then try again.",
+    );
   }
 
   return {
     redirect: checkout.redirect,
     orderNumber: checkout.order?.orderNumber ?? null,
+    orderDatabaseId: checkout.order?.databaseId ?? null,
     sessionToken: nextSession,
   };
 }

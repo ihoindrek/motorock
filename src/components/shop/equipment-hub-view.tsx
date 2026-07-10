@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { GrainOverlay } from "@/components/ui/grain-overlay";
+import { useDictionary, useLocale } from "@/context/locale-context";
 import type { Locale } from "@/i18n/config";
 import { localizedHref } from "@/i18n/paths";
 import {
@@ -12,6 +13,7 @@ import {
   type EquipmentHubCategory,
 } from "@/data/equipment-hub";
 import { cn } from "@/lib/utils";
+import { getBrandCatalogHref } from "@/lib/shop/brand-catalog-url";
 
 function MobileCategoryPanel({
   category,
@@ -114,9 +116,15 @@ function DesktopCategoryIndex({
   );
 }
 
-export function EquipmentHubView({ locale }: { locale: Locale }) {
-  const { categories, copy: equipmentHubCopy, brands: equipmentHubBrands } =
-    getEquipmentHubData(locale);
+export function EquipmentHubView({
+  locale,
+  hubData,
+}: {
+  locale: Locale;
+  hubData: ReturnType<typeof getEquipmentHubData>;
+}) {
+  const dict = useDictionary();
+  const { categories, copy: equipmentHubCopy, brands: equipmentHubBrands } = hubData;
   const ui =
     locale === "et"
       ? {
@@ -132,9 +140,13 @@ export function EquipmentHubView({ locale }: { locale: Locale }) {
           featuredBrands: "Featured brands",
         };
 
-  const [activeId, setActiveId] = useState<string>(categories[0].id);
+  const [activeId, setActiveId] = useState<string>(categories[0]?.id ?? "helmets");
   const activeCategory =
     categories.find((category) => category.id === activeId) ?? categories[0];
+
+  if (!activeCategory || categories.length === 0) {
+    return null;
+  }
 
   return (
     <div className="bg-ink">
@@ -172,7 +184,7 @@ export function EquipmentHubView({ locale }: { locale: Locale }) {
                 </Link>
               </li>
               <li aria-hidden="true">/</li>
-              <li className="text-paper/80">{equipmentHubCopy.title}</li>
+              <li className="text-paper/80">{dict.nav.equipment}</li>
             </ol>
           </nav>
 
@@ -280,7 +292,7 @@ export function EquipmentHubView({ locale }: { locale: Locale }) {
             {equipmentHubBrands.map((brand) => (
               <li key={brand.name}>
                 <Link
-                  href={localizedHref(locale, brand.href)}
+                  href={localizedHref(locale, getBrandCatalogHref(brand.slug, locale))}
                   className="inline-flex min-h-11 items-center border border-paper/15 px-5 py-2 font-body text-[10px] font-bold uppercase tracking-aggressive text-paper/70 transition-colors hover:border-accent hover:text-accent"
                 >
                   {brand.name}

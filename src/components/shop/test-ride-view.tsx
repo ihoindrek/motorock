@@ -1,17 +1,20 @@
 "use client";
 
-import { useDictionary } from "@/context/locale-context";
+import { useDictionary, useLocale } from "@/context/locale-context";
 import { EditorialHero } from "@/components/content/editorial-hero";
 import { TestRideForm, type TestRideInitialValues } from "@/components/shop/test-ride-form";
 import {
   SHOWROOM,
   SHOWROOM_GOOGLE_MAPS_URL,
+  getShowroomCopy,
 } from "@/data/showroom";
 
 export type { TestRideInitialValues };
 
 export function TestRideView({ initial }: { initial: TestRideInitialValues }) {
   const dict = useDictionary();
+  const locale = useLocale();
+  const showroom = getShowroomCopy(locale);
 
   return (
     <>
@@ -29,7 +32,7 @@ export function TestRideView({ initial }: { initial: TestRideInitialValues }) {
               {dict.testRide.showroom}
             </h2>
             <p className="mt-4 text-base leading-relaxed text-ink/70">
-              {SHOWROOM.name}
+              {showroom.name}
               <br />
               {SHOWROOM.addressLine}
               <br />
@@ -49,7 +52,12 @@ export function TestRideView({ initial }: { initial: TestRideInitialValues }) {
           </div>
 
           <div className="mt-12 border border-ink/15 bg-paper p-6 sm:p-8 lg:col-span-7 lg:mt-0 lg:p-10">
-            <TestRideForm initial={initial} />
+            <h2 className="font-body text-xs font-bold uppercase tracking-aggressive text-ink/45">
+              {dict.testRide.formTitle}
+            </h2>
+            <div className="mt-6">
+              <TestRideForm initial={initial} />
+            </div>
           </div>
         </div>
       </section>

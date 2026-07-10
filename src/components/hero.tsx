@@ -1,7 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
+import { HeroBannerMedia } from "@/components/hero-banner-media";
 import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries/en";
+import { buildEquipmentHubHref } from "@/lib/shop/category-url";
 import { localizedHref } from "@/i18n/paths";
 
 const motorcycleLogos = [
@@ -46,7 +48,8 @@ export function Hero({ locale, dictionary }: HeroProps) {
       label: dictionary.hero.motorcycles,
       href: localizedHref(locale, "/shop/motorcycles"),
       image: "/brixton-image.webp",
-      video: "/5052415-hd_1920_1080_30fps.mp4",
+      mobileImage: "/hero-fallback.jpg",
+      video: "/mc-hero.webm",
       span: "col-span-1 md:col-span-2",
       imageSizes: "(max-width: 768px) 100vw, 66vw",
       titleClass: "text-3xl sm:text-4xl lg:text-6xl",
@@ -56,14 +59,15 @@ export function Hero({ locale, dictionary }: HeroProps) {
     },
     {
       label: dictionary.hero.equipment,
-      href: localizedHref(locale, "/shop/equipment"),
+      href: localizedHref(locale, buildEquipmentHubHref(locale)),
       image: "/JRH10015_L23.webp",
+      mobileImage: "/JRH10015_L23.webp",
       video: undefined,
       span: "col-span-1",
       imageSizes: "(max-width: 768px) 100vw, 33vw",
-      titleClass: "text-xl sm:text-2xl lg:text-3xl",
+      titleClass: "text-2xl sm:text-3xl lg:text-4xl xl:text-5xl",
       cta: dictionary.hero.browseProducts,
-      ctaClass: "btn-hero-ghost px-5 py-3 sm:px-6 sm:py-3",
+      ctaClass: "btn-hero-ghost",
       logos: null,
     },
   ] as const;
@@ -75,47 +79,30 @@ export function Hero({ locale, dictionary }: HeroProps) {
     >
       <h1 className="sr-only">Motorock.eu</h1>
 
-      {banners.map(
-        (
-          {
-            label,
-            href,
-            image,
-            video,
-            span,
-            imageSizes,
-            titleClass,
-            cta,
-            ctaClass,
-            logos,
-          },
-          index,
-        ) => (
+      {banners.map((banner, index) => (
           <Link
-            key={href}
-            href={href}
-            className={`group relative flex min-h-[40svh] items-center justify-center overflow-hidden sm:min-h-[46svh] lg:min-h-[52svh] ${span}`}
+            key={banner.href}
+            href={banner.href}
+            prefetch
+            scroll
+            className={`group relative flex min-h-[40svh] items-center justify-center overflow-hidden sm:min-h-[46svh] lg:min-h-[52svh] ${banner.span}`}
           >
-            {video ? (
-              <video
-                autoPlay
-                muted
-                loop
-                playsInline
-                preload="metadata"
-                poster={image}
-                src={video}
-                className="absolute inset-0 h-full w-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-105"
-                aria-hidden="true"
+            {banner.video ? (
+              <HeroBannerMedia
+                mobileImage={banner.mobileImage}
+                desktopPoster={banner.image}
+                video={banner.video}
+                imageSizes={banner.imageSizes}
+                priority={index === 0}
               />
             ) : (
               <Image
-                src={image}
+                src={banner.image}
                 alt=""
                 fill
                 priority={index === 0}
                 className="object-cover object-center transition-transform duration-700 ease-out group-hover:scale-105"
-                sizes={imageSizes}
+                sizes={banner.imageSizes}
               />
             )}
             <div
@@ -128,14 +115,14 @@ export function Hero({ locale, dictionary }: HeroProps) {
             />
             <div className="relative z-10 flex flex-col items-center gap-5 px-4 sm:gap-7">
               <h2
-                className={`whitespace-pre-line text-center font-display font-extrabold uppercase leading-[0.95] tracking-tight text-paper drop-shadow-[0_4px_24px_rgba(0,0,0,0.6)] transition-transform duration-300 group-hover:scale-[1.02] ${titleClass}`}
+                className={`whitespace-pre-line text-center font-display font-extrabold uppercase leading-[0.95] tracking-tight text-paper drop-shadow-[0_4px_24px_rgba(0,0,0,0.6)] transition-transform duration-300 group-hover:scale-[1.02] ${banner.titleClass}`}
               >
-                {label}
+                {banner.label}
               </h2>
 
-              {logos ? (
+              {banner.logos ? (
                 <ul className="flex flex-wrap items-center justify-center gap-5 sm:gap-7 lg:gap-8">
-                  {logos.map((logo) => (
+                  {banner.logos.map((logo) => (
                     <li key={logo.name}>
                       <Image
                         src={logo.src}
@@ -150,14 +137,13 @@ export function Hero({ locale, dictionary }: HeroProps) {
               ) : null}
 
               <span
-                className={`${ctaClass} mt-1 transition-transform duration-300 group-hover:scale-105`}
+                className={`${banner.ctaClass} mt-1 transition-transform duration-300 group-hover:scale-105`}
               >
-                {cta}
+                {banner.cta}
               </span>
             </div>
           </Link>
-        ),
-      )}
+        ))}
     </section>
   );
 }

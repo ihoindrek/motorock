@@ -11,7 +11,6 @@ import { formatPrice } from "@/lib/shop/category";
 import { resolveLineVariationId } from "@/lib/shop/resolve-cart-variation";
 import { formatSizeLabel } from "@/lib/shop/size-label";
 import { sortProductSizes } from "@/lib/shop/sort-sizes";
-import { SHIPPING_THRESHOLD } from "@/lib/shop/cart-totals";
 import { BrandLogo } from "@/components/shop/brand-logo";
 import { FinancingPriceTeaser } from "@/components/shop/financing-price-teaser";
 import { ProductImageGallery } from "@/components/shop/product-image-gallery";
@@ -152,12 +151,7 @@ export function EquipmentProductView({
 
   const handleBuyNow = () => {
     addItem(cartPayload);
-    router.push(localizedHref(locale, "/cart"));
-  };
-
-  const handleCheckoutFinancing = () => {
-    addItem(cartPayload);
-    router.push(localizedHref(locale, "/checkout"));
+    router.push(`${localizedHref(locale, "/cart")}?step=2`);
   };
 
   return (
@@ -175,7 +169,7 @@ export function EquipmentProductView({
             <li aria-hidden="true">/</li>
             <li>
               <Link
-                href={product.backHref}
+                href={localizedHref(locale, product.backHref)}
                 className="transition-colors hover:text-ink"
               >
                 {product.backLabel}
@@ -195,7 +189,7 @@ export function EquipmentProductView({
               <li aria-hidden="true">/</li>
               <li>
                 <Link
-                  href={product.backHref}
+                  href={localizedHref(locale, product.backHref)}
                   className="transition-colors hover:text-ink"
                 >
                   {product.backLabel}
@@ -210,7 +204,7 @@ export function EquipmentProductView({
               {product.name}
             </h1>
             {(product.tagline || product.shortDescription) && (
-              <p className="mt-3 text-sm leading-relaxed text-ink/60">
+              <p className="mt-3 text-base leading-relaxed text-ink/65">
                 {product.tagline || product.shortDescription}
               </p>
             )}
@@ -219,11 +213,8 @@ export function EquipmentProductView({
           <div className="space-y-2">
             <FinancingPriceTeaser
               price={product.price}
-              productType="equipment"
-              productName={product.name}
               variant="compact"
               priceVariant="xl"
-              onCheckout={handleCheckoutFinancing}
             />
             {product.inStock ? (
               <p className="flex items-center gap-2 text-xs text-ink/60">
@@ -243,6 +234,7 @@ export function EquipmentProductView({
               options={colorOptions}
               value={color}
               onChange={setColor}
+              label={dict.pdp.color}
             />
           ) : null}
 
@@ -302,14 +294,13 @@ export function EquipmentProductView({
                 onClick={handleBuyNow}
                 className="flex min-h-11 w-full items-center justify-center border border-ink/20 text-xs text-ink/70 transition-colors hover:border-ink hover:text-ink"
               >
-                Buy now
+                {dict.pdp.buyNow}
               </button>
             ) : null}
           </div>
 
-          <p className="text-[11px] leading-relaxed text-ink/45">
-            Free shipping on orders over {formatPrice(SHIPPING_THRESHOLD)}. Montonio
-            pay later & järelmaks at checkout.
+          <p className="text-xs leading-relaxed text-ink/50 sm:text-sm">
+            {dict.pdp.paymentAtCheckout}
           </p>
         </div>
 
@@ -352,7 +343,7 @@ export function EquipmentProductView({
               </h2>
               {product.descriptionHtml ? (
                 <div
-                  className={`product-description mt-4 text-sm leading-relaxed text-ink/70 [&_p]:mb-3 ${
+                  className={`product-description mt-4 text-base leading-relaxed text-ink/70 [&_p]:mb-3 ${
                     !descriptionExpanded && hasLongDescription
                       ? "max-h-28 overflow-hidden"
                       : ""
@@ -361,7 +352,7 @@ export function EquipmentProductView({
                 />
               ) : (
                 <p
-                  className={`mt-4 text-sm leading-relaxed text-ink/70 ${
+                  className={`mt-4 text-base leading-relaxed text-ink/70 ${
                     !descriptionExpanded && hasLongDescription
                       ? "line-clamp-4"
                       : ""
@@ -374,7 +365,7 @@ export function EquipmentProductView({
                 <button
                   type="button"
                   onClick={() => setDescriptionExpanded((open) => !open)}
-                  className="mt-3 text-xs font-medium text-ink underline-offset-2 hover:underline"
+                  className="mt-3 text-sm font-medium text-ink underline-offset-2 hover:underline"
                 >
                   {descriptionExpanded ? dict.pdp.readLess : dict.pdp.readMore}
                 </button>
@@ -389,7 +380,7 @@ export function EquipmentProductView({
                   {product.features.map((feature) => (
                     <li
                       key={feature}
-                      className="border border-ink/10 px-3 py-1.5 text-xs text-ink/70"
+                      className="border border-ink/10 px-3 py-1.5 text-sm text-ink/70"
                     >
                       {feature}
                     </li>
@@ -405,7 +396,7 @@ export function EquipmentProductView({
             ) : null}
 
             <CraftAccordion title={dict.pdp.shippingReturns}>
-              <p className="text-sm leading-relaxed text-ink/65">
+              <p className="text-base leading-relaxed text-ink/65">
                 {dict.pdp.shippingReturnsBody}
               </p>
             </CraftAccordion>

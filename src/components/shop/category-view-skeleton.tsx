@@ -1,5 +1,6 @@
 type CategoryViewSkeletonProps = {
   productCount?: number;
+  loadingLabel?: string;
 };
 
 function SkeletonBar({ className }: { className?: string }) {
@@ -13,12 +14,13 @@ function SkeletonBar({ className }: { className?: string }) {
 
 export function CategoryViewSkeleton({
   productCount = 12,
+  loadingLabel = "Loading products",
 }: CategoryViewSkeletonProps) {
   return (
     <div
       className="site-container relative z-10 py-8 lg:py-12"
       aria-busy="true"
-      aria-label="Loading products"
+      aria-label={loadingLabel}
     >
       <div className="mb-6 flex flex-wrap items-center gap-2">
         <SkeletonBar className="h-3 w-10" />

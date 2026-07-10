@@ -33,7 +33,7 @@ export function EquipmentReturnPromise({
         <p className="text-sm font-semibold leading-snug text-ink">
           {dict.returns.headline}
         </p>
-        <p className="mt-1 text-xs leading-relaxed text-ink/55">
+        <p className="mt-1 text-sm leading-relaxed text-ink/55">
           {dict.returns.detail}
         </p>
       </div>
@@ -45,7 +45,7 @@ export function EquipmentReturnPromise({
       <p className="text-sm font-semibold leading-snug text-ink">
         {dict.returns.headline}
       </p>
-      <p className="mt-1 text-xs leading-relaxed text-ink/55">
+      <p className="mt-1 text-sm leading-relaxed text-ink/55">
         {dict.returns.detail}
       </p>
     </div>

@@ -5,6 +5,7 @@ export type CarouselArrowTheme = "light" | "dark";
 type CarouselArrowProps = {
   direction: "prev" | "next";
   label: string;
+  text?: string;
   onClick: () => void;
   theme?: CarouselArrowTheme;
   variant?: "full" | "icon";
@@ -16,6 +17,7 @@ type CarouselArrowProps = {
 export function CarouselArrow({
   direction,
   label,
+  text,
   onClick,
   theme = "light",
   variant = "full",
@@ -46,7 +48,7 @@ export function CarouselArrow({
             isLight ? "text-ink/40" : "text-paper/40"
           }`}
         >
-          {isPrev ? "Previous" : "Next"}
+          {text ?? label}
         </span>
       ) : null}
 

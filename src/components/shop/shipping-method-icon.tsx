@@ -104,32 +104,36 @@ export function ShippingMethodIcon({
 }) {
   const visual = resolveShippingMethodVisual(rate);
 
+  if (visual.kind === "logos") {
+    return (
+      <span className="flex h-9 w-[4.75rem] shrink-0 items-center justify-center gap-1 overflow-hidden sm:h-10 sm:w-20">
+        {visual.items.map((logo) => (
+          <img
+            key={logo.src}
+            src={logo.src}
+            alt=""
+            width={50}
+            height={33}
+            className="h-5 w-auto max-w-[2.125rem] flex-1 object-contain sm:h-6 sm:max-w-[2.25rem]"
+            loading="lazy"
+            decoding="async"
+          />
+        ))}
+      </span>
+    );
+  }
+
   return (
     <span
       className={cn(
         "flex shrink-0 items-center justify-center",
-        visual.kind === "logo" || visual.kind === "logos"
+        visual.kind === "logo"
           ? "size-10"
           : "size-10 overflow-hidden rounded-md border border-ink/10 bg-white p-2 text-ink/75",
         className,
       )}
     >
-      {visual.kind === "logos" ? (
-        <span className="flex items-center gap-1.5">
-          {visual.items.map((logo) => (
-            <img
-              key={logo.src}
-              src={logo.src}
-              alt=""
-              width={50}
-              height={33}
-              className="h-6 w-auto max-w-[2.75rem] object-contain sm:h-7"
-              loading="lazy"
-              decoding="async"
-            />
-          ))}
-        </span>
-      ) : visual.kind === "logo" ? (
+      {visual.kind === "logo" ? (
         // Montonio ships rectangular SVG logos; plain img matches Woo checkout rendering.
         <img
           src={visual.src}

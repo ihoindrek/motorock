@@ -1,3 +1,4 @@
+import type { Locale } from "@/i18n/config";
 import type { ProductSpec } from "@/types/catalog-product";
 import {
   filterValidProductSpecs,
@@ -5,6 +6,7 @@ import {
   parseMotorcycleShortDescription,
   resolveMotorcycleCatalogCopy,
 } from "@/lib/shop/parse-brixton-html";
+import { specLabelCategoryBucket } from "@/lib/shop/motorcycle-spec-labels";
 
 export type MotorcycleEditorialSection = {
   title: string;
@@ -46,33 +48,7 @@ const KEY_SPEC_LABELS = new Set([
 type SpecBucket = "engine" | "dimension" | "extended";
 
 function categorizeSpecLabel(label: string): SpecBucket {
-  const key = label.toLowerCase();
-
-  if (
-    /engine|power|torque|transmission|ignition|starter|capacity|displacement|fuel|battery|voltage|cooling|cylinder|stroke|nominal/.test(
-      key,
-    )
-  ) {
-    return "engine";
-  }
-
-  if (
-    /dimension|mass|weight|length|width|height|seat|wheelbase|tank|running order|kerb/.test(
-      key,
-    )
-  ) {
-    return "dimension";
-  }
-
-  if (
-    /chassis|brake|suspension|tyre|tire|rim|performance|speed|consumption|range|gradability/.test(
-      key,
-    )
-  ) {
-    return "extended";
-  }
-
-  return "extended";
+  return specLabelCategoryBucket(label);
 }
 
 function dedupeSpecs(specs: readonly ProductSpec[]) {
@@ -137,6 +113,7 @@ export type NormalizeMotorcycleContentInput = {
   vimeoId?: string;
   productName: string;
   brand: string;
+  locale?: Locale;
   manualEnrichment?: MotorcycleContentOverrides;
 };
 
@@ -144,8 +121,13 @@ export type NormalizeMotorcycleContentInput = {
 export function normalizeMotorcycleContent(
   input: NormalizeMotorcycleContentInput,
 ): MotorcyclePageContent {
-  const parsedShort = parseMotorcycleShortDescription(input.shortHtml);
-  const catalog = resolveMotorcycleCatalogCopy(input.longHtml, input.shortHtml);
+  const locale = input.locale ?? "en";
+  const parsedShort = parseMotorcycleShortDescription(input.shortHtml, locale);
+  const catalog = resolveMotorcycleCatalogCopy(
+    input.longHtml,
+    input.shortHtml,
+    locale,
+  );
   const manual = input.manualEnrichment;
 
   let engineSpecs = dedupeSpecs(manual?.engineSpecs ?? catalog.engineSpecs);

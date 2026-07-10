@@ -1,57 +1,48 @@
 import type { ProductCategory } from "@/types/catalog-product";
-import {
-  ACCESSORY_CATEGORIES,
-  CATEGORY_TO_WC_SLUG,
-  PROTECTION_CATEGORIES,
-} from "@/lib/shop/wc-categories";
-import { buildEquipmentCategoryHref } from "@/lib/shop/equipment-route";
+import { CATEGORY_TO_WC_SLUG } from "@/lib/shop/wc-categories";
+import { buildEquipmentCategoryHref } from "@/lib/shop/category-url";
+
+function normalizeEquipmentPath(pathname: string) {
+  const trimmed = pathname.replace(/\/+$/, "");
+  return trimmed || "/";
+}
+
+function redirectUnlessSame(pathname: string, target: string): string | null {
+  return normalizeEquipmentPath(pathname) === normalizeEquipmentPath(target)
+    ? null
+    : target;
+}
 
 const LEGACY_GENDER_SEGMENTS: Record<string, "for-men" | "for-women"> = {
   men: "for-men",
   women: "for-women",
 };
 
+const WC_ROOT_SLUGS = new Set(["for-men", "for-women", "accessories", "helmets"]);
+
 const LEGACY_TOP_LEVEL_CATEGORY_REDIRECTS: Partial<
   Record<ProductCategory, string>
 > = {
-  jackets: buildEquipmentCategoryHref("for-men", "jackets-and-tags"),
-  vests: buildEquipmentCategoryHref("for-men", "vests-2"),
-  pants: buildEquipmentCategoryHref("for-men", "mens-pants"),
-  gloves: buildEquipmentCategoryHref("for-men", "gloves"),
-  footwear: buildEquipmentCategoryHref("for-men", "footwear"),
-  hoodies: buildEquipmentCategoryHref("for-men", "sweaters"),
-  "t-shirts": buildEquipmentCategoryHref("for-men", "t-shirts"),
-  "base-layers": buildEquipmentCategoryHref("for-men", "base-layer-warm-underwear"),
-  helmets: buildEquipmentCategoryHref("helmets"),
-  "helmet-accessories": buildEquipmentCategoryHref("helmets", "helmet-accessories"),
-  goggles: buildEquipmentCategoryHref("accessories", "goggles"),
-  headwear: buildEquipmentCategoryHref("accessories", "headwear"),
-  bags: buildEquipmentCategoryHref("accessories", "bags-backpacks"),
-  belts: buildEquipmentCategoryHref("accessories", "belts"),
-  jewelry: buildEquipmentCategoryHref("accessories", "jewelry"),
-  scarves: buildEquipmentCategoryHref("accessories", "scarves-tubulars"),
-  socks: buildEquipmentCategoryHref("accessories", "socks"),
-  safety: buildEquipmentCategoryHref("accessories", "safety"),
-  accessories: buildEquipmentCategoryHref("accessories", "small-accessories"),
+  jackets: buildEquipmentCategoryHref("en", "for-men", "jackets-and-tags"),
+  vests: buildEquipmentCategoryHref("en", "for-men", "vests-2"),
+  pants: buildEquipmentCategoryHref("en", "for-men", "mens-pants"),
+  gloves: buildEquipmentCategoryHref("en", "for-men", "gloves"),
+  footwear: buildEquipmentCategoryHref("en", "for-men", "footwear"),
+  hoodies: buildEquipmentCategoryHref("en", "for-men", "sweaters"),
+  "t-shirts": buildEquipmentCategoryHref("en", "for-men", "t-shirts"),
+  "base-layers": buildEquipmentCategoryHref("en", "for-men", "base-layer-warm-underwear"),
+  helmets: buildEquipmentCategoryHref("en", "helmets"),
+  "helmet-accessories": buildEquipmentCategoryHref("en", "helmets", "helmet-accessories"),
+  goggles: buildEquipmentCategoryHref("en", "accessories", "goggles"),
+  headwear: buildEquipmentCategoryHref("en", "accessories", "headwear"),
+  bags: buildEquipmentCategoryHref("en", "accessories", "bags-backpacks"),
+  belts: buildEquipmentCategoryHref("en", "accessories", "belts"),
+  jewelry: buildEquipmentCategoryHref("en", "accessories", "jewelry"),
+  scarves: buildEquipmentCategoryHref("en", "accessories", "scarves-tubulars"),
+  socks: buildEquipmentCategoryHref("en", "accessories", "socks"),
+  safety: buildEquipmentCategoryHref("en", "accessories", "safety"),
+  accessories: buildEquipmentCategoryHref("en", "accessories", "small-accessories"),
 };
-
-function redirectAccessoryCategory(category: ProductCategory) {
-  const wcSlug = CATEGORY_TO_WC_SLUG[category];
-
-  if (!wcSlug) {
-    return null;
-  }
-
-  if (PROTECTION_CATEGORIES.includes(category) && category === "helmets") {
-    return buildEquipmentCategoryHref("helmets");
-  }
-
-  if (ACCESSORY_CATEGORIES.includes(category)) {
-    return buildEquipmentCategoryHref("accessories", wcSlug);
-  }
-
-  return null;
-}
 
 /**
  * Maps legacy `/shop/equipment/men/jackets` paths to Woo slug URLs.
@@ -77,36 +68,45 @@ export function resolveLegacyEquipmentRedirect(pathname: string): string | null 
 
   if (legacyGender) {
     if (segments.length === 1) {
-      return buildEquipmentCategoryHref(legacyGender);
+      return redirectUnlessSame(
+        pathname,
+        buildEquipmentCategoryHref("en", legacyGender),
+      );
     }
 
     const legacyCategory = segments[1] as ProductCategory;
     const wcSlug = CATEGORY_TO_WC_SLUG[legacyCategory];
 
     if (wcSlug) {
-      return buildEquipmentCategoryHref(legacyGender, wcSlug);
+      return redirectUnlessSame(
+        pathname,
+        buildEquipmentCategoryHref("en", legacyGender, wcSlug),
+      );
     }
-  }
-
-  if (segments.length === 1 && segments[0] === "accessories") {
-    return buildEquipmentCategoryHref("accessories");
   }
 
   if (segments.length === 2 && segments[0] === "accessories") {
     const legacyCategory = segments[1] as ProductCategory;
-    const redirect = redirectAccessoryCategory(legacyCategory);
+    const wcSlug = CATEGORY_TO_WC_SLUG[legacyCategory];
 
-    if (redirect) {
-      return redirect;
+    if (wcSlug && wcSlug !== segments[1]) {
+      return redirectUnlessSame(
+        pathname,
+        buildEquipmentCategoryHref("en", "accessories", wcSlug),
+      );
     }
   }
 
   if (segments.length === 1) {
+    if (WC_ROOT_SLUGS.has(segments[0])) {
+      return null;
+    }
+
     const legacyCategory = segments[0] as ProductCategory;
     const topLevel = LEGACY_TOP_LEVEL_CATEGORY_REDIRECTS[legacyCategory];
 
     if (topLevel) {
-      return topLevel;
+      return redirectUnlessSame(pathname, topLevel);
     }
   }
 

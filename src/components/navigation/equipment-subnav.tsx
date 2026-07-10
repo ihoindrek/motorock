@@ -2,29 +2,60 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useCategoryTree } from "@/context/category-tree-context";
 import { useDictionary, useLocale } from "@/context/locale-context";
 import { localizedHref, stripLocaleFromPath } from "@/i18n/paths";
-import { buildEquipmentCategoryHref } from "@/lib/shop/equipment-route";
+import type { Locale } from "@/i18n/config";
+import { getLocalizedCategorySlug } from "@/lib/graphql/categories";
+import {
+  buildEquipmentCategoryHref,
+  buildEquipmentHubHref,
+  isEquipmentCategoryPath,
+} from "@/lib/shop/category-url";
+import { buildEquipmentRootCategoryHref } from "@/lib/shop/equipment-route";
 import { cn } from "@/lib/utils";
 
 type EquipmentSectionId = "for-men" | "for-women" | "accessories";
 
-function resolveActiveSection(pathname: string): EquipmentSectionId | null {
+function matchesEquipmentSection(
+  locale: Locale,
+  basePath: string,
+  wcSlug: string,
+  localizedSlug: string,
+) {
+  return (
+    basePath.startsWith(buildEquipmentCategoryHref(locale, localizedSlug)) ||
+    basePath.startsWith(buildEquipmentCategoryHref(locale, wcSlug))
+  );
+}
+
+function resolveActiveSection(
+  pathname: string,
+  locale: Locale,
+  sections: Record<EquipmentSectionId, { wcSlug: string; localizedSlug: string }>,
+): EquipmentSectionId | null {
   const basePath = stripLocaleFromPath(pathname);
 
-  if (!basePath.startsWith("/shop/equipment")) {
+  if (!isEquipmentCategoryPath(pathname)) {
     return null;
   }
 
-  if (basePath === "/shop/equipment") {
+  if (basePath === buildEquipmentHubHref(locale)) {
     return null;
   }
 
-  if (basePath.startsWith(buildEquipmentCategoryHref("for-men"))) {
+  if (matchesEquipmentSection(locale, basePath, sections["for-men"].wcSlug, sections["for-men"].localizedSlug)) {
     return "for-men";
   }
 
-  if (basePath.startsWith(buildEquipmentCategoryHref("for-women"))) {
+  if (
+    matchesEquipmentSection(
+      locale,
+      basePath,
+      sections["for-women"].wcSlug,
+      sections["for-women"].localizedSlug,
+    )
+  ) {
     return "for-women";
   }
 
@@ -35,27 +66,56 @@ export function EquipmentSubnav() {
   const pathname = usePathname();
   const locale = useLocale();
   const dict = useDictionary();
-  const activeSection = resolveActiveSection(pathname);
+  const tree = useCategoryTree();
+
+  const sections = {
+    "for-men": {
+      wcSlug: "for-men",
+      localizedSlug: getLocalizedCategorySlug(tree?.forMen ?? { slug: "for-men" }, locale),
+    },
+    "for-women": {
+      wcSlug: "for-women",
+      localizedSlug: getLocalizedCategorySlug(tree?.forWomen ?? { slug: "for-women" }, locale),
+    },
+    accessories: {
+      wcSlug: "accessories",
+      localizedSlug: getLocalizedCategorySlug(
+        tree?.accessories ?? { slug: "accessories" },
+        locale,
+      ),
+    },
+  } as const;
+
+  const activeSection = resolveActiveSection(pathname, locale, sections);
 
   const equipmentSections = [
     {
       id: "for-men" as const,
       label: dict.nav.forMen,
-      href: localizedHref(locale, buildEquipmentCategoryHref("for-men")),
+      href: localizedHref(
+        locale,
+        buildEquipmentRootCategoryHref(tree?.forMen, "for-men", locale),
+      ),
     },
     {
       id: "for-women" as const,
       label: dict.nav.forWomen,
-      href: localizedHref(locale, buildEquipmentCategoryHref("for-women")),
+      href: localizedHref(
+        locale,
+        buildEquipmentRootCategoryHref(tree?.forWomen, "for-women", locale),
+      ),
     },
     {
       id: "accessories" as const,
       label: dict.nav.accessories,
-      href: localizedHref(locale, buildEquipmentCategoryHref("accessories")),
+      href: localizedHref(
+        locale,
+        buildEquipmentRootCategoryHref(tree?.accessories, "accessories", locale),
+      ),
     },
   ];
 
-  if (stripLocaleFromPath(pathname) === "/shop/equipment") {
+  if (stripLocaleFromPath(pathname) === buildEquipmentHubHref(locale)) {
     return null;
   }
 

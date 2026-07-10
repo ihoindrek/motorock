@@ -15,6 +15,10 @@ export function isShowroomPickupRate(rate: ShippingRate) {
   );
 }
 
+export function isVenipakRate(rate: ShippingRate) {
+  return rateHaystack(rate).includes("venipak");
+}
+
 export function findShowroomPickupRate(rates: readonly ShippingRate[]) {
   return rates.find(isShowroomPickupRate) ?? null;
 }
@@ -24,9 +28,11 @@ export function filterShippingRatesForCountry(
   rates: readonly ShippingRate[],
   country: string,
 ) {
+  const withoutVenipak = rates.filter((rate) => !isVenipakRate(rate));
+
   if (country === "EE") {
-    return [...rates];
+    return withoutVenipak;
   }
 
-  return rates.filter((rate) => !isShowroomPickupRate(rate));
+  return withoutVenipak.filter((rate) => !isShowroomPickupRate(rate));
 }

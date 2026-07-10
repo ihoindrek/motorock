@@ -1,0 +1,46 @@
+{
+  "key": "group_motorock_product",
+  "title": "Motorock toode",
+  "fields": [
+    {
+      "key": "field_motorock_showroom_available",
+      "label": "Praegu salongis",
+      "name": "showroom_available",
+      "aria-label": "",
+      "type": "true_false",
+      "instructions": "Näitab storefront'il märgist \"Praegu salongis\" / \"In store now\", kui toode on laos. Kasuta mootorrattade puhul, mis on Tallinnas saadaval.",
+      "required": 0,
+      "conditional_logic": 0,
+      "wrapper": {
+        "width": "",
+        "class": "",
+        "id": ""
+      },
+      "message": "",
+      "default_value": 0,
+      "allow_in_bindings": 0,
+      "ui": 1,
+      "ui_on_text": "Jah",
+      "ui_off_text": "Ei"
+    }
+  ],
+  "location": [
+    [
+      {
+        "param": "post_type",
+        "operator": "==",
+        "value": "product"
+      }
+    ]
+  ],
+  "menu_order": 0,
+  "position": "side",
+  "style": "default",
+  "label_placement": "top",
+  "instruction_placement": "label",
+  "hide_on_screen": "",
+  "active": true,
+  "description": "Storefront'i tooteväljad (Motorock.eu). \"Uus\" märgis tuleb automaatselt 30 päeva jooksul alates avaldamise kuupäevast.",
+  "show_in_rest": 1,
+  "modified": 1751880000
+}

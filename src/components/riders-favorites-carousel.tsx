@@ -9,6 +9,8 @@ import { Swiper, SwiperSlide } from "swiper/react";
 
 import { CarouselArrow } from "@/components/ui/carousel-arrow";
 import { Price } from "@/components/shop/price";
+import { useDictionary, useLocale } from "@/context/locale-context";
+import { localizedProductHref } from "@/lib/shop/product-url";
 import { cn } from "@/lib/utils";
 
 import "swiper/css";
@@ -83,6 +85,7 @@ export function FavoriteProductCard({
   figureBackground,
   priority = false,
 }: FavoriteProductCardProps) {
+  const locale = useLocale();
   const textClass = theme === "light" ? "text-ink" : "text-paper";
   const prominentMeta = theme === "light" && compact;
   const resolvedFigureBackground =
@@ -93,17 +96,16 @@ export function FavoriteProductCard({
   return (
     <article className="flex h-full w-full flex-col">
       <Link
-        href={`/shop/product/${slug}`}
+        href={localizedProductHref(slug, locale)}
+        prefetch
+        scroll
         className="group flex h-full flex-col outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
       >
         {compact ? (
           <figure
             className={`relative aspect-[4/3] w-full overflow-hidden ${figureBg}`}
           >
-            <div
-              className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-2/5 opacity-0 transition-opacity duration-300 group-hover:opacity-100 motion-reduce:transition-none motion-reduce:group-hover:opacity-0 bg-[radial-gradient(ellipse_62%_100%_at_50%_100%,rgb(255_90_0_/_0.28),transparent_72%)]"
-              aria-hidden="true"
-            />
+            <div className="moto-catalog-glow" aria-hidden="true" />
             <Image
               src={image}
               alt={name}
@@ -202,6 +204,7 @@ export function RidersFavoritesCarousel({
   mobilePeek = false,
   slideGroup,
 }: RidersFavoritesCarouselProps) {
+  const dict = useDictionary();
   const swiperRef = useRef<SwiperInstance | null>(null);
   const grouped = slideGroup != null && slideGroup > 0;
 
@@ -278,18 +281,20 @@ export function RidersFavoritesCarousel({
 
       {showNavigation ? (
         <nav
-          aria-label="Carousel navigation"
+          aria-label={dict.carousel.navigation}
           className="mt-8 flex items-center justify-between"
         >
         <CarouselArrow
           direction="prev"
-          label="Previous product"
+          label={dict.carousel.previousProduct}
+          text={dict.carousel.previous}
           onClick={() => swiperRef.current?.slidePrev()}
           theme={theme}
         />
         <CarouselArrow
           direction="next"
-          label="Next product"
+          label={dict.carousel.nextProduct}
+          text={dict.carousel.next}
           onClick={() => swiperRef.current?.slideNext()}
           theme={theme}
         />
@@ -316,6 +321,7 @@ export function RidersFavoritesGrid({
   figureBackground,
   columns = 4,
 }: RidersFavoritesGridProps) {
+  const dict = useDictionary();
   const columnClass =
     columns === 4
       ? "sm:grid-cols-2 lg:grid-cols-4"
@@ -324,7 +330,7 @@ export function RidersFavoritesGrid({
   return (
     <ul
       className={`grid grid-cols-1 gap-x-6 gap-y-10 ${columnClass}`}
-      aria-label="Featured products"
+      aria-label={dict.carousel.featuredProducts}
     >
       {products.map((product, index) => (
         <li key={product.slug}>

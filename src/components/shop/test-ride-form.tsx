@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { useDictionary } from "@/context/locale-context";
+import { FormHoneypot } from "@/components/forms/form-honeypot";
+import { useDictionary, useLocale } from "@/context/locale-context";
+import { submitForm } from "@/lib/forms/submit-form-client";
 import {
   shopFieldClassName,
   shopFieldLabelClassName,
@@ -21,10 +23,40 @@ type TestRideFormProps = {
 
 export function TestRideForm({ initial, idPrefix = "test-ride" }: TestRideFormProps) {
   const dict = useDictionary();
+  const locale = useLocale();
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setSubmitError(null);
+
+    const form = event.currentTarget;
+    const data = new FormData(form);
+
+    setSubmitting(true);
+
+    const result = await submitForm({
+      type: "test-ride",
+      locale,
+      name: String(data.get("name") ?? ""),
+      email: String(data.get("email") ?? ""),
+      phone: String(data.get("phone") ?? ""),
+      preferredDate: String(data.get("preferred_date") ?? ""),
+      message: String(data.get("message") ?? "") || undefined,
+      bike: String(data.get("bike") ?? "") || undefined,
+      slug: String(data.get("slug") ?? "") || undefined,
+      _gotcha: String(data.get("_gotcha") ?? ""),
+    });
+
+    setSubmitting(false);
+
+    if (!result.ok) {
+      setSubmitError(result.error || dict.forms.submitError);
+      return;
+    }
+
     setSubmitted(true);
   }
 
@@ -45,7 +77,8 @@ export function TestRideForm({ initial, idPrefix = "test-ride" }: TestRideFormPr
   }
 
   return (
-    <form className="space-y-8" onSubmit={handleSubmit}>
+    <form className="relative space-y-8" onSubmit={handleSubmit}>
+      <FormHoneypot />
       {bikeLabel ? (
         <div>
           <p className={shopFieldLabelClassName}>{dict.forms.motorcycle}</p>
@@ -147,11 +180,18 @@ export function TestRideForm({ initial, idPrefix = "test-ride" }: TestRideFormPr
         />
       </div>
 
+      {submitError ? (
+        <p className="text-sm text-accent" role="alert">
+          {submitError}
+        </p>
+      ) : null}
+
       <button
         type="submit"
-        className="inline-flex min-h-12 w-full items-center justify-center rounded-full bg-ink px-7 py-3 font-body text-xs font-bold uppercase tracking-aggressive text-paper transition-colors duration-200 hover:bg-accent sm:w-auto"
+        disabled={submitting}
+        className="inline-flex min-h-12 w-full items-center justify-center rounded-full bg-ink px-7 py-3 font-body text-xs font-bold uppercase tracking-aggressive text-paper transition-colors duration-200 hover:bg-accent disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
       >
-        {dict.forms.sendRequest}
+        {submitting ? dict.forms.submitting : dict.forms.sendRequest}
       </button>
     </form>
   );

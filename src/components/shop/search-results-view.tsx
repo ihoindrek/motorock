@@ -5,6 +5,8 @@ import { useEffect, useMemo, useState } from "react";
 import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries/en";
 import { localizedHref } from "@/i18n/paths";
+import { buildToolsCategoryHref } from "@/lib/shop/shop-category-route";
+import { buildEquipmentHubHref } from "@/lib/shop/category-url";
 import type { CatalogProduct } from "@/types/catalog-product";
 import { CatalogLoadMore } from "@/components/shop/catalog-load-more";
 import { CatalogProductGrid } from "@/components/shop/catalog-product-grid";
@@ -58,12 +60,13 @@ function productMatchesType(
   return product.category === "tools";
 }
 
-function getSearchFacets(products: readonly CatalogProduct[]) {
+function getSearchFacets(products: readonly CatalogProduct[], locale: Locale) {
   const typeOptions = (
     ["all", "motorcycle", "equipment", "tools"] as const
   ).filter(
     (type) =>
-      type === "all" || products.some((product) => productMatchesType(product, type)),
+      (type !== "tools" || locale === "et") &&
+      (type === "all" || products.some((product) => productMatchesType(product, type))),
   );
 
   const brands = new Set(products.map((product) => product.brand));
@@ -219,7 +222,7 @@ export function SearchResultsView({
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [visibleCount, setVisibleCount] = useState(pageSize);
 
-  const facets = useMemo(() => getSearchFacets(products), [products]);
+  const facets = useMemo(() => getSearchFacets(products, locale), [products, locale]);
 
   const availableBrands = useMemo(
     () =>
@@ -451,17 +454,27 @@ export function SearchResultsView({
         <p className="py-12 font-body text-base text-ink/60">
           No products matched &ldquo;{query}&rdquo;. Try a different keyword or
           browse{" "}
-          <Link href="/shop/equipment" className="text-accent hover:underline">
+          <Link
+            href={localizedHref(locale, buildEquipmentHubHref(locale))}
+            className="text-accent hover:underline"
+          >
             equipment
           </Link>
           ,{" "}
           <Link href="/shop/motorcycles" className="text-accent hover:underline">
             motorcycles
           </Link>
-          , or{" "}
-          <Link href="/shop/tools" className="text-accent hover:underline">
-            tools
-          </Link>
+          {locale === "et" ? (
+            <>
+              , or{" "}
+              <Link
+                href={localizedHref(locale, buildToolsCategoryHref(locale))}
+                className="text-accent hover:underline"
+              >
+                tools
+              </Link>
+            </>
+          ) : null}
           .
         </p>
       ) : null}

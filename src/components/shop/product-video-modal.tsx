@@ -2,6 +2,8 @@
 
 import { useEffect, useId, useState } from "react";
 import { createPortal } from "react-dom";
+import { useDictionary } from "@/context/locale-context";
+import { cn } from "@/lib/utils";
 
 type ProductVideoModalProps = {
   vimeoId: string;
@@ -45,21 +47,44 @@ export function GalleryVideoPlayButton({
   onClick,
   theme = "light",
   layout = "row",
+  variant = "default",
   className = "",
 }: {
   onClick: () => void;
   theme?: "dark" | "light";
   layout?: "row" | "column";
+  variant?: "default" | "overlay";
   className?: string;
 }) {
+  const dict = useDictionary();
   const isDark = theme === "dark";
   const isColumn = layout === "column";
+  const label = dict.motorcycle.watchVideo;
+
+  if (variant === "overlay") {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        aria-label={label}
+        className={cn(
+          "inline-flex items-center gap-2 rounded-full border border-ink/10 bg-paper/92 px-2.5 py-1.5 font-body text-[9px] font-bold uppercase tracking-aggressive text-ink shadow-[0_8px_24px_-16px_rgba(11,11,11,0.28)] backdrop-blur-sm transition-[border-color,color,transform] duration-200 hover:border-accent hover:text-accent motion-safe:active:scale-[0.98] sm:gap-2.5 sm:px-3 sm:py-2 sm:text-[10px]",
+          className,
+        )}
+      >
+        <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-ink text-paper sm:size-8">
+          <PlayIcon className="size-3 translate-x-px sm:size-3.5" />
+        </span>
+        <span className="pr-0.5">{label}</span>
+      </button>
+    );
+  }
 
   return (
     <button
       type="button"
       onClick={onClick}
-      aria-label="Watch video"
+      aria-label={label}
       className={`group transition-opacity hover:opacity-90 ${
         isColumn
           ? "flex w-full flex-col items-center gap-2 pt-1"
@@ -100,7 +125,7 @@ export function GalleryVideoPlayButton({
             : "text-[10px]"
         } ${isDark ? "text-paper/75" : "text-ink/65"}`}
       >
-        Watch video
+        {label}
       </span>
     </button>
   );

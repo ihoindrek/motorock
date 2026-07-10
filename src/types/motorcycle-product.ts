@@ -1,3 +1,4 @@
+import type { Locale } from "@/i18n/config";
 import type { ProductSpec } from "@/types/catalog-product";
 import type {
   MotorcyclePageContent,
@@ -50,7 +51,7 @@ export type MotorockEnrichment = {
   vimeoId?: string;
   relatedSlugs?: readonly string[];
   isNew?: boolean;
-  /** Override showroom availability when not set in WC meta. */
+  /** Set in Woo via ACF field `showroom_available` (Motorock toode). */
   showroomAvailable?: boolean;
   /** Per-colour swatches when curated manually (hex not in Motomad). */
   colorSwatches?: readonly { label: string; hex?: string; image?: string }[];
@@ -59,6 +60,10 @@ export type MotorockEnrichment = {
 export type MotorcycleProduct = {
   slug: string;
   databaseId?: number;
+  /** Language of synced copy from WooCommerce / GraphQL (may differ from page locale). */
+  contentLocale: Locale;
+  /** ET page shows EN copy because the WP translation was not filled in yet. */
+  contentUntranslated?: boolean;
   backHref: string;
   backLabel: string;
   /** True when this bike is on display in Tallinn and test rides can be booked. */

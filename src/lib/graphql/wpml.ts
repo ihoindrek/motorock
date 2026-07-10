@@ -1,8 +1,11 @@
 import { isLocale, type Locale } from "@/i18n/config";
 
 export type GraphQLTranslation = {
+  databaseId?: number | null;
   slug?: string | null;
   name?: string | null;
+  title?: string | null;
+  description?: string | null;
   language?: {
     code?: string | null;
   } | null;
@@ -100,6 +103,17 @@ export function findTranslationSlug(
   return match?.slug ?? null;
 }
 
+export function findTranslationDatabaseId(
+  node: GraphQLLanguageAware,
+  locale: Locale,
+): number | null {
+  const match = node.translations?.find(
+    (translation) => translation.language?.code?.toLowerCase() === locale,
+  );
+
+  return match?.databaseId ?? null;
+}
+
 export function resolveProductSlugForLocale(
   node: GraphQLLanguageAware & { slug: string },
   locale: Locale,
@@ -109,6 +123,46 @@ export function resolveProductSlugForLocale(
   }
 
   return findTranslationSlug(node, locale);
+}
+
+export function resolveLocalizedPostFields(
+  node: GraphQLLanguageAware & { slug: string; title: string },
+  locale: Locale,
+): { slug: string; title: string } {
+  const language = getGraphqlLanguageCode(node);
+
+  if (language === locale) {
+    return { slug: node.slug, title: node.title };
+  }
+
+  const translation = node.translations?.find(
+    (entry) => entry.language?.code?.toLowerCase() === locale,
+  );
+
+  if (translation?.slug) {
+    return {
+      slug: translation.slug,
+      title: translation.title ?? node.title,
+    };
+  }
+
+  return { slug: node.slug, title: node.title };
+}
+
+export function resolvePostSlugForLocale(
+  node: GraphQLLanguageAware & { slug: string; title?: string },
+  locale: Locale,
+) {
+  return resolveLocalizedPostFields(
+    { ...node, title: node.title ?? node.name ?? node.slug },
+    locale,
+  ).slug;
+}
+
+export function buildPostSlugAlternates(
+  node: GraphQLLanguageAware & { slug: string },
+): Partial<Record<Locale, string>> {
+  return buildProductSlugAlternates(node);
 }
 
 export function buildProductSlugAlternates(

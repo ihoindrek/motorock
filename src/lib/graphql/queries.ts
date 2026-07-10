@@ -5,8 +5,10 @@ const CATALOG_LIST_FIELDS = `
     name
     slug
     sku
+    date
     languageCode
     translations {
+      databaseId
       slug
       name
       language {
@@ -61,94 +63,108 @@ const CATALOG_LIST_FIELDS = `
   }
 `;
 
-export const PRODUCT_BY_SLUG = `
-  query ProductBySlug($slug: ID!) {
-    product(id: $slug, idType: SLUG) {
-      databaseId
+const PRODUCT_DETAIL_FIELDS = `
+  databaseId
+  name
+  slug
+  sku
+  date
+  languageCode
+  translations {
+    databaseId
+    slug
+    name
+    language {
+      code
+    }
+  }
+  shortDescription
+  description
+  image {
+    sourceUrl
+    altText
+  }
+  galleryImages {
+    nodes {
+      sourceUrl
+      altText
+    }
+  }
+  productCategories {
+    nodes {
       name
       slug
-      sku
-      languageCode
-      translations {
-        slug
-        name
-        language {
-          code
+      parent {
+        node {
+          slug
         }
       }
-      shortDescription
-      description
-      image {
-        sourceUrl
-        altText
+    }
+  }
+  metaData {
+    key
+    value
+  }
+  ... on SimpleProduct {
+    __typename
+    price
+    regularPrice
+    stockStatus
+    attributes {
+      nodes {
+        name
+        options
+        variation
       }
-      galleryImages {
-        nodes {
+    }
+  }
+  ... on VariableProduct {
+    __typename
+    price
+    regularPrice
+    stockStatus
+    attributes {
+      nodes {
+        name
+        options
+        variation
+      }
+    }
+    variations(first: 50) {
+      nodes {
+        databaseId
+        sku
+        name
+        price
+        regularPrice
+        stockStatus
+        image {
           sourceUrl
           altText
         }
-      }
-      productCategories {
-        nodes {
-          name
-          slug
-          parent {
-            node {
-              slug
-            }
-          }
-        }
-      }
-      metaData {
-        key
-        value
-      }
-      ... on SimpleProduct {
-        __typename
-        price
-        regularPrice
-        stockStatus
         attributes {
           nodes {
             name
-            options
-            variation
+            value
           }
         }
       }
-      ... on VariableProduct {
-        __typename
-        price
-        regularPrice
-        stockStatus
-        attributes {
-          nodes {
-            name
-            options
-            variation
-          }
-        }
-        variations(first: 50) {
-          nodes {
-            databaseId
-            sku
-            name
-            price
-            regularPrice
-            stockStatus
-            image {
-              sourceUrl
-              altText
-            }
-            attributes {
-              nodes {
-                name
-                value
-              }
-            }
-          }
-        }
-      }
+    }
+  }
+`;
+
+export const PRODUCT_BY_SLUG = `
+  query ProductBySlug($slug: ID!) {
+    product(id: $slug, idType: SLUG) {
+      ${PRODUCT_DETAIL_FIELDS}
+    }
+  }
+`;
+
+export const PRODUCT_BY_DATABASE_ID = `
+  query ProductByDatabaseId($id: ID!) {
+    product(id: $id, idType: DATABASE_ID) {
+      ${PRODUCT_DETAIL_FIELDS}
     }
   }
 `;

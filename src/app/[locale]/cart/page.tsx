@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import { CartCheckoutView } from "@/components/shop/cart-checkout-view";
 import { isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/get-dictionary";
@@ -29,5 +30,9 @@ export default async function CartPage({ params }: CartPageProps) {
     notFound();
   }
 
-  return <CartCheckoutView />;
+  return (
+    <Suspense fallback={null}>
+      <CartCheckoutView />
+    </Suspense>
+  );
 }

@@ -1,127 +1,78 @@
 "use client";
 
-import { ChevronRight } from "lucide-react";
-import { useMemo, useState } from "react";
 import { useDictionary } from "@/context/locale-context";
-import type { FinancingProductType } from "@/data/financing";
-import { Price } from "@/components/shop/price";
-import type { ComponentProps } from "react";
+import { FINANCING_COUNTRY_CODE, isFinancingAvailable } from "@/data/financing";
 import {
-  formatMonthlyPrice,
-  getLowestFinancingQuote,
-} from "@/lib/shop/financing";
-import { FinancingCalculatorModal } from "@/components/shop/financing-calculator-modal";
+  getInbankCalculatorConfig,
+  isInbankCalculatorAmount,
+} from "@/lib/montonio/inbank-calculator";
+import { Price } from "@/components/shop/price";
+import { MontonioFinancingCalculator } from "@/components/shop/montonio-financing-calculator";
+import type { ComponentProps } from "react";
 
 type FinancingPriceTeaserProps = {
   price: number;
-  productType: FinancingProductType;
-  productName?: string;
   variant?: "hero" | "compact";
   priceVariant?: ComponentProps<typeof Price>["variant"];
   className?: string;
-  onCheckout?: () => void;
-  onEnquire?: () => void;
+  countryCode?: string;
 };
 
 export function FinancingPriceTeaser({
   price,
-  productType,
-  productName,
   variant = "hero",
   priceVariant,
   className,
-  onCheckout,
-  onEnquire,
+  countryCode = FINANCING_COUNTRY_CODE,
 }: FinancingPriceTeaserProps) {
   const dict = useDictionary();
-  const [open, setOpen] = useState(false);
-  const lowestQuote = useMemo(
-    () => getLowestFinancingQuote(price, productType),
-    [price, productType],
-  );
+  const config = getInbankCalculatorConfig();
+  const resolvedPriceVariant = priceVariant ?? (variant === "hero" ? "xl" : "md");
+  const showCalculator =
+    config.enabled &&
+    isFinancingAvailable(countryCode) &&
+    isInbankCalculatorAmount(price) &&
+    price > 0;
 
-  const isHero = variant === "hero";
-  const showFinancing = lowestQuote !== null && price > 0;
-  const resolvedPriceVariant = priceVariant ?? (isHero ? "xl" : "md");
+  const financing = showCalculator ? (
+    <MontonioFinancingCalculator
+      amount={price}
+      countryCode={countryCode}
+      eyebrow={dict.financing.finance}
+      calculateLabel={dict.financing.calculateFinancing}
+    />
+  ) : null;
+
+  if (variant === "compact") {
+    return (
+      <div className={className}>
+        <Price value={price} variant={resolvedPriceVariant} />
+        {financing ? <div className="mt-2">{financing}</div> : null}
+      </div>
+    );
+  }
 
   return (
-    <>
-      <div className={className}>
-        {isHero ? (
-          <div className="flex flex-wrap items-end gap-x-5 gap-y-4 sm:flex-nowrap sm:gap-x-6">
-            <div className="shrink-0">
-              <p className="font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/45">
-                {dict.financing.retail}
-              </p>
-              <p className="mt-1">
-                <Price value={price} variant={resolvedPriceVariant} />
-              </p>
-            </div>
-            {showFinancing ? (
-              <>
-                <div
-                  className="mb-1 hidden h-8 w-px shrink-0 bg-ink/10 sm:block sm:h-9"
-                  aria-hidden="true"
-                />
-                <button
-                  type="button"
-                  onClick={() => setOpen(true)}
-                  className="group min-w-0 shrink cursor-pointer text-left"
-                >
-                  <p className="font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/45">
-                    {dict.financing.finance}
-                  </p>
-                  <p className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-sm text-ink/65">
-                    <span className="font-bold text-ink transition-colors group-hover:text-accent">
-                      {formatMonthlyPrice(lowestQuote.monthlyPayment)}
-                      {dict.financing.perMonth}
-                    </span>
-                    <span>· {dict.financing.indicative}</span>
-                    <ChevronRight
-                      className="size-4 shrink-0 text-ink/35 transition-[color,transform] group-hover:translate-x-0.5 group-hover:text-accent"
-                      aria-hidden="true"
-                    />
-                  </p>
-                </button>
-              </>
-            ) : null}
-          </div>
-        ) : showFinancing ? (
-          <div className="space-y-3">
-            <button
-              type="button"
-              onClick={() => setOpen(true)}
-              className="group flex w-full cursor-pointer flex-wrap items-center gap-x-2 gap-y-1 text-left"
-            >
-              <Price value={price} variant={resolvedPriceVariant} />
-              <span className="text-ink/35">·</span>
-              <span className="font-body text-sm font-bold text-accent transition-colors group-hover:text-ink">
-                {dict.financing.fromMonthlyPrefix}{" "}
-                {formatMonthlyPrice(lowestQuote.monthlyPayment)}
-                {dict.financing.perMonth}
-              </span>
-              <ChevronRight
-                className="size-4 shrink-0 text-accent/70 transition-[color,transform] group-hover:translate-x-0.5 group-hover:text-ink"
-                aria-hidden="true"
-              />
-            </button>
-          </div>
-        ) : (
-          <Price value={price} variant={resolvedPriceVariant} />
-        )}
+    <div className={className}>
+      <div className="flex flex-wrap items-start gap-x-2 gap-y-1 sm:flex-nowrap">
+        <div className="shrink-0">
+          <p className="font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/45">
+            {dict.financing.retail}
+          </p>
+          <p className="mt-0.5">
+            <Price value={price} variant={resolvedPriceVariant} />
+          </p>
+        </div>
+        {financing ? (
+          <>
+            <div
+              className="hidden h-5 w-px shrink-0 bg-ink/10 sm:block"
+              aria-hidden="true"
+            />
+            <div className="min-w-0 shrink">{financing}</div>
+          </>
+        ) : null}
       </div>
-
-      {showFinancing ? (
-        <FinancingCalculatorModal
-          open={open}
-          onClose={() => setOpen(false)}
-          price={price}
-          productType={productType}
-          productName={productName}
-          onCheckout={onCheckout}
-          onEnquire={onEnquire}
-        />
-      ) : null}
-    </>
+    </div>
   );
 }

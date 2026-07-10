@@ -5,16 +5,15 @@ import {
   type FavoriteProduct,
 } from "@/components/riders-favorites-carousel";
 import { PopularGearSection } from "@/components/popular-gear-section";
-import { VideoText } from "@/components/video-text";
 import type { Locale } from "@/i18n/config";
 import { localizedHref } from "@/i18n/paths";
 import {
-  getEquipmentCatalogForRoute,
-  getMotorcycleCatalog,
+  getHomepageFavoriteCatalogs,
 } from "@/lib/graphql/products";
 import {
   partitionPopularGearByAudience,
   pickFavoriteProducts,
+  pickHomepageWomenGear,
   pickPopularGearProducts,
 } from "@/lib/shop/favorite-product";
 
@@ -100,6 +99,8 @@ function RidersFavoritesBlock({
           </div>
           <Link
             href={href}
+            prefetch
+            scroll
             className={`self-start font-body text-xs font-bold uppercase tracking-aggressive transition-[color,border-color] duration-200 sm:self-auto ${linkClass}`}
           >
             {linkLabel}
@@ -165,9 +166,9 @@ export async function RidersFavorites({ locale }: { locale: Locale }) {
           motorcyclesEyebrow: "Mootorrattad",
           motorcyclesTitle: "Populaarsed rattad",
           motorcyclesCta: "Vaata mootorrattaid →",
-          gearEyebrow: "Varustus",
-          gearTitle: "Populaarne varustus",
-          gearCta: "Vaata varustust →",
+          gearEyebrow: "Sõiduvarustus",
+          gearTitle: "Populaarne sõiduvarustus",
+          gearCta: "Vaata sõiduvarustust →",
           gearTabMen: "Meestele",
           gearTabWomen: "Naistele",
           gearTabAccessories: "Aksessuaarid",
@@ -187,28 +188,12 @@ export async function RidersFavorites({ locale }: { locale: Locale }) {
           gearTabWomen: "For women",
           gearTabAccessories: "Accessories",
         };
-  const [motorcycles, menEquipment, womenEquipment, accessoriesEquipment] =
-    await Promise.all([
-      getMotorcycleCatalog(locale),
-      getEquipmentCatalogForRoute(
-        { title: "", description: "", breadcrumbs: [], wcCategorySlug: "for-men", gender: "men" },
-        locale,
-      ),
-      getEquipmentCatalogForRoute(
-        { title: "", description: "", breadcrumbs: [], wcCategorySlug: "for-women", gender: "women" },
-        locale,
-      ),
-      getEquipmentCatalogForRoute(
-        {
-          title: "",
-          description: "",
-          breadcrumbs: [],
-          wcCategorySlug: "accessories",
-          accessoriesOnly: true,
-        },
-        locale,
-      ),
-    ]);
+  const {
+    motorcycles,
+    menEquipment,
+    womenEquipment,
+    accessoriesEquipment,
+  } = await getHomepageFavoriteCatalogs(locale);
 
   const blockProducts: Record<string, FavoriteProduct[]> = {
     "favorites-motorcycles": pickFavoriteProducts(motorcycles, 6),
@@ -222,7 +207,7 @@ export async function RidersFavorites({ locale }: { locale: Locale }) {
 
   const gearProductsByAudience = {
     men: pickPopularGearProducts("men", gearByAudience.men, 8),
-    women: pickPopularGearProducts("women", gearByAudience.women, 8),
+    women: pickHomepageWomenGear(womenEquipment, 8),
     accessories: pickPopularGearProducts("accessories", gearByAudience.accessories, 8),
   };
 
@@ -234,12 +219,9 @@ export async function RidersFavorites({ locale }: { locale: Locale }) {
             id="favorites-heading"
             className={`max-w-4xl shrink-0 ${headingVideoClass}`}
           >
-            <VideoText
-              videoSrc="/5052415-hd_1920_1080_30fps.mp4"
-              className={headingVideoClass}
-            >
+            <span className={`text-paper ${headingVideoClass}`}>
               {copy.rebelTop}
-            </VideoText>
+            </span>
             <br />
             <span className="bg-gradient-to-r from-[#FF5A00] via-[#ff7e26] to-[#ff9c59] bg-clip-text text-transparent">
               {copy.rebelBottom}

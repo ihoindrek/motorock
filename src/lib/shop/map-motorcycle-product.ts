@@ -127,6 +127,7 @@ export function mapWooToMotorcycleProduct(
 
   return {
     slug: options.slug,
+    contentLocale: "en",
     backHref: options.backHref ?? "/shop/motorcycles",
     backLabel: options.backLabel ?? "Motorcycles",
     sync: {

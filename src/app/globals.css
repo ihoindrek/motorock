@@ -15,6 +15,23 @@
   --color-stock: #1fa855;
   --color-stock-hover: #178a46;
 
+  --color-background: #faf8f6;
+  --color-foreground: #0b0b0b;
+  --color-card: #2a2a2a;
+  --color-card-foreground: #faf8f6;
+  --color-primary: #ff6813;
+  --color-primary-foreground: #faf8f6;
+  --color-muted: #363636;
+  --color-muted-foreground: rgb(250 248 246 / 0.62);
+  --color-border: rgb(250 248 246 / 0.12);
+  --color-input: rgb(250 248 246 / 0.18);
+  --color-ring: #ff6813;
+  --color-popover: #2a2a2a;
+  --color-popover-foreground: #faf8f6;
+  --color-secondary: #363636;
+  --color-secondary-foreground: #faf8f6;
+  --color-accent-foreground: #faf8f6;
+
   --font-display: var(--font-racing-sans-one);
   --font-body: var(--font-plus-jakarta);
 }
@@ -29,7 +46,7 @@
   }
 
   html {
-    scroll-behavior: smooth;
+    scroll-behavior: auto;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
@@ -193,7 +210,7 @@
 }
 
 @utility btn-hero-ghost {
-  @apply inline-flex items-center justify-center border border-paper/40 bg-transparent px-8 py-4 font-body text-xs font-bold uppercase tracking-aggressive text-paper transition-all duration-300 hover:border-paper hover:bg-paper/10 active:scale-[0.98];
+  @apply inline-flex items-center justify-center border-2 border-paper/40 bg-transparent px-8 py-4 font-body text-xs font-bold uppercase tracking-aggressive text-paper transition-all duration-300 hover:border-paper hover:bg-paper/10 active:scale-[0.98];
 }
 
 /* Motomad / WC HTML descriptions on product pages */
@@ -202,7 +219,7 @@
 }
 
 .product-description table {
-  @apply mt-6 w-full border-collapse text-sm;
+  @apply mt-6 w-full border-collapse text-base;
 }
 
 .product-description th,
@@ -381,6 +398,40 @@
   .gallery-play-glow {
     animation: gallery-play-glow 3.2s ease-in-out infinite;
   }
+
+  .moto-catalog-glow {
+    pointer-events: none;
+    position: absolute;
+    inset-inline: 0;
+    bottom: 0;
+    z-index: 1;
+    height: 55%;
+    opacity: 0;
+    transition: opacity 300ms ease-out;
+    background: radial-gradient(
+      ellipse 100% 88% at 50% 90%,
+      rgb(255 90 0 / 0.3) 0%,
+      rgb(255 90 0 / 0.12) 40%,
+      rgb(255 90 0 / 0.03) 62%,
+      transparent 78%
+    );
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      black 10%,
+      black 48%,
+      transparent 100%
+    );
+    mask-image: linear-gradient(
+      to bottom,
+      black 10%,
+      black 48%,
+      transparent 100%
+    );
+  }
+
+  .group:hover .moto-catalog-glow {
+    opacity: 1;
+  }
 }
 
 @keyframes gallery-play-glow {
@@ -423,6 +474,10 @@
   .gallery-play-glow {
     animation: none !important;
     box-shadow: 0 8px 24px rgb(11 11 11 / 0.12) !important;
+  }
+
+  .group:hover .moto-catalog-glow {
+    opacity: 0 !important;
   }
 
   .mega-menu-shell {

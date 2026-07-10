@@ -5,6 +5,7 @@ import { EditorialHero } from "@/components/content/editorial-hero";
 import { brands } from "@/data/brands";
 import type { Locale } from "@/i18n/config";
 import { localizedHref } from "@/i18n/paths";
+import { getBrandCatalogHref } from "@/lib/shop/brand-catalog-url";
 
 const purchaseReasonsByLocale: Record<Locale, readonly {
   title: string;
@@ -322,7 +323,7 @@ export function AboutView({ locale }: AboutViewProps) {
                 }
               >
                 <Link
-                  href={localizedHref(locale, `/shop/brands/${brand.slug}`)}
+                  href={localizedHref(locale, getBrandCatalogHref(brand.slug, locale))}
                   className="opacity-45 mix-blend-multiply transition-opacity hover:opacity-100"
                 >
                   <Image

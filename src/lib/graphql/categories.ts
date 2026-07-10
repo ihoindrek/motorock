@@ -3,6 +3,7 @@ import type { Locale } from "@/i18n/config";
 import { graphqlRequest } from "@/lib/graphql/client";
 import {
   EQUIPMENT_CATEGORY_INDEX,
+  PRODUCT_CATEGORY_BY_SLUG,
   PRODUCT_CATEGORY_NAV_TREE,
 } from "@/lib/graphql/category-queries";
 import type { GraphQLTranslation } from "@/lib/graphql/wpml";
@@ -10,6 +11,7 @@ import type { GraphQLTranslation } from "@/lib/graphql/wpml";
 export type WcCategoryNode = {
   slug: string;
   name: string;
+  description?: string | null;
   count?: number | null;
   languageCode?: string | null;
   translations?: GraphQLTranslation[] | null;
@@ -45,7 +47,6 @@ const EXCLUDED_ROOT_SLUGS = new Set([
   "motorcycles",
   "other",
   "uncategorized",
-  "tools-maintenance",
 ]);
 
 type ProductCategoryNavTreeResponse = {
@@ -86,6 +87,70 @@ export function getLocalizedCategoryName(
   return translation?.name ?? node.name;
 }
 
+export function getLocalizedCategorySlug(
+  node: Pick<WcCategoryNode, "slug" | "languageCode" | "translations">,
+  locale: Locale,
+): string {
+  const language = node.languageCode?.toLowerCase();
+
+  if (language === locale) {
+    return node.slug;
+  }
+
+  const translation = node.translations?.find(
+    (entry) => entry.language?.code?.toLowerCase() === locale,
+  );
+
+  return translation?.slug ?? node.slug;
+}
+
+export function findCategoryByPathSlug(
+  index: EquipmentCategoryIndex,
+  slug: string,
+  locale: Locale,
+): WcCategoryEntry | null {
+  for (const node of index.nodes.values()) {
+    if (getLocalizedCategorySlug(node, locale) === slug) {
+      return node;
+    }
+  }
+
+  return null;
+}
+
+function stripCategoryDescription(html: string | null | undefined) {
+  if (!html?.trim()) {
+    return "";
+  }
+
+  return html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+}
+
+export function getLocalizedCategoryDescription(
+  node: Pick<WcCategoryNode, "description" | "languageCode" | "translations">,
+  locale: Locale,
+): string {
+  const language = node.languageCode?.toLowerCase();
+
+  if (language === locale) {
+    const localized = stripCategoryDescription(node.description);
+    if (localized) {
+      return localized;
+    }
+  }
+
+  const translation = node.translations?.find(
+    (entry) => entry.language?.code?.toLowerCase() === locale,
+  );
+  const translated = stripCategoryDescription(translation?.description);
+
+  if (translated) {
+    return translated;
+  }
+
+  return stripCategoryDescription(node.description);
+}
+
 function buildIndex(
   nodes: EquipmentCategoryIndexResponse["productCategories"]["nodes"],
 ): EquipmentCategoryIndex {
@@ -99,6 +164,7 @@ function buildIndex(
     entries.set(node.slug, {
       slug: node.slug,
       name: node.name,
+      description: node.description,
       count: node.count,
       languageCode: node.languageCode,
       translations: node.translations,
@@ -146,6 +212,61 @@ export function navTreeFromIndex(index: EquipmentCategoryIndex): EquipmentNavTre
   };
 }
 
+export function getLocalizedCategoryPathSegments(
+  chain: readonly Pick<WcCategoryNode, "slug" | "languageCode" | "translations">[],
+  locale: Locale,
+): string[] {
+  return chain.map((node) => getLocalizedCategorySlug(node, locale));
+}
+
+export function resolveLocalizedCategoryPath(
+  index: EquipmentCategoryIndex,
+  slugSegments: readonly string[],
+  locale: Locale,
+): WcCategoryEntry[] | null {
+  if (slugSegments.length === 0) {
+    return [];
+  }
+
+  const chain: WcCategoryEntry[] = [];
+
+  for (let indexOffset = 0; indexOffset < slugSegments.length; indexOffset += 1) {
+    const segment = slugSegments[indexOffset];
+    let node: WcCategoryEntry | null = null;
+
+    if (indexOffset === 0) {
+      for (const rootSlug of index.roots) {
+        const root = index.nodes.get(rootSlug);
+
+        if (root && getLocalizedCategorySlug(root, locale) === segment) {
+          node = root;
+          break;
+        }
+      }
+    } else {
+      const parentSlug = chain[indexOffset - 1]?.slug;
+
+      for (const candidate of index.nodes.values()) {
+        if (
+          candidate.parentSlug === parentSlug &&
+          getLocalizedCategorySlug(candidate, locale) === segment
+        ) {
+          node = candidate;
+          break;
+        }
+      }
+    }
+
+    if (!node) {
+      return null;
+    }
+
+    chain.push(node);
+  }
+
+  return chain;
+}
+
 export function resolveCategoryPath(
   index: EquipmentCategoryIndex,
   slugSegments: readonly string[],
@@ -188,6 +309,31 @@ export const fetchEquipmentCategoryIndex = cache(
       return buildIndex(data.productCategories.nodes);
     } catch (error) {
       console.error("[categories] GraphQL category index fetch failed:", error);
+      return null;
+    }
+  },
+);
+
+type ProductCategoryBySlugResponse = {
+  productCategories: {
+    nodes: WcCategoryNode[];
+  };
+};
+
+export const fetchProductCategoryBySlug = cache(
+  async (slug: string): Promise<WcCategoryNode | null> => {
+    try {
+      const data = await graphqlRequest<
+        ProductCategoryBySlugResponse,
+        { slug: string }
+      >(PRODUCT_CATEGORY_BY_SLUG, { slug });
+
+      return data.productCategories.nodes[0] ?? null;
+    } catch (error) {
+      console.error(
+        `[categories] GraphQL category fetch failed for ${slug}:`,
+        error,
+      );
       return null;
     }
   },

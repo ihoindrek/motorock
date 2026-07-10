@@ -1,13 +1,14 @@
 import Image from "next/image";
 import Link from "next/link";
-import { BlogCard } from "@/components/blog/blog-card";
 import { BlogBadge } from "@/components/blog/blog-badge";
 import { BlogPostContent } from "@/components/blog/blog-post-content";
+import { HomeBlogPostsView } from "@/components/blog/home-blog-posts-view";
 import { GiveawayCountdown } from "@/components/giveaway/giveaway-countdown";
 import { getCampaignForBlogPost } from "@/lib/campaigns/blog";
 import { formatBlogDate } from "@/lib/blog/posts";
 import type { Dictionary } from "@/i18n/dictionaries/en";
 import { localizedHref } from "@/i18n/paths";
+import { buildEquipmentHubHref } from "@/lib/shop/category-url";
 import type { BlogPost } from "@/types/blog-post";
 
 type BlogPostViewProps = {
@@ -27,7 +28,7 @@ export function BlogPostView({
   const blogHref = localizedHref(locale, "/blog");
   const shopHref = localizedHref(
     locale,
-    campaign ? "/shop/equipment" : "/shop/motorcycles",
+    campaign ? buildEquipmentHubHref(locale) : "/shop/motorcycles",
   );
 
   return (
@@ -105,32 +106,32 @@ export function BlogPostView({
       {relatedPosts.length > 0 ? (
         <section
           aria-labelledby="related-articles-heading"
-          className="border-t border-ink/10 bg-moto py-10 lg:py-12"
+          className="relative overflow-hidden border-t border-ink/8 bg-paper py-12 text-ink lg:py-14"
         >
-          <div className="site-container">
-            <div className="mx-auto max-w-2xl lg:mx-0 lg:max-w-none">
-              <p className="font-body text-[10px] font-bold uppercase tracking-aggressive text-accent">
-                {copy.keepReading}
-              </p>
-              <h2
-                id="related-articles-heading"
-                className="mt-2 font-display text-xl font-extrabold uppercase tracking-tight text-ink sm:text-2xl"
+          <div className="site-container relative z-10">
+            <header className="mb-6 flex flex-col gap-4 sm:mb-5 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="section-eyebrow">{copy.keepReading}</p>
+                <h2
+                  id="related-articles-heading"
+                  className="mt-1.5 font-body text-2xl font-bold leading-snug tracking-tight text-ink sm:text-[1.65rem]"
+                >
+                  {copy.relatedStories}
+                </h2>
+              </div>
+              <Link
+                href={blogHref}
+                className="inline-flex items-center self-start rounded-full bg-paper px-7 py-3 font-body text-xs font-bold uppercase tracking-aggressive text-ink transition-colors duration-200 hover:bg-accent hover:text-paper sm:self-auto"
               >
-                {copy.relatedStories}
-              </h2>
-            </div>
-            <ul className="mx-auto mt-6 grid max-w-2xl gap-5 lg:mx-0 lg:max-w-none lg:grid-cols-3 lg:gap-6">
-              {relatedPosts.map((related) => (
-                <li key={related.slug}>
-                  <BlogCard
-                    post={related}
-                    variant="compact"
-                    locale={locale}
-                    copy={copy}
-                  />
-                </li>
-              ))}
-            </ul>
+                {copy.viewAllPosts}
+              </Link>
+            </header>
+
+            <HomeBlogPostsView
+              posts={relatedPosts}
+              locale={locale}
+              copy={copy}
+            />
           </div>
         </section>
       ) : null}

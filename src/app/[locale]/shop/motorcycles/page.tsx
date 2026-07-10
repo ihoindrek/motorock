@@ -3,6 +3,7 @@ import { MotorcyclesCatalogView } from "@/components/shop/motorcycles-catalog-vi
 import { isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/get-dictionary";
 import { getMotorcycleCatalog } from "@/lib/graphql/products";
+import { buildPageMetadata } from "@/lib/seo/metadata";
 import { resolveMotorcycleBrandFromSlug } from "@/lib/shop/brand-catalog-url";
 
 export const revalidate = 300;
@@ -21,10 +22,12 @@ export async function generateMetadata({ params }: MotorcyclesPageProps) {
 
   const dict = getDictionary(localeParam);
 
-  return {
+  return buildPageMetadata({
+    locale: localeParam,
     title: dict.pages.motorcyclesTitle,
     description: dict.pages.motorcyclesDescription,
-  };
+    pathname: "/shop/motorcycles",
+  });
 }
 
 export default async function MotorcyclesPage({

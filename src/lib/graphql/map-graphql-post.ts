@@ -4,15 +4,17 @@ import {
   rewriteBlogContentLinks,
   stripHtml,
 } from "@/lib/blog/html";
-import type { BlogPost } from "@/types/blog-post";
+import { getLocalizedCategoryName } from "@/lib/graphql/categories";
 import type { GraphQLBlogPost, GraphQLBlogPostCard } from "@/lib/graphql/types-blog";
+import type { Locale } from "@/i18n/config";
+import type { BlogPost } from "@/types/blog-post";
 
 const FALLBACK_IMAGE = "/brixton-image.webp";
 
-function getCategories(post: GraphQLBlogPostCard): string[] {
+function getCategories(post: GraphQLBlogPostCard, locale: Locale): string[] {
   return (
     post.categories?.nodes
-      ?.map((category) => category.name.trim())
+      ?.map((category) => getLocalizedCategoryName(category, locale).trim())
       .filter(Boolean) ?? []
   );
 }
@@ -41,8 +43,11 @@ function getFeaturedImage(post: GraphQLBlogPostCard, content?: string | null) {
   };
 }
 
-export function mapGraphqlToBlogPostCard(post: GraphQLBlogPostCard): BlogPost {
-  const categories = getCategories(post);
+export function mapGraphqlToBlogPostCard(
+  post: GraphQLBlogPostCard,
+  locale: Locale = "en",
+): BlogPost {
+  const categories = getCategories(post, locale);
   const excerpt = stripHtml(post.excerpt ?? "");
   const { image, imageAlt } = getFeaturedImage(post);
 
@@ -61,9 +66,12 @@ export function mapGraphqlToBlogPostCard(post: GraphQLBlogPostCard): BlogPost {
   };
 }
 
-export function mapGraphqlToBlogPost(post: GraphQLBlogPost): BlogPost {
-  const contentHtml = rewriteBlogContentLinks(post.content ?? "");
-  const card = mapGraphqlToBlogPostCard(post);
+export function mapGraphqlToBlogPost(
+  post: GraphQLBlogPost,
+  locale: Locale = "en",
+): BlogPost {
+  const contentHtml = rewriteBlogContentLinks(post.content ?? "", locale);
+  const card = mapGraphqlToBlogPostCard(post, locale);
   const { image, imageAlt } = getFeaturedImage(post, contentHtml);
 
   return {

@@ -3,7 +3,7 @@ import type { Dictionary } from "./en";
 export const et: Dictionary = {
   nav: {
     motorcycles: "Mootorrattad",
-    equipment: "Sõiduriided",
+    equipment: "Sõiduvarustus",
     tools: "Tööriistad",
     blog: "Blogi",
     contact: "Kontakt",
@@ -20,8 +20,8 @@ export const et: Dictionary = {
     viewAllMens: "Vaata kõiki meeste tooteid",
     viewAllWomens: "Vaata kõiki naiste tooteid",
     viewAllAccessories: "Vaata kõiki aksessuaare",
-    shopAllEquipment: "Vaata kogu varustust",
-    shopEquipment: "Vaata varustust",
+    shopAllEquipment: "Vaata kogu sõiduvarustust",
+    shopEquipment: "Vaata sõiduvarustust",
     promoTag: "Uus",
     promoHeadline: "Pando Moto 2026 kollektsioon laos",
   },
@@ -57,9 +57,13 @@ export const et: Dictionary = {
     brands: "Brändid",
     cartCheckout: "Ostukorv ja kassa",
     testRide: "Broneeri proovisõit",
-    privacy: "Privaatsus",
-    terms: "Tingimused",
-    shipping: "Tarne",
+    privacy: "Privaatsuspoliitika",
+    terms: "Müügitingimused",
+    shipping: "Tarne ja kohaletoimetamine",
+    returns: "Tagastamine ja vahetus",
+    returnProduct: "Tagastan toote",
+    support: "Klienditugi",
+    cookies: "Küpsiste poliitika (EL)",
     needHelp: "Vajad abi?",
     rights: "Kõik õigused kaitstud.",
   },
@@ -70,10 +74,32 @@ export const et: Dictionary = {
     close: "Sulge",
     contactUs: "Võta ühendust",
     loading: "Laadin",
+    loadingCategories: "Laadin kategooriaid",
+    loadingProducts: "Laadin tooteid",
+  },
+  carousel: {
+    previous: "Eelmine",
+    next: "Järgmine",
+    previousProduct: "Eelmine toode",
+    nextProduct: "Järgmine toode",
+    previousImage: "Eelmine pilt",
+    nextImage: "Järgmine pilt",
+    scrollThumbnailsUp: "Keri pisipilte üles",
+    scrollThumbnailsDown: "Keri pisipilte alla",
+    scrollThumbnailsLeft: "Keri pisipilte vasakule",
+    scrollThumbnailsRight: "Keri pisipilte paremale",
+    navigation: "Karusselli navigatsioon",
+    galleryNavigation: "Galerii navigatsioon",
+    similarProducts: "Sarnased tooted",
+    similarProductsNavigation: "Sarnaste toodete navigatsioon",
+    featuredProducts: "Esiletõstetud tooted",
+    productThumbnails: "Toote pildid",
+    thumbnailNavigation: "Pisipiltide navigatsioon",
+    closeGallery: "Sulge galerii",
   },
   hero: {
     motorcycles: "Mootorrattad",
-    equipment: "Sõidu-\nvarustus",
+    equipment: "Sõiduvarustus",
     shopMotorcycles: "Vaata mootorrattaid",
     browseProducts: "Sirvi tooteid",
   },
@@ -96,7 +122,7 @@ export const et: Dictionary = {
     scanning: "Skannin kataloogi…",
     tapResult: "Puuduta tulemust avamiseks",
     keyboardHint: "Kasuta ↑ ↓ sirvimiseks, Enter avamiseks",
-    categoriesHint: "Mootorrattad · Varustus · Tööriistad",
+    categoriesHint: "Mootorrattad · Sõiduvarustus · Tööriistad",
     match: "tulemus",
     matches: "tulemust",
     pageTitle: "Otsing",
@@ -109,7 +135,7 @@ export const et: Dictionary = {
     adjustFilters: "Proovi filtreid muuta või otsi teist märksõna.",
     all: "Kõik",
     motorcycles: "Mootorrattad",
-    equipment: "Varustus",
+    equipment: "Sõiduvarustus",
     tools: "Tööriistad",
     ride: "Sõit",
     gear: "Varustus",
@@ -122,6 +148,29 @@ export const et: Dictionary = {
     pay: "Maksa",
     yourCart: "Sinu ostukorv",
     discountCode: "Sooduskood",
+    discount: "Soodustus",
+    haveDiscountCode: "Kas sul on sooduskood?",
+    apply: "Rakenda",
+    applyingCoupon: "Rakendan…",
+    removeCoupon: "Eemalda",
+    continueToDelivery: "Edasi tarne juurde",
+    continueToPayment: "Edasi maksmise juurde",
+    back: "Tagasi",
+    completeDeliveryFirst:
+      "Täida kontaktandmed, vali tarneviis ja vajadusel pakiautomaat.",
+    couponNotFound:
+      "Sooduskoodi ei leitud. Kontrolli kirjapilti või proovi teist koodi.",
+    couponAlreadyApplied: "See sooduskood on juba rakendatud.",
+    couponNotApplied: "Seda sooduskoodi pole ostukorvis.",
+    couponUsageLimitReached:
+      "Sooduskoodi kasutuste limiit on täis või kood on juba kasutatud.",
+    couponExpired: "Sooduskood on aegunud.",
+    couponNotValidForCart:
+      "Seda sooduskoodi ei saa nende toodete puhul kasutada.",
+    couponMinimumSpend:
+      "Tellimus ei vasta selle sooduskoodi miinimumsumma nõudele.",
+    couponApplyFailed: "Sooduskoodi ei õnnestunud rakendada. Proovi uuesti.",
+    couponRemoveFailed: "Sooduskoodi ei õnnestunud eemaldada. Proovi uuesti.",
     deliveryContact: "Tarne ja kontakt",
     shippingError:
       "Tarnevalikute laadimisel läks midagi valesti. Proovi uuesti.",
@@ -129,6 +178,36 @@ export const et: Dictionary = {
     decreaseQty: "Vähenda kogust",
     increaseQty: "Suurenda kogust",
     phoneCountry: "Telefoni riik",
+    paymentMethodsBank: "Pangalink",
+    paymentMethodsBankDesc:
+      "Vali pank ja maksa turvaliselt Montonio kaudu.",
+    paymentMethodsCard: "Kaardimakse",
+    paymentMethodsCardDesc:
+      "Maksa krediit- või deebetkaardiga Montonio kaudu.",
+    paymentMethodsBnpl: "Maksa hiljem",
+    paymentMethodsBnplDesc: "Maksa osamaksetena Montonio kaudu.",
+    paymentMethodsHirePurchase: "Järelmaks",
+    paymentMethodsHirePurchaseDesc:
+      "Montonio järelmaks kassas — koostöös Inbankiga. Saadaval ainult Eestis.",
+    paymentMethodsBlik: "BLIK",
+    paymentMethodsBlikDesc: "Maksa BLIK-iga Montonio kaudu.",
+    paymentChooseBank: "Pangalink",
+    paymentFinancing: "Järelmaks ja maksa hiljem",
+    paymentLoading: "Laen makseviise…",
+    paymentWaiting: "Makseviisid ilmuvad pärast tarneviisi valimist.",
+    paymentEmpty: "Makseviise ei leitud.",
+    paymentPreview:
+      "Testrežiim — makseviisid laetakse WooCommerce'ist. Tellimust ei looda ega makset ei võeta.",
+    paymentNotConfigured:
+      "Montonio API võtmed puuduvad serveris — makseviise ei lae.",
+    paymentMethodsEmpty: "Selle riigi jaoks makseviise ei leitud.",
+    pickupPointLabel: "Pakiautomaat",
+    pickupPointChoose: "Vali pakiautomaat",
+    pickupPointSearch: "Otsi linna või asukohta…",
+    pickupPointLoading: "Laen pakiautomaate…",
+    pickupPointEmpty: "Ühtegi automaati ei leitud. Proovi teist otsingusõna.",
+    pickupPointError: "Pakiautomaate ei õnnestunud laadida.",
+    pickupPointClose: "Sulge",
   },
   pdp: {
     breadcrumbHome: "Avaleht",
@@ -140,9 +219,11 @@ export const et: Dictionary = {
     color: "Värv",
     addToCart: "Lisa ostukorvi",
     addedToCart: "Lisatud ostukorvi",
+    buyNow: "Osta kohe",
+    paymentAtCheckout:
+      "Montonio maksa hiljem ja järelmaks kassas.",
     selectSize: "Vali suurus",
     selectColor: "Vali värv",
-    freeShippingOver: "Tasuta tarne tellimustele üle",
     description: "Kirjeldus",
     readMore: "Loe edasi",
     readLess: "Näita vähem",
@@ -152,7 +233,7 @@ export const et: Dictionary = {
     features: "Omadused",
     oneSize: "Üks suurus",
     shippingReturnsBody:
-      "Tavaline tarne üle Eesti ja EL-i. Kasutamata tooteid saab tagastada 14 päeva jooksul — võta tagastuseks ühendust.",
+      "Tarne üle EL-i SmartPosti, Omniva, DPD, kulleri või salongist kättesaamisega. Tarnekulud kuvatakse kassas. 14-päevane taganemisõigus — kirjuta info@motorock.eu.",
   },
   catalog: {
     sort: "Sorteeri",
@@ -169,34 +250,44 @@ export const et: Dictionary = {
     price: "Hind",
     availability: "Saadavus",
     inStock: "Laos",
-    inStore: "Esinduses",
+    inStore: "Salongis",
+    inStoreNow: "Praegu salongis",
     inStockOnly: "Ainult laos",
-    inStoreOnly: "Ainult esinduses",
+    inStoreOnly: "Ainult salongis",
     protectionSafety: "Kaitse ja turvalisus",
     minPrice: "Minimaalne hind",
     maxPrice: "Maksimaalne hind",
     loadMore: "Laadi rohkem tooteid",
+    loadMoreMotorcycles: "Meil on veel motikaid",
+    scrollBrandsHint: "Keri, et näha rohkem brände",
     loadingMore: "Laadin…",
     allLoaded: "Kõik tooted laetud",
     productsProgress: "Laetud tooted",
+    productSingular: "toode",
+    productPlural: "toodet",
     clearFilters: "Tühista filtrid",
+    lookingForGear: "Otsid varustust?",
+    shopEquipmentCta: "Vaata sõiduvarustust →",
+    brandMotorcyclesTitle: "{brand} mootorrattad",
+    brandMotorcyclesDescription:
+      "Avasta {brand} mootorrattad Motorockis — premium masinad sõitjatele, kes ei taha sulguda massi.",
+    contentAvailableInEnglish:
+      "Selle mudeli kirjeldus on hetkel saadaval ainult inglise keeles. Eestikeelne tõlge on peagi tulemas.",
   },
   showroom: {
-    pickupTitle: "Tule järgi showroomi ja proovi",
+    pickupTitle: "Tule salongi järgi ja proovi",
     pickupDescription:
       "Broneeri veebis, proovi varustust või vaata rattaid kohapeal enne otsust.",
-    pickupSelected: "Showroomi järeletulek valitud",
-    usePickup: "Kasuta showroomi järeletulekut",
+    pickupSelected: "Salongist kättesaamine valitud",
+    usePickup: "Tule salongi järele",
     directions: "Juhised →",
     pickupFallback:
-      "Märgi tellimuse märkmetesse showroomi järeletulek või vali allpool lähim pakiautomaat — hoiame tooted sulle valmis.",
-    tryBeforeBuy: "Proovi enne ostu.",
-    visitUs: "Külasta meid",
-    pickupNote: "Tule järgi meie Tallinna showroomist —",
+      "Märgi tellimuse märkmetesse salongist kättesaamine või vali allpool lähim pakiautomaat — hoiame tooted sulle valmis.",
+    pickupNote: "Külasta meid Motorocki salongis — {address}",
   },
   returns: {
-    headline: "Tasuta vahetus või tagastus 14 päeva jooksul",
-    detail: "Vale suurus? Vaheta või saada tagasi — lihtsalt ja kiiresti.",
+    headline: "14-päevane taganemisõigus",
+    detail: "Teavita aadressil info@motorock.eu — tagastuse otsesed kulud kannab ostja.",
   },
   financing: {
     retail: "Jaehind",
@@ -207,7 +298,7 @@ export const et: Dictionary = {
     monthlyPayment: "Kuumakse",
     notAvailableTitle: "Veebist pole saadaval",
     notAvailableDescription:
-      "Toode võib siiski sobida esinduses — kirjuta meile ja selgitame võimalused.",
+      "Toode võib siiski sobida salongis — kirjuta meile ja selgitame võimalused.",
     askFinancing: "Küsi järelmaksu kohta →",
     term: "Periood",
     monthsShort: "kuud",
@@ -217,23 +308,47 @@ export const et: Dictionary = {
     promoZero: "0% (kampaania)",
     totalPayable: "Kogusumma",
     interestFees: "Intress ja tasud",
-    checkoutMontonio:
-      "Vali kassas Montonio maksa hiljem ja järelmaks — sama voog nagu motorock.eu-s.",
     continueCheckout: "Jätka kassasse →",
     discussCheckout: "Aruta kassas →",
     handledInStore:
-      "taotlused käsitletakse meie meeskonnaga — saame pakkumise valmis tellimisel või showroomi külastusel.",
+      "Taotlused käsitletakse meie meeskonnaga — saame pakkumise valmis tellimisel või salongi külastusel.",
     askProvider: "Küsi",
     disclaimer:
-      "Ligikaudne kuumakse. Lõplikud tingimused, intress ja sobivus kinnitatakse pakkujaga kassas või taotluse esitamisel.",
+      "Ligikaudne kuumakse. Lõplikud tingimused, intress ja sobivus kinnitatakse Montonio ja Inbanki poolt kassas või taotluse esitamisel.",
     fromMonthlyPrefix: "alates",
+    openCalculatorLabel: "Ava järelmaksu kalkulaator",
+    calculateFinancing: "Arvuta →",
+    hirePurchaseTagline:
+      "Montonio järelmaks kassas — koostöös Inbankiga.",
+    checkoutHirePurchase:
+      "Kassas vali Montonio järelmaks. Lõplikud tingimused kinnitab Montonio koos Inbankiga.",
+    estoniaOnlyNote: "Järelmaks on saadaval ainult Eestis.",
   },
   notFound: {
     title: "Lehte ei leitud",
     description:
       "Seda lehte pole või see on teise aadressi alla viidud. Proovi poodi või otsingut.",
-    shopEquipment: "Vaata varustust",
+    shopEquipment: "Vaata sõiduvarustust",
     search: "Otsi",
+  },
+  error: {
+    eyebrow: "Midagi läks valesti",
+    title: "Tuli ette ootamatu viga",
+    description:
+      "Lehte ei õnnestunud laadida. Proovi uuesti või mine tagasi poodi.",
+    retry: "Proovi uuesti",
+    backToHome: "Tagasi avalehele",
+    globalDescription:
+      "Rakenduses tekkis ootamatu viga. Võid proovida lehte uuesti laadida.",
+  },
+  shopError: {
+    eyebrow: "Pood pole saadaval",
+    title: "Tooteid ei õnnestunud laadida",
+    description:
+      "Kataloogi ei saa hetkel kätte. Kontrolli ühendust ja proovi uuesti või vaata teist jaotist.",
+    retry: "Proovi uuesti",
+    equipmentHub: "Sõiduvarustus",
+    home: "Avaleht",
   },
   testRide: {
     eyebrow: "Proovisõit",
@@ -241,10 +356,70 @@ export const et: Dictionary = {
     accent: "proovisõit.",
     description:
       "Vali aeg — hoiame ratta valmis. Enamik otsustab sadulas — ülejäänu on meie kanda.",
-    showroom: "Showroom",
+    showroom: "Motorock salong",
     openMaps: "Ava Google Mapsis →",
     confirmNote:
       "Kinnitame aja e-postiga — tavaliselt ühe tööpäeva jooksul. Too kaasa juhiluba ja varustus, kui tahad sõita.",
+    formTitle: "Saada taotlus",
+  },
+  motorcycle: {
+    modelOverview: "Mudelist",
+    newBadge: "Uus",
+    onDisplay:
+      "Motorocki salongis Tallinnas — tule vaatama ja küsi proovisõitu",
+    availableToOrder:
+      "Tellitav — vaatamise kokkuleppimiseks võta ühendust",
+    bookTestRide: "Broneeri proovisõit",
+    askQuestion: "Küsi küsimus",
+    enquireModel: "Uuri selle mudeli kohta",
+    visitShowroom: "Tule salongi",
+    contactUs: "Võta ühendust",
+    keySpecifications: "Põhispetsifikatsioonid",
+    closerLook: "Lähem pilk",
+    closerLookBody: "Iga nurk mudelist {name} — keri ja avasta.",
+    closerLookAria: "Lähem pilk",
+    overview: "Ülevaade",
+    technical: "Tehniline",
+    underTank: "Paagi all",
+    showLess: "Näita vähem",
+    showMore: "Näita rohkem",
+    engineTransmission: "Mootor ja jõuülekanne",
+    chassisPerformance: "Raam ja jõudlus",
+    dimensionsWeight: "Mõõdud ja kaal",
+    similarBikes: "Sarnased rattad",
+    enquireShort: "Päring",
+    filterByBrand: "Filtreeri brändi {brand} järgi",
+    availableFinishes: "Saadaolevad viimistlused",
+    watchVideo: "Vaata videot",
+    modals: {
+      testRideEyebrow: "Proovisõit",
+      testRideTitle: "Broneeri proovisõit",
+      testRideDescription:
+        "Vali aeg — hoiame ratta valmis. Kinnitame tavaliselt ühe tööpäeva jooksul.",
+      enquireEyebrow: "Päring",
+      enquireTitle: "Uuri selle mudeli kohta",
+      enquireDescription:
+        "Pole hetkel eksponeeritud? Anna teada, et oled huvitatud — aitame tellimise või vaatamisega.",
+      questionEyebrow: "Kontakt",
+      questionTitle: "Küsi küsimus",
+      questionDescription:
+        "Spetsifikatsioonid, järelmaks, tarne — küsi julgelt. Päris inimesed, mitte kõnekeskus.",
+      contactEyebrow: "Kontakt",
+      contactTitle: "Võta ühendust",
+      contactDescription:
+        "Kontrollime saadavust ja võtame ühendust võimalustega.",
+      showroomEyebrow: "Motorock salong",
+      showroomTitle: "Külasta meid Tallinnas",
+      showroomDescription:
+        "Tule vaatama rattaid ja arutame võimalusi kohapeal.",
+      address: "Aadress",
+      googleMaps: "Google Maps →",
+      waze: "Waze →",
+      showroomInterested:
+        "Huvitatud mudelist {brand} {name}? Maini seda külastusel — või saada päring ja kinnitame, mis on kohal.",
+      showroomWalkIns:
+        "Ootame sind ilma eelregistreerimata. Too juhiluba, kui tahad proovisõitu arutada.",
+    },
   },
   forms: {
     messageReceived: "Sõnum käes",
@@ -272,6 +447,34 @@ export const et: Dictionary = {
     questionPlaceholder: "Mis sul selle ratta kohta mõttes on?",
     availabilityPlaceholder:
       "Ütle, mida otsid — võtame sinuga ühendust…",
+    submitting: "Saadan…",
+    submitError:
+      "Sõnumit ei õnnestunud saata. Proovi uuesti või kirjuta otse e-postile.",
+    withdrawalFormTitle: "Tellimusest taganemine",
+    withdrawalFormIntro:
+      "Kasuta seda vormi, et taganeda tellimusest 14-päevase taganemisõiguse raames. Kinnitame avalduse kättesaamise e-kirjaga.",
+    withdrawalEmailHint:
+      "Saadame taganemise kinnituse sellele e-posti aadressile.",
+    withdrawalOrderNumber: "Tellimuse number",
+    withdrawalOrderNumberPlaceholder: "nt 12345",
+    withdrawalOrderDate: "Tellimuse või kättesaamise kuupäev",
+    withdrawalProduct: "Toote või tellimuse andmed",
+    withdrawalProductPlaceholder:
+      "Kirjelda tagastatavat toodet (nimi, suurus, värv, kogus…)",
+    withdrawalConfirmLabel:
+      "Kinnitan, et soovin tellimusest taganeda ja toote tagastada.",
+    withdrawalConfirmRequired:
+      "Palun kinnita taganemine enne vormi saatmist.",
+    withdrawalSubmit: "Kinnitan taganemise",
+    withdrawalReceived: "Taganemisavaldus käes",
+    withdrawalThanks:
+      "Aitäh — saatsime koopia teie avaldusest teie e-postile. Meie meeskond kinnitab kättesaamise peagi.",
+  },
+  seo: {
+    homeTitle: "Premium mootorrattad ja sõiduvarustus",
+    homeDescription:
+      "Mootorrattad Brixtonilt, Muttilt, Motronilt ja Malagutilt. Premium sõiduriided ja varustus sõitjatele, kes ei taha massi sulanduda — Motorock.eu.",
+    brandDescription: "Osta {brand} sõiduriideid Motorock.eu poes.",
   },
   pages: {
     cartTitle: "Ostukorv",
@@ -282,7 +485,9 @@ export const et: Dictionary = {
       "Premium mootorrattad Brixtonilt, Muttilt, Motronilt ja Malagutilt.",
     testRideTitle: "Broneeri proovisõit",
     testRideDescription:
-      "Broneeri mootorratta proovisõit Motorocki showroomis Tallinnas.",
+      "Broneeri mootorratta proovisõit Motorocki salongis Tallinnas.",
+    orderThankYouTitle: "Tellimus kinnitatud",
+    orderThankYouDescription: "Sinu Motorock tellimuse kokkuvõte pärast makset.",
   },
   giveaway: {
     drawClosed: "Loosimine lõppenud",
@@ -310,15 +515,59 @@ export const et: Dictionary = {
     eyebrow: "Juriidiline",
     lastUpdated: "Viimati uuendatud",
     questions: "Küsimusi?",
-    privacyTitle: "Privaatsuspoliitika",
+    privacyTitle: "Privaatsustingimused",
     privacyDescription:
-      "Kuidas me käsitleme sinu isikuandmeid, kui ostad, pärid või külastad meie esindust.",
+      "Kuidas Motomonopol OÜ veebipoe motorock.eu isikuandmeid kogub, töötleb ja säilitab.",
     termsTitle: "Müügitingimused",
     termsDescription:
-      "Reeglid, mis kehtivad Motorock.eu-st ostmisel või meie teenuste kasutamisel.",
-    shippingTitle: "Tarneinfo",
+      "Veebipoe motorock.eu müügitingimused — Motomonopol OÜ.",
+    shippingTitle: "Tarnetingimused",
     shippingDescription:
-      "Tarnevalikud, hinnad ja töötlemisajad Motorock.eu tellimustele.",
+      "Tarneviisid, ajad, kulud ja tellimuse jälgimine motorock.eu tellimustele üle EL-i.",
+    returnsTitle: "Tagastamine ja vahetus",
+    returnsDescription:
+      "14-päevane taganemisõigus ja kuidas tagastused ning tagasimaksed motorock.eu-s toimivad.",
+    supportEyebrow: "Abi",
+    supportTitle: "Klienditugi",
+    supportDescription:
+      "Tellimuste abi, tarneküsimused, suuruste nõuanded ja kuidas Motorocki meeskonnaga ühendust võtta.",
+    cookiesTitle: "Küpsised",
+    cookiesDescription:
+      "Küpsiste kasutamine motorock.eu lehel Euroopa Majanduspiirkonna ja Šveitsi külastajatele.",
+    emailPrompt: "või kirjuta",
+    supportContact: {
+      emailLabel: "E-post",
+      phoneLabel: "Telefon",
+      hoursLabel: "Salongi lahtiolekuajad",
+      formLabel: "saada sõnum",
+    },
+  },
+  consent: {
+    eyebrow: "Privaatsus",
+    bannerTitle: "Kasutame küpsiseid",
+    bannerDescription:
+      "Kasutame küpsiseid ja sarnaseid tehnoloogiaid poe põhifunktsioonide, eelistuste, statistika ja turunduse jaoks. Saad nõustuda kõigiga, keelata mitte-hädavajalikud või valida eelistused ise.",
+    acceptAll: "Nõustu kõigiga",
+    rejectAll: "Keela mitte-hädavajalikud",
+    customize: "Kohanda",
+    savePreferences: "Salvesta eelistused",
+    preferencesTitle: "Küpsiste eelistused",
+    functionalLabel: "Funktsionaalsed",
+    functionalDescription:
+      "Vajalikud ostukorvi, checkouti, keele ja turvalisuse jaoks. Neid ei saa välja lülitada.",
+    functionalAlwaysActive: "Alati aktiivsed",
+    preferencesLabel: "Eelistused",
+    preferencesDescription: "Mäletavad mugavusseadeid, näiteks suletud teateid.",
+    statisticsLabel: "Statistika",
+    statisticsDescription:
+      "Aitavad mõista, kuidas motorock.eu-d kasutatakse (Google Analytics Tag Manageri kaudu).",
+    marketingLabel: "Turundus",
+    marketingDescription:
+      "Mõõdavad kampaaniate ja reklaamide tulemusi (Google Ads ja Meta/Facebook Tag Manageri kaudu).",
+    cookieSettings: "Küpsiste seaded",
+    policyLink: "Küpsisepoliitika",
+    manageDescription: "Kohanda allpool oma küpsiste eelistusi.",
+    requiredHint: "Neid küpsiseid ei saa välja lülitada.",
   },
   blog: {
     pageTitle: "Blogi",
@@ -342,6 +591,7 @@ export const et: Dictionary = {
     featured: "Esiletõstetud",
     read: "Loe →",
     readArticle: "Loe artiklit →",
+    readMore: "Loe edasi",
     backToArticles: "← Artiklid",
     allArticles: "← Kõik artiklid",
     shopNow: "Vaata poodi →",
@@ -349,5 +599,8 @@ export const et: Dictionary = {
     keepReading: "Jätka lugemist",
     relatedStories: "Seotud lood",
     articleNotFound: "Artiklit ei leitud",
+    latestPostsEyebrow: "Blogi",
+    latestPostsTitle: "Viimased postitused",
+    viewAllPosts: "Vaata kõiki artikleid →",
   },
 };

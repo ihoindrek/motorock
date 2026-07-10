@@ -2,6 +2,14 @@ const BLOG_POST_CARD_FIELDS = `
   databaseId
   title
   slug
+  languageCode
+  translations {
+    slug
+    title
+    language {
+      code
+    }
+  }
   date
   excerpt
   featuredImage {
@@ -19,13 +27,21 @@ const BLOG_POST_CARD_FIELDS = `
     nodes {
       name
       slug
+      languageCode
+      translations {
+        name
+        slug
+        language {
+          code
+        }
+      }
     }
   }
 `;
 
 export const BLOG_POSTS_LIST = `
-  query BlogPostsList($first: Int!, $after: String, $language: LanguageCodeFilterEnum) {
-    contentNodes(first: $first, after: $after, where: { contentTypes: POST, language: $language }) {
+  query BlogPostsList($first: Int!, $after: String) {
+    contentNodes(first: $first, after: $after, where: { contentTypes: POST }) {
       pageInfo {
         hasNextPage
         endCursor

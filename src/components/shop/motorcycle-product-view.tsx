@@ -6,7 +6,7 @@ import { useDictionary, useLocale } from "@/context/locale-context";
 import type { CatalogProduct, ProductSpec } from "@/types/catalog-product";
 import type { MotorcycleProduct } from "@/types/motorcycle-product";
 import { formatPrice } from "@/lib/shop/category";
-import { guessHexFromColorLabel } from "@/lib/shop/product-color-swatches";
+import { resolveProductColorHex } from "@/lib/shop/product-color-swatches";
 import {
   hasMotorcycleTechnical,
 } from "@/lib/shop/normalize-motorcycle-content";
@@ -18,11 +18,12 @@ import {
 } from "@/components/shop/motorcycle-action-modals";
 import { MotorcycleColorPicker } from "@/components/shop/motorcycle-color-picker";
 import { MotorcycleCtaBar } from "@/components/shop/motorcycle-cta-bar";
+import { MotorcycleOverviewSection } from "@/components/shop/motorcycle-overview-section";
 import { MotorcycleProductGallery } from "@/components/shop/motorcycle-product-gallery";
-import { ProductDescriptionHtml } from "@/components/shop/product-description-html";
 import { MotorcycleRelatedProducts } from "@/components/shop/motorcycle-related-products";
 import { TestRideIcon } from "@/components/ui/test-ride-icon";
 import { ZoomParallax } from "@/components/ui/zoom-parallax";
+import { cn } from "@/lib/utils";
 
 type MotorcycleProductViewProps = {
   product: MotorcycleProduct;
@@ -74,96 +75,28 @@ function SpecBlock({
   );
 }
 
-function ModelOverviewAccordion({ html }: { html: string }) {
-  return (
-    <details className="group border border-ink/10 bg-paper">
-      <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 font-body text-xs font-bold uppercase tracking-aggressive text-ink transition-colors hover:text-accent sm:px-6 sm:py-5 [&::-webkit-details-marker]:hidden">
-        Model overview
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 16 16"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={2}
-          className="size-4 shrink-0 transition-transform duration-200 group-open:rotate-180"
-          aria-hidden="true"
-        >
-          <path d="M4 6l4 4 4-4" />
-        </svg>
-      </summary>
-      <div className="border-t border-ink/10 px-5 py-6 sm:px-6 sm:py-8">
-        <ProductDescriptionHtml html={html} />
-      </div>
-    </details>
-  );
-}
-
 function RichMotorcycleProductView({
   product,
   relatedProducts = [],
 }: MotorcycleProductViewProps) {
   const locale = useLocale();
   const dict = useDictionary();
-  const t =
-    locale === "et"
-      ? {
-          modelOverview: "Mudelist",
-          new: "Uus",
-          onDisplay: "Tallinna showroomis kohal — tule vaatama ja broneeri proovisõit",
-          availableToOrder: "Tellitav — vaatamise kokkuleppimiseks võta ühendust",
-          bookTestRide: "Broneeri proovisõit",
-          askQuestion: "Küsi küsimus",
-          enquireModel: "Uuri selle mudeli kohta",
-          visitShowroom: "Külasta showroomi",
-          contactUs: "Võta ühendust",
-          keySpecifications: "Põhispetsifikatsioonid",
-          closerLook: "Lähem pilk",
-          closerLookBody: `Iga nurk mudelist ${product.sync.name} — keri ja avasta.`,
-          overview: "Ülevaade",
-          technical: "Tehniline",
-          underTank: "Paagi all",
-          showLess: "Näita vähem",
-          showMore: "Näita rohkem",
-          engineTransmission: "Mootor ja jõuülekanne",
-          chassisPerformance: "Raam ja jõudlus",
-          dimensionsWeight: "Mõõdud ja kaal",
-        }
-      : {
-          modelOverview: "Model overview",
-          new: "New",
-          onDisplay: "On display in our Tallinn showroom — come see it and book a test ride",
-          availableToOrder: "Available to order — contact us to arrange a viewing",
-          bookTestRide: "Book a test ride",
-          askQuestion: "Ask a question",
-          enquireModel: "Enquire about this model",
-          visitShowroom: "Visit showroom",
-          contactUs: "Contact us",
-          keySpecifications: "Key specifications",
-          closerLook: "Closer look",
-          closerLookBody: `Every angle of the ${product.sync.name} — scroll to explore.`,
-          overview: "Overview",
-          technical: "Technical",
-          underTank: "Under the tank",
-          showLess: "Show less",
-          showMore: "Show more",
-          engineTransmission: "Engine & transmission",
-          chassisPerformance: "Chassis & performance",
-          dimensionsWeight: "Dimensions & weight",
-        };
+  const mc = dict.motorcycle;
+  const closerLookBody = mc.closerLookBody.replace("{name}", product.sync.name);
   const { sync, enrichment, content, showroomAvailable } = product;
 
   const colorSwatches = useMemo(() => {
     if (enrichment.colorSwatches?.length) {
       return enrichment.colorSwatches.map((option) => ({
         ...option,
-        hex: option.hex ?? guessHexFromColorLabel(option.label),
+        hex: option.hex ?? resolveProductColorHex(option.label),
       }));
     }
 
     if (sync.variations.length > 0) {
       return sync.variations.map((variation) => ({
         label: variation.color,
-        hex: variation.hex ?? guessHexFromColorLabel(variation.color),
+        hex: variation.hex ?? resolveProductColorHex(variation.color),
         image: variation.image,
       }));
     }
@@ -172,7 +105,7 @@ function RichMotorcycleProductView({
       .filter((color) => color && color !== "—")
       .map((label) => ({
         label,
-        hex: guessHexFromColorLabel(label),
+        hex: resolveProductColorHex(label),
         image: undefined,
       }));
   }, [enrichment.colorSwatches, sync.variations, sync.colors]);
@@ -200,8 +133,8 @@ function RichMotorcycleProductView({
     content.tagline?.trim() || sync.shortDescription.trim() || undefined;
   const hasEngineSpecs = content.engineSpecs.length > 0;
   const leftColumnTitle = hasEngineSpecs
-    ? t.engineTransmission
-    : t.chassisPerformance;
+    ? mc.engineTransmission
+    : mc.chassisPerformance;
   const leftColumnSpecs =
     showMoreSpecs && hasEngineSpecs
       ? [...content.engineSpecs, ...content.extendedSpecs]
@@ -217,9 +150,29 @@ function RichMotorcycleProductView({
   const showOverviewSection =
     content.overviewSections.length > 0 || showSupplementary;
   const parallaxImages = content.parallaxImages;
+  const showEnglishContentNotice =
+    locale === "et" &&
+    (product.contentLocale !== "et" || product.contentUntranslated);
 
   return (
-    <article className="bg-paper max-lg:pb-[calc(5.5rem+env(safe-area-inset-bottom))]">
+    <article
+      className={cn(
+        "bg-paper",
+        sync.inStock &&
+          relatedProducts.length === 0 &&
+          "max-lg:pb-[calc(5.5rem+env(safe-area-inset-bottom))]",
+      )}
+    >
+      {showEnglishContentNotice ? (
+        <div
+          role="status"
+          className="border-b border-amber-200/80 bg-amber-50 text-ink/80"
+        >
+          <p className="site-container py-3 text-sm leading-relaxed">
+            {dict.catalog.contentAvailableInEnglish}
+          </p>
+        </div>
+      ) : null}
       <section className="relative overflow-hidden bg-moto text-ink">
         <div className="site-container relative max-lg:pt-0 pb-4 lg:py-6">
           <div className="grid items-start gap-8 lg:grid-cols-12 lg:gap-6 xl:gap-8">
@@ -237,7 +190,7 @@ function RichMotorcycleProductView({
                       href={product.backHref}
                       className="transition-colors hover:text-accent"
                     >
-                      ← {product.backLabel}
+                      ← {dict.nav.motorcycles}
                     </Link>
                   </li>
                 </ol>
@@ -247,7 +200,7 @@ function RichMotorcycleProductView({
                 <BrandLogo brand={sync.brand} size="sm" />
                 {enrichment.isNew ? (
                   <span className="bg-accent px-2.5 py-1 font-body text-[9px] font-bold uppercase tracking-aggressive text-paper">
-                    {t.new}
+                    {mc.newBadge}
                   </span>
                 ) : null}
               </div>
@@ -270,29 +223,26 @@ function RichMotorcycleProductView({
 
               <FinancingPriceTeaser
                 price={sync.price}
-                productType="motorcycle"
-                productName={sync.name}
                 variant="hero"
                 className="mt-8"
-                onEnquire={() => setModalAction("question")}
               />
 
               {sync.inStock ? (
                 showroomAvailable ? (
-                  <p className="mt-6 flex items-center gap-2 text-xs text-ink/70">
+                  <p className="mt-6 flex items-center gap-2.5 text-sm leading-snug text-ink/75 sm:text-base">
                     <span
-                      className="size-1.5 shrink-0 rounded-full bg-stock motion-safe:animate-pulse"
+                      className="size-2 shrink-0 rounded-full bg-stock motion-safe:animate-pulse"
                       aria-hidden="true"
                     />
-                    {t.onDisplay}
+                    {mc.onDisplay}
                   </p>
                 ) : (
-                  <p className="mt-6 flex items-center gap-2 text-xs text-ink/60">
+                  <p className="mt-6 flex items-center gap-2.5 text-sm leading-snug text-ink/65 sm:text-base">
                     <span
-                      className="size-1.5 shrink-0 rounded-full bg-ink/30"
+                      className="size-2 shrink-0 rounded-full bg-ink/30"
                       aria-hidden="true"
                     />
-                    {t.availableToOrder}
+                    {mc.availableToOrder}
                   </p>
                 )
               ) : (
@@ -307,13 +257,15 @@ function RichMotorcycleProductView({
                     options={colorSwatches}
                     value={color}
                     onChange={setColor}
+                    heading={dict.forms.finish}
+                    finishesAriaLabel={mc.availableFinishes}
                     theme="light"
                     variant="compact"
                   />
                 </div>
               ) : sync.colors.length === 1 && sync.colors[0] !== "—" ? (
                 <p className="mt-8 font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/50">
-                  Finish · {sync.colors[0]}
+                  {dict.forms.finish} · {sync.colors[0]}
                 </p>
               ) : null}
 
@@ -327,14 +279,14 @@ function RichMotorcycleProductView({
                         className="btn-accent min-w-[200px] gap-2"
                       >
                         <TestRideIcon />
-                        {t.bookTestRide}
+                        {mc.bookTestRide}
                       </button>
                       <button
                         type="button"
                         onClick={() => setModalAction("question")}
                         className="btn-ghost min-w-[200px]"
                       >
-                        {t.askQuestion}
+                        {mc.askQuestion}
                       </button>
                     </>
                   ) : (
@@ -344,14 +296,14 @@ function RichMotorcycleProductView({
                         onClick={() => setModalAction("enquire")}
                         className="btn-accent min-w-[200px]"
                       >
-                        {t.enquireModel}
+                        {mc.enquireModel}
                       </button>
                       <button
                         type="button"
                         onClick={() => setModalAction("showroom")}
                         className="btn-ghost min-w-[200px]"
                       >
-                        {t.visitShowroom}
+                        {mc.visitShowroom}
                       </button>
                     </>
                   )}
@@ -363,7 +315,7 @@ function RichMotorcycleProductView({
                     onClick={() => setModalAction("contact")}
                     className="btn-accent min-w-[200px]"
                   >
-                    {t.contactUs}
+                    {mc.contactUs}
                   </button>
                 </div>
               )}
@@ -377,6 +329,7 @@ function RichMotorcycleProductView({
                 layout="hero"
                 vimeoId={content.vimeoId}
                 videoTitle={`${sync.brand} ${sync.name}`}
+                inStoreNow={showroomAvailable && sync.inStock}
               />
             </div>
           </div>
@@ -385,7 +338,7 @@ function RichMotorcycleProductView({
 
       {content.keySpecs.length > 0 ? (
         <section
-          aria-label={t.keySpecifications}
+          aria-label={mc.keySpecifications}
           className="border-b border-ink/10 bg-paper"
         >
           <ul className="site-container grid grid-cols-2 lg:grid-cols-4">
@@ -413,13 +366,13 @@ function RichMotorcycleProductView({
       ) : null}
 
       {parallaxImages.length >= 3 ? (
-        <section aria-label="Closer look" className="bg-white">
+        <section aria-label={mc.closerLookAria} className="bg-white">
           <div className="site-container py-14 lg:py-20">
             <h2 className="text-[clamp(2.2rem,5vw,3.85rem)] font-extrabold uppercase leading-[0.92] tracking-tight text-ink">
-              {t.closerLook}
+              {mc.closerLook}
             </h2>
             <p className="mt-4 max-w-lg text-sm text-ink/55 sm:text-base">
-              {t.closerLookBody}
+              {closerLookBody}
             </p>
           </div>
           <ZoomParallax
@@ -431,43 +384,21 @@ function RichMotorcycleProductView({
       ) : null}
 
       {showOverviewSection ? (
-      <section className="bg-white py-16 lg:py-24">
-        <div className="site-container max-w-3xl">
-          {content.overviewSections.length > 0 ? (
-            <div>
-              <p className="section-eyebrow">{t.overview}</p>
-              <div className="mt-6 space-y-10">
-                {content.overviewSections.map((section) => (
-                  <div key={section.title}>
-                    <h2 className="font-body text-xs font-bold uppercase tracking-aggressive text-ink/45">
-                      {section.title}
-                    </h2>
-                    <div className="mt-4 space-y-4 text-sm leading-relaxed text-ink/75 sm:text-base">
-                      {section.paragraphs.map((paragraph) => (
-                        <p key={paragraph}>{paragraph}</p>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : null}
-
-          {showSupplementary && supplementaryHtml ? (
-            <div className={content.overviewSections.length > 0 ? "mt-10" : ""}>
-              <ModelOverviewAccordion html={supplementaryHtml} />
-            </div>
-          ) : null}
-        </div>
-      </section>
+        <MotorcycleOverviewSection
+          eyebrow={mc.overview}
+          productName={sync.name}
+          sections={content.overviewSections}
+          supplementaryHtml={showSupplementary ? supplementaryHtml : undefined}
+          supplementaryLabel={mc.modelOverview}
+        />
       ) : null}
 
       {showTechnical ? (
         <section className="bg-ink py-16 text-paper lg:py-24">
           <div className="site-container">
-            <p className="section-eyebrow text-accent">{t.technical}</p>
+            <p className="section-eyebrow text-accent">{mc.technical}</p>
             <h2 className="mt-3 text-3xl font-extrabold uppercase leading-[0.92] sm:text-4xl">
-              {t.underTank}
+              {mc.underTank}
             </h2>
 
             <div className="mt-12 grid gap-14 lg:grid-cols-2 lg:gap-20">
@@ -484,14 +415,14 @@ function RichMotorcycleProductView({
                       onClick={() => setShowMoreSpecs((open) => !open)}
                       className="mt-6 font-body text-[10px] font-bold uppercase tracking-aggressive text-accent hover:underline"
                     >
-                      {showMoreSpecs ? t.showLess : t.showMore}
+                      {showMoreSpecs ? mc.showLess : mc.showMore}
                     </button>
                   ) : null}
                 </div>
               ) : null}
               {content.dimensionSpecs.length > 0 ? (
                 <SpecBlock
-                  title={t.dimensionsWeight}
+                  title={mc.dimensionsWeight}
                   specs={content.dimensionSpecs}
                   dark
                 />
@@ -502,7 +433,10 @@ function RichMotorcycleProductView({
       ) : null}
 
       {relatedProducts.length > 0 ? (
-        <MotorcycleRelatedProducts products={relatedProducts} />
+        <MotorcycleRelatedProducts
+          products={relatedProducts}
+          reserveMobileCtaSpace={sync.inStock}
+        />
       ) : null}
 
       <MotorcycleCtaBar

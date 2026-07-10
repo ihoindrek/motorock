@@ -1,9 +1,11 @@
 import type { ProductColorOption } from "@/types/catalog-product";
+import { getColorSwatchStyle } from "@/lib/shop/product-color-swatches";
 
 type EquipmentColorPickerProps = {
   options: readonly ProductColorOption[];
   value: string;
   onChange: (value: string) => void;
+  label: string;
 };
 
 function optionValue(option: ProductColorOption) {
@@ -14,6 +16,7 @@ export function EquipmentColorPicker({
   options,
   value,
   onChange,
+  label,
 }: EquipmentColorPickerProps) {
   const selectedLabel = options.find(
     (option) => optionValue(option) === value,
@@ -22,7 +25,7 @@ export function EquipmentColorPicker({
   return (
     <div>
       <p className="text-xs font-medium text-ink">
-        Colour
+        {label}
         {selectedLabel ? (
           <span className="font-normal text-ink/60"> · {selectedLabel}</span>
         ) : null}
@@ -40,12 +43,12 @@ export function EquipmentColorPicker({
               aria-pressed={selected}
               aria-label={option.label}
               title={option.label}
-              className={`size-8 shrink-0 border transition-colors sm:size-9 ${
+              className={`size-8 shrink-0 overflow-hidden border transition-colors sm:size-9 ${
                 selected
                   ? "border-ink ring-1 ring-ink ring-offset-1"
                   : "border-ink/20 hover:border-ink"
               }`}
-              style={{ backgroundColor: option.hex ?? "#C5C5C5" }}
+              style={getColorSwatchStyle(option)}
             />
           );
         })}

@@ -1,11 +1,14 @@
+import { unstable_cache } from "next/cache";
+import { cache } from "react";
 import type { Locale } from "@/i18n/config";
 import type { CatalogProduct } from "@/types/catalog-product";
 import type { MotorcycleProduct } from "@/types/motorcycle-product";
-import { pickSimilarProducts } from "@/lib/shop/similar-products";
+import { pickSimilarProducts, RELATED_PRODUCTS_LIMIT } from "@/lib/shop/similar-products";
 import {
   type CategoryRoute,
   resolveEquipmentCatalogWhere,
 } from "@/lib/shop/category";
+import { TOOLS_WC_SLUG } from "@/lib/shop/wc-categories";
 import { graphqlRequest } from "@/lib/graphql/client";
 import {
   isGraphqlMotorcycle,
@@ -13,14 +16,26 @@ import {
   mapGraphqlToCatalogProduct,
   mapGraphqlToMotorcycleProduct,
 } from "@/lib/graphql/map-graphql-product";
-import { PRODUCT_BY_SLUG, PRODUCT_CATALOG_PAGE } from "@/lib/graphql/queries";
+import { PRODUCT_BY_SLUG, PRODUCT_BY_DATABASE_ID, PRODUCT_CATALOG_PAGE } from "@/lib/graphql/queries";
 import type { GraphQLProduct, GraphQLProductCard } from "@/lib/graphql/types";
+import {
+  mergeGraphqlProductPricing,
+  resolveCatalogPricingNode,
+} from "@/lib/graphql/resolve-product-pricing";
 import {
   getGraphqlLanguageCode,
   resolveProductSlugForLocale,
   buildProductSlugAlternates,
   selectCatalogNodesForLocale,
+  findTranslationDatabaseId,
 } from "@/lib/graphql/wpml";
+import { isSameProductContent } from "@/lib/graphql/product-content-parity";
+import {
+  collectShowroomMetaSourcesFromSiblingProducts,
+  getShowroomAvailableFromMeta,
+  type ShowroomMetaSource,
+} from "@/lib/shop/resolve-showroom-available";
+import { getIsNewFromMeta } from "@/lib/shop/resolve-is-new";
 
 type ProductBySlugResponse = {
   product: GraphQLProduct | null;
@@ -49,12 +64,182 @@ type CatalogPageVariables = {
 };
 
 const CATALOG_PAGE_SIZE = 100;
+const HOMEPAGE_MOTORCYCLE_LIMIT = 36;
+const HOMEPAGE_GEAR_LIMIT = 120;
+const HOMEPAGE_WOMEN_LIMIT = 200;
+
+type CatalogFetchResult = {
+  nodes: GraphQLProductCard[];
+  nodesById: Map<number, GraphQLProductCard>;
+};
+
+function indexCatalogNodesById(
+  nodes: readonly GraphQLProductCard[],
+): Map<number, GraphQLProductCard> {
+  const nodesById = new Map<number, GraphQLProductCard>();
+
+  for (const node of nodes) {
+    if (node.databaseId) {
+      nodesById.set(node.databaseId, node);
+    }
+  }
+
+  return nodesById;
+}
+
+async function buildShowroomMetaSourcesForProduct(
+  product: GraphQLProduct | GraphQLProductCard,
+  locale: Locale,
+): Promise<ShowroomMetaSource[]> {
+  const sources: ShowroomMetaSource[] = [
+    { slug: product.slug, meta: product.metaData, publishedAt: product.date },
+  ];
+
+  const fallbackLocale: Locale = locale === "et" ? "en" : "et";
+  const translationId = findTranslationDatabaseId(product, fallbackLocale);
+
+  if (translationId) {
+    const translation = await fetchGraphqlProductByDatabaseId(translationId);
+
+    if (translation) {
+      sources.push({
+        slug: translation.slug,
+        meta: translation.metaData,
+        publishedAt: translation.date,
+      });
+    }
+  }
+
+  return sources;
+}
+
+export async function buildCatalogShowroomMetaSourcesMap(
+  nodes: readonly GraphQLProductCard[],
+  locale: Locale,
+): Promise<Map<number, readonly ShowroomMetaSource[]>> {
+  const fallbackLocale: Locale = locale === "et" ? "en" : "et";
+  const translationIds = new Set<number>();
+  const sourcesByProductId = new Map<number, readonly ShowroomMetaSource[]>();
+
+  for (const node of nodes) {
+    if (!node.databaseId) {
+      continue;
+    }
+
+    const translationId = findTranslationDatabaseId(node, fallbackLocale);
+    const needsTranslationMeta =
+      getShowroomAvailableFromMeta(node.metaData) === null ||
+      getIsNewFromMeta(node.metaData) === null;
+
+    if (translationId && needsTranslationMeta) {
+      translationIds.add(translationId);
+    }
+  }
+
+  const translationsById = new Map<number, GraphQLProductCard>();
+
+  await Promise.all(
+    [...translationIds].map(async (translationId) => {
+      const translation = await fetchGraphqlProductByDatabaseId(translationId);
+
+      if (translation?.databaseId) {
+        translationsById.set(translation.databaseId, translation);
+      }
+    }),
+  );
+
+  for (const node of nodes) {
+    if (!node.databaseId) {
+      continue;
+    }
+
+    const sources: ShowroomMetaSource[] = [
+      { slug: node.slug, meta: node.metaData, publishedAt: node.date },
+    ];
+    const translationId = findTranslationDatabaseId(node, fallbackLocale);
+
+    if (translationId) {
+      const translation = translationsById.get(translationId);
+
+      if (translation) {
+        sources.push({
+          slug: translation.slug,
+          meta: translation.metaData,
+          publishedAt: translation.date,
+        });
+      }
+    }
+
+    sourcesByProductId.set(node.databaseId, sources);
+  }
+
+  return sourcesByProductId;
+}
+
+function mapCatalogCard(
+  node: GraphQLProductCard,
+  locale: Locale,
+  nodesById: Map<number, GraphQLProductCard>,
+  showroomMetaSourcesByProductId?: Map<number, readonly ShowroomMetaSource[]>,
+) {
+  const pricedNode = resolveCatalogPricingNode(node, nodesById);
+  const showroomMetaSources =
+    (pricedNode.databaseId
+      ? showroomMetaSourcesByProductId?.get(pricedNode.databaseId)
+      : undefined) ??
+    collectShowroomMetaSourcesFromSiblingProducts(pricedNode, nodesById);
+
+  return mapGraphqlCardToCatalogProduct(pricedNode, locale, {
+    showroomMetaSources,
+  });
+}
+
+async function fetchCatalogNodesLimited(
+  where: CatalogWhere,
+  locale: Locale,
+  maxNodes: number,
+): Promise<CatalogFetchResult> {
+  const rawNodes: GraphQLProductCard[] = [];
+  let after: string | null = null;
+
+  for (;;) {
+    const remaining = maxNodes - rawNodes.length;
+    if (remaining <= 0) {
+      break;
+    }
+
+    const variables: CatalogPageVariables = {
+      first: Math.min(CATALOG_PAGE_SIZE, remaining),
+      after,
+      category: where.category ?? null,
+      categoryNotIn: where.categoryNotIn ?? null,
+    };
+
+    const data = await graphqlRequest<CatalogPageResponse, CatalogPageVariables>(
+      PRODUCT_CATALOG_PAGE,
+      variables,
+    );
+
+    rawNodes.push(...data.products.nodes);
+
+    if (!data.products.pageInfo.hasNextPage || rawNodes.length >= maxNodes) {
+      break;
+    }
+
+    after = data.products.pageInfo.endCursor;
+  }
+
+  return {
+    nodes: selectCatalogNodesForLocale(rawNodes, locale),
+    nodesById: indexCatalogNodesById(rawNodes),
+  };
+}
 
 async function fetchAllCatalogNodes(
   where: CatalogWhere,
   locale: Locale,
-): Promise<GraphQLProductCard[]> {
-  const nodes: GraphQLProductCard[] = [];
+): Promise<CatalogFetchResult> {
+  const rawNodes: GraphQLProductCard[] = [];
   let after: string | null = null;
 
   for (;;) {
@@ -70,7 +255,7 @@ async function fetchAllCatalogNodes(
       variables,
     );
 
-    nodes.push(...selectCatalogNodesForLocale(data.products.nodes, locale));
+    rawNodes.push(...data.products.nodes);
 
     if (!data.products.pageInfo.hasNextPage) {
       break;
@@ -79,19 +264,63 @@ async function fetchAllCatalogNodes(
     after = data.products.pageInfo.endCursor;
   }
 
-  return nodes;
+  return {
+    nodes: selectCatalogNodesForLocale(rawNodes, locale),
+    nodesById: indexCatalogNodesById(rawNodes),
+  };
 }
 
 function mapEquipmentCatalogNodes(
   nodes: GraphQLProductCard[],
   locale: Locale,
+  nodesById: Map<number, GraphQLProductCard>,
+  showroomMetaSourcesByProductId?: Map<number, readonly ShowroomMetaSource[]>,
 ): CatalogProduct[] {
   return nodes
-    .map((node) => mapGraphqlCardToCatalogProduct(node, locale))
+    .map((node) =>
+      mapCatalogCard(node, locale, nodesById, showroomMetaSourcesByProductId),
+    )
     .filter(
       (product) =>
         product.type === "equipment" && product.category !== "tools",
     );
+}
+
+function mapToolsCatalogNodes(
+  nodes: GraphQLProductCard[],
+  locale: Locale,
+  nodesById: Map<number, GraphQLProductCard>,
+  showroomMetaSourcesByProductId?: Map<number, readonly ShowroomMetaSource[]>,
+): CatalogProduct[] {
+  return nodes
+    .map((node) =>
+      mapCatalogCard(node, locale, nodesById, showroomMetaSourcesByProductId),
+    )
+    .filter((product) => product.category === "tools");
+}
+
+function mapCatalogNodesForRoute(
+  nodes: GraphQLProductCard[],
+  route: CategoryRoute,
+  locale: Locale,
+  nodesById: Map<number, GraphQLProductCard>,
+  showroomMetaSourcesByProductId?: Map<number, readonly ShowroomMetaSource[]>,
+): CatalogProduct[] {
+  if (route.category === "tools" || route.wcCategorySlug === TOOLS_WC_SLUG) {
+    return mapToolsCatalogNodes(
+      nodes,
+      locale,
+      nodesById,
+      showroomMetaSourcesByProductId,
+    );
+  }
+
+  return mapEquipmentCatalogNodes(
+    nodes,
+    locale,
+    nodesById,
+    showroomMetaSourcesByProductId,
+  );
 }
 
 export async function fetchGraphqlProductBySlug(slug: string) {
@@ -105,60 +334,145 @@ export async function fetchGraphqlProductBySlug(slug: string) {
   }
 }
 
+export async function fetchGraphqlProductByDatabaseId(databaseId: number) {
+  try {
+    const data = await graphqlRequest<
+      ProductBySlugResponse,
+      { id: number }
+    >(PRODUCT_BY_DATABASE_ID, { id: databaseId });
+    return data.product;
+  } catch {
+    return null;
+  }
+}
+
+async function fetchEnglishPricingProduct(
+  product: GraphQLProduct,
+): Promise<GraphQLProduct> {
+  if (getGraphqlLanguageCode(product) === "en") {
+    return product;
+  }
+
+  const englishId = findTranslationDatabaseId(product, "en");
+  if (!englishId || englishId === product.databaseId) {
+    return product;
+  }
+
+  return (await fetchGraphqlProductByDatabaseId(englishId)) ?? product;
+}
+
+async function fetchLocalizedGraphqlProduct(
+  slug: string,
+  locale: Locale,
+): Promise<GraphQLProduct | null> {
+  const remote = await fetchGraphqlProductBySlug(slug);
+
+  if (!remote) {
+    return null;
+  }
+
+  let localized: GraphQLProduct | null = null;
+
+  if (getGraphqlLanguageCode(remote) === locale) {
+    localized = remote;
+  } else {
+    const translationId = findTranslationDatabaseId(remote, locale);
+
+    if (translationId) {
+      const translated = await fetchGraphqlProductByDatabaseId(translationId);
+
+      if (translated && getGraphqlLanguageCode(translated) === locale) {
+        localized = translated;
+      }
+    }
+
+    if (!localized) {
+      const translatedSlug = resolveProductSlugForLocale(remote, locale);
+
+      if (translatedSlug && translatedSlug !== slug) {
+        const translated = await fetchGraphqlProductBySlug(translatedSlug);
+
+        if (translated && getGraphqlLanguageCode(translated) === locale) {
+          localized = translated;
+        }
+      }
+    }
+
+    if (!localized && locale === "et" && getGraphqlLanguageCode(remote) === "en") {
+      localized = remote;
+    }
+  }
+
+  if (!localized) {
+    return null;
+  }
+
+  const pricingSource = await fetchEnglishPricingProduct(localized);
+  return mergeGraphqlProductPricing(localized, pricingSource);
+}
+
 export async function getProductBySlugForLocale(
   slug: string,
   locale: Locale,
 ): Promise<CatalogProduct | undefined> {
-  const remote = await fetchGraphqlProductBySlug(slug);
+  const remote = await fetchLocalizedGraphqlProduct(slug, locale);
 
   if (!remote) {
     return undefined;
   }
 
-  if (getGraphqlLanguageCode(remote) === locale) {
-    return mapGraphqlToCatalogProduct(remote);
-  }
+  const showroomMetaSources = await buildShowroomMetaSourcesForProduct(
+    remote,
+    locale,
+  );
 
-  const translatedSlug = resolveProductSlugForLocale(remote, locale);
-  if (translatedSlug && translatedSlug !== slug) {
-    const translated = await fetchGraphqlProductBySlug(translatedSlug);
-    if (translated && getGraphqlLanguageCode(translated) === locale) {
-      return mapGraphqlToCatalogProduct(translated);
-    }
-  }
+  const mapped = mapGraphqlToCatalogProduct(remote, locale, {
+    showroomMetaSources,
+  });
 
-  if (locale === "et" && getGraphqlLanguageCode(remote) === "en") {
-    return mapGraphqlToCatalogProduct(remote);
-  }
+  const { enrichCatalogProductVariations } = await import(
+    "@/lib/woocommerce/store-api-product"
+  );
 
-  return undefined;
+  return enrichCatalogProductVariations(mapped);
 }
 
 export async function getMotorcycleProductBySlug(
   slug: string,
   locale: Locale = "en",
 ): Promise<MotorcycleProduct | null> {
-  const remote = await fetchGraphqlProductBySlug(slug);
+  const remote = await fetchLocalizedGraphqlProduct(slug, locale);
 
-  if (remote && isGraphqlMotorcycle(remote)) {
-    if (getGraphqlLanguageCode(remote) === locale) {
-      return mapGraphqlToMotorcycleProduct(remote);
-    }
+  if (!remote || !isGraphqlMotorcycle(remote)) {
+    return null;
+  }
 
-    const translatedSlug = resolveProductSlugForLocale(remote, locale);
-    if (translatedSlug) {
-      const translated = await fetchGraphqlProductBySlug(translatedSlug);
-      if (translated && isGraphqlMotorcycle(translated)) {
-        return mapGraphqlToMotorcycleProduct(translated);
-      }
-    }
+  let contentUntranslated = false;
 
-    if (locale === "et" && getGraphqlLanguageCode(remote) === "en") {
-      return mapGraphqlToMotorcycleProduct(remote);
+  if (locale === "et") {
+    const englishId = findTranslationDatabaseId(remote, "en");
+    const english = englishId
+      ? await fetchGraphqlProductByDatabaseId(englishId)
+      : null;
+
+    if (
+      english &&
+      isGraphqlMotorcycle(english) &&
+      isSameProductContent(english, remote)
+    ) {
+      contentUntranslated = true;
     }
   }
 
-  return null;
+  const showroomMetaSources = await buildShowroomMetaSourcesForProduct(
+    remote,
+    locale,
+  );
+
+  return mapGraphqlToMotorcycleProduct(remote, locale, {
+    contentUntranslated,
+    showroomMetaSources,
+  });
 }
 
 export async function getProductBySlug(
@@ -180,12 +494,103 @@ export async function getProductSlugAlternates(
   return buildProductSlugAlternates(remote);
 }
 
+export type HomepageFavoriteCatalogs = {
+  motorcycles: CatalogProduct[];
+  menEquipment: CatalogProduct[];
+  womenEquipment: CatalogProduct[];
+  accessoriesEquipment: CatalogProduct[];
+};
+
+async function fetchHomepageFavoriteCatalogsUncached(
+  locale: Locale,
+): Promise<HomepageFavoriteCatalogs> {
+  const [motorcyclesResult, menResult, womenResult, accessoriesResult] =
+    await Promise.all([
+      fetchCatalogNodesLimited(
+        { category: "motorcycles" },
+        locale,
+        HOMEPAGE_MOTORCYCLE_LIMIT,
+      ),
+      fetchCatalogNodesLimited({ category: "for-men" }, locale, HOMEPAGE_GEAR_LIMIT),
+      fetchCatalogNodesLimited(
+        { category: "for-women" },
+        locale,
+        HOMEPAGE_WOMEN_LIMIT,
+      ),
+      fetchCatalogNodesLimited(
+        { category: "accessories" },
+        locale,
+        HOMEPAGE_GEAR_LIMIT,
+      ),
+    ]);
+
+  return {
+    motorcycles: motorcyclesResult.nodes.map((node) =>
+      mapCatalogCard(node, locale, motorcyclesResult.nodesById),
+    ),
+    menEquipment: mapEquipmentCatalogNodes(
+      menResult.nodes,
+      locale,
+      menResult.nodesById,
+    ),
+    womenEquipment: mapEquipmentCatalogNodes(
+      womenResult.nodes,
+      locale,
+      womenResult.nodesById,
+    ),
+    accessoriesEquipment: mapEquipmentCatalogNodes(
+      accessoriesResult.nodes,
+      locale,
+      accessoriesResult.nodesById,
+    ),
+  };
+}
+
+const getHomepageFavoriteCatalogsEn = unstable_cache(
+  () => fetchHomepageFavoriteCatalogsUncached("en"),
+  ["homepage-favorite-catalogs", "en"],
+  { revalidate: 300, tags: ["woocommerce", "homepage-en"] },
+);
+
+const getHomepageFavoriteCatalogsEt = unstable_cache(
+  () => fetchHomepageFavoriteCatalogsUncached("et"),
+  ["homepage-favorite-catalogs", "et"],
+  { revalidate: 300, tags: ["woocommerce", "homepage-et"] },
+);
+
+const homepageFavoriteCatalogsByLocale = {
+  en: getHomepageFavoriteCatalogsEn,
+  et: getHomepageFavoriteCatalogsEt,
+} as const;
+
+export const getHomepageFavoriteCatalogs = cache(async (locale: Locale) => {
+  try {
+    return await homepageFavoriteCatalogsByLocale[locale]();
+  } catch (error) {
+    console.error("[homepage] favorite catalog fetch failed:", error);
+    return {
+      motorcycles: [],
+      menEquipment: [],
+      womenEquipment: [],
+      accessoriesEquipment: [],
+    };
+  }
+});
+
 export async function getMotorcycleCatalog(
   locale: Locale = "en",
 ): Promise<CatalogProduct[]> {
   try {
-    const nodes = await fetchAllCatalogNodes({ category: "motorcycles" }, locale);
-    return nodes.map((node) => mapGraphqlCardToCatalogProduct(node, locale));
+    const { nodes, nodesById } = await fetchAllCatalogNodes(
+      { category: "motorcycles" },
+      locale,
+    );
+    const showroomMetaSourcesByProductId =
+      await buildCatalogShowroomMetaSourcesMap(nodes, locale);
+
+    return nodes.map((node) =>
+      mapCatalogCard(node, locale, nodesById, showroomMetaSourcesByProductId),
+    );
   } catch (error) {
     console.error("[motorcycles] GraphQL catalog fetch failed:", error);
     return [];
@@ -196,14 +601,14 @@ export async function getEquipmentCatalog(
   locale: Locale = "en",
 ): Promise<CatalogProduct[]> {
   try {
-    const nodes = await fetchAllCatalogNodes(
+    const { nodes, nodesById } = await fetchAllCatalogNodes(
       {
         categoryNotIn: ["motorcycles", "tools-maintenance"],
       },
       locale,
     );
 
-    return mapEquipmentCatalogNodes(nodes, locale);
+    return mapEquipmentCatalogNodes(nodes, locale, nodesById);
   } catch (error) {
     console.error("[equipment] GraphQL catalog fetch failed:", error);
     return [];
@@ -216,8 +621,8 @@ export async function getEquipmentCatalogForRoute(
 ): Promise<CatalogProduct[]> {
   try {
     const where = resolveEquipmentCatalogWhere(route);
-    const nodes = await fetchAllCatalogNodes(where, locale);
-    return mapEquipmentCatalogNodes(nodes, locale);
+    const { nodes, nodesById } = await fetchAllCatalogNodes(where, locale);
+    return mapCatalogNodesForRoute(nodes, route, locale, nodesById);
   } catch (error) {
     console.error("[equipment] GraphQL catalog fetch failed:", error);
     return [];
@@ -227,21 +632,15 @@ export async function getEquipmentCatalogForRoute(
 export async function getToolsCatalog(
   locale: Locale = "en",
 ): Promise<CatalogProduct[]> {
-  if (locale !== "et") {
-    return [];
-  }
-
   try {
-    const nodes = await fetchAllCatalogNodes(
+    const { nodes, nodesById } = await fetchAllCatalogNodes(
       {
-        category: "tools-maintenance",
+        category: TOOLS_WC_SLUG,
       },
       locale,
     );
 
-    return nodes
-      .map((node) => mapGraphqlCardToCatalogProduct(node, locale))
-      .filter((product) => product.category === "tools");
+    return mapToolsCatalogNodes(nodes, locale, nodesById);
   } catch (error) {
     console.error("[tools] GraphQL catalog fetch failed:", error);
     return [];
@@ -260,7 +659,7 @@ export async function getCatalogProductsBySlugs(
 
 export async function getSimilarProducts(
   product: CatalogProduct,
-  limit = 4,
+  limit = RELATED_PRODUCTS_LIMIT,
   locale: Locale = "en",
 ): Promise<CatalogProduct[]> {
   const catalog =

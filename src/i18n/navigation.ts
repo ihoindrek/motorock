@@ -1,11 +1,19 @@
 import type { Dictionary } from "@/i18n/dictionaries/en";
 import type { Locale } from "@/i18n/config";
 import { localizedHref } from "@/i18n/paths";
-import type { EquipmentNavTree, WcCategoryNode } from "@/lib/graphql/categories";
-import { getLocalizedCategoryName } from "@/lib/graphql/categories";
+import type { EquipmentNavTree, WcCategoryEntry, WcCategoryNode } from "@/lib/graphql/categories";
+import { getLocalizedCategoryName, getLocalizedCategorySlug } from "@/lib/graphql/categories";
 import { getBrandCatalogHref } from "@/lib/shop/brand-catalog-url";
-import { buildEquipmentCategoryHref } from "@/lib/shop/equipment-route";
-import type { MegaMenu, NavColumn, NavLink, PrimaryNavItem } from "@/data/navigation";
+import {
+  buildEquipmentCategoryHref,
+  buildEquipmentHubHref,
+} from "@/lib/shop/category-url";
+import { buildEquipmentRootCategoryHref } from "@/lib/shop/equipment-route";
+import {
+  buildShopCategoryHref,
+  buildToolsCategoryHref,
+} from "@/lib/shop/shop-category-route";
+import type { MegaMenu, NavColumn, NavColumnId, NavLink, PrimaryNavItem } from "@/data/navigation";
 
 const equipmentBrandSlugs = [
   { slug: "pando-moto", label: "Pando Moto" },
@@ -14,13 +22,6 @@ const equipmentBrandSlugs = [
   { slug: "bobhead", label: "Bobhead" },
   { slug: "motogirl", label: "Motogirl" },
 ] as const;
-
-function prefixLinks(locale: Locale, links: readonly { href: string; label: string }[]): NavLink[] {
-  return links.map((link) => ({
-    href: localizedHref(locale, link.href),
-    label: link.label,
-  }));
-}
 
 function sortCategoryChildren(children: readonly WcCategoryNode[]) {
   return [...children].sort((left, right) => {
@@ -37,7 +38,7 @@ function sortCategoryChildren(children: readonly WcCategoryNode[]) {
 
 function buildCategoryColumnLinks(
   locale: Locale,
-  parentWcSlug: string,
+  parent: WcCategoryNode,
   children: readonly WcCategoryNode[],
 ): NavLink[] {
   const links: NavLink[] = [];
@@ -46,7 +47,11 @@ function buildCategoryColumnLinks(
     links.push({
       href: localizedHref(
         locale,
-        buildEquipmentCategoryHref(parentWcSlug, child.slug),
+        buildEquipmentCategoryHref(
+          locale,
+          getLocalizedCategorySlug(parent, locale),
+          getLocalizedCategorySlug(child, locale),
+        ),
       ),
       label: getLocalizedCategoryName(child, locale),
     });
@@ -61,7 +66,7 @@ export function buildEquipmentMegaMenuFromTree(
   tree: EquipmentNavTree,
 ): MegaMenu {
   const equipmentBrandLinks = equipmentBrandSlugs.map(({ slug, label }) => ({
-    href: localizedHref(locale, getBrandCatalogHref(slug)),
+    href: localizedHref(locale, getBrandCatalogHref(slug, locale)),
     label,
   }));
 
@@ -69,7 +74,10 @@ export function buildEquipmentMegaMenuFromTree(
 
   if (tree.helmets) {
     accessoriesLinks.push({
-      href: localizedHref(locale, buildEquipmentCategoryHref("helmets")),
+      href: localizedHref(
+        locale,
+        buildEquipmentRootCategoryHref(tree.helmets, "helmets", locale),
+      ),
       label: getLocalizedCategoryName(tree.helmets, locale),
     });
   }
@@ -77,7 +85,7 @@ export function buildEquipmentMegaMenuFromTree(
   if (tree.accessories?.children?.nodes.length) {
     for (const link of buildCategoryColumnLinks(
       locale,
-      "accessories",
+      tree.accessories,
       tree.accessories.children.nodes,
     )) {
       if (!accessoriesLinks.some((existing) => existing.href === link.href)) {
@@ -91,29 +99,38 @@ export function buildEquipmentMegaMenuFromTree(
       id: "men",
       title: dict.nav.forMen,
       viewAll: {
-        href: localizedHref(locale, buildEquipmentCategoryHref("for-men")),
+        href: localizedHref(
+          locale,
+          buildEquipmentRootCategoryHref(tree.forMen, "for-men", locale),
+        ),
         label: dict.nav.viewAllMens,
       },
       links: tree.forMen?.children?.nodes.length
-        ? buildCategoryColumnLinks(locale, "for-men", tree.forMen.children.nodes)
+        ? buildCategoryColumnLinks(locale, tree.forMen, tree.forMen.children.nodes)
         : [],
     },
     {
       id: "women",
       title: dict.nav.forWomen,
       viewAll: {
-        href: localizedHref(locale, buildEquipmentCategoryHref("for-women")),
+        href: localizedHref(
+          locale,
+          buildEquipmentRootCategoryHref(tree.forWomen, "for-women", locale),
+        ),
         label: dict.nav.viewAllWomens,
       },
       links: tree.forWomen?.children?.nodes.length
-        ? buildCategoryColumnLinks(locale, "for-women", tree.forWomen.children.nodes)
+        ? buildCategoryColumnLinks(locale, tree.forWomen, tree.forWomen.children.nodes)
         : [],
     },
     {
       id: "accessories",
       title: dict.nav.accessories,
       viewAll: {
-        href: localizedHref(locale, buildEquipmentCategoryHref("accessories")),
+        href: localizedHref(
+          locale,
+          buildEquipmentRootCategoryHref(tree.accessories, "accessories", locale),
+        ),
         label: dict.nav.viewAllAccessories,
       },
       links: accessoriesLinks,
@@ -122,7 +139,7 @@ export function buildEquipmentMegaMenuFromTree(
       id: "brands",
       title: dict.nav.brands,
       viewAll: {
-        href: localizedHref(locale, "/shop/equipment"),
+        href: localizedHref(locale, buildEquipmentHubHref(locale)),
         label: dict.nav.shopAllEquipment,
       },
       links: equipmentBrandLinks,
@@ -132,7 +149,7 @@ export function buildEquipmentMegaMenuFromTree(
   return {
     columns,
     promo: {
-      href: localizedHref(locale, getBrandCatalogHref("pando-moto")),
+      href: localizedHref(locale, getBrandCatalogHref("pando-moto", locale)),
       image: "/JRH10015_L23.webp",
       imageAlt: "Pando Moto riding gear",
       tag: dict.nav.promoTag,
@@ -142,86 +159,59 @@ export function buildEquipmentMegaMenuFromTree(
   };
 }
 
-function buildStaticEquipmentMegaMenu(locale: Locale, dict: Dictionary): MegaMenu {
-  const labels = dict.equipmentMenu;
-
-  const menGearLinks = [
-    { href: buildEquipmentCategoryHref("for-men", "jackets-and-tags"), label: labels.jackets },
-    { href: buildEquipmentCategoryHref("for-men", "vests-2"), label: labels.vests },
-    { href: buildEquipmentCategoryHref("for-men", "mens-pants"), label: labels.pants },
-    { href: buildEquipmentCategoryHref("for-men", "gloves"), label: labels.gloves },
-    { href: buildEquipmentCategoryHref("for-men", "footwear"), label: labels.footwear },
-    { href: buildEquipmentCategoryHref("for-men", "sweaters"), label: labels.hoodies },
-    { href: buildEquipmentCategoryHref("for-men", "t-shirts"), label: labels.tshirts },
-    { href: buildEquipmentCategoryHref("for-men", "base-layer-warm-underwear"), label: labels.baseLayers },
-  ] as const;
-
-  const womenGearLinks = [
-    { href: buildEquipmentCategoryHref("for-women", "jackets-and-tags-2"), label: labels.jackets },
-    { href: buildEquipmentCategoryHref("for-women", "vests-3"), label: labels.vests },
-    { href: buildEquipmentCategoryHref("for-women", "pants-jeans"), label: labels.pants },
-    { href: buildEquipmentCategoryHref("for-women", "gloves-2"), label: labels.gloves },
-    { href: buildEquipmentCategoryHref("for-women", "footwear-2"), label: labels.footwear },
-    { href: buildEquipmentCategoryHref("for-women", "hoodies-sweatshirts"), label: labels.hoodies },
-    { href: buildEquipmentCategoryHref("for-women", "t-shirts-jerseys"), label: labels.tshirts },
-    { href: buildEquipmentCategoryHref("for-women", "base-layer-warm-underwear-2"), label: labels.baseLayers },
-  ] as const;
-
+function buildEmptyEquipmentMegaMenu(locale: Locale, dict: Dictionary): MegaMenu {
   const equipmentBrandLinks = equipmentBrandSlugs.map(({ slug, label }) => ({
-    href: localizedHref(locale, getBrandCatalogHref(slug)),
+    href: localizedHref(locale, getBrandCatalogHref(slug, locale)),
     label,
   }));
 
-  const columns: NavColumn[] = [
-    {
-      id: "men",
-      title: dict.nav.forMen,
-      viewAll: {
-        href: localizedHref(locale, buildEquipmentCategoryHref("for-men")),
-        label: dict.nav.viewAllMens,
-      },
-      links: prefixLinks(locale, menGearLinks),
+  const emptyColumn = (
+    id: NavColumnId,
+    title: string,
+    viewAllHref: string,
+    viewAllLabel: string,
+  ): NavColumn => ({
+    id,
+    title,
+    viewAll: {
+      href: localizedHref(locale, viewAllHref),
+      label: viewAllLabel,
     },
-    {
-      id: "women",
-      title: dict.nav.forWomen,
-      viewAll: {
-        href: localizedHref(locale, buildEquipmentCategoryHref("for-women")),
-        label: dict.nav.viewAllWomens,
-      },
-      links: prefixLinks(locale, womenGearLinks),
-    },
-    {
-      id: "accessories",
-      title: dict.nav.accessories,
-      viewAll: {
-        href: localizedHref(locale, buildEquipmentCategoryHref("accessories")),
-        label: dict.nav.viewAllAccessories,
-      },
-      links: prefixLinks(locale, [
-        { href: buildEquipmentCategoryHref("helmets"), label: labels.helmets },
-        { href: buildEquipmentCategoryHref("accessories", "goggles"), label: labels.goggles },
-        { href: buildEquipmentCategoryHref("accessories", "headwear"), label: labels.headwear },
-        { href: buildEquipmentCategoryHref("accessories", "bags-backpacks"), label: labels.bags },
-        { href: buildEquipmentCategoryHref("accessories", "safety"), label: labels.safety },
-        { href: buildEquipmentCategoryHref("accessories", "scarves-tubulars"), label: labels.scarves },
-      ]),
-    },
-    {
-      id: "brands",
-      title: dict.nav.brands,
-      viewAll: {
-        href: localizedHref(locale, "/shop/equipment"),
-        label: dict.nav.shopAllEquipment,
-      },
-      links: equipmentBrandLinks,
-    },
-  ];
+    links: [],
+  });
 
   return {
-    columns,
+    columns: [
+      emptyColumn(
+        "men",
+        dict.nav.forMen,
+        buildEquipmentCategoryHref(locale, "for-men"),
+        dict.nav.viewAllMens,
+      ),
+      emptyColumn(
+        "women",
+        dict.nav.forWomen,
+        buildEquipmentCategoryHref(locale, "for-women"),
+        dict.nav.viewAllWomens,
+      ),
+      emptyColumn(
+        "accessories",
+        dict.nav.accessories,
+        buildEquipmentCategoryHref(locale, "accessories"),
+        dict.nav.viewAllAccessories,
+      ),
+      {
+        id: "brands",
+        title: dict.nav.brands,
+        viewAll: {
+          href: localizedHref(locale, buildEquipmentHubHref(locale)),
+          label: dict.nav.shopAllEquipment,
+        },
+        links: equipmentBrandLinks,
+      },
+    ],
     promo: {
-      href: localizedHref(locale, getBrandCatalogHref("pando-moto")),
+      href: localizedHref(locale, getBrandCatalogHref("pando-moto", locale)),
       image: "/JRH10015_L23.webp",
       imageAlt: "Pando Moto riding gear",
       tag: dict.nav.promoTag,
@@ -236,17 +226,27 @@ export function getEquipmentMegaMenu(
   dict: Dictionary,
   tree?: EquipmentNavTree | null,
 ): MegaMenu {
-  if (tree && (tree.forMen || tree.forWomen || tree.accessories)) {
+  if (tree && (tree.forMen || tree.forWomen || tree.accessories || tree.helmets)) {
     return buildEquipmentMegaMenuFromTree(locale, dict, tree);
   }
 
-  return buildStaticEquipmentMegaMenu(locale, dict);
+  return buildEmptyEquipmentMegaMenu(locale, dict);
+}
+
+function resolveToolsHref(
+  locale: Locale,
+  toolsCategory?: Pick<WcCategoryEntry, "slug" | "languageCode" | "translations"> | null,
+) {
+  return toolsCategory
+    ? buildShopCategoryHref(toolsCategory, locale)
+    : buildToolsCategoryHref(locale);
 }
 
 export function getShopNav(
   locale: Locale,
   dict: Dictionary,
   tree?: EquipmentNavTree | null,
+  toolsCategory?: WcCategoryEntry | null,
 ): PrimaryNavItem[] {
   const items: PrimaryNavItem[] = [
     {
@@ -255,7 +255,7 @@ export function getShopNav(
       group: "shop",
     },
     {
-      href: localizedHref(locale, "/shop/equipment"),
+      href: localizedHref(locale, buildEquipmentHubHref(locale)),
       label: dict.nav.equipment,
       group: "shop",
       megaMenu: getEquipmentMegaMenu(locale, dict, tree),
@@ -264,7 +264,7 @@ export function getShopNav(
 
   if (locale === "et") {
     items.push({
-      href: localizedHref(locale, "/shop/tools"),
+      href: localizedHref(locale, resolveToolsHref(locale, toolsCategory)),
       label: dict.nav.tools,
       group: "shop",
     });
@@ -297,18 +297,41 @@ export function getPrimaryNav(locale: Locale, dict: Dictionary) {
   return [...getShopNav(locale, dict), ...getSiteNav(locale, dict)];
 }
 
-export function getFooterShopLinks(locale: Locale, dict: Dictionary) {
+export function getFooterShopLinks(
+  locale: Locale,
+  dict: Dictionary,
+  toolsCategory?: WcCategoryEntry | null,
+  tree?: EquipmentNavTree | null,
+) {
   const links = [
     { href: localizedHref(locale, "/shop/motorcycles"), label: dict.nav.motorcycles },
-    { href: localizedHref(locale, "/shop/equipment"), label: dict.nav.equipment },
-    { href: localizedHref(locale, buildEquipmentCategoryHref("for-men")), label: dict.footer.mensGear },
-    { href: localizedHref(locale, buildEquipmentCategoryHref("for-women")), label: dict.footer.womensGear },
-    { href: localizedHref(locale, buildEquipmentCategoryHref("accessories")), label: dict.footer.accessories },
+    { href: localizedHref(locale, buildEquipmentHubHref(locale)), label: dict.nav.equipment },
+    {
+      href: localizedHref(
+        locale,
+        buildEquipmentRootCategoryHref(tree?.forMen, "for-men", locale),
+      ),
+      label: dict.footer.mensGear,
+    },
+    {
+      href: localizedHref(
+        locale,
+        buildEquipmentRootCategoryHref(tree?.forWomen, "for-women", locale),
+      ),
+      label: dict.footer.womensGear,
+    },
+    {
+      href: localizedHref(
+        locale,
+        buildEquipmentRootCategoryHref(tree?.accessories, "accessories", locale),
+      ),
+      label: dict.footer.accessories,
+    },
   ];
 
   if (locale === "et") {
     links.push({
-      href: localizedHref(locale, "/shop/tools"),
+      href: localizedHref(locale, resolveToolsHref(locale, toolsCategory)),
       label: dict.nav.tools,
     });
   }
@@ -337,8 +360,15 @@ export function getFooterCompanyLinks(locale: Locale, dict: Dictionary) {
 
 export function getFooterLegalLinks(locale: Locale, dict: Dictionary) {
   return [
-    { href: localizedHref(locale, "/privacy"), label: dict.footer.privacy },
+    { href: localizedHref(locale, "/support"), label: dict.footer.support },
     { href: localizedHref(locale, "/terms"), label: dict.footer.terms },
+    { href: localizedHref(locale, "/privacy"), label: dict.footer.privacy },
+    { href: localizedHref(locale, "/returns"), label: dict.footer.returns },
+    {
+      href: localizedHref(locale, "/returns#withdrawal-form"),
+      label: dict.footer.returnProduct,
+    },
     { href: localizedHref(locale, "/shipping"), label: dict.footer.shipping },
+    { href: localizedHref(locale, "/cookies"), label: dict.footer.cookies },
   ];
 }

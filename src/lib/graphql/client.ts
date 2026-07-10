@@ -1,4 +1,5 @@
 const DEFAULT_ENDPOINT = "https://motorock.eu/graphql";
+const DEFAULT_REVALIDATE_SECONDS = 300;
 
 type GraphQLResponse<T> = {
   data?: T;
@@ -9,20 +10,33 @@ export function getGraphqlEndpoint() {
   return process.env.WOOCOMMERCE_GRAPHQL_URL ?? DEFAULT_ENDPOINT;
 }
 
+type GraphqlRequestInit = RequestInit & {
+  next?: {
+    revalidate?: number | false;
+    tags?: string[];
+  };
+};
+
 export async function graphqlRequest<TData, TVariables = Record<string, unknown>>(
   query: string,
   variables?: TVariables,
-  init?: RequestInit,
+  init?: GraphqlRequestInit,
 ): Promise<TData> {
+  const nextOptions = init?.next ?? {};
+  const cacheTags = new Set(["woocommerce", ...(nextOptions.tags ?? [])]);
+
   const response = await fetch(getGraphqlEndpoint(), {
+    ...init,
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       ...(init?.headers ?? {}),
     },
     body: JSON.stringify({ query, variables }),
-    next: { revalidate: 300 },
-    ...init,
+    next: {
+      revalidate: nextOptions.revalidate ?? DEFAULT_REVALIDATE_SECONDS,
+      tags: [...cacheTags],
+    },
   });
 
   if (!response.ok) {

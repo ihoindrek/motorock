@@ -3,11 +3,13 @@ import type {
   ProductCategory,
   ProductGender,
 } from "@/types/catalog-product";
+import type { Dictionary } from "@/i18n/dictionaries/en";
 import {
-  ACCESSORY_CATEGORIES,
-  PROTECTION_CATEGORIES,
+  productInAccessoriesBranch,
+  productInProtectionBranch,
+  productInToolsCategory,
+  productMatchesWcCategoryRoute,
 } from "@/lib/shop/wc-categories";
-import { productMatchesRouteCategory } from "@/lib/shop/equipment-route";
 
 export type EquipmentCatalogWhere = {
   category?: string;
@@ -51,43 +53,6 @@ export type CategoryRoute = {
   accessoriesOnly?: boolean;
 };
 
-export const categoryLabels: Record<ProductCategory, string> = {
-  jackets: "Jackets & tags",
-  vests: "Vests",
-  pants: "Pants & jeans",
-  gloves: "Gloves",
-  footwear: "Footwear",
-  hoodies: "Hoodies & sweaters",
-  "t-shirts": "T-shirts & jerseys",
-  "base-layers": "Base layers",
-  helmets: "Helmets",
-  "helmet-accessories": "Helmet accessories",
-  goggles: "Goggles",
-  headwear: "Headwear",
-  bags: "Bags & backpacks",
-  belts: "Belts",
-  jewelry: "Jewelry",
-  scarves: "Scarves & tubulars",
-  socks: "Socks",
-  safety: "Safety & protection",
-  accessories: "Accessories",
-  tools: "Tools & maintenance",
-  other: "Other",
-  motorcycles: "Motorcycles",
-};
-
-const routeCategorySlugs = new Set<string>(
-  Object.keys(categoryLabels).filter((slug) => slug !== "motorcycles"),
-);
-
-export function isRouteCategorySlug(slug: string): slug is ProductCategory {
-  return routeCategorySlugs.has(slug);
-}
-
-export function getCategoryLabel(category: ProductCategory) {
-  return categoryLabels[category];
-}
-
 export const motorcyclesCatalogRoute: CategoryRoute = {
   title: "Motorcycles",
   description:
@@ -99,152 +64,41 @@ export const motorcyclesCatalogRoute: CategoryRoute = {
   category: "motorcycles",
 };
 
-export const toolsCatalogRoute: CategoryRoute = {
-  title: "Tools & Maintenance",
-  description:
-    "Workshop essentials, maintenance kits, and tools to keep your machine road-ready.",
-  breadcrumbs: [
-    { label: "Home", href: "/" },
-    { label: "Tools & Maintenance", href: "/shop/tools" },
-  ],
-  category: "tools",
-};
+export function buildMotorcyclesCatalogRoute(
+  dict: Dictionary,
+  brand?: string,
+): CategoryRoute {
+  const base: CategoryRoute = {
+    title: dict.pages.motorcyclesTitle,
+    description: dict.pages.motorcyclesDescription,
+    breadcrumbs: [
+      { label: dict.pdp.breadcrumbHome, href: "/" },
+      { label: dict.nav.motorcycles, href: "/shop/motorcycles" },
+    ],
+    category: "motorcycles",
+  };
 
-export function parseEquipmentSlug(slug: string[] = []): CategoryRoute {
-  const breadcrumbs: Breadcrumb[] = [
-    { label: "Home", href: "/" },
-    { label: "Driving Equipment", href: "/shop/equipment" },
-  ];
-
-  if (slug.length === 0) {
-    return {
-      title: "Driving Equipment",
-      description:
-        "Premium riding gear for men and women — jackets, protection, and rebel essentials.",
-      breadcrumbs,
-    };
+  if (!brand) {
+    return base;
   }
 
-  if (slug[0] === "men") {
-    breadcrumbs.push({ label: "Men", href: "/shop/equipment/men" });
-
-    if (slug[1] && isRouteCategorySlug(slug[1])) {
-      const category = slug[1];
-      breadcrumbs.push({
-        label: categoryLabels[category],
-        href: `/shop/equipment/men/${category}`,
-      });
-
-      return {
-        title: `Men's ${categoryLabels[category]}`,
-        description: `Men's ${categoryLabels[category].toLowerCase()} — built for the ride.`,
-        breadcrumbs,
-        gender: "men",
-        category,
-      };
-    }
-
-    return {
-      title: "Men's riding gear",
-      description: "Jackets, pants, gloves and more — engineered for riders.",
-      breadcrumbs,
-      gender: "men",
-    };
-  }
-
-  if (slug[0] === "women") {
-    breadcrumbs.push({ label: "Women", href: "/shop/equipment/women" });
-
-    if (slug[1] && isRouteCategorySlug(slug[1])) {
-      const category = slug[1];
-      breadcrumbs.push({
-        label: categoryLabels[category],
-        href: `/shop/equipment/women/${category}`,
-      });
-
-      return {
-        title: `Women's ${categoryLabels[category]}`,
-        description: `Women's ${categoryLabels[category].toLowerCase()} — style meets protection.`,
-        breadcrumbs,
-        gender: "women",
-        category,
-      };
-    }
-
-    return {
-      title: "Women's riding gear",
-      description: "Riding gear designed for women who refuse to blend in.",
-      breadcrumbs,
-      gender: "women",
-    };
-  }
-
-  if (slug[0] === "protection") {
-    breadcrumbs.push({
-      label: "Protection",
-      href: "/shop/equipment/protection",
-    });
-
-    return {
-      title: "Protection & safety",
-      description: "Helmets, goggles and CE-rated protection for every ride.",
-      breadcrumbs,
-      protectionOnly: true,
-    };
-  }
-
-  if (slug[0] === "accessories") {
-    breadcrumbs.push({
-      label: "Accessories",
-      href: "/shop/equipment/accessories",
-    });
-
-    if (slug[1] && isRouteCategorySlug(slug[1])) {
-      const category = slug[1];
-      breadcrumbs.push({
-        label: categoryLabels[category],
-        href: `/shop/equipment/accessories/${category}`,
-      });
-
-      return {
-        title: categoryLabels[category],
-        description: `${categoryLabels[category]} for riders who demand more.`,
-        breadcrumbs,
-        category,
-      };
-    }
-
-    return {
-      title: "Accessories",
-      description: "Goggles, headwear, bags, and the finishing details for every ride.",
-      breadcrumbs,
-      accessoriesOnly: true,
-    };
-  }
-
-  if (slug[0] === "armour") {
-    return parseEquipmentSlug(["safety"]);
-  }
-
-  if (slug[0] && isRouteCategorySlug(slug[0])) {
-    const category = slug[0];
-    breadcrumbs.push({
-      label: categoryLabels[category],
-      href: `/shop/equipment/${category}`,
-    });
-
-    return {
-      title: categoryLabels[category],
-      description: `${categoryLabels[category]} for riders who demand more.`,
-      breadcrumbs,
-      category,
-    };
-  }
+  const brandSlug = brand.toLowerCase().replace(/\s+/g, "-");
 
   return {
-    title: "Driving Equipment",
-    description: "Browse our riding gear collection.",
-    breadcrumbs,
+    ...base,
+    brand,
+    title: dict.catalog.brandMotorcyclesTitle.replace("{brand}", brand),
+    description: dict.catalog.brandMotorcyclesDescription.replace(
+      "{brand}",
+      brand,
+    ),
+    breadcrumbs: [
+      ...base.breadcrumbs,
+      {
+        label: brand,
+        href: `/shop/motorcycles?brand=${brandSlug}`,
+      },
+    ],
   };
 }
 
@@ -253,7 +107,15 @@ export function filterProductsByRoute(
   route: CategoryRoute,
 ) {
   return products.filter((product) => {
-    if (product.category === "tools" && route.category !== "tools") {
+    if (route.category === "tools") {
+      return productInToolsCategory(product.wcCategorySlugs);
+    }
+
+    if (route.category === "motorcycles") {
+      return product.type === "motorcycle";
+    }
+
+    if (productInToolsCategory(product.wcCategorySlugs)) {
       return false;
     }
 
@@ -269,25 +131,18 @@ export function filterProductsByRoute(
       }
     }
 
-    if (route.category && product.category !== route.category) {
-      return false;
-    }
-
-    if (route.wcCategorySlug && !productMatchesRouteCategory(product.wcCategorySlugs, route)) {
-      return false;
-    }
-
     if (
-      route.protectionOnly &&
-      !PROTECTION_CATEGORIES.includes(product.category)
+      route.wcCategorySlug &&
+      !productMatchesWcCategoryRoute(product.wcCategorySlugs, route.wcCategorySlug)
     ) {
       return false;
     }
 
-    if (
-      route.accessoriesOnly &&
-      !ACCESSORY_CATEGORIES.includes(product.category)
-    ) {
+    if (route.protectionOnly && !productInProtectionBranch(product.wcCategorySlugs)) {
+      return false;
+    }
+
+    if (route.accessoriesOnly && !productInAccessoriesBranch(product.wcCategorySlugs)) {
       return false;
     }
 
@@ -297,6 +152,49 @@ export function filterProductsByRoute(
 
     return true;
   });
+}
+
+export type CategoryFilterFacets = {
+  showSizeFilter: boolean;
+  showBrandFilter: boolean;
+  showCategoryFilter: boolean;
+};
+
+export function productHasSizeOptions(product: CatalogProduct): boolean {
+  return (
+    product.type === "equipment" &&
+    product.category !== "tools" &&
+    product.sizes.some((size) => size !== "One size")
+  );
+}
+
+export function resolveCategoryFilterFacets(
+  route: CategoryRoute,
+  products: readonly CatalogProduct[],
+): CategoryFilterFacets {
+  const brands = new Set(products.map((product) => product.brand));
+
+  if (route.category === "motorcycles") {
+    return {
+      showSizeFilter: false,
+      showBrandFilter: true,
+      showCategoryFilter: false,
+    };
+  }
+
+  if (route.category === "tools") {
+    return {
+      showSizeFilter: false,
+      showBrandFilter: brands.size > 1,
+      showCategoryFilter: false,
+    };
+  }
+
+  return {
+    showSizeFilter: products.some(productHasSizeOptions),
+    showBrandFilter: brands.size > 1,
+    showCategoryFilter: true,
+  };
 }
 
 export const searchResultsRoute: CategoryRoute = {
@@ -372,11 +270,13 @@ export function sortProducts(
 
 export function formatPrice(price: number, locale: "en" | "et" = "et") {
   const intlLocale = locale === "et" ? "et-EE" : "en-GB";
+  const hasCents = Math.abs(price - Math.round(price)) > 0.001;
 
   return new Intl.NumberFormat(intlLocale, {
     style: "currency",
     currency: "EUR",
-    maximumFractionDigits: 0,
+    minimumFractionDigits: hasCents ? 2 : 0,
+    maximumFractionDigits: hasCents ? 2 : 0,
   })
     .format(price)
     .replace(/ /g, "\u00a0");

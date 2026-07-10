@@ -10,8 +10,13 @@ export const CART_SHIPPING = `
       subtotal
       shippingTotal
       total
+      discountTotal
       needsShippingAddress
       chosenShippingMethods
+      appliedCoupons {
+        code
+        discountAmount
+      }
       availableShippingMethods {
         packageDetails
         rates {
@@ -48,24 +53,27 @@ export const CART_ITEM_COUNT = `
   }
 `;
 
-export const RESOLVE_PRODUCT_IDS = `
-  query ResolveProductIds($slug: ID!) {
-    product(id: $slug, idType: SLUG) {
-      databaseId
-      ... on SimpleProduct {
-        __typename
-      }
-      ... on VariableProduct {
-        __typename
-        variations(first: 100) {
+const RESOLVE_PRODUCT_FIELDS = `
+  databaseId
+  languageCode
+  translations {
+    databaseId
+    language {
+      code
+    }
+  }
+  ... on SimpleProduct {
+    __typename
+  }
+  ... on VariableProduct {
+    __typename
+    variations(first: 100) {
+      nodes {
+        databaseId
+        attributes {
           nodes {
-            databaseId
-            attributes {
-              nodes {
-                name
-                value
-              }
-            }
+            name
+            value
           }
         }
       }
@@ -73,27 +81,18 @@ export const RESOLVE_PRODUCT_IDS = `
   }
 `;
 
+export const RESOLVE_PRODUCT_IDS = `
+  query ResolveProductIds($slug: ID!) {
+    product(id: $slug, idType: SLUG) {
+      ${RESOLVE_PRODUCT_FIELDS}
+    }
+  }
+`;
+
 export const RESOLVE_PRODUCT_BY_ID = `
   query ResolveProductById($id: ID!) {
     product(id: $id, idType: DATABASE_ID) {
-      databaseId
-      ... on SimpleProduct {
-        __typename
-      }
-      ... on VariableProduct {
-        __typename
-        variations(first: 100) {
-          nodes {
-            databaseId
-            attributes {
-              nodes {
-                name
-                value
-              }
-            }
-          }
-        }
-      }
+      ${RESOLVE_PRODUCT_FIELDS}
     }
   }
 `;
@@ -140,9 +139,15 @@ export const UPDATE_SHIPPING_METHOD = `
   mutation UpdateShippingMethod($input: UpdateShippingMethodInput!) {
     updateShippingMethod(input: $input) {
       cart {
+        subtotal
         shippingTotal
         total
+        discountTotal
         chosenShippingMethods
+        appliedCoupons {
+          code
+          discountAmount
+        }
         availableShippingMethods {
           rates {
             id
@@ -152,6 +157,49 @@ export const UPDATE_SHIPPING_METHOD = `
             instanceId
           }
         }
+      }
+    }
+  }
+`;
+
+const CART_TOTALS_FRAGMENT = `
+  subtotal
+  shippingTotal
+  total
+  discountTotal
+  needsShippingAddress
+  chosenShippingMethods
+  appliedCoupons {
+    code
+    discountAmount
+  }
+  availableShippingMethods {
+    packageDetails
+    rates {
+      id
+      label
+      cost
+      methodId
+      instanceId
+    }
+  }
+`;
+
+export const APPLY_COUPON = `
+  mutation ApplyCoupon($input: ApplyCouponInput!) {
+    applyCoupon(input: $input) {
+      cart {
+        ${CART_TOTALS_FRAGMENT}
+      }
+    }
+  }
+`;
+
+export const REMOVE_COUPONS = `
+  mutation RemoveCoupons($input: RemoveCouponsInput!) {
+    removeCoupons(input: $input) {
+      cart {
+        ${CART_TOTALS_FRAGMENT}
       }
     }
   }

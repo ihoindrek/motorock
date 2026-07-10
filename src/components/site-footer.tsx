@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { brands } from "@/data/brands";
-import { useCheckoutStep } from "@/context/checkout-step-context";
+import { useCategoryTree, useToolsCategory } from "@/context/category-tree-context";
 import { useDictionary, useLocale } from "@/context/locale-context";
 import {
   getFooterCompanyLinks,
@@ -15,6 +15,7 @@ import {
 } from "@/i18n/navigation";
 import { localizedHref, stripLocaleFromPath } from "@/i18n/paths";
 import { getBrandCatalogHref } from "@/lib/shop/brand-catalog-url";
+import { SHOWROOM } from "@/data/showroom";
 
 function SocialIcon({ children }: { children: ReactNode }) {
   return (
@@ -153,7 +154,7 @@ function CheckoutFooter() {
   const legalLinks = getFooterLegalLinks(locale, dictionary);
 
   return (
-    <footer className="relative text-paper">
+    <footer className="relative hidden text-paper lg:block">
       <div className="site-footer-surface relative overflow-hidden">
         <div
           className="pointer-events-none absolute inset-x-0 top-0 z-20 h-px bg-gradient-to-r from-transparent via-accent/60 to-transparent"
@@ -165,16 +166,16 @@ function CheckoutFooter() {
               <p className="section-eyebrow text-paper/45">{dictionary.footer.needHelp}</p>
               <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-baseline sm:gap-x-8 sm:gap-y-2">
                 <a
-                  href="mailto:hello@motorock.eu"
+                  href={SHOWROOM.emailHref}
                   className="font-body text-xl font-extrabold uppercase tracking-tight text-paper transition-colors hover:text-accent sm:text-2xl"
                 >
-                  hello@motorock.eu
+                  {SHOWROOM.email}
                 </a>
                 <a
-                  href="tel:+37255551234"
+                  href="tel:+37256500400"
                   className="font-body text-lg font-bold tabular-nums text-paper/80 transition-colors hover:text-accent sm:text-xl"
                 >
-                  +372 5555 1234
+                  +372 56 500 400
                 </a>
               </div>
             </div>
@@ -206,10 +207,11 @@ export function SiteFooter() {
   const pathname = usePathname();
   const locale = useLocale();
   const dictionary = useDictionary();
-  const { checkoutStep } = useCheckoutStep();
-  const isCheckoutFlow =
-    stripLocaleFromPath(pathname) === "/cart" && checkoutStep !== null;
-  const shopLinks = getFooterShopLinks(locale, dictionary);
+  const toolsCategory = useToolsCategory();
+  const isCheckoutPage = stripLocaleFromPath(pathname) === "/cart";
+  const isCheckoutFlow = isCheckoutPage;
+  const tree = useCategoryTree();
+  const shopLinks = getFooterShopLinks(locale, dictionary, toolsCategory, tree);
   const quickLinks = getFooterQuickLinks(locale, dictionary);
   const companyLinks = getFooterCompanyLinks(locale, dictionary);
   const legalLinks = getFooterLegalLinks(locale, dictionary);
@@ -266,10 +268,10 @@ export function SiteFooter() {
 
               <address className="not-italic text-sm leading-relaxed text-paper/45">
                 <a
-                  href="mailto:hello@motorock.eu"
+                  href={SHOWROOM.emailHref}
                   className="block text-paper/70 hover:text-accent"
                 >
-                  hello@motorock.eu
+                  {SHOWROOM.email}
                 </a>
                 <span className="mt-1 block">Tallinn, Estonia · EU</span>
               </address>
@@ -302,7 +304,7 @@ export function SiteFooter() {
                 {motorcycleBrands.map((brand) => (
                   <li key={brand.slug}>
                     <Link
-                      href={localizedHref(locale, getBrandCatalogHref(brand.slug))}
+                      href={localizedHref(locale, getBrandCatalogHref(brand.slug, locale))}
                       className="opacity-45 transition-opacity duration-300 hover:opacity-100"
                     >
                       <Image

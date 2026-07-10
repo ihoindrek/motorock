@@ -14,7 +14,6 @@ const CARRIER_LOGOS: Record<string, { file: string; alt: string }> = {
   itella: { file: "smartposti-rect.svg", alt: "SmartPosti" },
   omniva: { file: "omniva-rect.svg", alt: "Omniva" },
   dpd: { file: "dpd-rect.svg", alt: "DPD" },
-  venipak: { file: "venipak-rect.svg", alt: "Venipak" },
   unisend: { file: "unisend-rect.svg", alt: "Unisend" },
   inpost: { file: "inpost-rect.svg", alt: "InPost" },
   orlen: { file: "orlen-rect.svg", alt: "Orlen" },
@@ -52,7 +51,7 @@ function carrierLogos(
 
 function montonioCarrierFromMethodId(methodId: string) {
   const match = methodId.match(
-    /montonio_(itella|smartposti|omniva|dpd|venipak|unisend|inpost|orlen|dhl|gls)(?:_|$)/,
+    /montonio_(itella|smartposti|omniva|dpd|unisend|inpost|orlen|dhl|gls)(?:_|$)/,
   );
   return match?.[1] as keyof typeof CARRIER_LOGOS | undefined;
 }
@@ -66,9 +65,6 @@ function carrierFromHaystack(haystack: string) {
   }
   if (haystack.includes("dpd")) {
     return "dpd" as const;
-  }
-  if (haystack.includes("venipak")) {
-    return "venipak" as const;
   }
   if (haystack.includes("unisend")) {
     return "unisend" as const;

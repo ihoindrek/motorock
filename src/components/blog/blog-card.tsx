@@ -12,7 +12,7 @@ type BlogCardProps = {
   locale: "en" | "et";
   copy: Dictionary["blog"];
   priority?: boolean;
-  variant?: "feature" | "card" | "compact";
+  variant?: "feature" | "card" | "compact" | "home";
 };
 
 export function BlogCard({
@@ -38,6 +38,18 @@ export function BlogCard({
 
   if (variant === "compact") {
     return <BlogCompactCard post={post} postHref={postHref} />;
+  }
+
+  if (variant === "home") {
+    return (
+      <BlogHomeCard
+        post={post}
+        postHref={postHref}
+        locale={locale}
+        copy={copy}
+        priority={priority}
+      />
+    );
   }
 
   return (
@@ -151,6 +163,58 @@ function BlogFeatureCard({
   );
 }
 
+function BlogHomeCard({
+  post,
+  postHref,
+  locale,
+  copy,
+  priority,
+}: {
+  post: BlogPost;
+  postHref: string;
+  locale: "en" | "et";
+  copy: Dictionary["blog"];
+  priority?: boolean;
+}) {
+  return (
+    <article className="group">
+      <Link
+        href={postHref}
+        className="block outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+      >
+        <figure className="relative aspect-[16/10] overflow-hidden bg-ink">
+          <Image
+            src={post.image}
+            alt={post.imageAlt}
+            fill
+            priority={priority}
+            className="object-cover object-center transition-transform duration-500 ease-out group-hover:scale-[1.03] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+          />
+          <div className="absolute right-2.5 top-2.5 z-10 flex max-w-[calc(100%-1.25rem)] flex-col items-end gap-1.5 sm:right-3 sm:top-3 sm:flex-row sm:flex-wrap sm:justify-end">
+            <BlogBadge variant="accent" className="px-2.5 py-0.5 text-[9px]">
+              {post.category}
+            </BlogBadge>
+            <BlogBadge variant="on-dark" className="px-2.5 py-0.5 text-[9px]">
+              <time dateTime={post.publishedAt}>
+                {formatBlogDate(post.publishedAt, locale)}
+              </time>
+            </BlogBadge>
+          </div>
+        </figure>
+        <h3 className="mt-3 font-body text-base font-semibold leading-snug tracking-normal text-ink transition-colors duration-200 group-hover:text-accent sm:text-lg">
+          {post.title}
+        </h3>
+        <span className="mt-3 inline-flex">
+          <BlogBadge className="px-4 py-2 text-xs font-bold transition-colors group-hover:bg-accent group-hover:text-paper group-hover:border-transparent">
+            {copy.readMore}
+          </BlogBadge>
+        </span>
+      </Link>
+    </article>
+  );
+}
+
 function BlogCompactCard({
   post,
   postHref,
@@ -191,11 +255,13 @@ export function BlogCardGrid({
   locale,
   copy,
   className,
+  variant = "card",
 }: {
   posts: readonly BlogPost[];
   locale: "en" | "et";
   copy: Dictionary["blog"];
   className?: string;
+  variant?: BlogCardProps["variant"];
 }) {
   return (
     <ul className={cn("grid grid-cols-1 gap-10 sm:grid-cols-2 lg:gap-12", className)}>
@@ -206,6 +272,7 @@ export function BlogCardGrid({
             locale={locale}
             copy={copy}
             priority={index < 2}
+            variant={variant}
           />
         </li>
       ))}

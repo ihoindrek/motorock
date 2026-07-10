@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { defaultLocale, isLocale, localeCookieName } from "@/i18n/config";
 import { getDictionary } from "@/i18n/get-dictionary";
 import { localizedHref } from "@/i18n/paths";
+import { buildEquipmentHubHref } from "@/lib/shop/category-url";
 
 export default async function NotFound() {
   const cookieStore = await cookies();
@@ -21,7 +22,7 @@ export default async function NotFound() {
       </p>
       <div className="mt-8 flex flex-wrap gap-3">
         <Link
-          href={localizedHref(locale, "/shop/equipment")}
+          href={localizedHref(locale, buildEquipmentHubHref(locale))}
           className="btn-accent"
         >
           {dict.notFound.shopEquipment}

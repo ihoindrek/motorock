@@ -1,6 +1,7 @@
 /**
- * Demo / override list when WooCommerce meta is not set yet.
- * In production, prefer product meta: `_motorock_showroom_available` = yes|no
+ * Fallback when ACF field is not set yet.
+ * Woo: Products → edit → ACF "Motorock toode" → "Praegu salongis".
+ * "Uus" badge: automatic for 30 days after Woo publish date (see NEW_PRODUCT_DAYS).
  */
 export const SHOWROOM_AVAILABLE_SLUGS = new Set<string>([
   "brixton-sunray-125",

@@ -61,3 +61,35 @@ export function defaultLocationForCountry(country: string) {
     }
   );
 }
+
+/** True when postcode looks complete enough to fetch courier shipping rates. */
+export function isPostcodeReadyForShipping(country: string, postcode: string) {
+  const normalized = postcode.trim().replace(/\s+/g, "");
+  if (!normalized) {
+    return false;
+  }
+
+  switch (country.toUpperCase()) {
+    case "EE":
+    case "LT":
+      return /^\d{5}$/.test(normalized);
+    case "LV":
+      return /^(LV-)?\d{4}$/i.test(normalized);
+    default:
+      return normalized.length >= 3;
+  }
+}
+
+export function isDeliveryAddressReady(
+  country: string,
+  address: { address1: string; city: string; postcode: string },
+) {
+  const address1 = address.address1.trim();
+  const city = address.city.trim();
+
+  return (
+    address1.length >= 2 &&
+    city.length >= 2 &&
+    isPostcodeReadyForShipping(country, address.postcode)
+  );
+}

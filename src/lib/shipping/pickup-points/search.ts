@@ -3,7 +3,8 @@ import type {
   MontonioPickupPointType,
   PickupPointSource,
 } from "@/lib/shipping/pickup-carrier";
-import { fetchMontonioPickupPointsByCode } from "@/lib/montonio/pickup-points";
+import { fetchMontonioPickupPointsByCode, enrichPickupPointsWithMontonioIds } from "@/lib/montonio/pickup-points";
+import { getMontonioConfig } from "@/lib/montonio/config";
 import { fetchAlzaboxPickupPoints } from "@/lib/shipping/pickup-points/alzabox";
 import { fetchDpdPickupPoints } from "@/lib/shipping/pickup-points/dpd";
 import {
@@ -58,6 +59,8 @@ async function fetchPublicFallbackPoints(
         return fetchDpdPickupPoints(country);
       }
       return fetchDpdInternationalPickupPoints(country, source.pickupType);
+    case "novapost":
+      return [];
     default:
       return [];
   }
@@ -67,6 +70,7 @@ async function fetchSourcePoints(
   source: PickupPointSource,
   country: string,
   sources: PickupPointSource[],
+  preferMontonioOnly: boolean,
 ) {
   const montonioPoints = await fetchMontonioPickupPointsByCode({
     carrierCode: source.montonioCode,
@@ -79,15 +83,44 @@ async function fetchSourcePoints(
     return montonioPoints;
   }
 
-  return fetchPublicFallbackPoints(source, country, sources);
+  const fallback = await fetchPublicFallbackPoints(source, country, sources);
+
+  if (!preferMontonioOnly) {
+    return fallback;
+  }
+
+  const enriched = await enrichPickupPointsWithMontonioIds(fallback, {
+    carrierCode: source.montonioCode,
+    country,
+    displayCarrier: source.carrier,
+  });
+
+  return enriched.filter((point) => point.montonioItemId);
+}
+
+function buildMontonioPickupError() {
+  const config = getMontonioConfig();
+
+  if (!config.isConfigured) {
+    return "Montonio API võtmed puuduvad serveris. Lisa MONTONIO_ACCESS_KEY ja MONTONIO_SECRET_KEY.";
+  }
+
+  if (config.environment === "sandbox") {
+    return "Montonio sandbox ei sisalda pakiautomaate. Sea serveris MONTONIO_ENV=production ja kasuta production võtmeid.";
+  }
+
+  return "Pakiautomaate ei õnnestunud Montonio kaudu laadida. Kontrolli WooCommerce Montonio shipping synci.";
 }
 
 async function fetchPickupSources(
   sources: PickupPointSource[],
   country: string,
+  preferMontonioOnly: boolean,
 ) {
   const batches = await Promise.all(
-    sources.map((source) => fetchSourcePoints(source, country, sources)),
+    sources.map((source) =>
+      fetchSourcePoints(source, country, sources, preferMontonioOnly),
+    ),
   );
 
   const seen = new Set<string>();
@@ -114,12 +147,22 @@ export async function searchPickupPoints(input: {
   query?: string;
   limit?: number;
   type?: MontonioPickupPointType;
+  preferMontonioOnly?: boolean;
 }) {
   const query = normalizeQuery(input.query ?? "");
   const limit = input.limit ?? 100;
   const sources = input.sources.length > 0 ? input.sources : [];
+  const preferMontonioOnly = input.preferMontonioOnly ?? false;
 
-  const points = await fetchPickupSources(sources, input.country);
+  const points = await fetchPickupSources(
+    sources,
+    input.country,
+    preferMontonioOnly,
+  );
+
+  if (preferMontonioOnly && points.length === 0) {
+    throw new Error(buildMontonioPickupError());
+  }
 
   const filtered = points
     .filter((point) => matchesQuery(point, query))

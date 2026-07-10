@@ -1,13 +1,16 @@
 import {
   fetchAllBlogPosts,
   fetchBlogPostBySlug,
+  fetchBlogPostSlugAlternates,
   fetchBlogPostSlugs,
   fetchBlogPostsPage,
+  fetchBlogSitemapEntries,
   BLOG_INITIAL_PAGE_SIZE,
   BLOG_LOAD_MORE_SIZE,
   type BlogPostsPage,
   type BlogPostsPageInfo,
 } from "@/lib/graphql/blog-posts";
+import { blogSlugsMatch } from "@/lib/blog/slug";
 import type { Locale } from "@/i18n/config";
 import type { BlogPost } from "@/types/blog-post";
 
@@ -39,6 +42,14 @@ export async function getBlogPostSlugs(locale: Locale = "en"): Promise<string[]>
   return fetchBlogPostSlugs(locale);
 }
 
+export async function getBlogPostSlugAlternates(slug: string) {
+  return fetchBlogPostSlugAlternates(slug);
+}
+
+export async function getBlogSitemapEntries() {
+  return fetchBlogSitemapEntries();
+}
+
 export function getBlogCategories(
   posts: readonly BlogPost[],
 ): readonly string[] {
@@ -59,14 +70,14 @@ export async function getRelatedBlogPosts(
   limit = 3,
 ): Promise<readonly BlogPost[]> {
   const posts = await getAllBlogPosts(locale);
-  const current = posts.find((post) => post.slug === slug);
+  const current = posts.find((post) => blogSlugsMatch(slug, post.slug));
 
   if (!current) {
     return [];
   }
 
   return posts
-    .filter((post) => post.slug !== slug)
+    .filter((post) => !blogSlugsMatch(slug, post.slug))
     .sort((a, b) => {
       const aShared = a.categories.some((category) =>
         current.categories.includes(category),

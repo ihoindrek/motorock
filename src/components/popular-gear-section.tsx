@@ -6,9 +6,12 @@ import {
   RidersFavoritesCarousel,
   type FavoriteProduct,
 } from "@/components/riders-favorites-carousel";
+import { useCategoryTree } from "@/context/category-tree-context";
 import type { Locale } from "@/i18n/config";
 import { localizedHref } from "@/i18n/paths";
-import { buildEquipmentCategoryHref } from "@/lib/shop/equipment-route";
+import type { WcCategoryNode } from "@/lib/graphql/categories";
+import { buildEquipmentHubHref } from "@/lib/shop/category-url";
+import { buildEquipmentRootCategoryHref } from "@/lib/shop/equipment-route";
 import { cn } from "@/lib/utils";
 
 type GearAudience = "men" | "women" | "accessories";
@@ -26,31 +29,35 @@ type PopularGearSectionProps = {
   copy: PopularGearCopy;
 };
 
-const tabConfig: readonly {
-  id: GearAudience;
-  href: string;
-}[] = [
-  { id: "men", href: buildEquipmentCategoryHref("for-men") },
-  { id: "women", href: buildEquipmentCategoryHref("for-women") },
-  { id: "accessories", href: buildEquipmentCategoryHref("accessories") },
-];
-
 export function PopularGearSection({
   locale,
   productsByAudience,
   copy,
 }: PopularGearSectionProps) {
-  const tabs = useMemo(
-    () =>
-      tabConfig
-        .filter((tab) => productsByAudience[tab.id].length > 0)
-        .map((tab) => ({
-          ...tab,
-          label: copy.tabs[tab.id],
-          href: localizedHref(locale, tab.href),
-        })),
-    [copy.tabs, locale, productsByAudience],
-  );
+  const tree = useCategoryTree();
+
+  const tabs = useMemo(() => {
+    const tabConfig: readonly {
+      id: GearAudience;
+      wcSlug: "for-men" | "for-women" | "accessories";
+      node: WcCategoryNode | null | undefined;
+    }[] = [
+      { id: "men", wcSlug: "for-men", node: tree?.forMen },
+      { id: "women", wcSlug: "for-women", node: tree?.forWomen },
+      { id: "accessories", wcSlug: "accessories", node: tree?.accessories },
+    ];
+
+    return tabConfig
+      .filter((tab) => productsByAudience[tab.id].length > 0)
+      .map((tab) => ({
+        id: tab.id,
+        label: copy.tabs[tab.id],
+        href: localizedHref(
+          locale,
+          buildEquipmentRootCategoryHref(tab.node, tab.wcSlug, locale),
+        ),
+      }));
+  }, [copy.tabs, locale, productsByAudience, tree]);
 
   const [activeId, setActiveId] = useState<GearAudience>(
     () => tabs[0]?.id ?? "men",
@@ -77,7 +84,7 @@ export function PopularGearSection({
             </h3>
           </div>
           <Link
-            href={activeTab?.href ?? localizedHref(locale, "/shop/equipment")}
+            href={localizedHref(locale, buildEquipmentHubHref(locale))}
             className="inline-flex items-center self-start rounded-full bg-paper px-7 py-3 font-body text-xs font-bold uppercase tracking-aggressive text-ink transition-colors duration-200 hover:bg-accent hover:text-paper sm:self-auto"
           >
             {copy.cta}
@@ -117,10 +124,10 @@ export function PopularGearSection({
             key={activeTab?.id}
             products={products}
             theme="light"
-            imageMultiply={false}
+            imageMultiply={activeTab?.id === "accessories"}
             compact={false}
             slideDividers={false}
-            figureBackground="none"
+            figureBackground={activeTab?.id === "accessories" ? "moto" : "none"}
             slideGroup={2}
           />
         </div>

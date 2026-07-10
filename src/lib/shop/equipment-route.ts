@@ -1,20 +1,59 @@
 import type { Dictionary } from "@/i18n/dictionaries/en";
 import type { Locale } from "@/i18n/config";
-import type { EquipmentCategoryIndex, WcCategoryEntry } from "@/lib/graphql/categories";
-import {
-  getLocalizedCategoryName,
-  resolveCategoryPath,
+import type {
+  EquipmentCategoryIndex,
+  WcCategoryEntry,
+  WcCategoryNode,
 } from "@/lib/graphql/categories";
+import {
+  getLocalizedCategoryDescription,
+  getLocalizedCategoryName,
+  getLocalizedCategoryPathSegments,
+  getLocalizedCategorySlug,
+  resolveCategoryPath,
+  resolveLocalizedCategoryPath,
+} from "@/lib/graphql/categories";
+import {
+  buildEquipmentCategoryHref,
+  buildEquipmentHubHref,
+} from "@/lib/shop/category-url";
 import type { Breadcrumb, CategoryRoute } from "@/lib/shop/category";
-import { mapWcSlugToCategory } from "@/lib/shop/wc-categories";
 import type { ProductGender } from "@/types/catalog-product";
 
-export function buildEquipmentCategoryHref(...slugSegments: string[]) {
-  if (slugSegments.length === 0) {
-    return "/shop/equipment";
-  }
+export { buildEquipmentCategoryHref, buildEquipmentHubHref } from "@/lib/shop/category-url";
 
-  return `/shop/equipment/${slugSegments.join("/")}`;
+export function buildEquipmentCategoryHrefFromNodes(
+  chain: readonly WcCategoryNode[],
+  locale: Locale,
+): string {
+  return buildEquipmentCategoryHref(locale, ...getLocalizedCategoryPathSegments(chain, locale));
+}
+
+export function buildEquipmentRootCategoryHref(
+  node: Pick<WcCategoryNode, "slug" | "languageCode" | "translations"> | null | undefined,
+  wcSlug: string,
+  locale: Locale,
+) {
+  const segment = node ? getLocalizedCategorySlug(node, locale) : wcSlug;
+  return buildEquipmentCategoryHref(locale, segment);
+}
+
+export function resolveEquipmentCategoryChain(
+  slugSegments: readonly string[],
+  index: EquipmentCategoryIndex,
+  locale: Locale,
+): WcCategoryEntry[] | null {
+  return (
+    resolveLocalizedCategoryPath(index, slugSegments, locale) ??
+    resolveCategoryPath(index, slugSegments)
+  );
+}
+
+export function getCanonicalEquipmentSlugSegments(
+  chain: readonly WcCategoryEntry[],
+  locale: Locale,
+): string[] {
+  return getLocalizedCategoryPathSegments(chain, locale);
 }
 
 function genderFromRootSlug(slug: string): ProductGender | undefined {
@@ -31,7 +70,7 @@ function genderFromRootSlug(slug: string): ProductGender | undefined {
 
 function buildDescription(name: string, locale: Locale) {
   if (locale === "et") {
-    return `${name} — sõiduriided ja varustus Motorock.eu poes.`;
+    return `${name} — sõiduvarustus Motorock.eu poes.`;
   }
 
   return `${name} — riding gear and equipment from Motorock.eu.`;
@@ -44,16 +83,16 @@ function buildBreadcrumbs(
 ): Breadcrumb[] {
   const breadcrumbs: Breadcrumb[] = [
     { label: dict.common.home, href: "/" },
-    { label: dict.nav.equipment, href: buildEquipmentCategoryHref() },
+    { label: dict.nav.equipment, href: buildEquipmentHubHref(locale) },
   ];
 
   for (let index = 0; index < chain.length; index += 1) {
     const node = chain[index];
-    const path = chain.slice(0, index + 1).map((entry) => entry.slug);
+    const path = chain.slice(0, index + 1);
 
     breadcrumbs.push({
       label: getLocalizedCategoryName(node, locale),
-      href: buildEquipmentCategoryHref(...path),
+      href: buildEquipmentCategoryHrefFromNodes(path, locale),
     });
   }
 
@@ -69,10 +108,10 @@ function resolveProtectionRoute(locale: Locale, dict: Dictionary): CategoryRoute
         : "Helmets, goggles and CE-rated protection for every ride.",
     breadcrumbs: [
       { label: dict.common.home, href: "/" },
-      { label: dict.nav.equipment, href: buildEquipmentCategoryHref() },
+      { label: dict.nav.equipment, href: buildEquipmentHubHref(locale) },
       {
         label: locale === "et" ? "Kaitse" : "Protection",
-        href: buildEquipmentCategoryHref("protection"),
+        href: buildEquipmentCategoryHref(locale, "protection"),
       },
     ],
     protectionOnly: true,
@@ -90,11 +129,11 @@ export function resolveEquipmentRoute(
       title: dict.nav.equipment,
       description:
         locale === "et"
-          ? "Premium sõiduriided meestele ja naistele — jakid, kaitse ja varustus."
+          ? "Premium sõiduvarustus meestele ja naistele — jakid, kaitse ja varustus."
           : "Premium riding gear for men and women — jackets, protection, and rebel essentials.",
       breadcrumbs: [
         { label: dict.common.home, href: "/" },
-        { label: dict.nav.equipment, href: buildEquipmentCategoryHref() },
+        { label: dict.nav.equipment, href: buildEquipmentHubHref(locale) },
       ],
     };
   }
@@ -111,7 +150,7 @@ export function resolveEquipmentRoute(
     return null;
   }
 
-  const chain = resolveCategoryPath(index, slugSegments);
+  const chain = resolveEquipmentCategoryChain(slugSegments, index, locale);
 
   if (!chain) {
     return null;
@@ -121,27 +160,17 @@ export function resolveEquipmentRoute(
   const title = getLocalizedCategoryName(current, locale);
   const rootSlug = chain[0]?.slug;
   const gender = rootSlug ? genderFromRootSlug(rootSlug) : undefined;
-  const mappedCategory = mapWcSlugToCategory(current.slug);
+  const description =
+    getLocalizedCategoryDescription(current, locale) ||
+    buildDescription(title, locale);
 
   return {
     title,
-    description: buildDescription(title, locale),
+    description,
     breadcrumbs: buildBreadcrumbs(chain, locale, dict),
     wcCategorySlug: current.slug,
     wcCategoryPath: chain.map((node) => node.slug),
     gender,
-    category: mappedCategory,
     accessoriesOnly: rootSlug === "accessories" && chain.length === 1,
   };
-}
-
-export function productMatchesRouteCategory(
-  wcCategorySlugs: readonly string[] | undefined,
-  route: CategoryRoute,
-) {
-  if (!route.wcCategorySlug || !wcCategorySlugs?.length) {
-    return true;
-  }
-
-  return wcCategorySlugs.includes(route.wcCategorySlug);
 }

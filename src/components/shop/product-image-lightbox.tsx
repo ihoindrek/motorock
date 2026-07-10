@@ -8,6 +8,7 @@ import {
   useGallerySlideDirection,
 } from "@/components/shop/gallery-image-transition";
 import { CarouselArrow } from "@/components/ui/carousel-arrow";
+import { useDictionary } from "@/context/locale-context";
 
 type ProductImageLightboxProps = {
   images: readonly string[];
@@ -109,6 +110,7 @@ export function ProductImageLightbox({
   onClose,
   variant = "product",
 }: ProductImageLightboxProps) {
+  const dict = useDictionary();
   const [activeIndex, setActiveIndex] = useState(initialIndex);
   const [mounted, setMounted] = useState(false);
   const mobileThumbRefs = useRef<(HTMLButtonElement | null)[]>([]);
@@ -180,6 +182,35 @@ export function ProductImageLightbox({
   }, [open, hasMultiple, onClose, showNext, showPrevious]);
 
   const slideDirection = useGallerySlideDirection(activeIndex, images.length);
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+
+  const handleMainImageTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
+    const touch = event.touches[0];
+    touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+  };
+
+  const handleMainImageTouchEnd = (event: React.TouchEvent<HTMLDivElement>) => {
+    if (!touchStartRef.current || !hasMultiple) {
+      return;
+    }
+
+    const touch = event.changedTouches[0];
+    const dx = touch.clientX - touchStartRef.current.x;
+    const dy = touch.clientY - touchStartRef.current.y;
+    touchStartRef.current = null;
+
+    const isHorizontalSwipe = Math.abs(dx) >= 44 && Math.abs(dy) <= 34;
+    if (!isHorizontalSwipe) {
+      return;
+    }
+
+    if (dx < 0) {
+      showNext();
+      return;
+    }
+
+    showPrevious();
+  };
 
   if (!open || images.length === 0 || !mounted) {
     return null;
@@ -198,7 +229,7 @@ export function ProductImageLightbox({
         type="button"
         className="absolute inset-0 z-0"
         onClick={onClose}
-        aria-label="Close gallery"
+        aria-label={dict.carousel.closeGallery}
       />
 
       <div className="relative z-10 flex min-h-0 flex-1 basis-0 justify-center overflow-hidden p-3 sm:p-4 lg:p-6">
@@ -214,15 +245,19 @@ export function ProductImageLightbox({
               <button
                 type="button"
                 onClick={onClose}
-                aria-label="Close gallery"
+                aria-label={dict.carousel.closeGallery}
                 className="pointer-events-auto inline-flex min-h-12 min-w-12 items-center justify-center gap-2.5 border border-ink/15 bg-white px-4 font-body text-xs font-bold uppercase tracking-aggressive text-ink shadow-[0_8px_24px_rgb(11_11_11_/_0.08)] transition-colors hover:border-accent hover:text-accent sm:min-h-14 sm:px-5"
               >
                 <CloseIcon />
-                <span>Close</span>
+                <span>{dict.common.close}</span>
               </button>
             </div>
 
-            <div className="relative min-h-0 flex-1 basis-0 overflow-hidden">
+            <div
+              className="relative min-h-0 flex-1 basis-0 overflow-hidden"
+              onTouchStart={handleMainImageTouchStart}
+              onTouchEnd={handleMainImageTouchEnd}
+            >
               <div className="absolute inset-0">
                 <GalleryImageTransition
                   imageKey={activeSrc}
@@ -253,7 +288,7 @@ export function ProductImageLightbox({
                   <div className="pointer-events-none absolute inset-y-0 left-0 z-10 hidden items-center p-2 sm:p-4 lg:flex">
                     <CarouselArrow
                       direction="prev"
-                      label="Previous image"
+                      label={dict.carousel.previousImage}
                       onClick={showPrevious}
                       theme="light"
                       variant="icon"
@@ -263,7 +298,7 @@ export function ProductImageLightbox({
                   <div className="pointer-events-none absolute inset-y-0 right-0 z-10 hidden items-center p-2 sm:p-4 lg:flex">
                     <CarouselArrow
                       direction="next"
-                      label="Next image"
+                      label={dict.carousel.nextImage}
                       onClick={showNext}
                       theme="light"
                       variant="icon"
@@ -276,18 +311,20 @@ export function ProductImageLightbox({
 
             {hasMultiple ? (
               <nav
-                aria-label="Gallery navigation"
+                aria-label={dict.carousel.galleryNavigation}
                 className="flex shrink-0 items-center justify-between border-t border-ink/10 bg-white px-4 py-3 sm:px-6 sm:py-4 lg:hidden"
               >
                 <CarouselArrow
                   direction="prev"
-                  label="Previous image"
+                  label={dict.carousel.previousImage}
+                  text={dict.carousel.previous}
                   onClick={showPrevious}
                   theme="light"
                 />
                 <CarouselArrow
                   direction="next"
-                  label="Next image"
+                  label={dict.carousel.nextImage}
+                  text={dict.carousel.next}
                   onClick={showNext}
                   theme="light"
                 />
@@ -297,7 +334,7 @@ export function ProductImageLightbox({
             {hasMultiple ? (
               <div
                 className="shrink-0 border-t border-ink/10 bg-white px-4 py-3 sm:px-6 lg:hidden"
-                aria-label="Gallery thumbnails"
+                aria-label={dict.carousel.productThumbnails}
               >
                 <div className="relative">
                   <div
@@ -336,7 +373,7 @@ export function ProductImageLightbox({
             <aside className="hidden h-full min-h-0 w-24 shrink-0 flex-col py-3 lg:flex lg:py-4">
               <div
                 className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-                aria-label="Gallery thumbnails"
+                aria-label={dict.carousel.productThumbnails}
               >
                 {images.map((src, index) => (
                   <LightboxThumbnail

@@ -6,7 +6,7 @@ import { useCategoryTree } from "@/context/category-tree-context";
 import { useDictionary, useLocale } from "@/context/locale-context";
 import { PriceRangeSlider } from "@/components/shop/price-range-slider";
 import { getEquipmentMegaMenu } from "@/i18n/navigation";
-import { buildEquipmentCategoryHref } from "@/lib/shop/equipment-route";
+import { buildEquipmentCategoryHref, buildEquipmentRootCategoryHref } from "@/lib/shop/equipment-route";
 import { localizedHref } from "@/i18n/paths";
 import { allSizes } from "@/types/catalog-product";
 import type { CategoryRoute } from "@/lib/shop/category";
@@ -294,9 +294,10 @@ export function CategoryFilters({
 
   const showGenderNav =
     !route.gender &&
-    !route.category &&
+    !route.wcCategorySlug &&
     !route.protectionOnly &&
-    !route.accessoriesOnly;
+    !route.accessoriesOnly &&
+    !route.brand;
   const isMotorcycleCatalog = route.category === "motorcycles";
   const availabilityFilterLabel = isMotorcycleCatalog
     ? dict.catalog.inStore
@@ -304,7 +305,7 @@ export function CategoryFilters({
   const availabilityFilterDrawerLabel = isMotorcycleCatalog
     ? dict.catalog.inStoreOnly
     : dict.catalog.inStockOnly;
-  const showSubcategoryNav = !route.category && route.gender;
+  const showSubcategoryNav = Boolean(route.gender) && !route.wcCategorySlug;
   const showCategoryDropdown =
     showCategoryFilter && (showGenderNav || showSubcategoryNav);
 
@@ -363,7 +364,7 @@ export function CategoryFilters({
       ))}
       <li>
         <Link
-          href={localizedHref(locale, buildEquipmentCategoryHref("protection"))}
+          href={localizedHref(locale, buildEquipmentCategoryHref(locale, "protection"))}
           className="block py-1 text-base font-medium text-ink transition-colors hover:text-accent"
           onClick={() => setOpenFilter(null)}
         >
@@ -372,7 +373,10 @@ export function CategoryFilters({
       </li>
       <li>
         <Link
-          href={localizedHref(locale, buildEquipmentCategoryHref("accessories"))}
+          href={localizedHref(
+            locale,
+            buildEquipmentRootCategoryHref(categoryTree?.accessories, "accessories", locale),
+          )}
           className="block py-1 text-base font-medium text-ink transition-colors hover:text-accent"
           onClick={() => setOpenFilter(null)}
         >

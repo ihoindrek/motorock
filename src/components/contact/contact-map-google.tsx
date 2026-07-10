@@ -2,15 +2,16 @@
 
 import { APIProvider, Map } from "@vis.gl/react-google-maps";
 import { ContactMapMarker } from "@/components/contact/contact-map-marker";
+import { ContactMapViewport } from "@/components/contact/contact-map-viewport";
 import { ContactMapZoomControls } from "@/components/contact/contact-map-zoom-controls";
 import { contactMapGrayStyles } from "@/components/contact/contact-map-styles";
-import { SHOWROOM_MAP_VIEW } from "@/data/showroom";
+import { SHOWROOM_MAP_VIEW_MOBILE } from "@/data/showroom";
 
 const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
 const mapCenter = {
-  lat: SHOWROOM_MAP_VIEW.latitude,
-  lng: SHOWROOM_MAP_VIEW.longitude,
+  lat: SHOWROOM_MAP_VIEW_MOBILE.latitude,
+  lng: SHOWROOM_MAP_VIEW_MOBILE.longitude,
 };
 
 export function ContactMapGoogle() {
@@ -27,7 +28,7 @@ export function ContactMapGoogle() {
     <APIProvider apiKey={apiKey}>
       <Map
         defaultCenter={mapCenter}
-        defaultZoom={SHOWROOM_MAP_VIEW.zoom}
+        defaultZoom={SHOWROOM_MAP_VIEW_MOBILE.zoom}
         gestureHandling="greedy"
         disableDefaultUI
         mapTypeControl={false}
@@ -37,6 +38,7 @@ export function ContactMapGoogle() {
         className="contact-map-google h-full w-full"
         styles={contactMapGrayStyles}
       >
+        <ContactMapViewport />
         <ContactMapMarker />
         <ContactMapZoomControls />
       </Map>

@@ -7,12 +7,14 @@ import { createPortal } from "react-dom";
 import { useCart } from "@/context/cart-context";
 import { useDictionary, useLocale } from "@/context/locale-context";
 import { localizedHref } from "@/i18n/paths";
-import { getCartTotals, SHIPPING_THRESHOLD } from "@/lib/shop/cart-totals";
+import { localizedProductHref } from "@/lib/shop/product-url";
+import { getCartTotals } from "@/lib/shop/cart-totals";
 import { cartLineThumbnailClass } from "@/lib/shop/cart-line-image";
 import { formatPrice } from "@/lib/shop/category";
 import { Price } from "@/components/shop/price";
 import { cn } from "@/lib/utils";
 import { CampaignCartPanels } from "@/components/campaigns/campaign-cart-panels";
+import { buildEquipmentHubHref } from "@/lib/shop/category-url";
 
 function CloseIcon() {
   return (
@@ -54,15 +56,12 @@ export function CartDrawer() {
           emptyBody: "Lisa varustust või mootorratas — checkout võtab alla minuti.",
           shopEquipment: "Vaata varustust",
           shopMotorcycles: "Vaata mootorrattaid",
-          size: "Suurus",
-          color: "Värv",
           remove: "Eemalda",
           decreaseQty: "Vähenda kogust",
           increaseQty: "Suurenda kogust",
           subtotal: "Vahesumma",
           shipping: "Tarne",
-          free: "Tasuta",
-          freeShippingOver: "Tasuta tarne alates",
+          shippingAtCheckout: "Arvutatakse kassas",
           total: "Kokku",
           checkout: "Kassa",
           continueShopping: "Jätka ostlemist",
@@ -76,22 +75,19 @@ export function CartDrawer() {
           emptyBody: "Add gear or a motorcycle — checkout takes under a minute.",
           shopEquipment: "Shop equipment",
           shopMotorcycles: "Shop motorcycles",
-          size: "Size",
-          color: "Colour",
           remove: "Remove",
           decreaseQty: "Decrease quantity",
           increaseQty: "Increase quantity",
           subtotal: "Subtotal",
           shipping: "Shipping",
-          free: "Free",
-          freeShippingOver: "Free shipping over",
+          shippingAtCheckout: "At checkout",
           total: "Total",
           checkout: "Checkout",
           continueShopping: "Continue shopping",
         };
   const [mounted, setMounted] = useState(false);
 
-  const { shipping, total } = getCartTotals(subtotal);
+  const { total } = getCartTotals(subtotal);
 
   useEffect(() => {
     setMounted(true);
@@ -176,7 +172,7 @@ export function CartDrawer() {
             </p>
             <div className="mt-8 flex w-full max-w-xs flex-col gap-3">
               <Link
-                href={localizedHref(locale, "/shop/equipment")}
+                href={localizedHref(locale, buildEquipmentHubHref(locale))}
                 onClick={closeCart}
                 className="btn-accent justify-center"
               >
@@ -193,8 +189,9 @@ export function CartDrawer() {
           </div>
         ) : (
           <>
-            <ul className="min-h-0 flex-1 divide-y divide-ink/10 overflow-y-auto overscroll-contain px-5 sm:px-6 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              {lines.map((line) => {
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              <ul className="divide-y divide-ink/10 px-5 sm:px-6">
+                {lines.map((line) => {
                 if (!line.name || !line.image) {
                   return null;
                 }
@@ -208,7 +205,7 @@ export function CartDrawer() {
                     className="flex gap-4 py-5 first:pt-5"
                   >
                     <Link
-                      href={localizedHref(locale, `/shop/product/${line.slug}`)}
+                      href={localizedProductHref(line.slug, locale)}
                       onClick={closeCart}
                       className={cn(
                         "relative w-20 shrink-0 overflow-hidden rounded-sm border border-ink/10",
@@ -233,7 +230,7 @@ export function CartDrawer() {
                             </p>
                           ) : null}
                           <Link
-                            href={localizedHref(locale, `/shop/product/${line.slug}`)}
+                            href={localizedProductHref(line.slug, locale)}
                             onClick={closeCart}
                             className="mt-1 block truncate text-sm font-bold leading-snug hover:text-accent"
                           >
@@ -241,12 +238,12 @@ export function CartDrawer() {
                           </Link>
                           {line.size ? (
                             <p className="mt-1 text-xs text-ink/55">
-                              {t.size}: {line.size}
+                              {dict.pdp.size}: {line.size}
                             </p>
                           ) : null}
                           {line.color ? (
                             <p className="text-xs text-ink/55">
-                              {t.color}: {line.color}
+                              {dict.pdp.color}: {line.color}
                             </p>
                           ) : null}
                         </div>
@@ -299,15 +296,16 @@ export function CartDrawer() {
                   </li>
                 );
               })}
-            </ul>
+              </ul>
 
-            <CampaignCartPanels
-              placement="cart-drawer"
-              variant="compact"
-              className="mb-4 px-5 sm:px-6"
-            />
+              <CampaignCartPanels
+                placement="cart-drawer"
+                variant="compact"
+                className="mb-4 px-5 sm:px-6"
+              />
+            </div>
 
-            <div className="border-t border-ink/10 bg-surface/50 px-5 py-5 sm:px-6">
+            <div className="shrink-0 border-t border-ink/10 bg-surface/50 px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-6">
               <dl className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <dt className="text-ink/65">{t.subtotal}</dt>
@@ -317,15 +315,10 @@ export function CartDrawer() {
                 </div>
                 <div className="flex justify-between">
                   <dt className="text-ink/65">{t.shipping}</dt>
-                  <dd className="font-body font-extrabold tabular-nums">
-                    {shipping === 0 ? t.free : formatPrice(shipping)}
+                  <dd className="font-body text-sm text-ink/55">
+                    {t.shippingAtCheckout}
                   </dd>
                 </div>
-                {subtotal > 0 && subtotal < SHIPPING_THRESHOLD ? (
-                  <p className="text-xs text-ink/50">
-                    {t.freeShippingOver} {formatPrice(SHIPPING_THRESHOLD)}
-                  </p>
-                ) : null}
                 <div className="flex justify-between border-t border-ink/10 pt-3 text-base">
                   <dt className="font-bold">{t.total}</dt>
                   <dd className="font-body font-bold tabular-nums">
@@ -342,7 +335,7 @@ export function CartDrawer() {
                 {t.checkout}
               </Link>
               <Link
-                href={localizedHref(locale, "/shop/equipment")}
+                href={localizedHref(locale, buildEquipmentHubHref(locale))}
                 onClick={closeCart}
                 className="mt-3 block text-center font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/50 transition-colors hover:text-accent"
               >

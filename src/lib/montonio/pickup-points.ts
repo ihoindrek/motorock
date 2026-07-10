@@ -5,6 +5,7 @@ import type { MontonioPickupPointType } from "@/lib/shipping/pickup-carrier";
 
 type MontonioPickupPoint = {
   id: string;
+  carrierAssignedId?: string;
   name: string;
   type: string;
   streetAddress: string;
@@ -40,7 +41,9 @@ function mapMontonioPoint(
   fallbackCarrier: PickupCarrier,
 ): PickupPoint {
   return {
-    id: point.id,
+    id: point.carrierAssignedId ?? point.id,
+    montonioItemId: point.id,
+    carrierAssignedId: point.carrierAssignedId,
     name: point.name,
     address: point.streetAddress,
     city: point.locality,
@@ -50,6 +53,35 @@ function mapMontonioPoint(
 }
 
 export async function fetchMontonioPickupPointsByCode(input: {
+  carrierCode: string;
+  country: string;
+  type?: MontonioPickupPointType;
+  displayCarrier: PickupCarrier;
+}) {
+  const config = getMontonioConfig();
+  if (!config.isConfigured || !config.accessKey || !config.secretKey) {
+    return null;
+  }
+
+  const withType = await fetchMontonioPickupPointsRequest(input);
+  if (withType && withType.length > 0) {
+    return withType;
+  }
+
+  if (input.type) {
+    const withoutType = await fetchMontonioPickupPointsRequest({
+      ...input,
+      type: undefined,
+    });
+    if (withoutType && withoutType.length > 0) {
+      return withoutType;
+    }
+  }
+
+  return withType ?? [];
+}
+
+async function fetchMontonioPickupPointsRequest(input: {
   carrierCode: string;
   country: string;
   type?: MontonioPickupPointType;
@@ -110,6 +142,59 @@ export async function fetchMontonioPickupPointsByCode(input: {
 
   cache.set(cacheKey, { fetchedAt: now, points });
   return points;
+}
+
+/** Match public carrier pickup ids to Montonio checkout ids. */
+export async function enrichPickupPointsWithMontonioIds(
+  points: PickupPoint[],
+  input: {
+    carrierCode: string;
+    country: string;
+    displayCarrier: PickupCarrier;
+  },
+) {
+  const catalog = await fetchMontonioPickupPointsByCode({
+    carrierCode: input.carrierCode,
+    country: input.country,
+    displayCarrier: input.displayCarrier,
+  });
+
+  if (!catalog?.length) {
+    return points;
+  }
+
+  const byCarrierAssignedId = new Map<string, PickupPoint>();
+  const byMontonioId = new Map<string, PickupPoint>();
+
+  for (const point of catalog) {
+    if (point.carrierAssignedId) {
+      byCarrierAssignedId.set(point.carrierAssignedId, point);
+    }
+    if (point.montonioItemId) {
+      byMontonioId.set(point.montonioItemId, point);
+    }
+  }
+
+  return points.map((point) => {
+    if (point.montonioItemId) {
+      return point;
+    }
+
+    const match =
+      byCarrierAssignedId.get(point.id) ??
+      byCarrierAssignedId.get(point.carrierAssignedId ?? "") ??
+      byMontonioId.get(point.id);
+
+    if (!match?.montonioItemId) {
+      return point;
+    }
+
+    return {
+      ...point,
+      montonioItemId: match.montonioItemId,
+      carrierAssignedId: match.carrierAssignedId ?? point.id,
+    };
+  });
 }
 
 export async function fetchMontonioPickupPoints(input: {

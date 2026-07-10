@@ -1,6 +1,27 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
+import {
+  defaultLocale,
+  isLocale,
+  localeCookieName,
+  type Locale,
+} from "@/i18n/config";
+import { getDictionary } from "@/i18n/get-dictionary";
+import { reportClientError } from "@/lib/monitoring/observability-client";
+
+function readLocaleFromCookie(): Locale {
+  if (typeof document === "undefined") {
+    return defaultLocale;
+  }
+
+  const match = document.cookie.match(
+    new RegExp(`(?:^|; )${localeCookieName}=([^;]*)`),
+  );
+  const value = match?.[1];
+
+  return value && isLocale(value) ? value : defaultLocale;
+}
 
 export default function GlobalError({
   error,
@@ -9,12 +30,15 @@ export default function GlobalError({
   error: Error & { digest?: string };
   unstable_retry: () => void;
 }) {
+  const locale = useMemo(() => readLocaleFromCookie(), []);
+  const dict = getDictionary(locale);
+
   useEffect(() => {
-    console.error(error);
+    void reportClientError(error, { source: "global-error" });
   }, [error]);
 
   return (
-    <html lang="en">
+    <html lang={locale}>
       <body className="bg-paper font-body text-ink antialiased">
         <div
           style={{
@@ -35,11 +59,10 @@ export default function GlobalError({
             Motorock.eu
           </p>
           <h1 style={{ marginTop: "1rem", fontSize: "2rem", fontWeight: 800 }}>
-            Something went wrong
+            {dict.error.title}
           </h1>
           <p style={{ marginTop: "1rem", lineHeight: 1.6, color: "rgb(11 11 11 / 0.65)" }}>
-            The application encountered an unexpected error. You can try reloading
-            this page.
+            {dict.error.globalDescription}
           </p>
           <button
             type="button"
@@ -57,7 +80,7 @@ export default function GlobalError({
               cursor: "pointer",
             }}
           >
-            Try again
+            {dict.error.retry}
           </button>
         </div>
       </body>

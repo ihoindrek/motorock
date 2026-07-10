@@ -1,7 +1,8 @@
 import type { CatalogProduct } from "@/types/catalog-product";
+import { productsShareWcSubcategory } from "@/lib/shop/wc-categories";
 
 const PLACEHOLDER_IMAGE = "/brixton-image.webp";
-const DEFAULT_LIMIT = 4;
+export const RELATED_PRODUCTS_LIMIT = 6;
 
 function gendersCompatible(
   a: CatalogProduct["gender"],
@@ -15,10 +16,6 @@ function similarityScore(
   candidate: CatalogProduct,
 ): number {
   let score = 0;
-
-  if (candidate.category === current.category) {
-    score += 10;
-  }
 
   if (candidate.brand === current.brand) {
     score += 8;
@@ -42,21 +39,18 @@ function similarityScore(
 export function pickSimilarProducts(
   current: CatalogProduct,
   catalog: readonly CatalogProduct[],
-  limit = DEFAULT_LIMIT,
+  limit = RELATED_PRODUCTS_LIMIT,
 ): CatalogProduct[] {
-  const picked: CatalogProduct[] = [];
-  const seen = new Set<string>();
-
   const ranked = catalog
     .filter(
       (candidate) =>
-        candidate.slug !== current.slug && candidate.type === current.type,
+        candidate.slug !== current.slug &&
+        productsShareWcSubcategory(current, candidate),
     )
     .map((candidate) => ({
       candidate,
       score: similarityScore(current, candidate),
     }))
-    .filter(({ score }) => score > 0)
     .sort((a, b) => {
       if (b.score !== a.score) {
         return b.score - a.score;
@@ -65,34 +59,5 @@ export function pickSimilarProducts(
       return a.candidate.name.localeCompare(b.candidate.name);
     });
 
-  for (const { candidate } of ranked) {
-    if (picked.length >= limit) {
-      break;
-    }
-
-    seen.add(candidate.slug);
-    picked.push(candidate);
-  }
-
-  if (picked.length < limit) {
-    for (const candidate of catalog) {
-      if (picked.length >= limit) {
-        break;
-      }
-
-      if (
-        candidate.slug === current.slug ||
-        seen.has(candidate.slug) ||
-        candidate.type !== current.type ||
-        candidate.category !== current.category
-      ) {
-        continue;
-      }
-
-      seen.add(candidate.slug);
-      picked.push(candidate);
-    }
-  }
-
-  return picked;
+  return ranked.slice(0, limit).map(({ candidate }) => candidate);
 }

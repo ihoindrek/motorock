@@ -21,6 +21,7 @@ import {
 } from "@/components/shop/product-video-modal";
 import { InStoreNowBadge } from "@/components/shop/in-store-now-badge";
 import { CarouselArrow } from "@/components/ui/carousel-arrow";
+import { useDictionary } from "@/context/locale-context";
 import { cn } from "@/lib/utils";
 
 const mobileFullBleedClass =
@@ -94,7 +95,7 @@ function GalleryThumb({
             : theme === "dark"
               ? "scale-[0.96] opacity-40 hover:scale-[0.98] hover:opacity-80"
               : "scale-[0.96] opacity-45 hover:scale-[0.98] hover:opacity-90"
-      } ${isProduct ? "bg-moto" : "bg-surface"}`}
+      } ${isProduct ? (theme === "light" ? "bg-white" : "bg-moto") : "bg-surface"}`}
     >
       <Image
         src={src}
@@ -198,6 +199,7 @@ export function ProductImageGallery({
   inStoreNow = false,
   fullBleedMobile = false,
 }: ProductImageGalleryProps) {
+  const dict = useDictionary();
   const isHero = layout === "hero";
   const isProduct = variant === "product";
   const preferredIndex = preferredImage
@@ -270,18 +272,14 @@ export function ProductImageGallery({
     />
   );
 
-  const galleryVideoTrigger = (
-    layout: "row" | "column",
-    className?: string,
-  ) =>
-    showGalleryVideo ? (
-      <GalleryVideoPlayButton
-        theme={theme}
-        layout={layout}
-        className={className}
-        onClick={() => setVideoOpen(true)}
-      />
-    ) : null;
+  const galleryVideoOverlay = showGalleryVideo ? (
+    <GalleryVideoPlayButton
+      theme={theme}
+      variant="overlay"
+      className="absolute right-3 top-3 z-20 sm:right-4 sm:top-4"
+      onClick={() => setVideoOpen(true)}
+    />
+  ) : null;
 
   if (images.length === 0) {
     return null;
@@ -519,6 +517,8 @@ export function ProductImageGallery({
         </GalleryImageTransition>
       </OpenableImageTrigger>
 
+      {galleryVideoOverlay}
+
       {inStoreNow && isHero ? (
         <InStoreNowBadge
           variant="overlay"
@@ -546,18 +546,20 @@ export function ProductImageGallery({
 
       {images.length > 1 ? (
         <nav
-          aria-label="Gallery navigation"
+          aria-label={dict.carousel.galleryNavigation}
           className="mt-3 flex items-center justify-between"
         >
           <CarouselArrow
             direction="prev"
-            label="Previous image"
+            label={dict.carousel.previousImage}
+            text={dict.carousel.previous}
             onClick={showPrevious}
             theme={theme}
           />
           <CarouselArrow
             direction="next"
-            label="Next image"
+            label={dict.carousel.nextImage}
+            text={dict.carousel.next}
             onClick={showNext}
             theme={theme}
           />
@@ -578,10 +580,9 @@ export function ProductImageGallery({
         {isHero ? (
           <>
             {mainStage}
-            {images.length > 1 || showGalleryVideo ? (
+            {images.length > 1 ? (
               <div className="hidden w-24 shrink-0 flex-col gap-3 lg:flex">
-                {images.length > 1 ? thumbList("vertical") : null}
-                {galleryVideoTrigger("column")}
+                {thumbList("vertical")}
               </div>
             ) : null}
           </>
@@ -597,10 +598,9 @@ export function ProductImageGallery({
         )}
       </div>
 
-      {images.length > 1 || (isHero && showGalleryVideo) ? (
+      {images.length > 1 ? (
         <div className="flex flex-col gap-3 lg:hidden">
-          {images.length > 1 ? thumbList("horizontal") : null}
-          {isHero ? galleryVideoTrigger("row") : null}
+          {thumbList("horizontal")}
         </div>
       ) : null}
 

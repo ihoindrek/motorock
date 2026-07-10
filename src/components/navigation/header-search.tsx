@@ -14,7 +14,10 @@ import { GrainOverlay } from "@/components/ui/grain-overlay";
 import { useDictionary, useLocale } from "@/context/locale-context";
 import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries/en";
+import { buildEquipmentHubHref } from "@/lib/shop/category-url";
 import { localizedHref } from "@/i18n/paths";
+import { localizedProductHref } from "@/lib/shop/product-url";
+import { buildToolsCategoryHref } from "@/lib/shop/shop-category-route";
 import {
   HEADER_SEARCH_LIMIT,
   type ProductSearchResult,
@@ -38,7 +41,7 @@ function getQuickBrowse(locale: Locale, dictionary: Dictionary) {
       image: "/brixton-image.webp",
     },
     {
-      href: localizedHref(locale, "/shop/equipment"),
+      href: localizedHref(locale, buildEquipmentHubHref(locale)),
       label: dictionary.search.equipment,
       tag: dictionary.search.gear,
       image: "/JRH10015_L23.webp",
@@ -47,7 +50,7 @@ function getQuickBrowse(locale: Locale, dictionary: Dictionary) {
 
   if (locale === "et") {
     items.push({
-      href: localizedHref(locale, "/shop/tools"),
+      href: localizedHref(locale, buildToolsCategoryHref(locale)),
       label: dictionary.search.tools,
       tag: dictionary.search.maintain,
       image: "/makita-tools.jpg",
@@ -71,6 +74,23 @@ function SearchIcon({ className }: { className?: string }) {
     >
       <circle cx="11" cy="11" r="7" />
       <path d="M20 20l-4-4" />
+    </svg>
+  );
+}
+
+function CloseIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="square"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M6 6l12 12M18 6L6 18" />
     </svg>
   );
 }
@@ -150,7 +170,7 @@ function SearchPreview({
 
   return (
     <Link
-      href={localizedHref(locale, `/shop/product/${result.slug}`)}
+      href={localizedProductHref(result.slug, locale)}
       className="group flex min-h-[18rem] flex-col overflow-hidden rounded-sm border border-paper/10 bg-paper/5 lg:min-h-[24rem]"
     >
       <div
@@ -233,7 +253,7 @@ function SearchResultRow({
 
   return (
     <Link
-      href={localizedHref(locale, `/shop/product/${result.slug}`)}
+      href={localizedProductHref(result.slug, locale)}
       onClick={onSelect}
       onMouseEnter={onHover}
       onTouchStart={onHover}
@@ -305,6 +325,7 @@ function QuickBrowseCard({
   image,
   onSelect,
   index,
+  className,
 }: {
   href: string;
   label: string;
@@ -312,13 +333,17 @@ function QuickBrowseCard({
   image: string;
   onSelect: () => void;
   index: number;
+  className?: string;
 }) {
   return (
     <Link
       href={href}
       onClick={onSelect}
       style={{ animationDelay: `${120 + index * 90}ms` }}
-      className="group animate-mega-menu-item relative aspect-[4/3] overflow-hidden rounded-sm border border-paper/10"
+      className={cn(
+        "group animate-mega-menu-item relative block aspect-[4/3] min-h-[9.5rem] shrink-0 overflow-hidden rounded-sm border border-paper/10",
+        className,
+      )}
     >
       <Image
         src={image}
@@ -335,11 +360,11 @@ function QuickBrowseCard({
         className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 bg-[radial-gradient(circle_at_50%_100%,rgb(120_120_120_/_0.4),transparent_65%)]"
         aria-hidden="true"
       />
-      <div className="absolute inset-x-0 bottom-0 z-[1] p-4">
+      <div className="absolute inset-x-0 bottom-0 z-[1] p-3 sm:p-4">
         <p className="font-body text-[10px] font-bold uppercase tracking-aggressive text-accent">
           {tag}
         </p>
-        <p className="mt-1 font-body text-lg font-extrabold uppercase leading-none tracking-tight text-paper">
+        <p className="mt-1 font-body text-base font-extrabold uppercase leading-tight tracking-tight text-paper sm:text-lg">
           {label}
         </p>
       </div>
@@ -520,9 +545,9 @@ export function HeaderSearch({ inverted = false }: HeaderSearchProps) {
 
     if (event.key === "Enter" && activeIndex >= 0 && results[activeIndex]) {
       event.preventDefault();
-      window.location.href = localizedHref(
+      window.location.href = localizedProductHref(
+        results[activeIndex].slug,
         locale,
-        `/shop/product/${results[activeIndex].slug}`,
       );
       close();
     }
@@ -568,20 +593,18 @@ export function HeaderSearch({ inverted = false }: HeaderSearchProps) {
           />
 
           <div className="relative z-[2] flex min-h-0 flex-1 flex-col overflow-hidden">
-            <div className="site-container shrink-0 flex items-center justify-end py-4 sm:py-6">
+            <div className="site-container flex shrink-0 items-center justify-end py-3 sm:py-6">
               <button
                 type="button"
                 onClick={close}
-                className="inline-flex min-h-11 items-center gap-2 px-1 font-body text-[10px] font-bold uppercase tracking-aggressive text-paper/50 transition-colors hover:text-accent"
+                aria-label={dictionary.search.close}
+                className="inline-flex size-11 items-center justify-center text-paper/70 transition-colors hover:text-accent"
               >
-                {dictionary.common.close}
-                <kbd className="hidden rounded-sm border border-paper/15 px-1.5 py-0.5 text-paper/35 sm:inline">
-                  Esc
-                </kbd>
+                <CloseIcon className="size-5" />
               </button>
             </div>
 
-            <div className="site-container shrink-0 pb-6 sm:pb-8">
+            <div className="site-container shrink-0 pb-5 sm:pb-8">
               <label htmlFor={inputId} id={`${dialogId}-label`} className="sr-only">
                 {dictionary.search.label}
               </label>
@@ -630,17 +653,19 @@ export function HeaderSearch({ inverted = false }: HeaderSearchProps) {
                       <p className="font-body text-[10px] font-bold uppercase tracking-aggressive text-paper/40">
                         {dictionary.search.browseShop}
                       </p>
-                      <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
+                      <ul className="mt-4 flex flex-col gap-3 md:grid md:grid-cols-3 md:gap-4">
                         {quickBrowse.map((item, index) => (
-                          <QuickBrowseCard
-                            key={item.href}
-                            {...item}
-                            index={index}
-                            onSelect={close}
-                          />
+                          <li key={item.href} className="md:min-w-0">
+                            <QuickBrowseCard
+                              {...item}
+                              index={index}
+                              onSelect={close}
+                              className="size-full"
+                            />
+                          </li>
                         ))}
-                      </div>
-                      <p className="mt-6 font-body text-sm text-paper/45">
+                      </ul>
+                      <p className="mt-5 font-body text-sm text-paper/45 sm:mt-6">
                         {dictionary.search.typeHint}
                       </p>
                     </div>

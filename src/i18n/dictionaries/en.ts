@@ -56,6 +56,10 @@ export type Dictionary = {
     privacy: string;
     terms: string;
     shipping: string;
+    returns: string;
+    returnProduct: string;
+    support: string;
+    cookies: string;
     needHelp: string;
     rights: string;
   };
@@ -66,6 +70,28 @@ export type Dictionary = {
     close: string;
     contactUs: string;
     loading: string;
+    loadingCategories: string;
+    loadingProducts: string;
+  };
+  carousel: {
+    previous: string;
+    next: string;
+    previousProduct: string;
+    nextProduct: string;
+    previousImage: string;
+    nextImage: string;
+    scrollThumbnailsUp: string;
+    scrollThumbnailsDown: string;
+    scrollThumbnailsLeft: string;
+    scrollThumbnailsRight: string;
+    navigation: string;
+    galleryNavigation: string;
+    similarProducts: string;
+    similarProductsNavigation: string;
+    featuredProducts: string;
+    productThumbnails: string;
+    thumbnailNavigation: string;
+    closeGallery: string;
   };
   hero: {
     motorcycles: string;
@@ -116,12 +142,55 @@ export type Dictionary = {
     pay: string;
     yourCart: string;
     discountCode: string;
+    discount: string;
+    haveDiscountCode: string;
+    apply: string;
+    applyingCoupon: string;
+    removeCoupon: string;
+    continueToDelivery: string;
+    continueToPayment: string;
+    back: string;
+    completeDeliveryFirst: string;
+    couponNotFound: string;
+    couponAlreadyApplied: string;
+    couponNotApplied: string;
+    couponUsageLimitReached: string;
+    couponExpired: string;
+    couponNotValidForCart: string;
+    couponMinimumSpend: string;
+    couponApplyFailed: string;
+    couponRemoveFailed: string;
     deliveryContact: string;
     shippingError: string;
     paymentError: string;
     decreaseQty: string;
     increaseQty: string;
     phoneCountry: string;
+    paymentMethodsBank: string;
+    paymentMethodsBankDesc: string;
+    paymentMethodsCard: string;
+    paymentMethodsCardDesc: string;
+    paymentMethodsBnpl: string;
+    paymentMethodsBnplDesc: string;
+    paymentMethodsHirePurchase: string;
+    paymentMethodsHirePurchaseDesc: string;
+    paymentMethodsBlik: string;
+    paymentMethodsBlikDesc: string;
+    paymentChooseBank: string;
+    paymentFinancing: string;
+    paymentLoading: string;
+    paymentWaiting: string;
+    paymentEmpty: string;
+    paymentPreview: string;
+    paymentNotConfigured: string;
+    paymentMethodsEmpty: string;
+    pickupPointLabel: string;
+    pickupPointChoose: string;
+    pickupPointSearch: string;
+    pickupPointLoading: string;
+    pickupPointEmpty: string;
+    pickupPointError: string;
+    pickupPointClose: string;
   };
   pdp: {
     breadcrumbHome: string;
@@ -133,9 +202,10 @@ export type Dictionary = {
     color: string;
     addToCart: string;
     addedToCart: string;
+    buyNow: string;
+    paymentAtCheckout: string;
     selectSize: string;
     selectColor: string;
-    freeShippingOver: string;
     description: string;
     readMore: string;
     readLess: string;
@@ -162,16 +232,26 @@ export type Dictionary = {
     availability: string;
     inStock: string;
     inStore: string;
+    inStoreNow: string;
     inStockOnly: string;
     inStoreOnly: string;
     protectionSafety: string;
     minPrice: string;
     maxPrice: string;
     loadMore: string;
+    loadMoreMotorcycles: string;
+    scrollBrandsHint: string;
     loadingMore: string;
     allLoaded: string;
     productsProgress: string;
+    productSingular: string;
+    productPlural: string;
     clearFilters: string;
+    lookingForGear: string;
+    shopEquipmentCta: string;
+    brandMotorcyclesTitle: string;
+    brandMotorcyclesDescription: string;
+    contentAvailableInEnglish: string;
   };
   showroom: {
     pickupTitle: string;
@@ -180,8 +260,6 @@ export type Dictionary = {
     usePickup: string;
     directions: string;
     pickupFallback: string;
-    tryBeforeBuy: string;
-    visitUs: string;
     pickupNote: string;
   };
   returns: {
@@ -206,19 +284,39 @@ export type Dictionary = {
     promoZero: string;
     totalPayable: string;
     interestFees: string;
-    checkoutMontonio: string;
     continueCheckout: string;
     discussCheckout: string;
     handledInStore: string;
     askProvider: string;
     disclaimer: string;
     fromMonthlyPrefix: string;
+    openCalculatorLabel: string;
+    calculateFinancing: string;
+    hirePurchaseTagline: string;
+    checkoutHirePurchase: string;
+    estoniaOnlyNote: string;
   };
   notFound: {
     title: string;
     description: string;
     shopEquipment: string;
     search: string;
+  };
+  error: {
+    eyebrow: string;
+    title: string;
+    description: string;
+    retry: string;
+    backToHome: string;
+    globalDescription: string;
+  };
+  shopError: {
+    eyebrow: string;
+    title: string;
+    description: string;
+    retry: string;
+    equipmentHub: string;
+    home: string;
   };
   testRide: {
     eyebrow: string;
@@ -228,6 +326,57 @@ export type Dictionary = {
     showroom: string;
     openMaps: string;
     confirmNote: string;
+    formTitle: string;
+  };
+  motorcycle: {
+    modelOverview: string;
+    newBadge: string;
+    onDisplay: string;
+    availableToOrder: string;
+    bookTestRide: string;
+    askQuestion: string;
+    enquireModel: string;
+    visitShowroom: string;
+    contactUs: string;
+    keySpecifications: string;
+    closerLook: string;
+    closerLookBody: string;
+    closerLookAria: string;
+    overview: string;
+    technical: string;
+    underTank: string;
+    showLess: string;
+    showMore: string;
+    engineTransmission: string;
+    chassisPerformance: string;
+    dimensionsWeight: string;
+    similarBikes: string;
+    enquireShort: string;
+    filterByBrand: string;
+    availableFinishes: string;
+    watchVideo: string;
+    modals: {
+      testRideEyebrow: string;
+      testRideTitle: string;
+      testRideDescription: string;
+      enquireEyebrow: string;
+      enquireTitle: string;
+      enquireDescription: string;
+      questionEyebrow: string;
+      questionTitle: string;
+      questionDescription: string;
+      contactEyebrow: string;
+      contactTitle: string;
+      contactDescription: string;
+      showroomEyebrow: string;
+      showroomTitle: string;
+      showroomDescription: string;
+      address: string;
+      googleMaps: string;
+      waze: string;
+      showroomInterested: string;
+      showroomWalkIns: string;
+    };
   };
   forms: {
     messageReceived: string;
@@ -252,6 +401,26 @@ export type Dictionary = {
     enquirePlaceholder: string;
     questionPlaceholder: string;
     availabilityPlaceholder: string;
+    submitting: string;
+    submitError: string;
+    withdrawalFormTitle: string;
+    withdrawalFormIntro: string;
+    withdrawalEmailHint: string;
+    withdrawalOrderNumber: string;
+    withdrawalOrderNumberPlaceholder: string;
+    withdrawalOrderDate: string;
+    withdrawalProduct: string;
+    withdrawalProductPlaceholder: string;
+    withdrawalConfirmLabel: string;
+    withdrawalConfirmRequired: string;
+    withdrawalSubmit: string;
+    withdrawalReceived: string;
+    withdrawalThanks: string;
+  };
+  seo: {
+    homeTitle: string;
+    homeDescription: string;
+    brandDescription: string;
   };
   pages: {
     cartTitle: string;
@@ -260,6 +429,8 @@ export type Dictionary = {
     motorcyclesDescription: string;
     testRideTitle: string;
     testRideDescription: string;
+    orderThankYouTitle: string;
+    orderThankYouDescription: string;
   };
   giveaway: {
     drawClosed: string;
@@ -290,6 +461,43 @@ export type Dictionary = {
     termsDescription: string;
     shippingTitle: string;
     shippingDescription: string;
+    returnsTitle: string;
+    returnsDescription: string;
+    supportEyebrow: string;
+    supportTitle: string;
+    supportDescription: string;
+    cookiesTitle: string;
+    cookiesDescription: string;
+    emailPrompt: string;
+    supportContact: {
+      emailLabel: string;
+      phoneLabel: string;
+      hoursLabel: string;
+      formLabel: string;
+    };
+  };
+  consent: {
+    eyebrow: string;
+    bannerTitle: string;
+    bannerDescription: string;
+    acceptAll: string;
+    rejectAll: string;
+    customize: string;
+    savePreferences: string;
+    preferencesTitle: string;
+    functionalLabel: string;
+    functionalDescription: string;
+    functionalAlwaysActive: string;
+    preferencesLabel: string;
+    preferencesDescription: string;
+    statisticsLabel: string;
+    statisticsDescription: string;
+    marketingLabel: string;
+    marketingDescription: string;
+    cookieSettings: string;
+    policyLink: string;
+    manageDescription: string;
+    requiredHint: string;
   };
   blog: {
     pageTitle: string;
@@ -311,6 +519,7 @@ export type Dictionary = {
     featured: string;
     read: string;
     readArticle: string;
+    readMore: string;
     backToArticles: string;
     allArticles: string;
     shopNow: string;
@@ -318,6 +527,9 @@ export type Dictionary = {
     keepReading: string;
     relatedStories: string;
     articleNotFound: string;
+    latestPostsEyebrow: string;
+    latestPostsTitle: string;
+    viewAllPosts: string;
   };
 };
 
@@ -378,9 +590,13 @@ export const en: Dictionary = {
     brands: "Brands",
     cartCheckout: "Cart & checkout",
     testRide: "Book test ride",
-    privacy: "Privacy",
-    terms: "Terms",
-    shipping: "Shipping",
+    privacy: "Privacy Policy",
+    terms: "Terms & Conditions",
+    shipping: "Shipping & Delivery",
+    returns: "Returns & Exchanges",
+    returnProduct: "Return a product",
+    support: "Customer Support",
+    cookies: "Cookie Policy (EU)",
     needHelp: "Need help?",
     rights: "All rights reserved.",
   },
@@ -391,6 +607,28 @@ export const en: Dictionary = {
     close: "Close",
     contactUs: "Contact us",
     loading: "Loading",
+    loadingCategories: "Loading categories",
+    loadingProducts: "Loading products",
+  },
+  carousel: {
+    previous: "Previous",
+    next: "Next",
+    previousProduct: "Previous product",
+    nextProduct: "Next product",
+    previousImage: "Previous image",
+    nextImage: "Next image",
+    scrollThumbnailsUp: "Scroll thumbnails up",
+    scrollThumbnailsDown: "Scroll thumbnails down",
+    scrollThumbnailsLeft: "Scroll thumbnails left",
+    scrollThumbnailsRight: "Scroll thumbnails right",
+    navigation: "Carousel navigation",
+    galleryNavigation: "Gallery navigation",
+    similarProducts: "Similar products",
+    similarProductsNavigation: "Similar products navigation",
+    featuredProducts: "Featured products",
+    productThumbnails: "Product image thumbnails",
+    thumbnailNavigation: "Thumbnail navigation",
+    closeGallery: "Close gallery",
   },
   hero: {
     motorcycles: "Motorcycles",
@@ -441,6 +679,29 @@ export const en: Dictionary = {
     pay: "Pay",
     yourCart: "Your cart",
     discountCode: "Discount code",
+    discount: "Discount",
+    haveDiscountCode: "Have a discount code?",
+    apply: "Apply",
+    applyingCoupon: "Applying…",
+    removeCoupon: "Remove",
+    continueToDelivery: "Continue to delivery",
+    continueToPayment: "Continue to payment",
+    back: "Back",
+    completeDeliveryFirst:
+      "Fill in contact details, choose delivery, and select a parcel locker if required.",
+    couponNotFound:
+      "This discount code was not found. Check the spelling or try another code.",
+    couponAlreadyApplied: "This discount code is already applied.",
+    couponNotApplied: "This discount code is not on your cart.",
+    couponUsageLimitReached:
+      "This discount code has reached its usage limit or has already been used.",
+    couponExpired: "This discount code has expired.",
+    couponNotValidForCart:
+      "This discount code cannot be applied to the items in your cart.",
+    couponMinimumSpend:
+      "Your order does not meet the minimum amount required for this discount code.",
+    couponApplyFailed: "Could not apply discount code. Please try again.",
+    couponRemoveFailed: "Could not remove discount code. Please try again.",
     deliveryContact: "Delivery & contact",
     shippingError:
       "Something went wrong loading delivery options. Please try again.",
@@ -448,6 +709,35 @@ export const en: Dictionary = {
     decreaseQty: "Decrease quantity",
     increaseQty: "Increase quantity",
     phoneCountry: "Phone country",
+    paymentMethodsBank: "Pay with your bank",
+    paymentMethodsBankDesc: "Choose your bank and pay securely via Montonio.",
+    paymentMethodsCard: "Card payment",
+    paymentMethodsCardDesc:
+      "Pay with your credit or debit card via Montonio.",
+    paymentMethodsBnpl: "Pay later",
+    paymentMethodsBnplDesc: "Pay in instalments via Montonio.",
+    paymentMethodsHirePurchase: "Hire purchase",
+    paymentMethodsHirePurchaseDesc:
+      "Montonio hire purchase at checkout — provided with Inbank. Available in Estonia only.",
+    paymentMethodsBlik: "BLIK",
+    paymentMethodsBlikDesc: "Pay with BLIK via Montonio.",
+    paymentChooseBank: "Bank link",
+    paymentFinancing: "Pay later & hire purchase",
+    paymentLoading: "Loading payment methods…",
+    paymentWaiting: "Payment methods appear after you choose delivery.",
+    paymentEmpty: "No payment methods found.",
+    paymentPreview:
+      "Test mode — payment methods load from WooCommerce. No order is created and no payment is taken.",
+    paymentNotConfigured:
+      "Montonio API keys are missing on the server — payment methods cannot load.",
+    paymentMethodsEmpty: "No payment methods found for this country.",
+    pickupPointLabel: "Parcel locker",
+    pickupPointChoose: "Choose parcel locker",
+    pickupPointSearch: "Search city or location…",
+    pickupPointLoading: "Loading parcel lockers…",
+    pickupPointEmpty: "No lockers found. Try another search.",
+    pickupPointError: "Could not load parcel lockers.",
+    pickupPointClose: "Close",
   },
   pdp: {
     breadcrumbHome: "Home",
@@ -459,9 +749,11 @@ export const en: Dictionary = {
     color: "Color",
     addToCart: "Add to cart",
     addedToCart: "Added to cart",
+    buyNow: "Buy now",
+    paymentAtCheckout:
+      "Montonio pay later & hire purchase at checkout.",
     selectSize: "Select a size",
     selectColor: "Select a color",
-    freeShippingOver: "Free shipping on orders over",
     description: "Description",
     readMore: "Read more",
     readLess: "Read less",
@@ -471,7 +763,7 @@ export const en: Dictionary = {
     features: "Features",
     oneSize: "One size",
     shippingReturnsBody:
-      "Standard delivery across Estonia and the EU. Returns accepted on unworn items within 14 days — contact us to arrange a return.",
+      "EU delivery via SmartPosti, Omniva, DPD, courier or showroom pickup. Shipping costs are shown at checkout. 14-day withdrawal — contact info@motorock.eu.",
   },
   catalog: {
     sort: "Sort",
@@ -489,16 +781,28 @@ export const en: Dictionary = {
     availability: "Availability",
     inStock: "In stock",
     inStore: "In store",
+    inStoreNow: "In store now",
     inStockOnly: "In stock only",
     inStoreOnly: "In store only",
     protectionSafety: "Protection & safety",
     minPrice: "Minimum price",
     maxPrice: "Maximum price",
     loadMore: "Load more products",
+    loadMoreMotorcycles: "We have more bikes",
+    scrollBrandsHint: "Scroll for more brands",
     loadingMore: "Loading…",
     allLoaded: "All products loaded",
     productsProgress: "Products loaded",
+    productSingular: "product",
+    productPlural: "products",
     clearFilters: "Clear filters",
+    lookingForGear: "Looking for gear?",
+    shopEquipmentCta: "Shop driving equipment →",
+    brandMotorcyclesTitle: "{brand} motorcycles",
+    brandMotorcyclesDescription:
+      "Explore {brand} motorcycles at Motorock — premium machines for riders who refuse to blend in.",
+    contentAvailableInEnglish:
+      "This model description is currently available in English only. An Estonian translation is coming soon.",
   },
   showroom: {
     pickupTitle: "Pick up at showroom & try on",
@@ -509,13 +813,11 @@ export const en: Dictionary = {
     directions: "Directions →",
     pickupFallback:
       "Mention showroom pickup in your order notes or choose the closest pickup option below — we'll hold items for you.",
-    tryBeforeBuy: "Try before you buy.",
-    visitUs: "Visit us",
-    pickupNote: "Pick up at our Tallinn showroom —",
+    pickupNote: "Visit us at Motorock — {address}",
   },
-  returns: {
-    headline: "Free exchange or returns within 14 days",
-    detail: "Wrong size? Exchange it or send it back — no hassle.",
+    returns: {
+    headline: "14-day right of withdrawal",
+    detail: "Notify us at info@motorock.eu — return shipping costs are borne by the buyer.",
   },
   financing: {
     retail: "Retail",
@@ -536,16 +838,21 @@ export const en: Dictionary = {
     promoZero: "0% (promo)",
     totalPayable: "Total payable",
     interestFees: "Interest & fees",
-    checkoutMontonio:
-      "Choose Montonio at checkout for pay later and järelmaks — same flow as on motorock.eu.",
     continueCheckout: "Continue to checkout →",
     discussCheckout: "Discuss at checkout →",
     handledInStore:
       "applications are handled with our team — we can prepare an offer when you order or visit the showroom.",
     askProvider: "Ask about",
     disclaimer:
-      "Indicative monthly payment. Final terms, interest, and eligibility are confirmed by the provider at checkout or when you apply.",
+      "Indicative monthly payment. Final terms, interest, and eligibility are confirmed by Montonio and Inbank at checkout or when you apply.",
     fromMonthlyPrefix: "or from",
+    openCalculatorLabel: "Open financing calculator",
+    calculateFinancing: "Calculate →",
+    hirePurchaseTagline:
+      "Montonio hire purchase at checkout — provided with Inbank.",
+    checkoutHirePurchase:
+      "At checkout, choose Montonio hire purchase. Final terms are confirmed by Montonio and Inbank.",
+    estoniaOnlyNote: "Hire purchase is available in Estonia only.",
   },
   notFound: {
     title: "Page not found",
@@ -553,6 +860,25 @@ export const en: Dictionary = {
       "This page does not exist or has moved. Try the shop or search instead.",
     shopEquipment: "Shop equipment",
     search: "Search",
+  },
+  error: {
+    eyebrow: "Something went wrong",
+    title: "We hit a bump",
+    description:
+      "The page could not load properly. Try again, or head back to the shop.",
+    retry: "Try again",
+    backToHome: "Back to home",
+    globalDescription:
+      "The application encountered an unexpected error. You can try reloading this page.",
+  },
+  shopError: {
+    eyebrow: "Shop unavailable",
+    title: "Could not load products",
+    description:
+      "Our catalog could not be reached right now. Check your connection and try again, or browse another section.",
+    retry: "Try again",
+    equipmentHub: "Equipment hub",
+    home: "Home",
   },
   testRide: {
     eyebrow: "Test ride",
@@ -564,6 +890,66 @@ export const en: Dictionary = {
     openMaps: "Open in Google Maps →",
     confirmNote:
       "We'll confirm your slot by email — usually within one business day. Bring your licence and gear if you want to ride.",
+    formTitle: "Send your request",
+  },
+  motorcycle: {
+    modelOverview: "Model overview",
+    newBadge: "New",
+    onDisplay:
+      "On display in our Tallinn showroom — come see it and book a test ride",
+    availableToOrder:
+      "Available to order — contact us to arrange a viewing",
+    bookTestRide: "Book a test ride",
+    askQuestion: "Ask a question",
+    enquireModel: "Enquire about this model",
+    visitShowroom: "Visit showroom",
+    contactUs: "Contact us",
+    keySpecifications: "Key specifications",
+    closerLook: "Closer look",
+    closerLookBody: "Every angle of the {name} — scroll to explore.",
+    closerLookAria: "Closer look",
+    overview: "Overview",
+    technical: "Technical",
+    underTank: "Under the tank",
+    showLess: "Show less",
+    showMore: "Show more",
+    engineTransmission: "Engine & transmission",
+    chassisPerformance: "Chassis & performance",
+    dimensionsWeight: "Dimensions & weight",
+    similarBikes: "Similar bikes",
+    enquireShort: "Enquire",
+    filterByBrand: "Filter by {brand}",
+    availableFinishes: "Available finishes",
+    watchVideo: "Watch video",
+    modals: {
+      testRideEyebrow: "Test ride",
+      testRideTitle: "Book a test ride",
+      testRideDescription:
+        "Pick a time — we'll have the bike ready. We usually confirm within one business day.",
+      enquireEyebrow: "Enquiry",
+      enquireTitle: "Enquire about this model",
+      enquireDescription:
+        "Not on display right now? Tell us you're interested and we'll help with ordering or a viewing.",
+      questionEyebrow: "Contact",
+      questionTitle: "Ask a question",
+      questionDescription:
+        "Specs, financing, delivery — ask away. Real people, not a call centre.",
+      contactEyebrow: "Contact",
+      contactTitle: "Get in touch",
+      contactDescription:
+        "We'll check availability and follow up with options.",
+      showroomEyebrow: "Showroom",
+      showroomTitle: "Visit us in Tallinn",
+      showroomDescription:
+        "Drop by to see the bikes and talk through options in person.",
+      address: "Address",
+      googleMaps: "Google Maps →",
+      waze: "Waze →",
+      showroomInterested:
+        "Interested in the {brand} {name}? Mention it when you visit — or send an enquiry and we'll confirm what's on display.",
+      showroomWalkIns:
+        "Walk-ins welcome. Bring your licence if you'd like to discuss a test ride.",
+    },
   },
   forms: {
     messageReceived: "Message received",
@@ -590,6 +976,31 @@ export const en: Dictionary = {
     questionPlaceholder: "What's on your mind about this bike?",
     availabilityPlaceholder:
       "Let us know what you're looking for and we'll follow up…",
+    submitting: "Sending…",
+    submitError: "Could not send your message. Please try again or email us directly.",
+    withdrawalFormTitle: "Withdrawal request",
+    withdrawalFormIntro:
+      "Use this form to withdraw from your order within the 14-day withdrawal period. We will confirm receipt by email.",
+    withdrawalEmailHint: "We will send your withdrawal confirmation to this address.",
+    withdrawalOrderNumber: "Order number",
+    withdrawalOrderNumberPlaceholder: "e.g. 12345",
+    withdrawalOrderDate: "Order or delivery date",
+    withdrawalProduct: "Product or order details",
+    withdrawalProductPlaceholder:
+      "Describe the item you wish to return (name, size, colour, quantity…)",
+    withdrawalConfirmLabel:
+      "I confirm that I wish to withdraw from this order and return the product.",
+    withdrawalConfirmRequired: "Please confirm your withdrawal before submitting.",
+    withdrawalSubmit: "Confirm withdrawal",
+    withdrawalReceived: "Withdrawal request received",
+    withdrawalThanks:
+      "Thank you — we have sent a copy of your request to your email. Our team will confirm receipt shortly.",
+  },
+  seo: {
+    homeTitle: "Premium Motorcycles & Riding Gear",
+    homeDescription:
+      "Motorcycles from Brixton, Mutt, Motron and Malaguti. Premium riding gear and equipment for riders who refuse to blend in — Motorock.eu.",
+    brandDescription: "Shop {brand} riding gear at Motorock.eu.",
   },
   pages: {
     cartTitle: "Cart",
@@ -601,6 +1012,8 @@ export const en: Dictionary = {
     testRideTitle: "Book a test ride",
     testRideDescription:
       "Book a motorcycle test ride at Motorock showroom in Tallinn.",
+    orderThankYouTitle: "Order confirmed",
+    orderThankYouDescription: "Your Motorock order summary after checkout.",
   },
   giveaway: {
     drawClosed: "Draw closed",
@@ -626,15 +1039,59 @@ export const en: Dictionary = {
     eyebrow: "Legal",
     lastUpdated: "Last updated",
     questions: "Questions?",
-    privacyTitle: "Privacy policy",
+    privacyTitle: "Privacy Policy",
     privacyDescription:
-      "How we handle your personal data when you shop, enquire, or visit our showroom.",
-    termsTitle: "Terms & conditions",
+      "How Motomonopol OÜ collects, processes and stores personal data for the motorock.eu online shop.",
+    termsTitle: "Terms & Conditions",
     termsDescription:
-      "The rules that apply when you buy from Motorock.eu or use our services.",
-    shippingTitle: "Shipping information",
+      "Terms and conditions for the motorock.eu online store operated by Motomonopol OÜ.",
+    shippingTitle: "Shipping and delivery",
     shippingDescription:
-      "Delivery options, costs, and handling times for Motorock.eu orders.",
+      "Delivery methods, times, costs and tracking for motorock.eu orders across the EU.",
+    returnsTitle: "Returns & Exchanges",
+    returnsDescription:
+      "Your 14-day right of withdrawal and how returns and refunds work at motorock.eu.",
+    supportEyebrow: "Help",
+    supportTitle: "Customer support",
+    supportDescription:
+      "Order help, delivery questions, sizing advice, and how to reach the Motorock team.",
+    cookiesTitle: "Cookie Policy (EU)",
+    cookiesDescription:
+      "Cookie use on motorock.eu for visitors in the European Economic Area and Switzerland.",
+    emailPrompt: "or email",
+    supportContact: {
+      emailLabel: "Email",
+      phoneLabel: "Phone",
+      hoursLabel: "Showroom hours",
+      formLabel: "send us a message",
+    },
+  },
+  consent: {
+    eyebrow: "Privacy",
+    bannerTitle: "We use cookies",
+    bannerDescription:
+      "We use cookies and similar technologies for essential shop functions, preferences, statistics, and marketing. You can accept all, reject non-essential cookies, or customize your choices.",
+    acceptAll: "Accept all",
+    rejectAll: "Reject non-essential",
+    customize: "Customize",
+    savePreferences: "Save preferences",
+    preferencesTitle: "Cookie preferences",
+    functionalLabel: "Functional",
+    functionalDescription:
+      "Required for cart, checkout, language, and security. These cannot be disabled.",
+    functionalAlwaysActive: "Always active",
+    preferencesLabel: "Preferences",
+    preferencesDescription: "Remember convenience settings such as dismissed notices.",
+    statisticsLabel: "Statistics",
+    statisticsDescription:
+      "Help us understand how motorock.eu is used (Google Analytics via Tag Manager).",
+    marketingLabel: "Marketing",
+    marketingDescription:
+      "Measure campaigns and advertising performance (Google Ads and Meta/Facebook via Tag Manager).",
+    cookieSettings: "Cookie settings",
+    policyLink: "Cookie policy",
+    manageDescription: "Customize your cookie preferences below.",
+    requiredHint: "These cookies cannot be disabled.",
   },
   blog: {
     pageTitle: "Blog",
@@ -658,6 +1115,7 @@ export const en: Dictionary = {
     featured: "Featured",
     read: "Read →",
     readArticle: "Read article →",
+    readMore: "Read more",
     backToArticles: "← Articles",
     allArticles: "← All articles",
     shopNow: "Shop now →",
@@ -665,5 +1123,8 @@ export const en: Dictionary = {
     keepReading: "Keep reading",
     relatedStories: "Related stories",
     articleNotFound: "Article not found",
+    latestPostsEyebrow: "Blog",
+    latestPostsTitle: "Latest stories",
+    viewAllPosts: "View all articles →",
   },
 };

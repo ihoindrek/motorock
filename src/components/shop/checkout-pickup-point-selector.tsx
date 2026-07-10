@@ -1,15 +1,17 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { ChevronDown, X } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { PickupPoint } from "@/types/pickup-point";
 import type { ShippingRate } from "@/lib/shop/shipping-method";
 import { MorphLoading } from "@/components/ui/morph-loading";
+import { useLocale } from "@/context/locale-context";
+import { getDictionary } from "@/i18n/get-dictionary";
 import { cn } from "@/lib/utils";
 
 type CheckoutPickupPointSelectorProps = {
   shippingRate: ShippingRate;
   country: string;
-  locale: "et" | "en";
   selectedPoint: PickupPoint | null;
   onSelect: (point: PickupPoint | null) => void;
 };
@@ -33,31 +35,14 @@ function PickupPointsSkeleton() {
 export function CheckoutPickupPointSelector({
   shippingRate,
   country,
-  locale,
   selectedPoint,
   onSelect,
 }: CheckoutPickupPointSelectorProps) {
-  const t =
-    locale === "et"
-      ? {
-          label: "Pakiautomaat",
-          choose: "Vali pakiautomaat",
-          search: "Otsi linja või asukohta…",
-          loading: "Laen pakiautomaate…",
-          empty: "Ühtegi automaati ei leitud. Proovi teist otsingusõna.",
-          error: "Pakiautomaate ei õnnestunud laadida.",
-          change: "Muuda pakiautomaati",
-        }
-      : {
-          label: "Parcel locker",
-          choose: "Choose parcel locker",
-          search: "Search city or location…",
-          loading: "Loading parcel lockers…",
-          empty: "No lockers found. Try another search.",
-          error: "Could not load parcel lockers.",
-          change: "Change parcel locker",
-        };
+  const locale = useLocale();
+  const t = getDictionary(locale).checkout;
 
+  const rootRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -69,6 +54,19 @@ export function CheckoutPickupPointSelector({
     () => `${shippingRate.id}:${shippingRate.methodId}:${country}`,
     [country, shippingRate.id, shippingRate.methodId],
   );
+
+  const closeDropdown = () => {
+    setIsOpen(false);
+    setQuery("");
+  };
+
+  const openDropdown = () => {
+    if (prefetching) {
+      return;
+    }
+
+    setIsOpen(true);
+  };
 
   useEffect(() => {
     onSelect(null);
@@ -102,7 +100,7 @@ export function CheckoutPickupPointSelector({
         };
 
         if (!response.ok) {
-          throw new Error(payload.error ?? t.error);
+          throw new Error(payload.error ?? t.pickupPointError);
         }
 
         if (!cancelled) {
@@ -111,7 +109,7 @@ export function CheckoutPickupPointSelector({
       } catch (cause) {
         if (!cancelled) {
           setPoints([]);
-          setError(cause instanceof Error ? cause.message : t.error);
+          setError(cause instanceof Error ? cause.message : t.pickupPointError);
         }
       } finally {
         if (!cancelled) {
@@ -132,80 +130,160 @@ export function CheckoutPickupPointSelector({
       cancelled = true;
       window.clearTimeout(timeout);
     };
-  }, [country, query, shippingRate, t.error]);
+  }, [country, query, shippingRate, t.pickupPointError]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    const frame = window.requestAnimationFrame(() => {
+      searchRef.current?.focus();
+    });
+
+    const handlePointerDown = (event: MouseEvent) => {
+      if (!rootRef.current?.contains(event.target as Node)) {
+        closeDropdown();
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        closeDropdown();
+      }
+    };
+
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isOpen]);
 
   const isLoading = prefetching || loading;
   const visiblePoints = useMemo(() => points, [points]);
 
   const handleChoosePoint = (point: PickupPoint) => {
     onSelect(point);
-    setIsOpen(false);
-    setQuery("");
-  };
-
-  const handleChange = () => {
-    onSelect(null);
-    setIsOpen(true);
-    setQuery("");
+    closeDropdown();
   };
 
   return (
-    <div className="mt-4 border-t border-ink/10 pt-5">
+    <div ref={rootRef} className="relative mt-4 border-t border-ink/10 pt-5">
       <div className="flex items-center justify-between gap-3">
-        <label className="font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/50">
-          {t.label}
+        <label
+          id={`pickup-point-label-${rateKey}`}
+          className="font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/50"
+        >
+          {t.pickupPointLabel}
         </label>
-        {isLoading && !selectedPoint ? (
+        {isLoading && !isOpen ? (
           <span className="inline-flex items-center gap-2 text-[11px] text-ink/45">
             <MorphLoading size="sm" className="!size-8" />
-            {t.loading}
+            {t.pickupPointLoading}
           </span>
         ) : null}
       </div>
 
-      {selectedPoint ? (
-        <div className="mt-2 flex items-start justify-between gap-3 border border-accent bg-white px-4 py-3 shadow-sm">
-          <div className="min-w-0">
-            <p className="text-sm font-semibold text-ink">{selectedPoint.name}</p>
-            <p className="mt-1 text-xs text-ink/55">
-              {selectedPoint.address}
-              {selectedPoint.city ? `, ${selectedPoint.city}` : ""}
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={handleChange}
-            className="shrink-0 text-xs font-medium text-ink/50 hover:text-accent"
-          >
-            {t.change}
-          </button>
-        </div>
-      ) : isOpen ? (
-        <>
-          <input
-            type="search"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder={t.search}
-            autoFocus
-            className="mt-2 w-full border border-ink/15 bg-paper px-4 py-3 text-base focus:border-accent focus:outline-none"
-          />
+      <button
+        type="button"
+        id={`pickup-point-trigger-${rateKey}`}
+        aria-expanded={isOpen}
+        aria-haspopup="listbox"
+        aria-labelledby={`pickup-point-label-${rateKey} pickup-point-trigger-${rateKey}`}
+        disabled={prefetching}
+        onClick={() => {
+          if (isOpen) {
+            closeDropdown();
+            return;
+          }
 
-          <div className="mt-2 max-h-64 overflow-y-auto border border-ink/10 bg-white">
+          openDropdown();
+        }}
+        className={cn(
+          "mt-2 flex w-full items-center gap-3 border px-4 py-3 text-left text-sm transition-colors",
+          isOpen || selectedPoint
+            ? "border-accent bg-white shadow-sm"
+            : "border-ink/15 bg-paper hover:border-ink/30 hover:bg-white",
+          prefetching && "cursor-wait",
+        )}
+      >
+        <span className="min-w-0 flex-1">
+          {selectedPoint ? (
+            <>
+              <span className="block font-semibold text-ink">{selectedPoint.name}</span>
+              <span className="mt-0.5 block text-xs text-ink/55">
+                {selectedPoint.address}
+                {selectedPoint.city ? `, ${selectedPoint.city}` : ""}
+              </span>
+            </>
+          ) : (
+            <span className={prefetching ? "text-ink/40" : "text-ink/60"}>
+              {prefetching ? t.pickupPointLoading : t.pickupPointChoose}
+            </span>
+          )}
+        </span>
+        {prefetching ? (
+          <MorphLoading size="sm" className="!size-8 shrink-0" />
+        ) : (
+          <ChevronDown
+            className={cn(
+              "size-4 shrink-0 text-ink/40 transition-transform duration-200",
+              isOpen && "rotate-180",
+            )}
+            aria-hidden="true"
+          />
+        )}
+      </button>
+
+      {isOpen ? (
+        <div className="absolute left-0 right-0 top-full z-30 mt-1 border border-ink/15 bg-white shadow-[0_12px_40px_rgb(11_11_11_/_0.12)]">
+          <div className="flex items-center gap-2 border-b border-ink/10 px-3 py-2">
+            <input
+              ref={searchRef}
+              type="search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder={t.pickupPointSearch}
+              className="min-w-0 flex-1 border-0 bg-transparent px-1 py-2 text-sm text-ink placeholder:text-ink/40 focus:outline-none"
+            />
+            <button
+              type="button"
+              onClick={closeDropdown}
+              aria-label={t.pickupPointClose}
+              className="inline-flex size-8 shrink-0 items-center justify-center text-ink/45 transition-colors hover:bg-paper hover:text-ink"
+            >
+              <X className="size-4" aria-hidden="true" />
+            </button>
+          </div>
+
+          <div
+            role="listbox"
+            aria-label={t.pickupPointLabel}
+            className="max-h-64 overflow-y-auto"
+          >
             {isLoading ? (
               <PickupPointsSkeleton />
             ) : error ? (
               <p className="px-4 py-3 text-sm text-accent">{error}</p>
             ) : visiblePoints.length === 0 ? (
-              <p className="px-4 py-3 text-sm text-ink/50">{t.empty}</p>
+              <p className="px-4 py-3 text-sm text-ink/50">{t.pickupPointEmpty}</p>
             ) : (
               <ul className="divide-y divide-ink/8">
                 {visiblePoints.map((point) => (
                   <li key={`${point.carrier}-${point.id}`}>
                     <button
                       type="button"
+                      role="option"
+                      aria-selected={selectedPoint?.id === point.id}
                       onClick={() => handleChoosePoint(point)}
-                      className="flex w-full flex-col items-start px-4 py-3 text-left transition-colors hover:bg-paper"
+                      className={cn(
+                        "flex w-full flex-col items-start px-4 py-3 text-left transition-colors hover:bg-paper",
+                        selectedPoint?.id === point.id && "bg-paper",
+                      )}
                     >
                       <span className="text-sm font-semibold text-ink">
                         {point.name}
@@ -220,42 +298,8 @@ export function CheckoutPickupPointSelector({
               </ul>
             )}
           </div>
-
-          <button
-            type="button"
-            onClick={() => {
-              setIsOpen(false);
-              setQuery("");
-            }}
-            className="mt-3 text-sm font-medium text-ink/60 underline-offset-2 hover:text-accent hover:underline"
-          >
-            {locale === "et" ? "Sulge" : "Close"}
-          </button>
-        </>
-      ) : (
-        <button
-          type="button"
-          onClick={() => setIsOpen(true)}
-          disabled={prefetching}
-          className={cn(
-            "mt-2 flex w-full items-center justify-between border px-4 py-3 text-left text-sm transition-colors",
-            prefetching
-              ? "cursor-wait border-ink/10 bg-white"
-              : "border-ink/15 bg-paper hover:border-ink/30",
-          )}
-        >
-          <span className={prefetching ? "text-ink/40" : "text-ink/60"}>
-            {prefetching ? t.loading : t.choose}
-          </span>
-          {prefetching ? (
-            <MorphLoading size="sm" className="!size-8" />
-          ) : (
-            <span className="text-ink/35" aria-hidden="true">
-              →
-            </span>
-          )}
-        </button>
-      )}
+        </div>
+      ) : null}
     </div>
   );
 }

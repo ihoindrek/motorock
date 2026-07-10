@@ -1,10 +1,21 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useState, useMemo, type ReactNode } from "react";
 import { MorphLoading } from "@/components/ui/morph-loading";
+import { CheckoutSelectionCheck } from "@/components/shop/checkout-selection-check";
 import { resolvePaymentMethodVisual } from "@/lib/shop/payment-method-visual";
-import type { PaymentGateway } from "@/lib/graphql/checkout";
+import {
+  MONTONIO_PAYMENT_METHOD_ID,
+  type PaymentGateway,
+} from "@/lib/graphql/checkout";
 import { isLiveCheckoutEnabled } from "@/lib/checkout-mode";
+import type { Locale } from "@/i18n/config";
+import { getDictionary } from "@/i18n/get-dictionary";
+import {
+  getLocalizedMontonioGatewayDefs,
+  localizeBankDisplayName,
+  localizePaymentGateway,
+} from "@/lib/shop/localize-payment-gateway";
 import type { MontonioPaymentOption } from "@/types/montonio-payment";
 import {
   montonioOptionKey,
@@ -14,6 +25,35 @@ import { cn } from "@/lib/utils";
 
 function isMontonioGateway(gateway: PaymentGateway) {
   return gateway.id.toLowerCase().includes("montonio");
+}
+
+export function isBankMontonioGateway(gateway: PaymentGateway) {
+  const haystack = `${gateway.id} ${gateway.title}`.toLowerCase();
+
+  return (
+    gateway.id === MONTONIO_PAYMENT_METHOD_ID ||
+    haystack.includes("bank") ||
+    haystack.includes("pang") ||
+    haystack.includes("pay with your")
+  );
+}
+
+/** True when the customer must pick inside the expanded Montonio panel. */
+export function gatewayNeedsMontonioSubselection(
+  gateway: PaymentGateway,
+  options: MontonioPaymentOption[],
+) {
+  const scopedOptions = filterMontonioOptionsForGateway(gateway, options);
+
+  if (scopedOptions.length === 0) {
+    return false;
+  }
+
+  if (isBankMontonioGateway(gateway)) {
+    return true;
+  }
+
+  return scopedOptions.length > 1;
 }
 
 export function filterMontonioOptionsForGateway(
@@ -35,22 +75,20 @@ export function filterMontonioOptionsForGateway(
     haystack.includes("pay later") ||
     haystack.includes("maksa hiljem")
   ) {
-    return options.filter((option) => option.kind === "bnpl");
+    return options.filter(
+      (option) => option.kind === "bnpl" || option.kind === "hirePurchase",
+    );
   }
 
   if (
     haystack.includes("hire") ||
     haystack.includes("järelmaks") ||
-    haystack.includes("purchase")
+    gateway.id === "wc_montonio_hire_purchase"
   ) {
     return options.filter((option) => option.kind === "hirePurchase");
   }
 
-  if (
-    haystack.includes("bank") ||
-    haystack.includes("pang") ||
-    haystack.includes("pay with your")
-  ) {
+  if (isBankMontonioGateway(gateway)) {
     return options.filter(
       (option) =>
         option.kind === "bank" && option.systemName === "paymentInitiation",
@@ -58,6 +96,92 @@ export function filterMontonioOptionsForGateway(
   }
 
   return options;
+}
+
+const SYNTHETIC_MONTONIO_GATEWAY_ORDER = [
+  MONTONIO_PAYMENT_METHOD_ID,
+  "wc_montonio_hire_purchase",
+  "wc_montonio_card",
+  "wc_montonio_bnpl",
+  "wc_montonio_blik",
+] as const;
+
+/** Add Montonio gateways that Woo did not return but Montonio API supports. */
+export function expandMontonioPaymentGateways(
+  gateways: PaymentGateway[],
+  montonioOptions: MontonioPaymentOption[],
+  locale: Locale,
+) {
+  const existingIds = new Set(gateways.map((gateway) => gateway.id));
+  const extras: PaymentGateway[] = [];
+  const syntheticDefs = getLocalizedMontonioGatewayDefs(locale);
+
+  for (const def of syntheticDefs) {
+    if (existingIds.has(def.id)) {
+      continue;
+    }
+
+    const synthetic: PaymentGateway = {
+      id: def.id,
+      title: def.title,
+      description: def.description,
+      icon: null,
+    };
+
+    if (
+      filterMontonioOptionsForGateway(synthetic, montonioOptions).length > 0
+    ) {
+      extras.push(synthetic);
+    }
+  }
+
+  if (extras.length === 0) {
+    return gateways.map((gateway) => localizePaymentGateway(gateway, locale));
+  }
+
+  const merged = [
+    ...gateways.map((gateway) => localizePaymentGateway(gateway, locale)),
+    ...extras,
+  ];
+
+  return merged.sort((left, right) => {
+    const leftIndex = SYNTHETIC_MONTONIO_GATEWAY_ORDER.indexOf(
+      left.id as (typeof SYNTHETIC_MONTONIO_GATEWAY_ORDER)[number],
+    );
+    const rightIndex = SYNTHETIC_MONTONIO_GATEWAY_ORDER.indexOf(
+      right.id as (typeof SYNTHETIC_MONTONIO_GATEWAY_ORDER)[number],
+    );
+
+    if (leftIndex === -1 && rightIndex === -1) {
+      return 0;
+    }
+
+    if (leftIndex === -1) {
+      return 1;
+    }
+
+    if (rightIndex === -1) {
+      return -1;
+    }
+
+    return leftIndex - rightIndex;
+  });
+}
+
+/** Hide Montonio gateways that have no providers for the selected country. */
+export function filterGatewaysWithMontonioOptions(
+  gateways: PaymentGateway[],
+  montonioOptions: MontonioPaymentOption[],
+) {
+  return gateways.filter((gateway) => {
+    if (!isMontonioGateway(gateway)) {
+      return true;
+    }
+
+    return (
+      filterMontonioOptionsForGateway(gateway, montonioOptions).length > 0
+    );
+  });
 }
 
 function PaymentMethodIcon({
@@ -118,73 +242,61 @@ function PaymentMethodIcon({
   );
 }
 
-function formatBankDisplayName(name: string) {
-  return name
-    .replace(/\s+Estonia$/i, "")
-    .replace(/\s+Eesti$/i, "")
-    .replace(/\s+Bank$/i, "")
-    .trim();
+function formatBankDisplayName(name: string, locale: Locale) {
+  return localizeBankDisplayName(name, locale);
 }
 
 function BankLinkButton({
   option,
   selected,
   onSelect,
+  locale,
 }: {
   option: MontonioPaymentOption;
   selected: boolean;
   onSelect: (option: MontonioPaymentOption) => void;
+  locale: Locale;
 }) {
   const [logoFailed, setLogoFailed] = useState(false);
-  const label = formatBankDisplayName(option.name);
+  const label = formatBankDisplayName(option.name, locale);
 
   return (
     <button
       type="button"
       onClick={() => onSelect(option)}
       aria-pressed={selected}
+      aria-label={label}
       className={cn(
-        "group relative flex min-h-[4.75rem] w-full flex-col items-center justify-center gap-2.5 border bg-white px-3 py-3.5 transition-all duration-200 sm:min-h-[5rem]",
+        "group relative flex min-h-[3.75rem] w-full items-center justify-center border bg-white px-3 py-3 transition-all duration-200 sm:min-h-[4.25rem]",
         selected
           ? "border-accent ring-2 ring-accent/20 shadow-sm"
           : "border-ink/12 hover:-translate-y-px hover:border-ink/25 hover:shadow-[0_8px_20px_rgb(11_11_11_/_0.06)]",
       )}
     >
-      <span
-        className={cn(
-          "flex h-9 w-full items-center justify-center sm:h-10",
-          selected ? "opacity-100" : "opacity-90 group-hover:opacity-100",
-        )}
-      >
-        {option.logoUrl && !logoFailed ? (
-          <img
-            src={option.logoUrl}
-            alt=""
-            width={88}
-            height={32}
-            className="max-h-9 w-auto max-w-[5.75rem] object-contain sm:max-h-10 sm:max-w-[6.25rem]"
-            loading="lazy"
-            decoding="async"
-            onError={() => setLogoFailed(true)}
-          />
-        ) : (
-          <span className="font-body text-xs font-bold uppercase tracking-wide text-ink/55">
-            {label.slice(0, 4)}
-          </span>
-        )}
-      </span>
-      <span
-        className={cn(
-          "line-clamp-1 text-center text-[11px] font-medium leading-none sm:text-xs",
-          selected ? "text-ink" : "text-ink/60 group-hover:text-ink/80",
-        )}
-      >
-        {label}
-      </span>
+      {option.logoUrl && !logoFailed ? (
+        <img
+          src={option.logoUrl}
+          alt=""
+          width={88}
+          height={32}
+          className={cn(
+            "max-h-9 w-auto max-w-[5.75rem] object-contain sm:max-h-10 sm:max-w-[6.25rem]",
+            selected ? "opacity-100" : "opacity-90 group-hover:opacity-100",
+          )}
+          loading="lazy"
+          decoding="async"
+          onError={() => setLogoFailed(true)}
+        />
+      ) : (
+        <span className="font-body text-xs font-bold uppercase tracking-wide text-ink/55">
+          {label.slice(0, 4)}
+        </span>
+      )}
       {selected ? (
-        <span
-          className="absolute right-2 top-2 size-1.5 rounded-full bg-accent"
-          aria-hidden="true"
+        <CheckoutSelectionCheck
+          selected
+          size="sm"
+          className="absolute right-2 top-2"
         />
       ) : null}
     </button>
@@ -197,7 +309,7 @@ function BankLinksSkeleton() {
       {Array.from({ length: 8 }).map((_, index) => (
         <li
           key={index}
-          className="min-h-[4.75rem] animate-pulse border border-ink/10 bg-white sm:min-h-[5rem]"
+          className="min-h-[3.75rem] animate-pulse border border-ink/10 bg-white sm:min-h-[4.25rem]"
           aria-hidden="true"
         />
       ))}
@@ -241,39 +353,27 @@ function MontonioProviderList({
   configured: boolean;
   selectedKey: string | null;
   onSelect: (option: MontonioPaymentOption) => void;
-  locale: "en" | "et";
+  locale: Locale;
 }) {
   const scopedOptions = filterMontonioOptionsForGateway(gateway, options);
-  const copy =
-    locale === "et"
-      ? {
-          loading: "Laen makseviise…",
-          chooseBank: "Pangalink",
-          card: "Kaardimakse",
-          financing: "Järelmaks ja maksa hiljem",
-          blik: "BLIK",
-          notConfigured:
-            "Montonio API võtmed puuduvad serveris — makseviise ei lae.",
-          empty: "Selle riigi jaoks makseviise ei leitud.",
-        }
-      : {
-          loading: "Loading payment methods…",
-          chooseBank: "Bank link",
-          card: "Card payment",
-          financing: "Pay later & hire purchase",
-          blik: "BLIK",
-          notConfigured:
-            "Montonio API keys are missing on the server — payment methods cannot load.",
-          empty: "No payment methods found for this country.",
-        };
+  const copy = getDictionary(locale).checkout;
 
   if (loading) {
     return (
       <div className="border border-t-0 border-ink/10 bg-paper/40 px-3 py-4 sm:px-4">
-        <p className="mb-3 font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/45">
-          {copy.chooseBank}
-        </p>
-        <BankLinksSkeleton />
+        {isBankMontonioGateway(gateway) ? (
+          <>
+            <p className="mb-3 font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/45">
+              {copy.paymentChooseBank}
+            </p>
+            <BankLinksSkeleton />
+          </>
+        ) : (
+          <div className="flex flex-col items-center gap-3 py-4">
+            <MorphLoading size="sm" />
+            <p className="text-xs font-medium text-ink/50">{copy.paymentLoading}</p>
+          </div>
+        )}
       </div>
     );
   }
@@ -283,11 +383,11 @@ function MontonioProviderList({
   }
 
   if (!configured) {
-    return <p className="text-sm text-ink/55">{copy.notConfigured}</p>;
+    return <p className="text-sm text-ink/55">{copy.paymentNotConfigured}</p>;
   }
 
   if (scopedOptions.length === 0) {
-    return <p className="text-sm text-ink/55">{copy.empty}</p>;
+    return <p className="text-sm text-ink/55">{copy.paymentMethodsEmpty}</p>;
   }
 
   const banks = scopedOptions.filter(
@@ -301,11 +401,17 @@ function MontonioProviderList({
   const blik = scopedOptions.filter((option) => option.kind === "blik");
   const isSelected = (option: MontonioPaymentOption) =>
     selectedKey === montonioOptionKey(option);
+  const hideFinancingHeading =
+    financing.length > 0 &&
+    !isBankMontonioGateway(gateway) &&
+    (gateway.id === "wc_montonio_bnpl" ||
+      `${gateway.title}`.toLowerCase().includes("pay later") ||
+      `${gateway.title}`.toLowerCase().includes("maksa hiljem"));
 
   return (
     <div className="space-y-4 border border-t-0 border-ink/10 bg-paper/40 px-3 py-4 sm:px-4">
       {banks.length > 0 ? (
-        <MontonioSection title={copy.chooseBank}>
+        <MontonioSection title={copy.paymentChooseBank}>
           <ul className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4">
             {banks.map((option) => (
               <li key={montonioOptionKey(option)} className="min-w-0">
@@ -313,6 +419,7 @@ function MontonioProviderList({
                   option={option}
                   selected={isSelected(option)}
                   onSelect={onSelect}
+                  locale={locale}
                 />
               </li>
             ))}
@@ -335,15 +442,15 @@ function MontonioProviderList({
       ) : null}
 
       {financing.length > 0 ? (
-        <MontonioSection
-          title={copy.financing}
-          className={
-            banks.length > 0 || card.length > 0
-              ? "border-t border-ink/8 pt-4"
-              : undefined
-          }
-        >
-          <ul className="grid gap-2">
+        hideFinancingHeading ? (
+          <ul
+            className={cn(
+              "grid gap-2",
+              banks.length > 0 || card.length > 0
+                ? "border-t border-ink/8 pt-4"
+                : undefined,
+            )}
+          >
             {financing.map((option) => (
               <li key={montonioOptionKey(option)}>
                 <MontonioOptionRow
@@ -355,12 +462,34 @@ function MontonioProviderList({
               </li>
             ))}
           </ul>
-        </MontonioSection>
+        ) : (
+          <MontonioSection
+            title={copy.paymentFinancing}
+            className={
+              banks.length > 0 || card.length > 0
+                ? "border-t border-ink/8 pt-4"
+                : undefined
+            }
+          >
+            <ul className="grid gap-2">
+              {financing.map((option) => (
+                <li key={montonioOptionKey(option)}>
+                  <MontonioOptionRow
+                    option={option}
+                    selected={isSelected(option)}
+                    onSelect={onSelect}
+                    label={montonioOptionLabel(option, locale)}
+                  />
+                </li>
+              ))}
+            </ul>
+          </MontonioSection>
+        )
       ) : null}
 
       {blik.length > 0 ? (
         <MontonioSection
-          title={copy.blik}
+          title={copy.paymentMethodsBlik}
           className="border-t border-ink/8 pt-4"
         >
           <ul className="grid gap-2">
@@ -399,11 +528,12 @@ function MontonioOptionRow({
     <button
       type="button"
       onClick={() => onSelect(option)}
+      aria-pressed={selected}
       className={cn(
         "flex w-full items-center gap-3 border px-3 py-2.5 text-left transition-colors sm:px-4 sm:py-3",
         selected
           ? "border-accent bg-white shadow-sm"
-          : "border-ink/15 bg-paper hover:border-ink/30",
+          : "border-ink/15 bg-paper hover:border-ink/30 hover:bg-white",
       )}
     >
       {option.logoUrl && !logoFailed ? (
@@ -422,7 +552,10 @@ function MontonioOptionRow({
           {displayName.slice(0, 3)}
         </span>
       )}
-      <span className="text-sm font-semibold text-ink">{displayName}</span>
+      <span className="min-w-0 flex-1 text-sm font-semibold text-ink">
+        {displayName}
+      </span>
+      <CheckoutSelectionCheck selected={selected} />
     </button>
   );
 }
@@ -440,11 +573,12 @@ function PaymentMethodButton({
     <button
       type="button"
       onClick={() => onSelect(gateway.id)}
+      aria-pressed={selected}
       className={cn(
         "flex w-full items-center gap-3 border px-3 py-2.5 text-left transition-colors sm:px-4 sm:py-3",
         selected
           ? "border-accent bg-white shadow-sm"
-          : "border-ink/15 bg-paper hover:border-ink/30",
+          : "border-ink/15 bg-paper hover:border-ink/30 hover:bg-white",
       )}
     >
       <PaymentMethodIcon gateway={gateway} className="size-10" />
@@ -458,6 +592,7 @@ function PaymentMethodButton({
           </span>
         ) : null}
       </span>
+      <CheckoutSelectionCheck selected={selected} />
     </button>
   );
 }
@@ -502,27 +637,16 @@ export function CheckoutPaymentOptions({
   loading: boolean;
   waitingForDelivery?: boolean;
   error: string | null;
-  locale: "en" | "et";
+  locale: Locale;
 }) {
-  const copy =
-    locale === "et"
-      ? {
-          loading: "Laen makseviise…",
-          waiting: "Makseviisid ilmuvad pärast tarneviisi valimist.",
-          empty: "Makseviise ei leitud.",
-          preview:
-            "Testrežiim — makseviisid laetakse WooCommerce'ist. Tellimust ei looda ega makset ei võeta.",
-        }
-      : {
-          loading: "Loading payment methods…",
-          waiting: "Payment methods appear after you choose delivery.",
-          empty: "No payment methods found.",
-          preview:
-            "Test mode — payment methods load from WooCommerce. No order is created and no payment is taken.",
-        };
+  const copy = getDictionary(locale).checkout;
+  const localizedGateways = useMemo(
+    () => gateways.map((gateway) => localizePaymentGateway(gateway, locale)),
+    [gateways, locale],
+  );
 
   const selectedGateway =
-    gateways.find((gateway) => gateway.id === selectedId) ?? null;
+    localizedGateways.find((gateway) => gateway.id === selectedId) ?? null;
   const montonioSelected =
     selectedGateway !== null && isMontonioGateway(selectedGateway);
 
@@ -530,24 +654,26 @@ export function CheckoutPaymentOptions({
     <div className="space-y-3">
       {!isLiveCheckoutEnabled() ? (
         <p className="border border-ink/10 bg-surface/50 px-4 py-3 text-xs leading-relaxed text-ink/60">
-          {copy.preview}
+          {copy.paymentPreview}
         </p>
       ) : null}
 
       {waitingForDelivery ? (
-        <p className="text-sm text-ink/50">{copy.waiting}</p>
+        <p className="text-sm text-ink/50">{copy.paymentWaiting}</p>
       ) : loading ? (
-        <CheckoutPaymentOptionsSkeleton message={copy.loading} />
+        <CheckoutPaymentOptionsSkeleton message={copy.paymentLoading} />
       ) : error ? (
         <p className="text-sm text-accent">{error}</p>
-      ) : gateways.length === 0 ? (
-        <p className="text-sm text-ink/60">{copy.empty}</p>
+      ) : localizedGateways.length === 0 ? (
+        <p className="text-sm text-ink/60">{copy.paymentEmpty}</p>
       ) : (
         <ul className="grid gap-2">
-          {gateways.map((gateway) => {
+          {localizedGateways.map((gateway) => {
             const selected = selectedId === gateway.id;
             const showMontonioProviders =
-              selected && isMontonioGateway(gateway);
+              selected &&
+              isMontonioGateway(gateway) &&
+              gatewayNeedsMontonioSubselection(gateway, montonioOptions);
 
             return (
               <li key={gateway.id}>

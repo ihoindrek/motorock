@@ -19,16 +19,43 @@ import {
 import { parseGraphqlPrice } from "@/lib/shop/parse-graphql-price";
 import { getCanonicalBrandName } from "@/lib/shop/brands";
 import { parseSpecsFromDescriptionHtml } from "@/lib/shop/parse-product-description";
-import { resolveCategoryFromWcNodes } from "@/lib/shop/wc-categories";
+import {
+  canonicalizeWcCategorySlug,
+  canonicalizeWcCategorySlugs,
+  resolveCategoryFromWcNodes,
+} from "@/lib/shop/wc-categories";
 import { formatSizeLabel } from "@/lib/shop/size-label";
 import { sortProductSizes } from "@/lib/shop/sort-sizes";
-import { resolveShowroomAvailable } from "@/lib/shop/resolve-showroom-available";
+import { resolveShowroomAvailableFromSources } from "@/lib/shop/resolve-showroom-available";
+import type { ShowroomMetaSource } from "@/lib/shop/resolve-showroom-available";
+import { resolveIsNewFromSources } from "@/lib/shop/resolve-is-new";
+import { buildToolsCategoryHref } from "@/lib/shop/shop-category-route";
+import { buildEquipmentHubHref } from "@/lib/shop/category-url";
 import { normalizeMotorcycleContent } from "@/lib/shop/normalize-motorcycle-content";
 import { resolveProductVimeoIdFromMeta } from "@/lib/shop/parse-product-video";
-import { resolveLocalizedProductFields } from "@/lib/graphql/wpml";
+import { getGraphqlLanguageCode, resolveLocalizedProductFields } from "@/lib/graphql/wpml";
+import { getDictionary } from "@/i18n/get-dictionary";
+import { isLocale } from "@/i18n/config";
 
 const COLOR_ATTR_NAMES = new Set(["color", "colour", "värv", "finish"]);
 const SIZE_ATTR_NAMES = new Set(["size", "suurus"]);
+
+function resolveCatalogBackLabel(
+  locale: Locale,
+  kind: "motorcycles" | "equipment" | "tools",
+) {
+  const dict = getDictionary(locale);
+
+  if (kind === "motorcycles") {
+    return dict.nav.motorcycles;
+  }
+
+  if (kind === "tools") {
+    return dict.nav.tools;
+  }
+
+  return dict.nav.equipment;
+}
 
 function normalizeAttributeName(name: string) {
   return name.toLowerCase().replace(/^pa_/, "");
@@ -122,10 +149,14 @@ function hasGenderCategory(
   nodes: NonNullable<GraphQLProduct["productCategories"]>["nodes"],
   genderSlug: "for-men" | "for-women",
 ) {
-  return nodes.some(
-    (node) =>
-      node.slug === genderSlug || node.parent?.node?.slug === genderSlug,
-  );
+  return nodes.some((node) => {
+    const slug = canonicalizeWcCategorySlug(node.slug);
+    const parentSlug = node.parent?.node?.slug
+      ? canonicalizeWcCategorySlug(node.parent.node.slug)
+      : null;
+
+    return slug === genderSlug || parentSlug === genderSlug;
+  });
 }
 
 function resolveShopAudiences(
@@ -264,14 +295,53 @@ function getMetaValue(
   return entry?.value ?? undefined;
 }
 
+type MapGraphqlProductOptions = {
+  contentUntranslated?: boolean;
+  showroomMetaSources?: readonly ShowroomMetaSource[];
+};
+
+function resolveMappedShowroomAvailable(
+  slug: string,
+  meta: GraphQLProduct["metaData"],
+  options?: MapGraphqlProductOptions,
+) {
+  if (options?.showroomMetaSources?.length) {
+    return resolveShowroomAvailableFromSources(...options.showroomMetaSources);
+  }
+
+  return resolveShowroomAvailableFromSources({ slug, meta });
+}
+
+function resolveMappedIsNew(
+  meta: GraphQLProduct["metaData"],
+  publishedAt: string | null | undefined,
+  options?: MapGraphqlProductOptions,
+) {
+  if (options?.showroomMetaSources?.length) {
+    return resolveIsNewFromSources(...options.showroomMetaSources);
+  }
+
+  return resolveIsNewFromSources({ meta, publishedAt });
+}
+
 export function mapGraphqlToMotorcycleProduct(
   product: GraphQLProduct,
+  locale: Locale = "en",
+  options?: MapGraphqlProductOptions,
 ): MotorcycleProduct {
   const brand = resolveMotorcycleBrand(product.productCategories);
   const shortHtml = product.shortDescription ?? "";
   const longHtml = product.description ?? "";
-  const parsedShort = parseMotorcycleShortDescription(shortHtml);
-  const catalogCopy = resolveMotorcycleCatalogCopy(longHtml, shortHtml);
+  const contentLocale = (() => {
+    const language = getGraphqlLanguageCode(product);
+    return isLocale(language) ? language : "en";
+  })();
+  const parsedShort = parseMotorcycleShortDescription(shortHtml, contentLocale);
+  const catalogCopy = resolveMotorcycleCatalogCopy(
+    longHtml,
+    shortHtml,
+    contentLocale,
+  );
   const { descriptionHtml } = catalogCopy;
 
   const galleryUrls = (product.galleryImages?.nodes ?? []).map(
@@ -299,14 +369,21 @@ export function mapGraphqlToMotorcycleProduct(
     vimeoId: resolveProductVimeoIdFromMeta(product.metaData),
     productName: displayName(product.name, brand),
     brand,
+    locale: contentLocale,
   });
 
   return {
     slug: product.slug,
     databaseId: product.databaseId,
+    contentLocale,
+    contentUntranslated: options?.contentUntranslated,
     backHref: "/shop/motorcycles",
-    backLabel: "Motorcycles",
-    showroomAvailable: resolveShowroomAvailable(product.slug, product.metaData),
+    backLabel: resolveCatalogBackLabel(contentLocale, "motorcycles"),
+    showroomAvailable: resolveMappedShowroomAvailable(
+      product.slug,
+      product.metaData,
+      options,
+    ),
     sync: {
       sku: product.sku ?? product.slug,
       name: displayName(product.name, brand),
@@ -339,12 +416,17 @@ export function mapGraphqlToMotorcycleProduct(
       lifestyleImages:
         lifestyleImages.length > 0 ? lifestyleImages : undefined,
       vimeoId: content.vimeoId,
+      isNew: resolveMappedIsNew(product.metaData, product.date, options),
     },
     parsedSpecs: catalogCopy.parsedSpecs,
   };
 }
 
-export function mapGraphqlToCatalogProduct(product: GraphQLProduct): CatalogProduct {
+export function mapGraphqlToCatalogProduct(
+  product: GraphQLProduct,
+  locale: Locale = "en",
+  options?: MapGraphqlProductOptions,
+): CatalogProduct {
   const isMotorcycle = isMotorcycleProduct(product.productCategories);
   const isVariable = product.__typename === "VariableProduct";
   const variableProduct = isVariable ? product : null;
@@ -357,8 +439,8 @@ export function mapGraphqlToCatalogProduct(product: GraphQLProduct): CatalogProd
   const shopAudiences = isMotorcycle
     ? undefined
     : resolveShopAudiences(product.productCategories?.nodes ?? []);
-  const wcCategorySlugs = (product.productCategories?.nodes ?? []).map(
-    (node) => node.slug,
+  const wcCategorySlugs = canonicalizeWcCategorySlugs(
+    (product.productCategories?.nodes ?? []).map((node) => node.slug),
   );
   const galleryUrls = (product.galleryImages?.nodes ?? []).map(
     (image) => image.sourceUrl,
@@ -414,9 +496,9 @@ export function mapGraphqlToCatalogProduct(product: GraphQLProduct): CatalogProd
     sizes: sizes.length > 0 ? sizes : ["One size"],
     colors: colors.length > 0 ? colors : ["—"],
     inStock: product.stockStatus === "IN_STOCK",
-    isNew: false,
+    isNew: resolveMappedIsNew(product.metaData, product.date, options),
     showroomAvailable: isMotorcycle
-      ? resolveShowroomAvailable(product.slug, product.metaData)
+      ? resolveMappedShowroomAvailable(product.slug, product.metaData, options)
       : undefined,
     headline: parsedShort.tagline,
     tagline: parsedShort.tagline ?? plainDescription.slice(0, 120),
@@ -425,19 +507,20 @@ export function mapGraphqlToCatalogProduct(product: GraphQLProduct): CatalogProd
     backHref: isMotorcycle
       ? "/shop/motorcycles"
       : equipmentMeta.category === "tools"
-        ? "/shop/tools"
-        : "/shop/equipment",
+        ? buildToolsCategoryHref(locale)
+        : buildEquipmentHubHref(locale),
     backLabel: isMotorcycle
-      ? "Motorcycles"
+      ? resolveCatalogBackLabel(locale, "motorcycles")
       : equipmentMeta.category === "tools"
-        ? "Tools & Maintenance"
-        : "Equipment",
+        ? resolveCatalogBackLabel(locale, "tools")
+        : resolveCatalogBackLabel(locale, "equipment"),
   };
 }
 
 export function mapGraphqlCardToCatalogProduct(
   product: GraphQLProductCard,
   locale: Locale = "en",
+  options?: MapGraphqlProductOptions,
 ): CatalogProduct {
   const localized = resolveLocalizedProductFields(product, locale);
   const isMotorcycle = isMotorcycleProduct(product.productCategories);
@@ -454,8 +537,8 @@ export function mapGraphqlCardToCatalogProduct(
   const shopAudiences = isMotorcycle
     ? undefined
     : resolveShopAudiences(product.productCategories?.nodes ?? []);
-  const wcCategorySlugs = (product.productCategories?.nodes ?? []).map(
-    (node) => node.slug,
+  const wcCategorySlugs = canonicalizeWcCategorySlugs(
+    (product.productCategories?.nodes ?? []).map((node) => node.slug),
   );
   const image = product.image?.sourceUrl ?? "/brixton-image.webp";
   const price = parseCardPrice(product);
@@ -490,9 +573,9 @@ export function mapGraphqlCardToCatalogProduct(
     colors: colors.length > 0 ? colors : ["—"],
     variations,
     inStock: product.stockStatus === "IN_STOCK",
-    isNew: false,
+    isNew: resolveMappedIsNew(product.metaData, product.date, options),
     showroomAvailable: isMotorcycle
-      ? resolveShowroomAvailable(product.slug, product.metaData)
+      ? resolveMappedShowroomAvailable(product.slug, product.metaData, options)
       : undefined,
     tagline: "",
     description: "",
@@ -501,13 +584,13 @@ export function mapGraphqlCardToCatalogProduct(
     backHref: isMotorcycle
       ? "/shop/motorcycles"
       : equipmentMeta.category === "tools"
-        ? "/shop/tools"
-        : "/shop/equipment",
+        ? buildToolsCategoryHref(locale)
+        : buildEquipmentHubHref(locale),
     backLabel: isMotorcycle
-      ? "Motorcycles"
+      ? resolveCatalogBackLabel(locale, "motorcycles")
       : equipmentMeta.category === "tools"
-        ? "Tools & Maintenance"
-        : "Equipment",
+        ? resolveCatalogBackLabel(locale, "tools")
+        : resolveCatalogBackLabel(locale, "equipment"),
   };
 }
 

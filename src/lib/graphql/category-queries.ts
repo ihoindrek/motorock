@@ -7,6 +7,7 @@ export const PRODUCT_CATEGORY_NAV_TREE = `
         languageCode
         translations {
           name
+          slug
           language {
             code
           }
@@ -19,6 +20,7 @@ export const PRODUCT_CATEGORY_NAV_TREE = `
             languageCode
             translations {
               name
+              slug
               language {
                 code
               }
@@ -34,6 +36,7 @@ export const PRODUCT_CATEGORY_NAV_TREE = `
         languageCode
         translations {
           name
+          slug
           language {
             code
           }
@@ -46,6 +49,7 @@ export const PRODUCT_CATEGORY_NAV_TREE = `
             languageCode
             translations {
               name
+              slug
               language {
                 code
               }
@@ -61,6 +65,7 @@ export const PRODUCT_CATEGORY_NAV_TREE = `
         languageCode
         translations {
           name
+          slug
           language {
             code
           }
@@ -73,6 +78,7 @@ export const PRODUCT_CATEGORY_NAV_TREE = `
             languageCode
             translations {
               name
+              slug
               language {
                 code
               }
@@ -88,6 +94,7 @@ export const PRODUCT_CATEGORY_NAV_TREE = `
         languageCode
         translations {
           name
+          slug
           language {
             code
           }
@@ -100,6 +107,7 @@ export const PRODUCT_CATEGORY_NAV_TREE = `
             languageCode
             translations {
               name
+              slug
               language {
                 code
               }
@@ -113,14 +121,17 @@ export const PRODUCT_CATEGORY_NAV_TREE = `
 
 export const EQUIPMENT_CATEGORY_INDEX = `
   query EquipmentCategoryIndex {
-    productCategories(first: 100, where: { hideEmpty: false }) {
+    productCategories(first: 200, where: { hideEmpty: false }) {
       nodes {
         slug
         name
+        description
         count
         languageCode
         translations {
           name
+          description
+          slug
           language {
             code
           }
@@ -128,6 +139,28 @@ export const EQUIPMENT_CATEGORY_INDEX = `
         parent {
           node {
             slug
+          }
+        }
+      }
+    }
+  }
+`;
+
+export const PRODUCT_CATEGORY_BY_SLUG = `
+  query ProductCategoryBySlug($slug: String!) {
+    productCategories(where: { slug: [$slug] }) {
+      nodes {
+        slug
+        name
+        description
+        count
+        languageCode
+        translations {
+          name
+          description
+          slug
+          language {
+            code
           }
         }
       }

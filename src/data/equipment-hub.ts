@@ -1,5 +1,11 @@
 import type { Locale } from "@/i18n/config";
-import { buildEquipmentCategoryHref } from "@/lib/shop/equipment-route";
+import type { EquipmentNavTree, WcCategoryEntry, WcCategoryNode } from "@/lib/graphql/categories";
+import { getLocalizedCategoryName } from "@/lib/graphql/categories";
+import { buildEquipmentRootCategoryHref } from "@/lib/shop/equipment-route";
+import {
+  buildShopCategoryHref,
+  buildToolsCategoryHref,
+} from "@/lib/shop/shop-category-route";
 
 export type EquipmentHubCategory = {
   id: string;
@@ -12,111 +18,174 @@ export type EquipmentHubCategory = {
   imageAlt: string;
 };
 
-export const equipmentHubCategories = [
-  {
-    id: "helmets",
-    index: "01",
-    title: "Helmets",
-    titleLines: ["Helmets"],
-    description: "Retro lids, open-face classics, and full protection.",
-    href: buildEquipmentCategoryHref("helmets"),
-    image: "/equipment-helmets.webp",
-    imageAlt: "Motorcycle helmet",
-  },
-  {
-    id: "men",
-    index: "02",
-    title: "Men's gear",
-    titleLines: ["Men's", "gear"],
-    description: "Jackets, vests, pants, gloves — built for the ride.",
-    href: buildEquipmentCategoryHref("for-men"),
-    image: "/Brando-22.webp",
-    imageAlt: "Men's motorcycle riding gear",
-  },
-  {
-    id: "women",
-    index: "03",
-    title: "Women's gear",
-    titleLines: ["Women's", "gear"],
-    description: "Gear designed for riders who refuse to blend in.",
-    href: buildEquipmentCategoryHref("for-women"),
-    image: "/Motogirl_17_sept_edited_sized_for_website74-re6v5j7w.webp",
-    imageAlt: "Women's motorcycle riding gear",
-  },
-  {
-    id: "accessories",
-    index: "04",
-    title: "Accessories",
-    titleLines: ["Accessories"],
-    description: "Goggles, bags, headwear, and the finishing details.",
-    href: buildEquipmentCategoryHref("accessories"),
-    image: "/backpack-bushcraft-4.webp",
-    imageAlt: "Motorcycle backpack",
-  },
-  {
-    id: "tools",
-    index: "05",
-    title: "Tools & maintenance",
-    titleLines: ["Tools &", "maintenance"],
-    description: "Workshop essentials to keep your machine road-ready.",
-    href: "/shop/tools",
-    image: "/hero-may-ggh01z.webp",
-    imageAlt: "Motorcycle workshop tools",
-  },
-] as const satisfies readonly EquipmentHubCategory[];
+type HubPresentation = {
+  id: string;
+  wcSlug: string;
+  image: string;
+  description: { en: string; et: string };
+  imageAlt: { en: string; et: string };
+  titleLines?: { en: readonly string[]; et: readonly string[] };
+};
 
-const equipmentHubCategoriesEt: readonly EquipmentHubCategory[] = [
+const HUB_PRESENTATION: readonly HubPresentation[] = [
   {
     id: "helmets",
-    index: "01",
-    title: "Kiivrid",
-    titleLines: ["Kiivrid"],
-    description: "Retro kiivrid, open-face klassikud ja täiskaitse.",
-    href: buildEquipmentCategoryHref("helmets"),
+    wcSlug: "helmets",
     image: "/equipment-helmets.webp",
-    imageAlt: "Mootorrattakiiver",
+    description: {
+      en: "Retro lids, open-face classics, and full protection.",
+      et: "Retro kiivrid, open-face klassikud ja täiskaitse.",
+    },
+    imageAlt: {
+      en: "Motorcycle helmet",
+      et: "Mootorrattakiiver",
+    },
+    titleLines: {
+      en: ["Helmets"],
+      et: ["Kiivrid"],
+    },
   },
   {
     id: "men",
-    index: "02",
-    title: "Meeste varustus",
-    titleLines: ["Meeste", "varustus"],
-    description: "Joped, vestid, püksid, kindad — loodud sõiduks.",
-    href: buildEquipmentCategoryHref("for-men"),
+    wcSlug: "for-men",
     image: "/Brando-22.webp",
-    imageAlt: "Meeste mootorrattavarustus",
+    description: {
+      en: "Jackets, vests, pants, gloves — built for the ride.",
+      et: "Joped, vestid, püksid, kindad — loodud sõiduks.",
+    },
+    imageAlt: {
+      en: "Men's motorcycle riding gear",
+      et: "Meeste mootorrattavarustus",
+    },
+    titleLines: {
+      en: ["Men's", "gear"],
+      et: ["Meeste", "varustus"],
+    },
   },
   {
     id: "women",
-    index: "03",
-    title: "Naiste varustus",
-    titleLines: ["Naiste", "varustus"],
-    description: "Varustus sõitjatele, kes ei taha massi sulanduda.",
-    href: buildEquipmentCategoryHref("for-women"),
+    wcSlug: "for-women",
     image: "/Motogirl_17_sept_edited_sized_for_website74-re6v5j7w.webp",
-    imageAlt: "Naiste mootorrattavarustus",
+    description: {
+      en: "Gear designed for riders who refuse to blend in.",
+      et: "Varustus sõitjatele, kes ei taha massi sulanduda.",
+    },
+    imageAlt: {
+      en: "Women's motorcycle riding gear",
+      et: "Naiste mootorrattavarustus",
+    },
+    titleLines: {
+      en: ["Women's", "gear"],
+      et: ["Naiste", "varustus"],
+    },
   },
   {
     id: "accessories",
-    index: "04",
-    title: "Aksessuaarid",
-    titleLines: ["Aksessuaarid"],
-    description: "Prillid, kotid, peakated ja viimistlevad detailid.",
-    href: buildEquipmentCategoryHref("accessories"),
+    wcSlug: "accessories",
     image: "/backpack-bushcraft-4.webp",
-    imageAlt: "Mootorrattaseljakott",
-  },
-  {
-    id: "tools",
-    index: "05",
-    title: "Tööriistad ja hooldus",
-    titleLines: ["Tööriistad", "ja hooldus"],
-    description: "Töökoja hädavajalik, et ratas oleks alati teevalmis.",
-    href: "/shop/tools",
-    image: "/hero-may-ggh01z.webp",
-    imageAlt: "Mootorratta tööriistad",
+    description: {
+      en: "Goggles, bags, headwear, and the finishing details.",
+      et: "Prillid, kotid, peakated ja viimistlevad detailid.",
+    },
+    imageAlt: {
+      en: "Motorcycle backpack",
+      et: "Mootorrattaseljakott",
+    },
+    titleLines: {
+      en: ["Accessories"],
+      et: ["Aksessuaarid"],
+    },
   },
 ];
+
+const TOOLS_HUB: EquipmentHubCategory = {
+  id: "tools",
+  index: "05",
+  title: "Tools & maintenance",
+  titleLines: ["Tools &", "maintenance"],
+  description: "Workshop essentials to keep your machine road-ready.",
+  href: buildToolsCategoryHref("en"),
+  image: "/hero-may-ggh01z.webp",
+  imageAlt: "Motorcycle workshop tools",
+};
+
+const TOOLS_HUB_ET: EquipmentHubCategory = {
+  ...TOOLS_HUB,
+  title: "Tööriistad ja hooldus",
+  titleLines: ["Tööriistad", "ja hooldus"],
+  description: "Töökoja hädavajalik, et ratas oleks alati teevalmis.",
+  imageAlt: "Mootorratta tööriistad",
+};
+
+function treeNodeForSlug(
+  tree: EquipmentNavTree | null,
+  wcSlug: string,
+): WcCategoryNode | null {
+  if (!tree) {
+    return null;
+  }
+
+  switch (wcSlug) {
+    case "for-men":
+      return tree.forMen;
+    case "for-women":
+      return tree.forWomen;
+    case "accessories":
+      return tree.accessories;
+    case "helmets":
+      return tree.helmets;
+    default:
+      return null;
+  }
+}
+
+export function buildEquipmentHubCategories(
+  tree: EquipmentNavTree | null,
+  locale: Locale,
+  toolsCategory?: WcCategoryEntry | null,
+): EquipmentHubCategory[] {
+  const categories: EquipmentHubCategory[] = [];
+  let index = 1;
+
+  for (const presentation of HUB_PRESENTATION) {
+    const node = treeNodeForSlug(tree, presentation.wcSlug);
+
+    if (!node) {
+      continue;
+    }
+
+    const title = getLocalizedCategoryName(node, locale);
+
+    categories.push({
+      id: presentation.id,
+      index: String(index).padStart(2, "0"),
+      title,
+      titleLines: presentation.titleLines?.[locale],
+      description: presentation.description[locale],
+      href: buildEquipmentRootCategoryHref(node, presentation.wcSlug, locale),
+      image: presentation.image,
+      imageAlt: presentation.imageAlt[locale],
+    });
+    index += 1;
+  }
+
+  if (locale === "et") {
+    const toolsHub = locale === "et" ? TOOLS_HUB_ET : TOOLS_HUB;
+
+    categories.push({
+      ...toolsHub,
+      title: toolsCategory
+        ? getLocalizedCategoryName(toolsCategory, locale)
+        : toolsHub.title,
+      href: toolsCategory
+        ? buildShopCategoryHref(toolsCategory, locale)
+        : buildToolsCategoryHref(locale),
+      index: String(index).padStart(2, "0"),
+    });
+  }
+
+  return categories;
+}
 
 export const equipmentHubCopy = {
   eyebrow: "Shop",
@@ -143,15 +212,19 @@ const equipmentHubCopyEt = {
 } as const;
 
 export const equipmentHubBrands = [
-  { name: "Pando Moto", href: "/shop/brands/pando-moto" },
-  { name: "Holyfreedom", href: "/shop/brands/holyfreedom" },
-  { name: "Johnny Reb", href: "/shop/brands/johnny-reb" },
-  { name: "Motogirl", href: "/shop/brands/motogirl" },
+  { name: "Pando Moto", slug: "pando-moto" },
+  { name: "Holyfreedom", slug: "holyfreedom" },
+  { name: "Johnny Reb", slug: "johnny-reb" },
+  { name: "Motogirl", slug: "motogirl" },
 ] as const;
 
-export function getEquipmentHubData(locale: Locale) {
+export function getEquipmentHubData(
+  locale: Locale,
+  tree: EquipmentNavTree | null = null,
+  toolsCategory?: WcCategoryEntry | null,
+) {
   return {
-    categories: locale === "et" ? equipmentHubCategoriesEt : equipmentHubCategories,
+    categories: buildEquipmentHubCategories(tree, locale, toolsCategory),
     copy: locale === "et" ? equipmentHubCopyEt : equipmentHubCopy,
     brands: equipmentHubBrands,
   };

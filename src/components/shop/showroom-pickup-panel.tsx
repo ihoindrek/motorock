@@ -5,6 +5,7 @@ import { useDictionary, useLocale } from "@/context/locale-context";
 import {
   SHOWROOM,
   SHOWROOM_GOOGLE_MAPS_URL,
+  getShowroomCopy,
 } from "@/data/showroom";
 import { localizedHref } from "@/i18n/paths";
 import type { ShippingRate } from "@/lib/shop/shipping-method";
@@ -29,6 +30,7 @@ export function ShowroomPickupPanel({
 }: ShowroomPickupPanelProps) {
   const locale = useLocale();
   const dict = useDictionary();
+  const showroom = getShowroomCopy(locale);
   const pickupRate = findShowroomPickupRate(rates);
   const pickupSelected =
     selectedRateId !== null &&
@@ -47,7 +49,7 @@ export function ShowroomPickupPanel({
         {dict.showroom.pickupTitle}
       </p>
       <p className="mt-2 text-sm leading-relaxed text-ink/65">
-        {SHOWROOM.name} — {SHOWROOM.addressLine}, {SHOWROOM.city}.{" "}
+        {showroom.name} — {SHOWROOM.addressLine}, {SHOWROOM.city}.{" "}
         {dict.showroom.pickupDescription}
       </p>
       <div className="mt-4 flex flex-wrap items-center gap-3">
@@ -93,13 +95,11 @@ export function ShowroomPickupNote({ className }: ShowroomPickupNoteProps) {
 
   return (
     <p className={cn("text-sm leading-relaxed text-ink/60", className)}>
-      <span className="font-semibold text-ink">{dict.showroom.tryBeforeBuy}</span>{" "}
-      {dict.showroom.pickupNote} {SHOWROOM.addressLine}.{" "}
       <Link
         href={localizedHref(locale, "/contact")}
         className="text-ink underline-offset-2 hover:text-accent hover:underline"
       >
-        {dict.showroom.visitUs}
+        {dict.showroom.pickupNote.replace("{address}", SHOWROOM.addressLine)}
       </Link>
     </p>
   );

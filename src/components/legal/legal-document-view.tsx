@@ -1,12 +1,64 @@
 import Link from "next/link";
+import { SHOWROOM } from "@/data/showroom";
 import { EditorialHero } from "@/components/content/editorial-hero";
+
+export type LegalInlineLink = {
+  type: "link";
+  label: string;
+  href: string;
+  external?: boolean;
+};
+
+export type LegalParagraphPart = string | LegalInlineLink;
 
 export type LegalSection = {
   id: string;
   title: string;
-  paragraphs: readonly string[];
+  paragraphs: readonly (string | readonly LegalParagraphPart[])[];
   bullets?: readonly string[];
 };
+
+function renderParagraphPart(part: LegalParagraphPart, index: number) {
+  if (typeof part === "string") {
+    return <span key={index}>{part}</span>;
+  }
+
+  if (part.external) {
+    return (
+      <a
+        key={index}
+        href={part.href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-ink underline-offset-2 hover:text-accent hover:underline"
+      >
+        {part.label}
+      </a>
+    );
+  }
+
+  return (
+    <Link
+      key={index}
+      href={part.href}
+      className="text-ink underline-offset-2 hover:text-accent hover:underline"
+    >
+      {part.label}
+    </Link>
+  );
+}
+
+function renderParagraph(paragraph: string | readonly LegalParagraphPart[], index: number) {
+  if (typeof paragraph === "string") {
+    return <p key={paragraph}>{paragraph}</p>;
+  }
+
+  return (
+    <p key={`rich-${index}`}>
+      {paragraph.map((part, partIndex) => renderParagraphPart(part, partIndex))}
+    </p>
+  );
+}
 
 type LegalDocumentViewProps = {
   eyebrow: string;
@@ -18,6 +70,7 @@ type LegalDocumentViewProps = {
   questionsLabel: string;
   contactUsLabel: string;
   contactHref: string;
+  emailPrompt: string;
 };
 
 export function LegalDocumentView({
@@ -30,6 +83,7 @@ export function LegalDocumentView({
   questionsLabel,
   contactUsLabel,
   contactHref,
+  emailPrompt,
 }: LegalDocumentViewProps) {
   return (
     <article>
@@ -52,9 +106,9 @@ export function LegalDocumentView({
                 {section.title}
               </h2>
               <div className="mt-4 space-y-4 text-base leading-relaxed text-ink/75">
-                {section.paragraphs.map((paragraph) => (
-                  <p key={paragraph}>{paragraph}</p>
-                ))}
+                {section.paragraphs.map((paragraph, paragraphIndex) =>
+                  renderParagraph(paragraph, paragraphIndex),
+                )}
                 {section.bullets && section.bullets.length > 0 ? (
                   <ul className="list-disc space-y-2 pl-5">
                     {section.bullets.map((item) => (
@@ -72,12 +126,12 @@ export function LegalDocumentView({
           <Link href={contactHref} className="text-ink underline-offset-2 hover:text-accent hover:underline">
             {contactUsLabel}
           </Link>{" "}
-          or email{" "}
+          {emailPrompt}{" "}
           <a
-            href="mailto:hello@motorock.eu"
+            href={SHOWROOM.emailHref}
             className="text-ink underline-offset-2 hover:text-accent hover:underline"
           >
-            hello@motorock.eu
+            {SHOWROOM.email}
           </a>
           .
         </p>

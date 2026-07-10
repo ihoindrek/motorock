@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { AboutView } from "@/components/about/about-view";
 import { isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/get-dictionary";
+import { buildPageMetadata } from "@/lib/seo/metadata";
 
 type AboutPageProps = {
   params: Promise<{ locale: string }>;
@@ -20,13 +21,15 @@ export async function generateMetadata({ params }: AboutPageProps) {
 
   const dict = getDictionary(localeParam);
 
-  return {
+  return buildPageMetadata({
+    locale: localeParam,
     title: dict.nav.about,
     description:
       localeParam === "et"
         ? "Motorock.eu — premium mootorrattad ja sõiduvarustus sõitjatele, kes ei taha massi sulanduda."
         : "Motorock.eu — premium motorcycles and riding gear for riders who refuse to blend in.",
-  };
+    pathname: "/about",
+  });
 }
 
 export default async function AboutPage({ params }: AboutPageProps) {

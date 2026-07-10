@@ -1,5 +1,7 @@
 "use client";
 
+import { useMemo } from "react";
+import { useDictionary, useLocale } from "@/context/locale-context";
 import { ShopModal } from "@/components/ui/shop-modal";
 import { MotorcycleEnquiryForm } from "@/components/shop/motorcycle-enquiry-form";
 import { TestRideForm } from "@/components/shop/test-ride-form";
@@ -7,6 +9,7 @@ import {
   SHOWROOM,
   SHOWROOM_GOOGLE_MAPS_URL,
   SHOWROOM_WAZE_URL,
+  getShowroomCopy,
 } from "@/data/showroom";
 
 export type MotorcycleModalAction =
@@ -27,53 +30,70 @@ type MotorcycleActionModalsProps = {
   };
 };
 
-const modalCopy: Record<
-  MotorcycleModalAction,
-  { eyebrow: string; title: string; description?: string; size?: "md" | "lg" }
-> = {
-  "test-ride": {
-    eyebrow: "Test ride",
-    title: "Book a test ride",
-    description:
-      "Pick a time — we'll have the bike ready. We usually confirm within one business day.",
-    size: "lg",
-  },
-  enquire: {
-    eyebrow: "Enquiry",
-    title: "Enquire about this model",
-    description:
-      "Not on display right now? Tell us you're interested and we'll help with ordering or a viewing.",
-    size: "lg",
-  },
-  question: {
-    eyebrow: "Contact",
-    title: "Ask a question",
-    description: "Specs, financing, delivery — ask away. Real people, not a call centre.",
-    size: "lg",
-  },
-  contact: {
-    eyebrow: "Contact",
-    title: "Get in touch",
-    description: "We'll check availability and follow up with options.",
-    size: "lg",
-  },
-  showroom: {
-    eyebrow: "Showroom",
-    title: "Visit us in Tallinn",
-    description: "Drop by to see the bikes and talk through options in person.",
-  },
-};
-
 export function MotorcycleActionModals({
   action,
   onClose,
   product,
 }: MotorcycleActionModalsProps) {
+  const dict = useDictionary();
+  const locale = useLocale();
+  const showroom = getShowroomCopy(locale);
+  const modals = dict.motorcycle.modals;
+
+  const modalCopy = useMemo(
+    () =>
+      ({
+        "test-ride": {
+          eyebrow: modals.testRideEyebrow,
+          title: modals.testRideTitle,
+          description: modals.testRideDescription,
+          size: "lg" as const,
+        },
+        enquire: {
+          eyebrow: modals.enquireEyebrow,
+          title: modals.enquireTitle,
+          description: modals.enquireDescription,
+          size: "lg" as const,
+        },
+        question: {
+          eyebrow: modals.questionEyebrow,
+          title: modals.questionTitle,
+          description: modals.questionDescription,
+          size: "lg" as const,
+        },
+        contact: {
+          eyebrow: modals.contactEyebrow,
+          title: modals.contactTitle,
+          description: modals.contactDescription,
+          size: "lg" as const,
+        },
+        showroom: {
+          eyebrow: modals.showroomEyebrow,
+          title: modals.showroomTitle,
+          description: modals.showroomDescription,
+        },
+      }) satisfies Record<
+        MotorcycleModalAction,
+        {
+          eyebrow: string;
+          title: string;
+          description?: string;
+          size?: "md" | "lg";
+        }
+      >,
+    [modals],
+  );
+
   if (!action) {
     return null;
   }
 
   const copy = modalCopy[action];
+  const showroomNote = product.name
+    ? modals.showroomInterested
+        .replace("{brand}", product.brand)
+        .replace("{name}", product.name)
+    : modals.showroomWalkIns;
 
   return (
     <ShopModal
@@ -82,7 +102,7 @@ export function MotorcycleActionModals({
       eyebrow={copy.eyebrow}
       title={copy.title}
       description={copy.description}
-      size={copy.size}
+      size={"size" in copy ? copy.size : undefined}
     >
       {action === "test-ride" ? (
         <TestRideForm
@@ -132,9 +152,9 @@ export function MotorcycleActionModals({
       {action === "showroom" ? (
         <div className="space-y-8">
           <div>
-            <p className={shopEyebrowClassName}>Address</p>
+            <p className={shopEyebrowClassName}>{modals.address}</p>
             <p className="mt-2 text-base leading-relaxed text-ink/75">
-              {SHOWROOM.name}
+              {showroom.name}
               <br />
               {SHOWROOM.addressLine}
               <br />
@@ -149,7 +169,7 @@ export function MotorcycleActionModals({
               rel="noopener noreferrer"
               className="inline-flex items-center rounded-full bg-ink px-7 py-3 font-body text-xs font-bold uppercase tracking-aggressive text-paper transition-colors duration-200 hover:bg-accent"
             >
-              Google Maps →
+              {modals.googleMaps}
             </a>
             <a
               href={SHOWROOM_WAZE_URL}
@@ -157,22 +177,18 @@ export function MotorcycleActionModals({
               rel="noopener noreferrer"
               className="inline-flex items-center rounded-full border border-ink/15 bg-paper px-7 py-3 font-body text-xs font-bold uppercase tracking-aggressive text-ink transition-colors duration-200 hover:border-ink/30 hover:bg-surface"
             >
-              Waze →
+              {modals.waze}
             </a>
           </div>
 
-          <p className="text-sm leading-relaxed text-ink/55">
-            {product.name
-              ? `Interested in the ${product.brand} ${product.name}? Mention it when you visit — or send an enquiry and we'll confirm what's on display.`
-              : "Walk-ins welcome. Bring your licence if you'd like to discuss a test ride."}
-          </p>
+          <p className="text-sm leading-relaxed text-ink/55">{showroomNote}</p>
 
           <button
             type="button"
             onClick={() => onClose()}
             className="inline-flex items-center font-body text-xs font-bold uppercase tracking-aggressive text-ink/50 transition-colors hover:text-accent"
           >
-            Close
+            {dict.common.close}
           </button>
         </div>
       ) : null}

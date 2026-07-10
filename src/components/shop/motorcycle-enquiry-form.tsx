@@ -1,7 +1,9 @@
 "use client";
 
 import { useMemo, useState, type FormEvent } from "react";
-import { useDictionary } from "@/context/locale-context";
+import { FormHoneypot } from "@/components/forms/form-honeypot";
+import { useDictionary, useLocale } from "@/context/locale-context";
+import { submitForm } from "@/lib/forms/submit-form-client";
 import {
   shopFieldClassName,
   shopFieldLabelClassName,
@@ -27,7 +29,11 @@ export function MotorcycleEnquiryForm({
   idPrefix = "motorcycle-enquiry",
 }: MotorcycleEnquiryFormProps) {
   const dict = useDictionary();
+  const locale = useLocale();
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const displayName = `${brand} ${bikeName}`.trim();
 
   const messagePlaceholders = useMemo(
     () => ({
@@ -38,12 +44,37 @@ export function MotorcycleEnquiryForm({
     [dict.forms],
   );
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setSubmitError(null);
+
+    const form = event.currentTarget;
+    const data = new FormData(form);
+
+    setSubmitting(true);
+
+    const result = await submitForm({
+      type: "enquiry",
+      locale,
+      name: String(data.get("name") ?? ""),
+      email: String(data.get("email") ?? ""),
+      phone: String(data.get("phone") ?? "") || undefined,
+      message: String(data.get("message") ?? ""),
+      intent,
+      bike: String(data.get("bike") ?? displayName),
+      slug: String(data.get("slug") ?? slug),
+      _gotcha: String(data.get("_gotcha") ?? ""),
+    });
+
+    setSubmitting(false);
+
+    if (!result.ok) {
+      setSubmitError(result.error || dict.forms.submitError);
+      return;
+    }
+
     setSubmitted(true);
   }
-
-  const displayName = `${brand} ${bikeName}`.trim();
 
   if (submitted) {
     return (
@@ -57,7 +88,8 @@ export function MotorcycleEnquiryForm({
   }
 
   return (
-    <form className="space-y-8" onSubmit={handleSubmit}>
+    <form className="relative space-y-8" onSubmit={handleSubmit}>
+      <FormHoneypot />
       <div>
         <p className={shopFieldLabelClassName}>{dict.forms.motorcycle}</p>
         <p className="mt-2 font-body text-lg font-extrabold uppercase leading-tight tracking-tight text-ink">
@@ -132,11 +164,18 @@ export function MotorcycleEnquiryForm({
         />
       </div>
 
+      {submitError ? (
+        <p className="text-sm text-accent" role="alert">
+          {submitError}
+        </p>
+      ) : null}
+
       <button
         type="submit"
-        className="inline-flex min-h-12 w-full items-center justify-center rounded-full bg-ink px-7 py-3 font-body text-xs font-bold uppercase tracking-aggressive text-paper transition-colors duration-200 hover:bg-accent sm:w-auto"
+        disabled={submitting}
+        className="inline-flex min-h-12 w-full items-center justify-center rounded-full bg-ink px-7 py-3 font-body text-xs font-bold uppercase tracking-aggressive text-paper transition-colors duration-200 hover:bg-accent disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
       >
-        {dict.forms.sendMessage}
+        {submitting ? dict.forms.submitting : dict.forms.sendMessage}
       </button>
     </form>
   );

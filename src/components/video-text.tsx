@@ -210,7 +210,7 @@ export function VideoText({ children, videoSrc, className = "" }: VideoTextProps
           muted
           loop
           playsInline
-          preload="auto"
+          preload="metadata"
           src={videoSrc}
           aria-hidden="true"
           className="rebel-text__video pointer-events-none"

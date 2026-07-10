@@ -7,6 +7,7 @@ import { parseShippingRateCost } from "@/lib/shop/shipping-method";
 import { groupShippingRatesForCheckout } from "@/lib/shop/shipping-rate-priority";
 import { formatCheckoutPrice } from "@/lib/shop/category";
 import { ShippingMethodIcon } from "@/components/shop/shipping-method-icon";
+import { CheckoutSelectionCheck } from "@/components/shop/checkout-selection-check";
 import { MorphLoading } from "@/components/ui/morph-loading";
 import { cn } from "@/lib/utils";
 
@@ -34,11 +35,12 @@ function ShippingRateButton({
     <button
       type="button"
       onClick={() => onSelect(rate.id)}
+      aria-pressed={selected}
       className={cn(
         "flex w-full items-center gap-3 border px-3 py-2.5 text-left transition-colors sm:px-4 sm:py-3",
         selected
           ? "border-accent bg-white shadow-sm"
-          : "border-ink/15 bg-paper hover:border-ink/30",
+          : "border-ink/15 bg-paper hover:border-ink/30 hover:bg-white",
       )}
     >
       <ShippingMethodIcon rate={rate} className="size-9 sm:size-10" />
@@ -50,6 +52,7 @@ function ShippingRateButton({
       <span className="shrink-0 font-body text-sm font-bold tabular-nums">
         {price ?? freeLabel}
       </span>
+      <CheckoutSelectionCheck selected={selected} />
     </button>
   );
 }
@@ -78,6 +81,7 @@ function CollapsedShippingSelection({
           {price ?? freeLabel}
         </p>
       </div>
+      <CheckoutSelectionCheck selected />
       <button
         type="button"
         onClick={onChange}

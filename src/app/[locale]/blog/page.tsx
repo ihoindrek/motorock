@@ -8,6 +8,7 @@ import {
   getBlogPostsPage,
   BLOG_INITIAL_PAGE_SIZE,
 } from "@/lib/blog/posts";
+import { buildPageMetadata } from "@/lib/seo/metadata";
 
 export const revalidate = 300;
 
@@ -22,10 +23,12 @@ export async function generateMetadata({
   const locale = isLocale(localeParam) ? localeParam : "en";
   const dict = await getDictionary(locale);
 
-  return {
+  return buildPageMetadata({
+    locale,
     title: dict.blog.pageTitle,
     description: dict.blog.pageDescription,
-  };
+    pathname: "/blog",
+  });
 }
 
 export default async function BlogPage({ params }: BlogPageProps) {

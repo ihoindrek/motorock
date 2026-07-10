@@ -8,10 +8,12 @@ import { localizedHref } from "@/i18n/paths";
 import type { ShippingRate } from "@/lib/shop/shipping-method";
 import { formatCheckoutPrice } from "@/lib/shop/category";
 import { cn } from "@/lib/utils";
+import { SHOWROOM } from "@/data/showroom";
 
 type CheckoutOrderSummaryProps = {
   itemCount: number;
   subtotal: number;
+  discountTotal?: number;
   shippingTotal: number;
   total: number;
   selectedRate: ShippingRate | null;
@@ -49,8 +51,8 @@ function TrustCopy() {
       <li className="text-xs text-ink/60">{dict.returns.headline}</li>
       <li>
         {t.questions}{" "}
-        <a href="mailto:hello@motorock.eu" className="text-ink hover:text-accent">
-          hello@motorock.eu
+        <a href={SHOWROOM.emailHref} className="text-ink hover:text-accent">
+          {SHOWROOM.email}
         </a>
       </li>
     </ul>
@@ -60,6 +62,7 @@ function TrustCopy() {
 export function CheckoutOrderSummary({
   itemCount,
   subtotal,
+  discountTotal = 0,
   shippingTotal,
   total,
   selectedRate,
@@ -75,6 +78,7 @@ export function CheckoutOrderSummary({
   variant = "sidebar",
 }: CheckoutOrderSummaryProps) {
   const locale = useLocale();
+  const dict = useDictionary();
   const isMobile = variant === "mobile";
   const t =
     locale === "et"
@@ -122,6 +126,14 @@ export function CheckoutOrderSummary({
           <dt className="text-ink/70">{t.items} ({itemCount})</dt>
           <dd className="font-body font-extrabold tabular-nums">{formatCheckoutPrice(subtotal, locale)}</dd>
         </div>
+        {discountTotal > 0 ? (
+          <div className="flex justify-between gap-4">
+            <dt className="text-ink/70">{dict.checkout.discount}</dt>
+            <dd className="font-body font-extrabold tabular-nums text-accent">
+              −{formatCheckoutPrice(discountTotal, locale)}
+            </dd>
+          </div>
+        ) : null}
         <div className="flex justify-between gap-4">
           <dt className="text-ink/70">{t.shipping}</dt>
           <dd className="font-body font-extrabold tabular-nums">
@@ -187,6 +199,55 @@ export function CheckoutOrderSummary({
   );
 }
 
+export function CheckoutMobileStepBar({
+  continueLabel,
+  onContinue,
+  disabled,
+  showBack,
+  onBack,
+  backLabel,
+  total,
+}: {
+  continueLabel: string;
+  onContinue: () => void;
+  disabled?: boolean;
+  showBack?: boolean;
+  onBack?: () => void;
+  backLabel?: string;
+  total?: number;
+}) {
+  const locale = useLocale();
+
+  return (
+    <div className="fixed inset-x-0 bottom-0 z-[80] border-t border-ink/10 bg-paper/95 px-5 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-sm lg:hidden">
+      <div className="mx-auto flex max-w-site items-center gap-3">
+        {showBack && onBack ? (
+          <button
+            type="button"
+            onClick={onBack}
+            className="shrink-0 px-1 text-xs font-bold uppercase tracking-aggressive text-ink/50 hover:text-ink"
+          >
+            {backLabel}
+          </button>
+        ) : null}
+        <button
+          type="button"
+          onClick={onContinue}
+          disabled={disabled}
+          className="btn-accent min-h-12 flex-1 justify-center disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          {continueLabel}
+          {total != null ? (
+            <span className="ml-2 tabular-nums opacity-90">
+              · {formatCheckoutPrice(total, locale)}
+            </span>
+          ) : null}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function CheckoutMobilePayBar({
   total,
   canSubmit,
@@ -210,7 +271,7 @@ export function CheckoutMobilePayBar({
   const label = payLabel ?? t.pay;
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-40 border-t border-ink/10 bg-paper/95 px-5 py-3 backdrop-blur-sm lg:hidden">
+    <div className="fixed inset-x-0 bottom-0 z-[80] border-t border-ink/10 bg-paper/95 px-5 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-sm lg:hidden">
       <div className="mx-auto flex max-w-site items-center gap-3">
         <div className="min-w-0 flex-1">
           <p className="text-[10px] font-bold uppercase tracking-aggressive text-ink/45">

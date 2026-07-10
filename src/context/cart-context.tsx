@@ -10,7 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import type { ProductType } from "@/types/catalog-product";
-import { formatSizeLabel } from "@/lib/shop/size-label";
+import { formatSizeLabel, isOneSizeLabel } from "@/lib/shop/size-label";
 
 export type CartLine = {
   slug: string;
@@ -99,7 +99,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const addItem = useCallback(
     (line: Omit<CartLine, "quantity"> & { quantity?: number }) => {
       const normalizedSize =
-        line.size && line.size !== "One size"
+        line.size && !isOneSizeLabel(line.size)
           ? formatSizeLabel(line.size)
           : line.size;
 

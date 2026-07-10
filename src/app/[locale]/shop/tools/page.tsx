@@ -1,39 +1,27 @@
-import type { Metadata } from "next";
-import { notFound } from "next/navigation";
-import { CategoryView } from "@/components/shop/category-view";
+import { notFound, redirect } from "next/navigation";
 import { isLocale } from "@/i18n/config";
-import { getToolsCatalog } from "@/lib/graphql/products";
-import { toolsCatalogRoute } from "@/lib/shop/category";
+import { localizedHref } from "@/i18n/paths";
+import { fetchProductCategoryBySlug } from "@/lib/graphql/categories";
+import { buildShopCategoryHref } from "@/lib/shop/shop-category-route";
+import { TOOLS_WC_SLUG } from "@/lib/shop/wc-categories";
 
-export const revalidate = 300;
-
-export const metadata: Metadata = {
-  title: toolsCatalogRoute.title,
-  description: toolsCatalogRoute.description,
-};
-
-type ToolsPageProps = {
+type ToolsLegacyPageProps = {
   params: Promise<{ locale: string }>;
 };
 
-export default async function ToolsPage({ params }: ToolsPageProps) {
+export default async function ToolsLegacyRedirect({
+  params,
+}: ToolsLegacyPageProps) {
   const { locale: localeParam } = await params;
 
   if (!isLocale(localeParam)) {
     notFound();
   }
 
-  if (localeParam !== "et") {
-    notFound();
-  }
+  const node = await fetchProductCategoryBySlug(TOOLS_WC_SLUG);
+  const target = node
+    ? buildShopCategoryHref(node, localeParam)
+    : `/shop/${TOOLS_WC_SLUG}`;
 
-  const products = await getToolsCatalog(localeParam);
-
-  return (
-    <CategoryView
-      key="tools"
-      route={toolsCatalogRoute}
-      products={products}
-    />
-  );
+  redirect(localizedHref(localeParam, target));
 }

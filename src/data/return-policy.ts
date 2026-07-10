@@ -1,4 +1,5 @@
+/** Short return copy for banners — aligned with legal withdrawal terms. */
 export const EQUIPMENT_RETURN_PROMISE = {
-  headline: "Free exchange or returns within 14 days",
-  detail: "Wrong size? Exchange it or send it back — no hassle.",
+  headline: "14-day right of withdrawal",
+  detail: "Notify us at info@motorock.eu — return shipping costs are borne by the buyer.",
 } as const;

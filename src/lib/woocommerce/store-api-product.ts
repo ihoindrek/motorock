@@ -1,0 +1,251 @@
+import { getWooStoreUrl } from "@/lib/storefront/url";
+import { isOneSizeLabel, sizesMatch } from "@/lib/shop/size-label";
+
+type StoreAttributeTerm = {
+  name: string;
+  slug: string;
+};
+
+type StoreProductAttribute = {
+  name: string;
+  terms?: StoreAttributeTerm[];
+};
+
+type StoreProductVariation = {
+  id: number;
+  attributes: Array<{ name: string; value: string }>;
+};
+
+type StoreProduct = {
+  id: number;
+  type: string;
+  variations?: StoreProductVariation[];
+  attributes?: StoreProductAttribute[];
+};
+
+const storeProductCache = new Map<number, StoreProduct>();
+
+function normalizeAttributeName(name: string) {
+  return name.toLowerCase().replace(/^pa_/, "");
+}
+
+function isSizeAttribute(name: string) {
+  const normalized = normalizeAttributeName(name);
+  return normalized === "size" || normalized === "suurus" || normalized.includes("size");
+}
+
+function isColorAttribute(name: string) {
+  const normalized = normalizeAttributeName(name);
+  return (
+    normalized === "color" ||
+    normalized === "colour" ||
+    normalized === "värv" ||
+    normalized === "finish"
+  );
+}
+
+function colorValueMatches(
+  variationValue: string,
+  selectedColor: string,
+  terms?: StoreAttributeTerm[],
+) {
+  const normalizedSelected = selectedColor.toLowerCase();
+  const normalizedValue = variationValue.toLowerCase();
+
+  if (normalizedValue === normalizedSelected) {
+    return true;
+  }
+
+  const term = terms?.find(
+    (entry) =>
+      entry.slug.toLowerCase() === normalizedSelected ||
+      entry.slug.toLowerCase() === normalizedValue ||
+      entry.name.toLowerCase() === normalizedSelected ||
+      entry.name.toLowerCase() === normalizedValue,
+  );
+
+  if (!term) {
+    return false;
+  }
+
+  return (
+    term.slug.toLowerCase() === normalizedSelected ||
+    term.name.toLowerCase() === normalizedSelected ||
+    term.slug.toLowerCase() === normalizedValue
+  );
+}
+
+export async function fetchStoreProduct(productId: number) {
+  const cached = storeProductCache.get(productId);
+  if (cached) {
+    return cached;
+  }
+
+  const response = await fetch(
+    `${getWooStoreUrl()}/wp-json/wc/store/v1/products/${productId}`,
+    {
+      next: { revalidate: 300 },
+    },
+  );
+
+  if (!response.ok) {
+    return null;
+  }
+
+  const product = (await response.json()) as StoreProduct;
+  storeProductCache.set(productId, product);
+  return product;
+}
+
+export function buildVariationIdsFromStoreProduct(product: StoreProduct) {
+  const variationIds: Record<string, number> = {};
+  const colorTerms =
+    product.attributes?.find((attribute) => isColorAttribute(attribute.name))
+      ?.terms ?? [];
+
+  for (const variation of product.variations ?? []) {
+    const size = variation.attributes.find((attribute) =>
+      isSizeAttribute(attribute.name),
+    );
+    const color = variation.attributes.find((attribute) =>
+      isColorAttribute(attribute.name),
+    );
+
+    if (size) {
+      variationIds[size.value] = variation.id;
+    }
+
+    if (color) {
+      variationIds[color.value] = variation.id;
+
+      const term = colorTerms.find(
+        (entry) => entry.slug.toLowerCase() === color.value.toLowerCase(),
+      );
+      if (term) {
+        variationIds[term.slug] = variation.id;
+        variationIds[term.name] = variation.id;
+      }
+    }
+  }
+
+  return Object.keys(variationIds).length > 0 ? variationIds : undefined;
+}
+
+export function findStoreVariationId(
+  product: StoreProduct,
+  input: { size?: string; color?: string },
+) {
+  const variations = product.variations ?? [];
+  if (variations.length === 0) {
+    return undefined;
+  }
+
+  if (variations.length === 1) {
+    return variations[0].id;
+  }
+
+  const colorTerms =
+    product.attributes?.find((attribute) => isColorAttribute(attribute.name))
+      ?.terms ?? [];
+  const sizeIsGeneric = isOneSizeLabel(input.size);
+
+  const matched = variations.find((variation) => {
+    const size = variation.attributes.find((attribute) =>
+      isSizeAttribute(attribute.name),
+    );
+    const color = variation.attributes.find((attribute) =>
+      isColorAttribute(attribute.name),
+    );
+
+    const sizeMatches =
+      !sizeIsGeneric &&
+      Boolean(input.size) &&
+      Boolean(size) &&
+      sizesMatch(size!.value, input.size!);
+
+    const colorMatches =
+      Boolean(input.color) &&
+      Boolean(color) &&
+      colorValueMatches(color!.value, input.color!, colorTerms);
+
+    if (sizeMatches && colorMatches) {
+      return true;
+    }
+
+    if (sizeMatches && !input.color) {
+      return true;
+    }
+
+    if (colorMatches && sizeIsGeneric) {
+      return true;
+    }
+
+    if (sizeIsGeneric && !input.color && !color) {
+      return true;
+    }
+
+    return false;
+  });
+
+  return matched?.id;
+}
+
+export async function resolveStoreVariationId(
+  productId: number,
+  input: { size?: string; color?: string },
+) {
+  const product = await fetchStoreProduct(productId);
+  if (!product || product.type !== "variable") {
+    return undefined;
+  }
+
+  return findStoreVariationId(product, input);
+}
+
+export async function enrichCatalogProductVariations<
+  T extends {
+    databaseId?: number;
+    variationIds?: Readonly<Record<string, number>>;
+    variations?: ReadonlyArray<{ databaseId?: number; sku: string; color: string }>;
+  },
+>(product: T): Promise<T> {
+  if (!product.databaseId) {
+    return product;
+  }
+
+  if (product.variationIds && Object.keys(product.variationIds).length > 0) {
+    return product;
+  }
+
+  const storeProduct = await fetchStoreProduct(product.databaseId);
+  if (!storeProduct?.variations?.length) {
+    return product;
+  }
+
+  const variationIds = buildVariationIdsFromStoreProduct(storeProduct);
+  if (!variationIds) {
+    return product;
+  }
+
+  const variations =
+    product.variations && product.variations.length > 0
+      ? product.variations
+      : storeProduct.variations.map((variation) => {
+          const color =
+            variation.attributes.find((attribute) =>
+              isColorAttribute(attribute.name),
+            )?.value ?? "Default";
+
+          return {
+            databaseId: variation.id,
+            sku: `${product.databaseId}-${variation.id}`,
+            color,
+          };
+        });
+
+  return {
+    ...product,
+    variationIds,
+    variations,
+  };
+}

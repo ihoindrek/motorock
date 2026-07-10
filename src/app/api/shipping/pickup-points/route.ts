@@ -6,6 +6,10 @@ import {
 import { searchPickupPoints } from "@/lib/shipping/pickup-points/search";
 import type { ShippingRate } from "@/lib/shop/shipping-method";
 
+function isLiveCheckoutEnabled() {
+  return process.env.NEXT_PUBLIC_CHECKOUT_LIVE === "true";
+}
+
 function rateFromParams(searchParams: URLSearchParams): ShippingRate | null {
   const methodId = searchParams.get("methodId");
   const rateId = searchParams.get("rateId");
@@ -59,13 +63,16 @@ export async function GET(request: Request) {
       query,
       limit: 100,
       type: pickupType,
+      preferMontonioOnly: isLiveCheckoutEnabled(),
     });
 
     return NextResponse.json({ points });
-  } catch {
-    return NextResponse.json(
-      { error: "Could not load pickup points" },
-      { status: 502 },
-    );
+  } catch (cause) {
+    const message =
+      cause instanceof Error
+        ? cause.message
+        : "Could not load pickup points";
+
+    return NextResponse.json({ error: message }, { status: 502 });
   }
 }

@@ -1,19 +1,25 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useDictionary } from "@/context/locale-context";
 import type { CartLine } from "@/context/cart-context";
+import { formatCouponError } from "@/lib/checkout/format-coupon-error";
 import {
+  applyCheckoutCoupon,
   fetchAllowedCountries,
   fetchCartShipping,
   parseCartMoney,
+  removeCheckoutCoupon,
   selectShippingRate,
   syncLocalCartToWoo,
   updateCheckoutCustomerShipping,
+  type AppliedCoupon,
 } from "@/lib/graphql/checkout";
 import { readWooSessionToken } from "@/lib/graphql/checkout-client";
 import {
   countryLabel,
   defaultLocationForCountry,
+  isDeliveryAddressReady,
   sortCountryCodes,
 } from "@/lib/shop/countries";
 import { formatPhoneWithCountryCode } from "@/lib/shop/phone";
@@ -35,11 +41,18 @@ type CheckoutShippingState = {
   selectedRate: ShippingRate | null;
   needsAddress: boolean;
   shippingTotal: number;
+  discountTotal: number;
+  appliedCoupons: AppliedCoupon[];
   wcSubtotal: number | null;
   wcTotal: number | null;
+  couponLoading: boolean;
+  couponError: string | null;
   setCountry: (country: string) => void;
   setSelectedRateId: (rateId: string) => void;
   refreshShipping: () => Promise<void>;
+  applyCoupon: (code: string) => Promise<{ ok: boolean }>;
+  removeCoupon: (code: string) => Promise<{ ok: boolean }>;
+  commitDeliveryAddress: () => void;
 };
 
 export function useCheckoutShipping(
@@ -55,6 +68,7 @@ export function useCheckoutShipping(
     postcode: string;
   },
 ): CheckoutShippingState {
+  const dict = useDictionary();
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -65,6 +79,10 @@ export function useCheckoutShipping(
     null,
   );
   const [shippingTotal, setShippingTotal] = useState(0);
+  const [discountTotal, setDiscountTotal] = useState(0);
+  const [appliedCoupons, setAppliedCoupons] = useState<AppliedCoupon[]>([]);
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [couponError, setCouponError] = useState<string | null>(null);
   const [wcSubtotal, setWcSubtotal] = useState<number | null>(null);
   const [wcTotal, setWcTotal] = useState<number | null>(null);
   const sessionRef = useRef<string | null>(null);
@@ -73,6 +91,7 @@ export function useCheckoutShipping(
   const countryRef = useRef("EE");
   const linesRef = useRef(lines);
   const customerRef = useRef(customer);
+  const committedAddressKeyRef = useRef("");
 
   customerRef.current = customer;
   countryRef.current = country;
@@ -120,6 +139,8 @@ export function useCheckoutShipping(
       rememberSession(cart.sessionToken);
       setRates(nextRates);
       setShippingTotal(parseCartMoney(cart.cart.shippingTotal));
+      setDiscountTotal(cart.discountTotal);
+      setAppliedCoupons(cart.appliedCoupons);
       setWcSubtotal(parseCartMoney(cart.cart.subtotal));
       setWcTotal(parseCartMoney(cart.cart.total));
 
@@ -185,6 +206,7 @@ export function useCheckoutShipping(
   const setCountry = useCallback(
     (nextCountry: string) => {
       countryRef.current = nextCountry;
+      committedAddressKeyRef.current = "";
       setCountryState(nextCountry);
       setSelectedRateIdState(null);
       setSyncing(true);
@@ -205,6 +227,47 @@ export function useCheckoutShipping(
     [pushCustomerShipping],
   );
 
+  const commitDeliveryAddress = useCallback(() => {
+    if (!bootstrapReadyRef.current || loading || !needsAddress) {
+      return;
+    }
+
+    const current = customerRef.current;
+    const shipCountry = countryRef.current;
+
+    if (!isDeliveryAddressReady(shipCountry, current)) {
+      return;
+    }
+
+    const addressKey = [
+      shipCountry,
+      current.address1.trim(),
+      current.city.trim(),
+      current.postcode.trim(),
+    ].join("|");
+
+    if (addressKey === committedAddressKeyRef.current) {
+      return;
+    }
+
+    committedAddressKeyRef.current = addressKey;
+    setSyncing(true);
+    setError(null);
+
+    void pushCustomerShipping(shipCountry, true)
+      .catch((cause) => {
+        committedAddressKeyRef.current = "";
+        setError(
+          cause instanceof Error
+            ? cause.message
+            : "Could not update delivery address",
+        );
+      })
+      .finally(() => {
+        setSyncing(false);
+      });
+  }, [loading, needsAddress, pushCustomerShipping]);
+
   const setSelectedRateId = useCallback((rateId: string) => {
     setSyncing(true);
     setError(null);
@@ -214,6 +277,8 @@ export function useCheckoutShipping(
         rememberSession(result.sessionToken);
         setRates(filterShippingRatesForCountry(result.rates, countryRef.current));
         setShippingTotal(parseCartMoney(result.cart.shippingTotal));
+        setDiscountTotal(result.discountTotal);
+        setAppliedCoupons(result.appliedCoupons);
         setWcTotal(parseCartMoney(result.cart.total));
 
         const appliedRateId = result.chosenRateId ?? rateId;
@@ -234,6 +299,57 @@ export function useCheckoutShipping(
         setSyncing(false);
       });
   }, [activeSession, rememberSession]);
+
+  const applyCoupon = useCallback(
+    async (code: string) => {
+      const trimmed = code.trim();
+      if (!trimmed) {
+        return { ok: false };
+      }
+
+      setCouponLoading(true);
+      setCouponError(null);
+
+      try {
+        const result = await applyCheckoutCoupon(trimmed, activeSession());
+        applyCart(result);
+        return { ok: true };
+      } catch (cause) {
+        const message =
+          cause instanceof Error
+            ? cause.message
+            : dict.checkout.couponApplyFailed;
+        setCouponError(formatCouponError(message, dict.checkout));
+        return { ok: false };
+      } finally {
+        setCouponLoading(false);
+      }
+    },
+    [activeSession, applyCart, dict.checkout],
+  );
+
+  const removeCoupon = useCallback(
+    async (code: string) => {
+      setCouponLoading(true);
+      setCouponError(null);
+
+      try {
+        const result = await removeCheckoutCoupon(code, activeSession());
+        applyCart(result);
+        return { ok: true };
+      } catch (cause) {
+        const message =
+          cause instanceof Error
+            ? cause.message
+            : dict.checkout.couponRemoveFailed;
+        setCouponError(formatCouponError(message, dict.checkout));
+        return { ok: false };
+      } finally {
+        setCouponLoading(false);
+      }
+    },
+    [activeSession, applyCart, dict.checkout],
+  );
 
   useEffect(() => {
     if (
@@ -260,6 +376,9 @@ export function useCheckoutShipping(
       syncedLinesKeyRef.current = "";
       setRates([]);
       setSelectedRateIdState(null);
+      setDiscountTotal(0);
+      setAppliedCoupons([]);
+      setCouponError(null);
       setLoading(false);
       return;
     }
@@ -356,43 +475,6 @@ export function useCheckoutShipping(
     };
   }, [linesKey, needsAddress, loading, pushCustomerShipping, rememberSession]);
 
-  useEffect(() => {
-    if (!bootstrapReadyRef.current || loading || !needsAddress) {
-      return;
-    }
-
-    const current = customerRef.current;
-    if (!current.address1 || !current.city || !current.postcode) {
-      return;
-    }
-
-    const timeout = window.setTimeout(() => {
-      setSyncing(true);
-      void pushCustomerShipping(countryRef.current, true)
-        .catch((cause) => {
-          setError(
-            cause instanceof Error
-              ? cause.message
-              : "Could not update delivery address",
-          );
-        })
-        .finally(() => {
-          setSyncing(false);
-        });
-    }, 500);
-
-    return () => {
-      window.clearTimeout(timeout);
-    };
-  }, [
-    needsAddress,
-    customer.address1,
-    customer.city,
-    customer.postcode,
-    loading,
-    pushCustomerShipping,
-  ]);
-
   return {
     loading,
     syncing,
@@ -404,11 +486,18 @@ export function useCheckoutShipping(
     selectedRate,
     needsAddress,
     shippingTotal,
+    discountTotal,
+    appliedCoupons,
     wcSubtotal,
     wcTotal,
+    couponLoading,
+    couponError,
     setCountry,
     setSelectedRateId,
     refreshShipping,
+    applyCoupon,
+    removeCoupon,
+    commitDeliveryAddress,
   };
 }
 

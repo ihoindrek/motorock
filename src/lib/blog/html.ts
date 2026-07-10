@@ -1,3 +1,6 @@
+import type { Locale } from "@/i18n/config";
+import { buildProductHref } from "@/lib/shop/product-url";
+
 const HTML_ENTITY_MAP: Record<string, string> = {
   "&nbsp;": " ",
   "&amp;": "&",
@@ -30,12 +33,19 @@ export function estimateReadTime(html: string): string {
   return `${minutes} min read`;
 }
 
-export function rewriteBlogContentLinks(html: string): string {
+export function rewriteBlogContentLinks(html: string, locale: Locale = "en"): string {
+  const productPrefix = buildProductHref("", locale).slice(0, -1);
+
   return html
-    .replace(/href="\/product\/([^"/]+)\/?"/gi, 'href="/shop/product/$1"')
+    .replace(/href="\/product\/([^"/]+)\/?"/gi, `href="${productPrefix}/$1"`)
     .replace(
       /href="https?:\/\/(?:www\.)?motorock\.eu\/product\/([^"/]+)\/?"/gi,
-      'href="/shop/product/$1"',
+      `href="${productPrefix}/$1"`,
+    )
+    .replace(/href="\/toode\/([^"/]+)\/?"/gi, `href="${productPrefix}/$1"`)
+    .replace(
+      /href="https?:\/\/(?:www\.)?motorock\.eu\/toode\/([^"/]+)\/?"/gi,
+      `href="${productPrefix}/$1"`,
     );
 }
 

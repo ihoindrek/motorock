@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { EquipmentHubView } from "@/components/shop/equipment-hub-view";
-import { getEquipmentHubData } from "@/data/equipment-hub";
 import { isLocale } from "@/i18n/config";
+import {
+  generateEquipmentHubMetadata,
+  renderEquipmentHubPage,
+} from "@/lib/shop/equipment-hub-page";
 
 export const revalidate = 300;
 
@@ -14,13 +16,12 @@ export async function generateMetadata({
   params,
 }: EquipmentHubPageProps): Promise<Metadata> {
   const { locale: localeParam } = await params;
-  const locale = isLocale(localeParam) ? localeParam : "en";
-  const { copy } = getEquipmentHubData(locale);
 
-  return {
-    title: `${copy.title} ${copy.accent}`,
-    description: copy.description,
-  };
+  if (!isLocale(localeParam)) {
+    return { title: "Equipment" };
+  }
+
+  return generateEquipmentHubMetadata({ locale: localeParam });
 }
 
 export default async function EquipmentHubPage({ params }: EquipmentHubPageProps) {
@@ -30,5 +31,5 @@ export default async function EquipmentHubPage({ params }: EquipmentHubPageProps
     notFound();
   }
 
-  return <EquipmentHubView locale={localeParam} />;
+  return renderEquipmentHubPage({ locale: localeParam, routeTree: "en" });
 }
