@@ -59,8 +59,8 @@ export function getShowroomAvailableFromMeta(
       return parsed;
     }
 
-    // ACF true/false off — key exists but value is empty.
-    if (key === "showroom_available" && raw === "") {
+    // ACF unchecked — field exists but has no truthy value.
+    if (key === "showroom_available" && (raw === undefined || raw === "")) {
       return false;
     }
   }
