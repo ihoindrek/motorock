@@ -1,4 +1,5 @@
-const DEFAULT_ENDPOINT = "https://motorock.eu/graphql";
+import { DEFAULT_WOO_STORE_URL } from "@/lib/storefront/url";
+
 const SESSION_STORAGE_KEY = "motorock-wc-session";
 const SYNCED_LINES_KEY = "motorock-wc-synced-lines";
 
@@ -25,7 +26,10 @@ type GraphQLResponse<T> = {
 };
 
 export function getCheckoutGraphqlEndpoint() {
-  return process.env.NEXT_PUBLIC_WOOCOMMERCE_GRAPHQL_URL ?? DEFAULT_ENDPOINT;
+  return (
+    process.env.NEXT_PUBLIC_WOOCOMMERCE_GRAPHQL_URL?.replace(/\/$/, "") ??
+    `${DEFAULT_WOO_STORE_URL}/graphql`
+  );
 }
 
 export function readWooSessionToken(): string | null {

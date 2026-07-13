@@ -1,3 +1,6 @@
+/** WooCommerce / WordPress backend (headless API + media). */
+export const DEFAULT_WOO_STORE_URL = "https://shop.motorock.eu";
+
 /** Public Next.js storefront origin (customer-facing). */
 export function getStorefrontUrl() {
   const configured = process.env.NEXT_PUBLIC_STOREFRONT_URL?.replace(/\/$/, "");
@@ -16,7 +19,14 @@ export function getStorefrontUrl() {
 export function getWooStoreUrl() {
   return (
     process.env.WOOCOMMERCE_STORE_URL?.replace(/\/$/, "") ??
-    "https://motorock.eu"
+    DEFAULT_WOO_STORE_URL
+  );
+}
+
+export function getWooGraphqlUrl() {
+  return (
+    process.env.WOOCOMMERCE_GRAPHQL_URL?.replace(/\/$/, "") ??
+    `${DEFAULT_WOO_STORE_URL}/graphql`
   );
 }
 

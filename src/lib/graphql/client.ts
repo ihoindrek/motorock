@@ -1,4 +1,5 @@
-const DEFAULT_ENDPOINT = "https://motorock.eu/graphql";
+import { getWooGraphqlUrl } from "@/lib/storefront/url";
+
 const DEFAULT_REVALIDATE_SECONDS = 300;
 
 type GraphQLResponse<T> = {
@@ -7,7 +8,7 @@ type GraphQLResponse<T> = {
 };
 
 export function getGraphqlEndpoint() {
-  return process.env.WOOCOMMERCE_GRAPHQL_URL ?? DEFAULT_ENDPOINT;
+  return getWooGraphqlUrl();
 }
 
 type GraphqlRequestInit = RequestInit & {

@@ -1,5 +1,7 @@
+import { DEFAULT_WOO_STORE_URL } from "@/lib/storefront/url";
+
 const MONTONIO_ASSETS =
-  "https://motorock.eu/wp-content/plugins/montonio-for-woocommerce/assets/images";
+  `${DEFAULT_WOO_STORE_URL}/wp-content/plugins/montonio-for-woocommerce/assets/images`;
 
 export type PaymentMethodVisual =
   | { kind: "logo"; src: string; alt: string }

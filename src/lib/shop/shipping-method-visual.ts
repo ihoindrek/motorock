@@ -1,8 +1,9 @@
 import type { ShippingRate } from "@/lib/shop/shipping-method";
+import { DEFAULT_WOO_STORE_URL } from "@/lib/storefront/url";
 
 /** Same carrier artwork as Montonio for WooCommerce checkout (`*-rect.svg`). */
 const MONTONIO_CARRIER_ICONS =
-  "https://motorock.eu/wp-content/plugins/montonio-for-woocommerce/assets/images";
+  `${DEFAULT_WOO_STORE_URL}/wp-content/plugins/montonio-for-woocommerce/assets/images`;
 
 export type ShippingMethodVisual =
   | { kind: "logo"; src: string; alt: string }
