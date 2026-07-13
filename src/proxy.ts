@@ -11,7 +11,7 @@ import {
   resolveWordPressLegacyRedirect,
 } from "@/lib/shop/wordpress-legacy-redirects";
 import { resolveEquipmentPathPrefixRedirect } from "@/lib/shop/category-url";
-import { resolveBrandPathPrefixRedirect } from "@/lib/shop/brand-url";
+import { resolveBrandPathPrefixRedirect, resolveLegacyBrandSlugRedirect } from "@/lib/shop/brand-url";
 import { resolveProductPathPrefixRedirect } from "@/lib/shop/product-url";
 
 function applyLocalePathRedirects(
@@ -42,6 +42,12 @@ function applyLocalePathRedirects(
 
   if (brandPrefixTarget) {
     resolvedPath = brandPrefixTarget;
+  }
+
+  const legacyBrandTarget = resolveLegacyBrandSlugRedirect(resolvedPath, locale);
+
+  if (legacyBrandTarget) {
+    resolvedPath = legacyBrandTarget;
   }
 
   const productPrefixTarget = resolveProductPathPrefixRedirect(
