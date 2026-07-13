@@ -81,7 +81,7 @@ export function buildProductSeoSnapshotFromMotorcycle(
   const images = uniqueImages([
     product.sync.images[0],
     ...product.sync.variations.map((variation) => variation.image),
-    ...product.enrichment.lifestyleImages,
+    ...(product.enrichment.lifestyleImages ?? []),
   ]);
 
   return {
@@ -107,7 +107,7 @@ export function buildProductSeoSnapshotFromCatalog(
     product.lifestyleImage,
     ...(product.gallery ?? []),
     ...(product.lifestyleImages ?? []),
-    ...product.variations.map((variation) => variation.image),
+    ...(product.variations ?? []).map((variation) => variation.image),
   ]);
 
   return {
