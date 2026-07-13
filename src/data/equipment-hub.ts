@@ -195,7 +195,7 @@ export const equipmentHubCopy = {
     "Layers, lids, and rebel essentials — curated for riders who refuse to blend in.",
   outline: "Ride ready",
   heroImage:
-    "https://motorock.eu/wp-content/uploads/2026/06/Capo-Cor-02-Black-1-1_fcc5dbe4-95fc-4a09-bcd0-f7a42c5dd699.jpg",
+    "https://shop.motorock.eu/wp-content/uploads/2026/06/Capo-Cor-02-Black-1-1_fcc5dbe4-95fc-4a09-bcd0-f7a42c5dd699.jpg",
   heroImageAlt: "Capo Cor armored motorcycle shirt for men",
 } as const;
 
@@ -207,7 +207,7 @@ const equipmentHubCopyEt = {
     "Kihid, kiivrid ja mässulise sõitja hädavajalik — valitud neile, kes ei taha massi sulanduda.",
   outline: "Sõiduks valmis",
   heroImage:
-    "https://motorock.eu/wp-content/uploads/2026/06/Capo-Cor-02-Black-1-1_fcc5dbe4-95fc-4a09-bcd0-f7a42c5dd699.jpg",
+    "https://shop.motorock.eu/wp-content/uploads/2026/06/Capo-Cor-02-Black-1-1_fcc5dbe4-95fc-4a09-bcd0-f7a42c5dd699.jpg",
   heroImageAlt: "Capo Cor turvasärk meestele",
 } as const;
 
