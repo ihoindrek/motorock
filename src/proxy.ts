@@ -6,6 +6,10 @@ import {
   type Locale,
 } from "@/i18n/config";
 import { resolveLegacyEquipmentRedirect } from "@/lib/shop/equipment-legacy-redirects";
+import {
+  inferLocaleFromLegacyPath,
+  resolveWordPressLegacyRedirect,
+} from "@/lib/shop/wordpress-legacy-redirects";
 import { resolveEquipmentPathPrefixRedirect } from "@/lib/shop/category-url";
 import { resolveBrandPathPrefixRedirect } from "@/lib/shop/brand-url";
 import { resolveProductPathPrefixRedirect } from "@/lib/shop/product-url";
@@ -16,7 +20,13 @@ function applyLocalePathRedirects(
   basePath: string,
 ) {
   let resolvedPath = basePath;
-  const legacyTarget = resolveLegacyEquipmentRedirect(basePath);
+  const wordpressTarget = resolveWordPressLegacyRedirect(resolvedPath, locale);
+
+  if (wordpressTarget) {
+    resolvedPath = wordpressTarget;
+  }
+
+  const legacyTarget = resolveLegacyEquipmentRedirect(resolvedPath);
 
   if (legacyTarget) {
     resolvedPath = legacyTarget;
@@ -111,22 +121,29 @@ export function proxy(request: NextRequest) {
   }
 
   const locale = resolveLocale(request, segment);
-  const redirectResponse = applyLocalePathRedirects(request, locale, pathname);
+  const pathLocale = inferLocaleFromLegacyPath(pathname);
+  const effectiveLocale = pathLocale ?? locale;
+  const redirectResponse = applyLocalePathRedirects(
+    request,
+    effectiveLocale,
+    pathname,
+  );
 
   if (redirectResponse) {
     return redirectResponse;
   }
 
   const redirectUrl = request.nextUrl.clone();
-  redirectUrl.pathname = pathname === "/" ? `/${locale}` : `/${locale}${pathname}`;
+  redirectUrl.pathname =
+    pathname === "/" ? `/${effectiveLocale}` : `/${effectiveLocale}${pathname}`;
 
   const response = NextResponse.redirect(redirectUrl);
-  response.cookies.set(localeCookieName, locale, {
+  response.cookies.set(localeCookieName, effectiveLocale, {
     path: "/",
     maxAge: 60 * 60 * 24 * 365,
     sameSite: "lax",
   });
-  return withLocaleHeader(response, locale);
+  return withLocaleHeader(response, effectiveLocale);
 }
 
 export const config = {

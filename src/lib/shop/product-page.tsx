@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { ProductLocaleAlternates } from "@/components/locale-alternates";
+import { ProductJsonLd } from "@/components/seo/product-json-ld";
 import { EquipmentProductView } from "@/components/shop/equipment-product-view";
 import { MotorcycleProductView } from "@/components/shop/motorcycle-product-view";
 import type { Locale } from "@/i18n/config";
@@ -14,6 +15,11 @@ import {
   getSimilarProducts,
 } from "@/lib/graphql/products";
 import { buildPageMetadata } from "@/lib/seo/metadata";
+import {
+  buildProductOpenGraphImages,
+  buildProductSeoSnapshotFromCatalog,
+  buildProductSeoSnapshotFromMotorcycle,
+} from "@/lib/seo/product-metadata";
 import {
   buildProductHref,
   localizedProductHref,
@@ -29,34 +35,66 @@ type ProductPageParams = {
   pathSegment: string;
 };
 
-export async function generateProductPageMetadata({
-  locale,
-  slug,
-}: Omit<ProductPageParams, "pathSegment">): Promise<Metadata> {
-  const motorcycle = await getMotorcycleProductBySlug(slug, locale);
-  const product = motorcycle ? undefined : await getProductBySlug(slug, locale);
-
-  const name = motorcycle?.sync.name ?? product?.name;
-  const description =
-    motorcycle?.content.tagline ??
-    motorcycle?.enrichment.tagline ??
-    motorcycle?.sync.shortDescription ??
-    product?.tagline;
-
-  if (!name) {
-    return { title: "Product not found" };
-  }
-
-  const slugAlternates = await getProductSlugAlternates(slug);
-
-  return buildPageMetadata({
+function buildProductPageMetadataFromSnapshot(
+  locale: Locale,
+  slug: string,
+  slugAlternates: Awaited<ReturnType<typeof getProductSlugAlternates>>,
+  snapshot: ReturnType<typeof buildProductSeoSnapshotFromMotorcycle>,
+): Metadata {
+  const base = buildPageMetadata({
     locale,
-    title: name,
-    description: description || undefined,
+    title: snapshot.name,
+    description: snapshot.description,
     pathname: buildProductHref(slugAlternates[locale] ?? slug, locale),
     slugAlternates,
     slugPathTemplate: PRODUCT_SLUG_PATH_TEMPLATES,
   });
+
+  const images = buildProductOpenGraphImages(snapshot);
+
+  return {
+    ...base,
+    openGraph: {
+      ...base.openGraph,
+      images,
+    },
+    twitter: {
+      card: images ? "summary_large_image" : "summary",
+      title: snapshot.name,
+      description: snapshot.description,
+      images: images?.map((image) => image.url),
+    },
+  };
+}
+
+export async function generateProductPageMetadata({
+  locale,
+  slug,
+}: Omit<ProductPageParams, "pathSegment">): Promise<Metadata> {
+  const slugAlternates = await getProductSlugAlternates(slug);
+  const motorcycle = await getMotorcycleProductBySlug(slug, locale);
+
+  if (motorcycle) {
+    return buildProductPageMetadataFromSnapshot(
+      locale,
+      slug,
+      slugAlternates,
+      buildProductSeoSnapshotFromMotorcycle(motorcycle, locale),
+    );
+  }
+
+  const product = await getProductBySlug(slug, locale);
+
+  if (!product) {
+    return { title: "Product not found" };
+  }
+
+  return buildProductPageMetadataFromSnapshot(
+    locale,
+    slug,
+    slugAlternates,
+    buildProductSeoSnapshotFromCatalog(product, locale),
+  );
 }
 
 export async function renderProductPage({
@@ -89,6 +127,9 @@ export async function renderProductPage({
 
     return (
       <>
+        <ProductJsonLd
+          product={buildProductSeoSnapshotFromMotorcycle(motorcycle, locale)}
+        />
         <ProductLocaleAlternates alternates={slugAlternates} />
         <MotorcycleProductView
           product={motorcycle}
@@ -114,6 +155,9 @@ export async function renderProductPage({
 
   return (
     <>
+      <ProductJsonLd
+        product={buildProductSeoSnapshotFromCatalog(product, locale)}
+      />
       <ProductLocaleAlternates alternates={slugAlternates} />
       <EquipmentProductView product={product} relatedProducts={relatedProducts} />
     </>

@@ -20,7 +20,7 @@ const LEGACY_GENDER_SEGMENTS: Record<string, "for-men" | "for-women"> = {
 
 const WC_ROOT_SLUGS = new Set(["for-men", "for-women", "accessories", "helmets"]);
 
-const LEGACY_TOP_LEVEL_CATEGORY_REDIRECTS: Partial<
+export const LEGACY_TOP_LEVEL_CATEGORY_REDIRECTS: Partial<
   Record<ProductCategory, string>
 > = {
   jackets: buildEquipmentCategoryHref("en", "for-men", "jackets-and-tags"),
