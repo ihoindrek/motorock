@@ -33,6 +33,23 @@ const MOTORCYCLE_BRAND_CATEGORY_SLUGS: Record<string, string> = {
 
 const SINGLE_WC_CATEGORY_REDIRECTS = buildSingleWcCategoryRedirects();
 
+/** Old WPML / WordPress ET page slugs → canonical storefront paths (no locale). */
+const LEGACY_STATIC_PAGE_SLUGS: Record<string, string> = {
+  kontakt: "/contact",
+  meist: "/about",
+  blogi: "/blog",
+  privaatsus: "/privacy",
+  tingimused: "/terms",
+  tagastus: "/returns",
+  tarne: "/shipping",
+  kupsised: "/cookies",
+  abi: "/support",
+  "proovisoid": "/test-ride",
+  "proovisõit": "/test-ride",
+};
+
+const ET_LEGACY_STATIC_SLUGS = new Set(Object.keys(LEGACY_STATIC_PAGE_SLUGS));
+
 function normalizePath(pathname: string) {
   const trimmed = pathname.replace(/\/+$/, "");
   return trimmed || "/";
@@ -145,8 +162,15 @@ export function inferLocaleFromLegacyPath(pathname: string): Locale | null {
     normalized.startsWith("/toode/") ||
     normalized === "/brandid" ||
     normalized.startsWith("/brandid/") ||
-    normalized === "/pood"
+    normalized === "/pood" ||
+    normalized === "/blogi" ||
+    normalized.startsWith("/blogi/")
   ) {
+    return "et";
+  }
+
+  const staticSlug = normalized.slice(1);
+  if (staticSlug && !staticSlug.includes("/") && ET_LEGACY_STATIC_SLUGS.has(staticSlug)) {
     return "et";
   }
 
@@ -184,6 +208,18 @@ export function resolveWordPressLegacyRedirect(
 
   if (normalized.startsWith("/journal/")) {
     return `/blog/${normalized.slice("/journal/".length)}`;
+  }
+
+  if (normalized.startsWith("/blogi/")) {
+    return `/blog/${normalized.slice("/blogi/".length)}`;
+  }
+
+  const staticSlug = normalized.slice(1);
+  if (staticSlug && !staticSlug.includes("/")) {
+    const staticTarget = LEGACY_STATIC_PAGE_SLUGS[staticSlug];
+    if (staticTarget) {
+      return redirectUnlessSame(normalized, staticTarget);
+    }
   }
 
   if (normalized === "/motorcycles" || normalized === "/mootorrattad") {

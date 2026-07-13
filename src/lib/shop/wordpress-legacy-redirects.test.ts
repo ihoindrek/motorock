@@ -31,12 +31,22 @@ describe("resolveWordPressLegacyRedirect", () => {
     expect(resolveWordPressLegacyRedirect("/shop", "en")).toBe("/shop/equipment");
     expect(resolveWordPressLegacyRedirect("/pood", "et")).toBe("/tootekategooria");
   });
+  it("maps Estonian static page slugs to canonical routes", () => {
+    expect(resolveWordPressLegacyRedirect("/kontakt", "et")).toBe("/contact");
+    expect(resolveWordPressLegacyRedirect("/meist", "et")).toBe("/about");
+    expect(resolveWordPressLegacyRedirect("/privaatsus", "et")).toBe("/privacy");
+    expect(
+      resolveWordPressLegacyRedirect("/blogi/my-post", "et"),
+    ).toBe("/blog/my-post");
+  });
 });
 
 describe("inferLocaleFromLegacyPath", () => {
   it("detects Estonian legacy prefixes", () => {
     expect(inferLocaleFromLegacyPath("/toode/brixton-crossfire-125")).toBe("et");
     expect(inferLocaleFromLegacyPath("/tootekategooria/mootorrattad")).toBe("et");
+    expect(inferLocaleFromLegacyPath("/kontakt")).toBe("et");
+    expect(inferLocaleFromLegacyPath("/blogi/post-slug")).toBe("et");
   });
 
   it("detects English legacy prefixes", () => {
