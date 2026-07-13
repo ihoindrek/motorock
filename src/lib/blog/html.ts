@@ -1,5 +1,6 @@
 import type { Locale } from "@/i18n/config";
 import { buildProductHref } from "@/lib/shop/product-url";
+import { normalizeWordPressMediaUrl } from "@/lib/shop/wordpress-media-url";
 import { DEFAULT_WOO_STORE_URL } from "@/lib/storefront/url";
 
 const SHOP_MEDIA_PREFIX = `${DEFAULT_WOO_STORE_URL}/wp-content/`;
@@ -38,21 +39,7 @@ export function estimateReadTime(html: string): string {
   return `${minutes} min read`;
 }
 
-export function normalizeWordPressMediaUrl(url: string): string {
-  const trimmed = url.trim();
-  if (!trimmed) {
-    return trimmed;
-  }
-
-  if (trimmed.startsWith("/wp-content/")) {
-    return `${DEFAULT_WOO_STORE_URL}${trimmed}`;
-  }
-
-  return trimmed.replace(
-    /^https?:\/\/(?:www\.)?motorock\.eu\/wp-content\//i,
-    SHOP_MEDIA_PREFIX,
-  );
-}
+export { normalizeWordPressMediaUrl } from "@/lib/shop/wordpress-media-url";
 
 export function rewriteBlogMediaUrls(html: string): string {
   return html

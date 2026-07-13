@@ -33,6 +33,11 @@ import { buildToolsCategoryHref } from "@/lib/shop/shop-category-route";
 import { buildEquipmentHubHref } from "@/lib/shop/category-url";
 import { normalizeMotorcycleContent } from "@/lib/shop/normalize-motorcycle-content";
 import { resolveProductVimeoIdFromMeta } from "@/lib/shop/parse-product-video";
+import {
+  normalizeWordPressMediaUrl,
+  normalizeWordPressMediaUrlOptional,
+  normalizeWordPressMediaUrls,
+} from "@/lib/shop/wordpress-media-url";
 import { getGraphqlLanguageCode, resolveLocalizedProductFields } from "@/lib/graphql/wpml";
 import { getDictionary } from "@/i18n/get-dictionary";
 import { isLocale } from "@/i18n/config";
@@ -260,7 +265,7 @@ function mapVariations(product: GraphQLVariableProduct) {
       sku: variation.sku ?? `${product.slug}-${variation.databaseId}`,
       color,
       price: parseGraphqlPrice(variation.regularPrice ?? variation.price),
-      image: variation.image?.sourceUrl,
+      image: normalizeWordPressMediaUrlOptional(variation.image?.sourceUrl),
     };
   });
 }
@@ -344,11 +349,11 @@ export function mapGraphqlToMotorcycleProduct(
   );
   const { descriptionHtml } = catalogCopy;
 
-  const galleryUrls = (product.galleryImages?.nodes ?? []).map(
-    (image) => image.sourceUrl,
+  const galleryUrls = normalizeWordPressMediaUrls(
+    (product.galleryImages?.nodes ?? []).map((image) => image.sourceUrl),
   );
   const { productImages, lifestyleImages } = splitCatalogImages(
-    product.image?.sourceUrl,
+    normalizeWordPressMediaUrlOptional(product.image?.sourceUrl),
     galleryUrls,
   );
 
@@ -442,10 +447,13 @@ export function mapGraphqlToCatalogProduct(
   const wcCategorySlugs = canonicalizeWcCategorySlugs(
     (product.productCategories?.nodes ?? []).map((node) => node.slug),
   );
-  const galleryUrls = (product.galleryImages?.nodes ?? []).map(
-    (image) => image.sourceUrl,
+  const galleryUrls = normalizeWordPressMediaUrls(
+    (product.galleryImages?.nodes ?? []).map((image) => image.sourceUrl),
   );
-  const featured = product.image?.sourceUrl ?? galleryUrls[0] ?? "";
+  const featured =
+    normalizeWordPressMediaUrlOptional(product.image?.sourceUrl) ??
+    galleryUrls[0] ??
+    "";
   const { productImages, lifestyleImages } = splitCatalogImages(
     featured,
     galleryUrls,
@@ -540,7 +548,9 @@ export function mapGraphqlCardToCatalogProduct(
   const wcCategorySlugs = canonicalizeWcCategorySlugs(
     (product.productCategories?.nodes ?? []).map((node) => node.slug),
   );
-  const image = product.image?.sourceUrl ?? "/brixton-image.webp";
+  const image = normalizeWordPressMediaUrl(
+    product.image?.sourceUrl ?? "/brixton-image.webp",
+  );
   const price = parseCardPrice(product);
   const colors = variableProduct
     ? colorsFromVariableProduct(variableProduct)
