@@ -46,6 +46,13 @@ export const metadata: Metadata = {
     template: "%s | Motorock.eu",
   },
   metadataBase: new URL(getStorefrontUrl()),
+  ...(process.env.GOOGLE_SITE_VERIFICATION?.trim()
+    ? {
+        verification: {
+          google: process.env.GOOGLE_SITE_VERIFICATION.trim(),
+        },
+      }
+    : {}),
   icons: {
     icon: [
       { url: favicon32Url, sizes: "32x32", type: "image/png" },

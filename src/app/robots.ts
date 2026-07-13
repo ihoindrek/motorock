@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 
 import { isSiteIndexable } from "@/lib/site-indexing";
+import { getStorefrontUrl } from "@/lib/storefront/url";
 
 export default function robots(): MetadataRoute.Robots {
   if (!isSiteIndexable()) {
@@ -17,5 +18,6 @@ export default function robots(): MetadataRoute.Robots {
       userAgent: "*",
       allow: "/",
     },
+    sitemap: `${getStorefrontUrl()}/sitemap.xml`,
   };
 }
