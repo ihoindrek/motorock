@@ -72,6 +72,10 @@ export async function GET(request: Request) {
   return revalidateResponse("manual");
 }
 
+function isWooWebhookPing(payload: string, signature: string | null) {
+  return !signature && /^webhook_id=\d+$/.test(payload.trim());
+}
+
 export async function POST(request: Request) {
   const webhookSecret = process.env.WOOCOMMERCE_WEBHOOK_SECRET;
   const signature = request.headers.get("x-wc-webhook-signature");
@@ -84,6 +88,15 @@ export async function POST(request: Request) {
       { ok: false, error: "Missing WOOCOMMERCE_WEBHOOK_SECRET" },
       { status: 500 },
     );
+  }
+
+  // WooCommerce deliver_ping on webhook save — no signature, body: webhook_id=123
+  if (isWooWebhookPing(payload, signature)) {
+    return revalidateResponse("woocommerce-webhook-ping", {
+      topic,
+      deliveryId,
+      webhookId: payload.trim(),
+    });
   }
 
   if (!signature || !verifyWooSignature(payload, signature, webhookSecret)) {

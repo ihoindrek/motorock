@@ -1,5 +1,6 @@
 import {
   estimateReadTime,
+  normalizeWordPressMediaUrl,
   pickFirstImageFromHtml,
   rewriteBlogContentLinks,
   stripHtml,
@@ -24,7 +25,7 @@ function getFeaturedImage(post: GraphQLBlogPostCard, content?: string | null) {
 
   if (featured?.sourceUrl) {
     return {
-      image: featured.sourceUrl,
+      image: normalizeWordPressMediaUrl(featured.sourceUrl),
       imageAlt: featured.altText?.trim() || post.title,
     };
   }

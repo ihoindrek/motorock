@@ -49,6 +49,11 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
+        hostname: "www.motorock.eu",
+        pathname: "/wp-content/**",
+      },
+      {
+        protocol: "https",
         hostname: "shop.motorock.eu",
         pathname: "/wp-content/**",
       },

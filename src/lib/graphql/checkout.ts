@@ -1,9 +1,11 @@
 import type { CartLine } from "@/context/cart-context";
 import {
   checkoutGraphqlRequest,
+  clearCheckoutSession,
   readSyncedCartLinesKey,
   readWooSessionToken,
   writeSyncedCartLinesKey,
+  writeWooSessionToken,
 } from "@/lib/graphql/checkout-client";
 import {
   ADD_TO_CART,
@@ -89,6 +91,15 @@ type UpdateShippingMethodResponse = {
 };
 
 const productIdCache = new Map<string, { productId: number; variationId?: number }>();
+
+export function clearCheckoutProductIdCache() {
+  productIdCache.clear();
+}
+
+export function resetCheckoutSyncState() {
+  clearCheckoutProductIdCache();
+  writeWooSessionToken(null);
+}
 
 function lineCacheKey(line: CartLine) {
   return `${line.slug}:${line.size ?? ""}:${line.color ?? ""}`;

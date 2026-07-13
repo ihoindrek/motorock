@@ -1,4 +1,4 @@
-import { DEFAULT_WOO_STORE_URL } from "@/lib/storefront/url";
+import { getWooGraphqlUrl } from "@/lib/storefront/url";
 
 const SESSION_STORAGE_KEY = "motorock-wc-session";
 const SYNCED_LINES_KEY = "motorock-wc-synced-lines";
@@ -26,10 +26,12 @@ type GraphQLResponse<T> = {
 };
 
 export function getCheckoutGraphqlEndpoint() {
-  return (
-    process.env.NEXT_PUBLIC_WOOCOMMERCE_GRAPHQL_URL?.replace(/\/$/, "") ??
-    `${DEFAULT_WOO_STORE_URL}/graphql`
-  );
+  if (typeof window !== "undefined") {
+    return new URL("/api/checkout/graphql", window.location.origin).toString();
+  }
+
+  // Server (API routes): talk to Woo directly — relative URLs are invalid in Node fetch.
+  return getWooGraphqlUrl();
 }
 
 export function readWooSessionToken(): string | null {
@@ -51,6 +53,11 @@ export function writeWooSessionToken(token: string | null) {
     window.sessionStorage.removeItem(SESSION_STORAGE_KEY);
     window.sessionStorage.removeItem(SYNCED_LINES_KEY);
   }
+}
+
+/** Drop stale Woo session after backend URL changes or expired JWT. */
+export function clearCheckoutSession() {
+  writeWooSessionToken(null);
 }
 
 export function readSyncedCartLinesKey(): string | null {
@@ -104,6 +111,14 @@ export async function checkoutGraphqlRequest<
   if (nextSession) {
     const normalized = nextSession.replace(/^Session\s+/i, "");
     writeWooSessionToken(normalized);
+  }
+
+  const contentType = response.headers.get("content-type") ?? "";
+
+  if (!contentType.includes("application/json")) {
+    throw new Error(
+      `GraphQL returned non-JSON (${response.status}). Check WOOCOMMERCE GraphQL URL.`,
+    );
   }
 
   const payload = (await response.json()) as GraphQLResponse<TData>;

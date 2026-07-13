@@ -114,6 +114,14 @@ function friendlyCheckoutError(
   }
 
   if (
+    /product not found|choose a size|could not add items|could not add items to checkout/i.test(
+      message,
+    )
+  ) {
+    return message;
+  }
+
+  if (
     message.includes("GraphQL") ||
     message.includes("HTTP") ||
     message.includes("Internal server")

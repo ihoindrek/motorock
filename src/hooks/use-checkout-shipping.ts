@@ -4,12 +4,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useDictionary } from "@/context/locale-context";
 import type { CartLine } from "@/context/cart-context";
 import { formatCouponError } from "@/lib/checkout/format-coupon-error";
+import { clearCheckoutSession } from "@/lib/graphql/checkout-client";
 import {
   applyCheckoutCoupon,
   fetchAllowedCountries,
   fetchCartShipping,
   parseCartMoney,
   removeCheckoutCoupon,
+  resetCheckoutSyncState,
   selectShippingRate,
   syncLocalCartToWoo,
   updateCheckoutCustomerShipping,
@@ -384,10 +386,17 @@ export function useCheckoutShipping(
     }
 
     let cancelled = false;
+    let retried = false;
 
-    async function bootstrap() {
+    async function bootstrap(forceResync = false) {
       setLoading(true);
       setError(null);
+
+      if (forceResync) {
+        resetCheckoutSyncState();
+        syncedLinesKeyRef.current = "";
+        bootstrapReadyRef.current = false;
+      }
 
       try {
         const [allowedCountries, session] = await Promise.all([
@@ -421,7 +430,14 @@ export function useCheckoutShipping(
           setLoading(false);
         }
       } catch (cause) {
+        if (!cancelled && !retried) {
+          retried = true;
+          await bootstrap(true);
+          return;
+        }
+
         if (!cancelled) {
+          clearCheckoutSession();
           setError(
             cause instanceof Error
               ? cause.message

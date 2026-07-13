@@ -1,5 +1,10 @@
 import type { Locale } from "@/i18n/config";
 import { buildProductHref } from "@/lib/shop/product-url";
+import { DEFAULT_WOO_STORE_URL } from "@/lib/storefront/url";
+
+const SHOP_MEDIA_PREFIX = `${DEFAULT_WOO_STORE_URL}/wp-content/`;
+const LEGACY_MEDIA_PREFIX =
+  /https?:\/\/(?:www\.)?motorock\.eu\/wp-content\//gi;
 
 const HTML_ENTITY_MAP: Record<string, string> = {
   "&nbsp;": " ",
@@ -33,10 +38,35 @@ export function estimateReadTime(html: string): string {
   return `${minutes} min read`;
 }
 
+export function normalizeWordPressMediaUrl(url: string): string {
+  const trimmed = url.trim();
+  if (!trimmed) {
+    return trimmed;
+  }
+
+  if (trimmed.startsWith("/wp-content/")) {
+    return `${DEFAULT_WOO_STORE_URL}${trimmed}`;
+  }
+
+  return trimmed.replace(
+    /^https?:\/\/(?:www\.)?motorock\.eu\/wp-content\//i,
+    SHOP_MEDIA_PREFIX,
+  );
+}
+
+export function rewriteBlogMediaUrls(html: string): string {
+  return html
+    .replace(LEGACY_MEDIA_PREFIX, SHOP_MEDIA_PREFIX)
+    .replace(
+      /(["'(])\/wp-content\//g,
+      `$1${SHOP_MEDIA_PREFIX}`,
+    );
+}
+
 export function rewriteBlogContentLinks(html: string, locale: Locale = "en"): string {
   const productPrefix = buildProductHref("", locale).slice(0, -1);
 
-  return html
+  return rewriteBlogMediaUrls(html)
     .replace(/href="\/product\/([^"/]+)\/?"/gi, `href="${productPrefix}/$1"`)
     .replace(
       /href="https?:\/\/(?:www\.)?motorock\.eu\/product\/([^"/]+)\/?"/gi,
@@ -55,5 +85,5 @@ export function pickFirstImageFromHtml(html: string | null | undefined) {
   }
 
   const match = html.match(/<img[^>]+src="([^"]+)"/i);
-  return match?.[1] ?? null;
+  return match?.[1] ? normalizeWordPressMediaUrl(match[1]) : null;
 }
