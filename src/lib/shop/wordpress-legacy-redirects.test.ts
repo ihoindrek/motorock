@@ -33,6 +33,7 @@ describe("resolveWordPressLegacyRedirect", () => {
   });
   it("maps Estonian static page slugs to canonical routes", () => {
     expect(resolveWordPressLegacyRedirect("/kontakt", "et")).toBe("/contact");
+    expect(resolveWordPressLegacyRedirect("/seadmed", "et")).toBe("/tootekategooria");
     expect(resolveWordPressLegacyRedirect("/meist", "et")).toBe("/about");
     expect(resolveWordPressLegacyRedirect("/privaatsus", "et")).toBe("/privacy");
     expect(

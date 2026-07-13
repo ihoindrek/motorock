@@ -38,6 +38,7 @@ const LEGACY_STATIC_PAGE_SLUGS: Record<string, string> = {
   kontakt: "/contact",
   meist: "/about",
   blogi: "/blog",
+  seadmed: "/tootekategooria",
   privaatsus: "/privacy",
   tingimused: "/terms",
   tagastus: "/returns",
@@ -163,6 +164,7 @@ export function inferLocaleFromLegacyPath(pathname: string): Locale | null {
     normalized === "/brandid" ||
     normalized.startsWith("/brandid/") ||
     normalized === "/pood" ||
+    normalized === "/seadmed" ||
     normalized === "/blogi" ||
     normalized.startsWith("/blogi/")
   ) {
