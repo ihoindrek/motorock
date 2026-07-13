@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useDictionary, useLocale } from "@/context/locale-context";
 import type { CatalogProduct, ProductSpec } from "@/types/catalog-product";
 import type { MotorcycleProduct } from "@/types/motorcycle-product";
@@ -23,6 +23,7 @@ import { MotorcycleProductGallery } from "@/components/shop/motorcycle-product-g
 import { MotorcycleRelatedProducts } from "@/components/shop/motorcycle-related-products";
 import { TestRideIcon } from "@/components/ui/test-ride-icon";
 import { ZoomParallax } from "@/components/ui/zoom-parallax";
+import { trackViewMotorcycleProduct } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 
 type MotorcycleProductViewProps = {
@@ -117,6 +118,10 @@ function RichMotorcycleProductView({
   const [modalAction, setModalAction] = useState<MotorcycleModalAction | null>(
     null,
   );
+
+  useEffect(() => {
+    trackViewMotorcycleProduct(product);
+  }, [product]);
 
   const openPrimaryAction = () => {
     setModalAction(showroomAvailable ? "test-ride" : "enquire");

@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import type { ProductType } from "@/types/catalog-product";
+import { trackAddToCart, trackRemoveFromCart } from "@/lib/analytics";
 import { formatSizeLabel, isOneSizeLabel } from "@/lib/shop/size-label";
 
 export type CartLine = {
@@ -134,15 +135,36 @@ export function CartProvider({ children }: { children: ReactNode }) {
           },
         ];
       });
+
+      trackAddToCart({
+        slug: line.slug,
+        name: line.name,
+        price: line.price,
+        image: line.image,
+        brand: line.brand,
+        type: line.type,
+        size: normalizedSize,
+        color: line.color,
+        productId: line.productId,
+        variationId: line.variationId,
+        quantity: line.quantity ?? 1,
+      });
     },
     [],
   );
 
   const removeItem = useCallback((slug: string, size?: string) => {
     const key = lineKey(slug, size);
-    setLines((current) =>
-      current.filter((item) => lineKey(item.slug, item.size) !== key),
-    );
+    setLines((current) => {
+      const removed = current.find(
+        (item) => lineKey(item.slug, item.size) === key,
+      );
+      if (removed) {
+        trackRemoveFromCart(removed);
+      }
+
+      return current.filter((item) => lineKey(item.slug, item.size) !== key);
+    });
   }, []);
 
   const updateQuantity = useCallback(

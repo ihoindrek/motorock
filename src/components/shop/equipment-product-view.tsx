@@ -8,6 +8,7 @@ import { useCart } from "@/context/cart-context";
 import { useDictionary, useLocale } from "@/context/locale-context";
 import { localizedHref } from "@/i18n/paths";
 import { formatPrice } from "@/lib/shop/category";
+import { trackViewItem } from "@/lib/analytics";
 import { resolveLineVariationId } from "@/lib/shop/resolve-cart-variation";
 import { formatSizeLabel } from "@/lib/shop/size-label";
 import { sortProductSizes } from "@/lib/shop/sort-sizes";
@@ -128,6 +129,10 @@ export function EquipmentProductView({
   const hasLongDescription =
     (product.descriptionHtml?.length ?? 0) > 320 ||
     product.description.length > 220;
+
+  useEffect(() => {
+    trackViewItem(product);
+  }, [product]);
 
   const cartPayload = {
     slug: product.slug,

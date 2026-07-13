@@ -23,6 +23,7 @@ import {
   type ProductSearchResult,
 } from "@/lib/graphql/search";
 import { Price } from "@/components/shop/price";
+import { trackSearch } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 
 type HeaderSearchProps = {
@@ -507,6 +508,7 @@ export function HeaderSearch({ inverted = false }: HeaderSearchProps) {
         setHasMore(payload.hasMore);
         setState("ready");
         setActiveIndex(payload.results.length > 0 ? 0 : -1);
+        trackSearch(trimmed);
       } catch (error) {
         if (error instanceof DOMException && error.name === "AbortError") {
           return;

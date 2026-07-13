@@ -19,6 +19,7 @@ import { MotorcycleBrandLogoFilter } from "@/components/shop/motorcycle-brand-lo
 import { MobileFilterDrawer } from "@/components/ui/mobile-filter-drawer";
 import { localizedHref } from "@/i18n/paths";
 import { buildEquipmentHubHref } from "@/lib/shop/category-url";
+import { trackViewItemList } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 
 type CategoryViewProps = {
@@ -223,6 +224,27 @@ export function CategoryView({
 
   const visibleProducts = filteredProducts.slice(0, visibleCount);
   const catalogResetKey = `${sort}-${filters.brands.join(",")}-${filters.sizes.join(",")}-${filters.inStockOnly}-${filters.priceMin}-${filters.priceMax}`;
+
+  useEffect(() => {
+    if (visibleProducts.length === 0) {
+      return;
+    }
+
+    const listId =
+      route.wcCategorySlug ??
+      route.title
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "");
+
+    trackViewItemList({
+      listId,
+      listName: route.title,
+      products: visibleProducts,
+    });
+    // Track list impressions when filters/sort change, not on "load more".
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- catalogResetKey covers filter changes.
+  }, [catalogResetKey, route.title, route.wcCategorySlug]);
 
   const clearFilters = () => {
     setFilters(getInitialFilters(routeProducts));

@@ -46,6 +46,12 @@ import {
   isValidCheckoutPhone,
   stripCountryDialCode,
 } from "@/lib/shop/phone";
+import {
+  trackAddPaymentInfo,
+  trackAddShippingInfo,
+  trackBeginCheckout,
+  trackViewCart,
+} from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 import { buildEquipmentHubHref } from "@/lib/shop/category-url";
 import { EquipmentReturnPromise } from "@/components/shop/equipment-return-promise";
@@ -545,6 +551,12 @@ export function CartCheckoutView() {
   const [selectedMontonioOption, setSelectedMontonioOption] =
     useState<MontonioPaymentOption | null>(null);
   const paymentGatewayTouchedRef = useRef(false);
+  const checkoutAnalyticsRef = useRef({
+    viewCart: false,
+    beginCheckout: false,
+    shipping: false,
+    payment: false,
+  });
 
   const customer = useMemo(
     () => ({
@@ -642,6 +654,41 @@ export function CartCheckoutView() {
   const displayDiscount = shipping.discountTotal;
   const displayTotal = shipping.wcTotal ?? displaySubtotal + displayShipping - displayDiscount;
 
+  useEffect(() => {
+    if (itemCount === 0 || mobileStep !== 1 || checkoutAnalyticsRef.current.viewCart) {
+      return;
+    }
+
+    checkoutAnalyticsRef.current.viewCart = true;
+    trackViewCart(lines);
+  }, [itemCount, lines, mobileStep]);
+
+  useEffect(() => {
+    if (itemCount === 0 || mobileStep !== 2 || checkoutAnalyticsRef.current.beginCheckout) {
+      return;
+    }
+
+    checkoutAnalyticsRef.current.beginCheckout = true;
+    trackBeginCheckout(lines, displayTotal);
+  }, [displayTotal, itemCount, lines, mobileStep]);
+
+  useEffect(() => {
+    if (
+      mobileStep !== 3 ||
+      !payment.selectedId ||
+      checkoutAnalyticsRef.current.payment
+    ) {
+      return;
+    }
+
+    checkoutAnalyticsRef.current.payment = true;
+    trackAddPaymentInfo({
+      lines,
+      paymentType: payment.selectedId,
+      value: displayTotal,
+    });
+  }, [displayTotal, lines, mobileStep, payment.selectedId]);
+
   async function handleApplyCoupon() {
     const code = couponCode.trim();
     if (!code || shipping.couponLoading) {
@@ -697,6 +744,15 @@ export function CartCheckoutView() {
         .querySelector<HTMLElement>("#checkout-form input, #checkout-form select")
         ?.focus();
       return;
+    }
+
+    if (!checkoutAnalyticsRef.current.shipping) {
+      checkoutAnalyticsRef.current.shipping = true;
+      trackAddShippingInfo({
+        lines,
+        shippingTier: shipping.selectedRate?.label ?? shipping.selectedRateId ?? "delivery",
+        value: displayTotal,
+      });
     }
 
     goToMobileStep(3);

@@ -8,6 +8,7 @@ import { localizedHref } from "@/i18n/paths";
 import type { OrderSummary } from "@/app/api/order/summary/route";
 import { formatPrice } from "@/lib/shop/category";
 import { buildEquipmentHubHref } from "@/lib/shop/category-url";
+import { trackPurchase } from "@/lib/analytics";
 
 type OrderThankYouViewProps = {
   locale: "en" | "et";
@@ -95,6 +96,7 @@ export function OrderThankYouView({
 
         if (!cancelled) {
           setSummary(payload);
+          trackPurchase(payload);
         }
       } catch (cause) {
         if (!cancelled) {
