@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
-import type { Locale } from "@/i18n/config";
+import { locales, type Locale } from "@/i18n/config";
+import { localizedHref } from "@/i18n/paths";
 import {
   fetchEquipmentCategoryIndex,
   EQUIPMENT_ROOT_SLUGS,
@@ -57,29 +58,55 @@ function absoluteUrl(path: string) {
   return `${getStorefrontUrl()}${path}`;
 }
 
+function buildPathAlternates(
+  pathAlternates: Partial<Record<Locale, string>>,
+) {
+  const languages: Record<string, string> = {};
+
+  for (const locale of locales) {
+    const path = pathAlternates[locale];
+    if (path) {
+      languages[locale] = absoluteUrl(localizedHref(locale, path));
+    }
+  }
+
+  if (languages.en) {
+    languages["x-default"] = languages.en;
+  }
+
+  return languages;
+}
+
 function sitemapEntry(
   pathname: string,
   options?: {
+    locale?: Locale;
+    pathAlternates?: Partial<Record<Locale, string>>;
     slugAlternates?: Partial<Record<Locale, string>>;
     slugPathTemplate?: string | Partial<Record<Locale, string>>;
     lastModified?: Date;
   },
 ): MetadataRoute.Sitemap[number] {
-  const languages = buildLanguageAlternates(
-    pathname,
-    options?.slugAlternates,
-    options?.slugPathTemplate,
-  );
-
-  return {
-    url: absoluteUrl(
-      resolveLocalizedPath(
-        "en",
+  const locale = options?.locale ?? "en";
+  const languages = options?.pathAlternates
+    ? buildPathAlternates(options.pathAlternates)
+    : buildLanguageAlternates(
         pathname,
         options?.slugAlternates,
         options?.slugPathTemplate,
-      ),
-    ),
+      );
+
+  const primaryPath = options?.pathAlternates?.[locale]
+    ? localizedHref(locale, options.pathAlternates[locale] as string)
+    : resolveLocalizedPath(
+        locale,
+        pathname,
+        options?.slugAlternates,
+        options?.slugPathTemplate,
+      );
+
+  return {
+    url: absoluteUrl(primaryPath),
     lastModified: options?.lastModified,
     alternates: {
       languages,
@@ -186,10 +213,13 @@ export async function buildSitemap(): Promise<MetadataRoute.Sitemap> {
 
   for (const brand of EQUIPMENT_BRAND_SLUGS) {
     entries.push(
-      sitemapEntry(buildBrandCatalogHref("en", brand), { lastModified: now }),
-    );
-    entries.push(
-      sitemapEntry(buildBrandCatalogHref("et", brand), { lastModified: now }),
+      sitemapEntry(buildBrandCatalogHref("en", brand), {
+        lastModified: now,
+        pathAlternates: {
+          en: buildBrandCatalogHref("en", brand),
+          et: buildBrandCatalogHref("et", brand),
+        },
+      }),
     );
   }
 
@@ -201,13 +231,12 @@ export async function buildSitemap(): Promise<MetadataRoute.Sitemap> {
       fetchEquipmentCategoryIndex("et"),
     ]);
 
-  const categoryPaths = new Set([
-    ...collectCategoryPaths("en", enCategoryIndex),
-    ...collectCategoryPaths("et", etCategoryIndex),
-  ]);
+  for (const locale of locales) {
+    const categoryIndex = locale === "en" ? enCategoryIndex : etCategoryIndex;
 
-  for (const path of categoryPaths) {
-    entries.push(sitemapEntry(path, { lastModified: now }));
+    for (const path of collectCategoryPaths(locale, categoryIndex)) {
+      entries.push(sitemapEntry(path, { lastModified: now, locale }));
+    }
   }
 
   for (const slugAlternates of blogEntries) {
