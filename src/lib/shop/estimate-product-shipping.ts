@@ -56,11 +56,14 @@ async function estimateGraphqlRequest<TData, TVariables = Record<string, unknown
     headers["woocommerce-session"] = `Session ${sessionToken}`;
   }
 
+  // POST requests bypass the Next fetch cache by default. An explicit
+  // `cache: "no-store"` would additionally mark the route dynamic, which
+  // must not happen — product pages are ISR and call this inside
+  // unstable_cache.
   const response = await fetch(getWooGraphqlUrl(), {
     method: "POST",
     headers,
     body: JSON.stringify({ query, variables }),
-    cache: "no-store",
   });
 
   if (!response.ok) {

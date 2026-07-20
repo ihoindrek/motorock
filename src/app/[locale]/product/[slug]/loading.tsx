@@ -1,10 +1,5 @@
-import { ProductPageLoading } from "@/components/shop/product-page-loading";
-import { getDictionary } from "@/i18n/get-dictionary";
-import { getRequestLocale } from "@/i18n/get-request-locale";
+import { LocalizedProductPageLoading } from "@/components/shop/localized-loading";
 
-export default async function ProductLoadingPage() {
-  const locale = await getRequestLocale();
-  const dict = getDictionary(locale);
-
-  return <ProductPageLoading ariaLabel={dict.common.loadingProducts} />;
+export default function ProductLoadingPage() {
+  return <LocalizedProductPageLoading />;
 }

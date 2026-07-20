@@ -7,6 +7,13 @@ import { buildBrandCatalogHref } from "@/lib/shop/brand-url";
 
 export const revalidate = 300;
 
+// No build-time prerender (empty list), but having generateStaticParams
+// opts the route into ISR so visited paths get cached on demand.
+export function generateStaticParams() {
+  return [];
+}
+
+
 type LegacyBrandPageProps = {
   params: Promise<{ locale: string; brand: string }>;
 };

@@ -1,14 +1,21 @@
+"use client";
+
 import Link from "next/link";
-import { cookies } from "next/headers";
-import { defaultLocale, isLocale, localeCookieName } from "@/i18n/config";
+import { usePathname } from "next/navigation";
+import { defaultLocale, isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/get-dictionary";
 import { localizedHref } from "@/i18n/paths";
 import { buildEquipmentHubHref } from "@/lib/shop/category-url";
 
-export default async function NotFound() {
-  const cookieStore = await cookies();
-  const cookieLocale = cookieStore.get(localeCookieName)?.value;
-  const locale = isLocale(cookieLocale) ? cookieLocale : defaultLocale;
+/**
+ * Client component on purpose: reading cookies()/headers() here would make
+ * the global not-found boundary dynamic, which in turn disables static
+ * prerendering (ISR) for every route in the app.
+ */
+export default function NotFound() {
+  const pathname = usePathname();
+  const segment = pathname.split("/")[1];
+  const locale = isLocale(segment) ? segment : defaultLocale;
   const dict = getDictionary(locale);
 
   return (

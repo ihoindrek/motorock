@@ -87,6 +87,13 @@ export async function renderEquipmentCategoryPage({
 
   const dictionary = getDictionary(locale);
   const index = await fetchEquipmentCategoryIndex(locale);
+
+  // A transient GraphQL failure must not get cached as a 404 by ISR;
+  // throwing keeps the previously cached page being served instead.
+  if (!index && slug.length > 0) {
+    throw new Error("Equipment category index unavailable");
+  }
+
   const route = resolveEquipmentRoute(slug, index, locale, dictionary);
 
   if (!route) {

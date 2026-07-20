@@ -35,7 +35,6 @@ import {
 } from "@/lib/shop/product-url";
 import { pickSimilarProducts, RELATED_PRODUCTS_LIMIT } from "@/lib/shop/similar-products";
 import { productsShareWcSubcategory } from "@/lib/shop/wc-categories";
-import { getRequestCountry } from "@/lib/geo/request-country";
 
 type ProductPageParams = {
   locale: Locale;
@@ -219,14 +218,12 @@ export async function renderProductPage({
     notFound();
   }
 
-  const [defaultShippingCountry, schemaShipping, relatedCandidates] =
-    await Promise.all([
-      getRequestCountry("EE"),
-      resolveSchemaShipping(product),
-      product.relatedSlugs?.length
-        ? getCatalogProductsBySlugs(product.relatedSlugs, locale)
-        : getSimilarProducts(product, RELATED_PRODUCTS_LIMIT, locale),
-    ]);
+  const [schemaShipping, relatedCandidates] = await Promise.all([
+    resolveSchemaShipping(product),
+    product.relatedSlugs?.length
+      ? getCatalogProductsBySlugs(product.relatedSlugs, locale)
+      : getSimilarProducts(product, RELATED_PRODUCTS_LIMIT, locale),
+  ]);
 
   const relatedProducts = relatedCandidates
     .filter((candidate) => productsShareWcSubcategory(product, candidate))
@@ -243,7 +240,6 @@ export async function renderProductPage({
       <EquipmentProductView
         product={product}
         relatedProducts={relatedProducts}
-        defaultShippingCountry={defaultShippingCountry}
       />
     </>
   );

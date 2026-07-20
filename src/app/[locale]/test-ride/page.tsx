@@ -21,29 +21,11 @@ export async function generateMetadata({
   };
 }
 
-type TestRidePageProps = {
-  params: Promise<{ locale: string }>;
-  searchParams: Promise<{
-    slug?: string;
-    bike?: string;
-    brand?: string;
-    color?: string;
-  }>;
-};
+export const revalidate = 300;
 
-export default async function TestRidePage({
-  searchParams,
-}: TestRidePageProps) {
-  const params = await searchParams;
-
-  return (
-    <TestRideView
-      initial={{
-        slug: params.slug,
-        bike: params.bike,
-        brand: params.brand,
-        color: params.color,
-      }}
-    />
-  );
+// Prefill values are read from the query string client-side so the page
+// stays static (reading searchParams on the server would force dynamic
+// rendering and disable ISR).
+export default function TestRidePage() {
+  return <TestRideView />;
 }

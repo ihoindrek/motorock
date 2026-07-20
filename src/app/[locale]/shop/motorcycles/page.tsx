@@ -4,13 +4,11 @@ import { isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/get-dictionary";
 import { getMotorcycleCatalog } from "@/lib/graphql/products";
 import { buildPageMetadata } from "@/lib/seo/metadata";
-import { resolveMotorcycleBrandFromSlug } from "@/lib/shop/brand-catalog-url";
 
 export const revalidate = 300;
 
 type MotorcyclesPageProps = {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ brand?: string }>;
 };
 
 export async function generateMetadata({ params }: MotorcyclesPageProps) {
@@ -30,25 +28,17 @@ export async function generateMetadata({ params }: MotorcyclesPageProps) {
   });
 }
 
-export default async function MotorcyclesPage({
-  params,
-  searchParams,
-}: MotorcyclesPageProps) {
+// The ?brand= preselection is resolved client-side inside
+// MotorcyclesCatalogView; reading searchParams here would force dynamic
+// rendering and disable ISR.
+export default async function MotorcyclesPage({ params }: MotorcyclesPageProps) {
   const { locale: localeParam } = await params;
-  const { brand: brandSlug } = await searchParams;
 
   if (!isLocale(localeParam)) {
     notFound();
   }
 
   const motorcycles = await getMotorcycleCatalog(localeParam);
-  const brandNames = [...new Set(motorcycles.map((product) => product.brand))];
-  const initialBrand = resolveMotorcycleBrandFromSlug(brandSlug, brandNames);
 
-  return (
-    <MotorcyclesCatalogView
-      products={motorcycles}
-      initialBrand={initialBrand}
-    />
-  );
+  return <MotorcyclesCatalogView products={motorcycles} />;
 }

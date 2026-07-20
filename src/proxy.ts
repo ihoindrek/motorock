@@ -71,7 +71,7 @@ function applyLocalePathRedirects(
     maxAge: 60 * 60 * 24 * 365,
     sameSite: "lax",
   });
-  return withLocaleHeader(response, locale);
+  return response;
 }
 
 function resolveLocale(request: NextRequest, segment: string | undefined): Locale {
@@ -85,11 +85,6 @@ function resolveLocale(request: NextRequest, segment: string | undefined): Local
   }
 
   return defaultLocale;
-}
-
-function withLocaleHeader(response: NextResponse, locale: Locale) {
-  response.headers.set("x-locale", locale);
-  return response;
 }
 
 export function proxy(request: NextRequest) {
@@ -118,19 +113,10 @@ export function proxy(request: NextRequest) {
       return redirectResponse;
     }
 
-    const response = NextResponse.next();
-
-    // Set-Cookie makes the response uncacheable downstream — only send it
-    // when the preference actually changes.
-    if (request.cookies.get(localeCookieName)?.value !== segment) {
-      response.cookies.set(localeCookieName, segment, {
-        path: "/",
-        maxAge: 60 * 60 * 24 * 365,
-        sameSite: "lax",
-      });
-    }
-
-    return withLocaleHeader(response, segment);
+    // No Set-Cookie on pass-through responses: it would make them
+    // uncacheable at the CDN (crawlers never send cookies, so they would
+    // always miss). LocaleProvider persists the locale cookie client-side.
+    return NextResponse.next();
   }
 
   const locale = resolveLocale(request, segment);
@@ -156,7 +142,7 @@ export function proxy(request: NextRequest) {
     maxAge: 60 * 60 * 24 * 365,
     sameSite: "lax",
   });
-  return withLocaleHeader(response, effectiveLocale);
+  return response;
 }
 
 export const config = {

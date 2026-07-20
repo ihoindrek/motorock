@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useDictionary, useLocale } from "@/context/locale-context";
 import { localizedHref } from "@/i18n/paths";
 import { formatCheckoutPrice } from "@/lib/shop/category";
@@ -37,6 +37,7 @@ export function ProductShippingEstimate({
   );
   const [loading, setLoading] = useState(Boolean(productId));
   const [failed, setFailed] = useState(false);
+  const userSelectedCountry = useRef(false);
 
   const activeVariationId = useMemo(
     () => resolveInitialVariationId(variationId),
@@ -46,6 +47,25 @@ export function ProductShippingEstimate({
   useEffect(() => {
     setCountry(defaultCountry.toUpperCase());
   }, [defaultCountry]);
+
+  // Pages are static (ISR), so visitor country comes from the edge via API.
+  useEffect(() => {
+    const controller = new AbortController();
+
+    void fetch("/api/geo", { signal: controller.signal })
+      .then(async (response) => (response.ok ? response.json() : null))
+      .then((payload: { country?: string } | null) => {
+        const detected = payload?.country?.toUpperCase();
+        if (detected && !userSelectedCountry.current) {
+          setCountry(detected);
+        }
+      })
+      .catch(() => {
+        // Keep the default country when geo lookup fails.
+      });
+
+    return () => controller.abort();
+  }, []);
 
   useEffect(() => {
     if (!productId) {
@@ -158,7 +178,10 @@ export function ProductShippingEstimate({
           <span className="sr-only">{dict.pdp.shippingCountry}</span>
           <select
             value={countries.includes(country) ? country : countries[0]}
-            onChange={(event) => setCountry(event.target.value.toUpperCase())}
+            onChange={(event) => {
+              userSelectedCountry.current = true;
+              setCountry(event.target.value.toUpperCase());
+            }}
             className="max-w-[11rem] border-0 bg-transparent py-0.5 pr-6 text-sm text-ink/70 underline decoration-ink/25 underline-offset-4 outline-none hover:text-ink"
             aria-label={dict.pdp.shippingCountry}
           >

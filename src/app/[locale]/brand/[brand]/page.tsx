@@ -8,6 +8,13 @@ import {
 
 export const revalidate = 300;
 
+// No build-time prerender (empty list), but having generateStaticParams
+// opts the route into ISR so visited paths get cached on demand.
+export function generateStaticParams() {
+  return [];
+}
+
+
 type BrandPageProps = {
   params: Promise<{ locale: string; brand: string }>;
 };

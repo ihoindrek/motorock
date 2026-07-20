@@ -1,28 +1,46 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
 import type { CatalogProduct } from "@/types/catalog-product";
 import { useDictionary, useLocale } from "@/context/locale-context";
 import { CategoryView } from "@/components/shop/category-view";
 import { buildMotorcyclesCatalogRoute } from "@/lib/shop/category";
 import { localizedHref } from "@/i18n/paths";
 import { buildEquipmentHubHref } from "@/lib/shop/category-url";
+import { resolveMotorcycleBrandFromSlug } from "@/lib/shop/brand-catalog-url";
 
 type MotorcyclesCatalogViewProps = {
   products: readonly CatalogProduct[];
-  initialBrand?: string;
 };
 
 export function MotorcyclesCatalogView({
   products,
-  initialBrand,
 }: MotorcyclesCatalogViewProps) {
   const locale = useLocale();
   const dict = useDictionary();
-  const route = buildMotorcyclesCatalogRoute(dict, initialBrand);
+  // ?brand= is resolved after mount so the page can be statically
+  // prerendered without server-side searchParams access.
+  const [brand, setBrand] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    const slug = new URLSearchParams(window.location.search).get("brand");
+    if (!slug) {
+      return;
+    }
+
+    const brandNames = [...new Set(products.map((product) => product.brand))];
+    setBrand(resolveMotorcycleBrandFromSlug(slug, brandNames));
+  }, [products]);
+
+  const route = useMemo(
+    () => buildMotorcyclesCatalogRoute(dict, brand),
+    [brand, dict],
+  );
 
   return (
     <CategoryView
+      key={brand ?? "all"}
       route={route}
       products={products}
       motoBackground

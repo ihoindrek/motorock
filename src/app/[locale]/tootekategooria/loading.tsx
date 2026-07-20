@@ -1,10 +1,5 @@
-import { EquipmentHubLoading } from "@/components/shop/equipment-hub-loading";
-import { getDictionary } from "@/i18n/get-dictionary";
-import { getRequestLocale } from "@/i18n/get-request-locale";
+import { LocalizedEquipmentHubLoading } from "@/components/shop/localized-loading";
 
-export default async function TootekategooriaHubLoadingPage() {
-  const locale = await getRequestLocale();
-  const dict = getDictionary(locale);
-
-  return <EquipmentHubLoading ariaLabel={dict.common.loadingCategories} />;
+export default function TootekategooriaHubLoadingPage() {
+  return <LocalizedEquipmentHubLoading />;
 }

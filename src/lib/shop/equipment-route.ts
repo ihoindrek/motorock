@@ -1,5 +1,5 @@
 import type { Dictionary } from "@/i18n/dictionaries/en";
-import type { Locale } from "@/i18n/config";
+import { locales, type Locale } from "@/i18n/config";
 import type {
   EquipmentCategoryIndex,
   WcCategoryEntry,
@@ -43,10 +43,31 @@ export function resolveEquipmentCategoryChain(
   index: EquipmentCategoryIndex,
   locale: Locale,
 ): WcCategoryEntry[] | null {
-  return (
+  const resolved =
     resolveLocalizedCategoryPath(index, slugSegments, locale) ??
-    resolveCategoryPath(index, slugSegments)
-  );
+    resolveCategoryPath(index, slugSegments);
+
+  if (resolved) {
+    return resolved;
+  }
+
+  // The locale switcher keeps the slug and only swaps the locale prefix
+  // (e.g. /et/tootekategooria/kiivrid -> /en/.../kiivrid). Try the other
+  // locales' slugs so the caller can redirect to the canonical URL instead
+  // of returning a 404.
+  for (const other of locales) {
+    if (other === locale) {
+      continue;
+    }
+
+    const chain = resolveLocalizedCategoryPath(index, slugSegments, other);
+
+    if (chain) {
+      return chain;
+    }
+  }
+
+  return null;
 }
 
 export function getCanonicalEquipmentSlugSegments(

@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useDictionary, useLocale } from "@/context/locale-context";
 import { EditorialHero } from "@/components/content/editorial-hero";
 import { TestRideForm, type TestRideInitialValues } from "@/components/shop/test-ride-form";
@@ -11,10 +12,24 @@ import {
 
 export type { TestRideInitialValues };
 
-export function TestRideView({ initial }: { initial: TestRideInitialValues }) {
+export function TestRideView() {
   const dict = useDictionary();
   const locale = useLocale();
   const showroom = getShowroomCopy(locale);
+  // Read prefill from the query string after mount; the page is statically
+  // prerendered, so the server never sees search params.
+  const [initial, setInitial] = useState<TestRideInitialValues>({});
+
+  useEffect(() => {
+    const query = new URLSearchParams(window.location.search);
+    const value = (key: string) => query.get(key)?.trim() || undefined;
+    setInitial({
+      slug: value("slug"),
+      bike: value("bike"),
+      brand: value("brand"),
+      color: value("color"),
+    });
+  }, []);
 
   return (
     <>
@@ -56,7 +71,10 @@ export function TestRideView({ initial }: { initial: TestRideInitialValues }) {
               {dict.testRide.formTitle}
             </h2>
             <div className="mt-6">
-              <TestRideForm initial={initial} />
+              <TestRideForm
+                key={`${initial.slug ?? ""}|${initial.bike ?? ""}|${initial.brand ?? ""}|${initial.color ?? ""}`}
+                initial={initial}
+              />
             </div>
           </div>
         </div>

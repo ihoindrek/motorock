@@ -1,9 +1,8 @@
 import type { Metadata, Viewport } from "next";
-import { headers } from "next/headers";
 import { Plus_Jakarta_Sans, Racing_Sans_One } from "next/font/google";
 import { ConsentScripts, GtmNoScript } from "@/components/consent/consent-scripts";
 import { Providers } from "@/components/providers";
-import { defaultLocale, isLocale } from "@/i18n/config";
+import { defaultLocale, locales } from "@/i18n/config";
 import { isSiteIndexable } from "@/lib/site-indexing";
 import { getStorefrontUrl } from "@/lib/storefront/url";
 import { getAssetVersion } from "@/lib/storefront/asset-version";
@@ -73,22 +72,28 @@ export const viewport: Viewport = {
   colorScheme: "light",
 };
 
-export default async function RootLayout({
+/**
+ * Sets <html lang> from the URL before first paint. The root layout cannot
+ * read the locale on the server without headers(), which would force every
+ * route dynamic and disable ISR/CDN caching.
+ */
+const langScript = `document.documentElement.lang=${JSON.stringify(
+  Object.fromEntries(locales.map((locale) => [locale, locale])),
+)}[location.pathname.split("/")[1]]||${JSON.stringify(defaultLocale)};`;
+
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const headersList = await headers();
-  const headerLocale = headersList.get("x-locale");
-  const lang = isLocale(headerLocale) ? headerLocale : defaultLocale;
-
   return (
     <html
-      lang={lang}
+      lang={defaultLocale}
       className={`${displayFont.variable} ${plusJakarta.variable} h-full`}
       suppressHydrationWarning
     >
       <body className="flex min-h-full flex-col bg-paper font-body text-ink antialiased">
+        <script dangerouslySetInnerHTML={{ __html: langScript }} />
         <GtmNoScript />
         <ConsentScripts />
         <Providers>{children}</Providers>
