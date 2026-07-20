@@ -48,7 +48,7 @@ export function Hero({ locale, dictionary }: HeroProps) {
       label: dictionary.hero.motorcycles,
       href: localizedHref(locale, "/shop/motorcycles"),
       image: "/brixton-image.webp",
-      mobileImage: "/hero-fallback.jpg",
+      mobileImage: "/hero-fallback.webp",
       video: "/mc-hero.webm",
       span: "col-span-1 md:col-span-2",
       imageSizes: "(max-width: 768px) 100vw, 66vw",
@@ -77,7 +77,7 @@ export function Hero({ locale, dictionary }: HeroProps) {
       aria-label={dictionary.common.shop}
       className="grid grid-cols-1 md:grid-cols-3"
     >
-      <h1 className="sr-only">Motorock.eu</h1>
+      <h1 className="sr-only">{`Motorock.eu — ${dictionary.seo.homeTitle}`}</h1>
 
       {banners.map((banner, index) => (
           <Link

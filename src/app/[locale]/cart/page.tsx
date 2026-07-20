@@ -20,6 +20,7 @@ export async function generateMetadata({ params }: CartPageProps) {
   return {
     title: dict.pages.cartTitle,
     description: dict.pages.cartDescription,
+    robots: { index: false, follow: false },
   };
 }
 

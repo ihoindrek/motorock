@@ -13,11 +13,14 @@ export default function robots(): MetadataRoute.Robots {
     };
   }
 
+  const origin = getStorefrontUrl();
+
   return {
     rules: {
       userAgent: "*",
       allow: "/",
     },
-    sitemap: `${getStorefrontUrl()}/sitemap.xml`,
+    // Primary + alternate path (GSC often caches failures on /sitemap.xml).
+    sitemap: [`${origin}/sitemap.xml`, `${origin}/sitemaps/main.xml`],
   };
 }

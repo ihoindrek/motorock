@@ -38,6 +38,7 @@ import { formatColorLabel } from "@/lib/shop/product-color-swatches";
 import { cartLineThumbnailClass } from "@/lib/shop/cart-line-image";
 import { formatSizeLabel } from "@/lib/shop/size-label";
 import { formatCheckoutPrice } from "@/lib/shop/category";
+import { localizeShippingRateLabel } from "@/lib/shop/localize-shipping-label";
 import { Price } from "@/components/shop/price";
 import { cartHasEquipment } from "@/lib/shop/cart-has-equipment";
 import { defaultLocationForCountry } from "@/lib/shop/countries";
@@ -1154,7 +1155,9 @@ export function CartCheckoutView() {
             .replace("{order}", orderId)
             .replace(
               "{delivery}",
-              shipping.selectedRate?.label ?? t.deliveryChosen,
+              shipping.selectedRate
+                ? localizeShippingRateLabel(shipping.selectedRate, locale)
+                : t.deliveryChosen,
             )
             .replace("{confirmation}", t.confirmationSent)
             .replace("{email}", email)}

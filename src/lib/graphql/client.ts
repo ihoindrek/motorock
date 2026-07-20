@@ -1,6 +1,7 @@
 import { getWooGraphqlUrl } from "@/lib/storefront/url";
 
 const DEFAULT_REVALIDATE_SECONDS = 300;
+const DEFAULT_RETRY_ATTEMPTS = 3;
 
 type GraphQLResponse<T> = {
   data?: T;
@@ -16,12 +17,41 @@ type GraphqlRequestInit = RequestInit & {
     revalidate?: number | false;
     tags?: string[];
   };
+  /** Override transient network retries (default 3). Set 1 to disable. */
+  retryAttempts?: number;
 };
 
-export async function graphqlRequest<TData, TVariables = Record<string, unknown>>(
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function isTransientFetchError(error: unknown): boolean {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  const cause =
+    "cause" in error && error.cause instanceof Error
+      ? `${error.cause.name} ${error.cause.message} ${error.cause.stack ?? ""}`
+      : String((error as { cause?: unknown }).cause ?? "");
+  const haystack = `${error.name} ${error.message} ${cause}`.toLowerCase();
+
+  return (
+    haystack.includes("fetch failed") ||
+    haystack.includes("und_err_socket") ||
+    haystack.includes("other side closed") ||
+    haystack.includes("econnreset") ||
+    haystack.includes("econnrefused") ||
+    haystack.includes("etimedout") ||
+    haystack.includes("socket hang up") ||
+    haystack.includes("network")
+  );
+}
+
+async function graphqlRequestOnce<TData, TVariables>(
   query: string,
-  variables?: TVariables,
-  init?: GraphqlRequestInit,
+  variables: TVariables | undefined,
+  init: GraphqlRequestInit | undefined,
 ): Promise<TData> {
   const nextOptions = init?.next ?? {};
   const cacheTags = new Set(["woocommerce", ...(nextOptions.tags ?? [])]);
@@ -55,4 +85,29 @@ export async function graphqlRequest<TData, TVariables = Record<string, unknown>
   }
 
   return payload.data;
+}
+
+export async function graphqlRequest<TData, TVariables = Record<string, unknown>>(
+  query: string,
+  variables?: TVariables,
+  init?: GraphqlRequestInit,
+): Promise<TData> {
+  const attempts = Math.max(1, init?.retryAttempts ?? DEFAULT_RETRY_ATTEMPTS);
+  let lastError: unknown;
+
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    try {
+      return await graphqlRequestOnce<TData, TVariables>(query, variables, init);
+    } catch (error) {
+      lastError = error;
+
+      if (!isTransientFetchError(error) || attempt === attempts - 1) {
+        throw error;
+      }
+
+      await sleep(250 * 2 ** attempt);
+    }
+  }
+
+  throw lastError;
 }

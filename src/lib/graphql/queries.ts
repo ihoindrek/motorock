@@ -1,3 +1,18 @@
+/** Global attributes expose taxonomy term names (e.g. S) alongside WPML option slugs (s-et). */
+const PRODUCT_ATTRIBUTE_FIELDS = `
+  name
+  options
+  variation
+  ... on GlobalProductAttribute {
+    terms(first: 100) {
+      nodes {
+        name
+        slug
+      }
+    }
+  }
+`;
+
 /** List/card view — no variations; sizes/colors come from product attributes. */
 const CATALOG_LIST_FIELDS = `
   ... on Product {
@@ -6,6 +21,7 @@ const CATALOG_LIST_FIELDS = `
     slug
     sku
     date
+    modified
     languageCode
     translations {
       databaseId
@@ -42,9 +58,7 @@ const CATALOG_LIST_FIELDS = `
     stockStatus
     attributes {
       nodes {
-        name
-        options
-        variation
+        ${PRODUCT_ATTRIBUTE_FIELDS}
       }
     }
   }
@@ -55,9 +69,7 @@ const CATALOG_LIST_FIELDS = `
     stockStatus
     attributes {
       nodes {
-        name
-        options
-        variation
+        ${PRODUCT_ATTRIBUTE_FIELDS}
       }
     }
   }
@@ -112,9 +124,7 @@ const PRODUCT_DETAIL_FIELDS = `
     stockStatus
     attributes {
       nodes {
-        name
-        options
-        variation
+        ${PRODUCT_ATTRIBUTE_FIELDS}
       }
     }
   }
@@ -125,9 +135,7 @@ const PRODUCT_DETAIL_FIELDS = `
     stockStatus
     attributes {
       nodes {
-        name
-        options
-        variation
+        ${PRODUCT_ATTRIBUTE_FIELDS}
       }
     }
     variations(first: 50) {

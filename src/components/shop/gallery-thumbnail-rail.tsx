@@ -243,7 +243,8 @@ export function GalleryThumbnailRail({
       </p>
       {needsThumbScroll && !atEnd && hiddenThumbsRemaining > 0 ? (
         <p className="font-body text-[9px] font-bold uppercase tracking-aggressive text-accent">
-          +{hiddenThumbsRemaining} more
+          {dict.carousel.moreImages
+            .replace("{count}", String(hiddenThumbsRemaining))}
         </p>
       ) : null}
     </div>

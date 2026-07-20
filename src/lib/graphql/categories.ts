@@ -118,12 +118,70 @@ export function findCategoryByPathSlug(
   return null;
 }
 
-function stripCategoryDescription(html: string | null | undefined) {
+const CATEGORY_DESCRIPTION_ALLOWED_TAGS = new Set([
+  "strong",
+  "b",
+  "em",
+  "i",
+  "p",
+  "br",
+  "ul",
+  "ol",
+  "li",
+  "a",
+]);
+
+/** Plain text for meta descriptions / fallbacks. */
+export function plainTextFromHtml(html: string | null | undefined) {
   if (!html?.trim()) {
     return "";
   }
 
-  return html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+  return html
+    .replace(/<br\s*\/?>/gi, " ")
+    .replace(/<\/p>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/** Keep a small set of safe inline/block tags from WooCommerce category HTML. */
+export function sanitizeCategoryDescriptionHtml(
+  html: string | null | undefined,
+) {
+  if (!html?.trim()) {
+    return "";
+  }
+
+  return html
+    .replace(/<(script|style|iframe|object|embed)[\s\S]*?<\/\1>/gi, "")
+    .replace(/on\w+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, "")
+    .replace(/<\/?([a-z0-9]+)(\s[^>]*)?>/gi, (match, tagName: string) => {
+      const tag = tagName.toLowerCase();
+
+      if (!CATEGORY_DESCRIPTION_ALLOWED_TAGS.has(tag)) {
+        return " ";
+      }
+
+      if (tag === "br") {
+        return "<br />";
+      }
+
+      if (match.startsWith("</")) {
+        return `</${tag}>`;
+      }
+
+      if (tag === "a") {
+        const href = match.match(/href\s*=\s*["'](https?:\/\/[^"']+)["']/i)?.[1];
+        return href
+          ? `<a href="${href}" rel="noopener noreferrer">`
+          : "";
+      }
+
+      return `<${tag}>`;
+    })
+    .replace(/(?:\s|&nbsp;)+/g, " ")
+    .trim();
 }
 
 export function getLocalizedCategoryDescription(
@@ -133,7 +191,7 @@ export function getLocalizedCategoryDescription(
   const language = node.languageCode?.toLowerCase();
 
   if (language === locale) {
-    const localized = stripCategoryDescription(node.description);
+    const localized = sanitizeCategoryDescriptionHtml(node.description);
     if (localized) {
       return localized;
     }
@@ -142,13 +200,13 @@ export function getLocalizedCategoryDescription(
   const translation = node.translations?.find(
     (entry) => entry.language?.code?.toLowerCase() === locale,
   );
-  const translated = stripCategoryDescription(translation?.description);
+  const translated = sanitizeCategoryDescriptionHtml(translation?.description);
 
   if (translated) {
     return translated;
   }
 
-  return stripCategoryDescription(node.description);
+  return sanitizeCategoryDescriptionHtml(node.description);
 }
 
 function buildIndex(

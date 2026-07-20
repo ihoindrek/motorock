@@ -3,7 +3,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLocale } from "@/context/locale-context";
 import type { ShippingRate } from "@/lib/shop/shipping-method";
-import { parseShippingRateCost } from "@/lib/shop/shipping-method";
+import {
+  isShippingByAgreement,
+  parseShippingRateCost,
+} from "@/lib/shop/shipping-method";
+import { localizeShippingRateLabel } from "@/lib/shop/localize-shipping-label";
 import { groupShippingRatesForCheckout } from "@/lib/shop/shipping-rate-priority";
 import { formatCheckoutPrice } from "@/lib/shop/category";
 import { ShippingMethodIcon } from "@/components/shop/shipping-method-icon";
@@ -11,25 +15,34 @@ import { CheckoutSelectionCheck } from "@/components/shop/checkout-selection-che
 import { MorphLoading } from "@/components/ui/morph-loading";
 import { cn } from "@/lib/utils";
 
-function formatRatePrice(cost: string | null, locale: "en" | "et") {
-  const value = parseShippingRateCost(cost);
-  return value === 0 ? null : formatCheckoutPrice(value, locale);
+function formatRatePriceLabel(
+  rate: ShippingRate,
+  locale: "en" | "et",
+  labels: { free: string; byAgreement: string },
+) {
+  if (isShippingByAgreement(rate)) {
+    return labels.byAgreement;
+  }
+
+  const value = parseShippingRateCost(rate.cost);
+  return value === 0 ? labels.free : formatCheckoutPrice(value, locale);
 }
 
 function ShippingRateButton({
   rate,
   selected,
   onSelect,
-  freeLabel,
+  priceLabels,
   locale,
 }: {
   rate: ShippingRate;
   selected: boolean;
   onSelect: (rateId: string) => void;
-  freeLabel: string;
+  priceLabels: { free: string; byAgreement: string };
   locale: "en" | "et";
 }) {
-  const price = formatRatePrice(rate.cost, locale);
+  const price = formatRatePriceLabel(rate, locale, priceLabels);
+  const label = localizeShippingRateLabel(rate, locale);
 
   return (
     <button
@@ -46,11 +59,11 @@ function ShippingRateButton({
       <ShippingMethodIcon rate={rate} className="size-9 sm:size-10" />
       <span className="min-w-0 flex-1">
         <span className="block text-sm font-semibold leading-snug text-ink">
-          {rate.label}
+          {label}
         </span>
       </span>
       <span className="shrink-0 font-body text-sm font-bold tabular-nums">
-        {price ?? freeLabel}
+        {price}
       </span>
       <CheckoutSelectionCheck selected={selected} />
     </button>
@@ -60,25 +73,26 @@ function ShippingRateButton({
 function CollapsedShippingSelection({
   rate,
   onChange,
-  freeLabel,
+  priceLabels,
   locale,
   changeLabel,
 }: {
   rate: ShippingRate;
   onChange: () => void;
-  freeLabel: string;
+  priceLabels: { free: string; byAgreement: string };
   locale: "en" | "et";
   changeLabel: string;
 }) {
-  const price = formatRatePrice(rate.cost, locale);
+  const price = formatRatePriceLabel(rate, locale, priceLabels);
+  const label = localizeShippingRateLabel(rate, locale);
 
   return (
     <div className="flex items-center gap-3 border border-accent bg-white px-3 py-2.5 shadow-sm sm:px-4 sm:py-3">
       <ShippingMethodIcon rate={rate} className="size-9 sm:size-10" />
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-semibold leading-snug text-ink">{rate.label}</p>
+        <p className="text-sm font-semibold leading-snug text-ink">{label}</p>
         <p className="mt-0.5 font-body text-sm font-bold tabular-nums text-ink/80">
-          {price ?? freeLabel}
+          {price}
         </p>
       </div>
       <CheckoutSelectionCheck selected />
@@ -98,14 +112,14 @@ function ShippingRateSection({
   rates,
   selectedRateId,
   onSelect,
-  freeLabel,
+  priceLabels,
   locale,
 }: {
   title: string;
   rates: ShippingRate[];
   selectedRateId: string | null;
   onSelect: (rateId: string) => void;
-  freeLabel: string;
+  priceLabels: { free: string; byAgreement: string };
   locale: "en" | "et";
 }) {
   if (rates.length === 0) {
@@ -124,7 +138,7 @@ function ShippingRateSection({
               rate={rate}
               selected={selectedRateId === rate.id}
               onSelect={onSelect}
-              freeLabel={freeLabel}
+              priceLabels={priceLabels}
               locale={locale}
             />
           </li>
@@ -199,6 +213,7 @@ export function CheckoutShippingOptions({
     locale === "et"
       ? {
           free: "Tasuta",
+          byAgreement: "Kokkuleppel",
           pickup: "Pakiautomaadid",
           courier: "Kuller",
           updating: "Uuendan tarneviise…",
@@ -206,12 +221,14 @@ export function CheckoutShippingOptions({
         }
       : {
           free: "Free",
+          byAgreement: "By agreement",
           pickup: "Parcel machines",
           courier: "Courier",
           updating: "Updating delivery options…",
           change: "Change",
         };
 
+  const priceLabels = { free: t.free, byAgreement: t.byAgreement };
   const { pickup, courier } = groupShippingRatesForCheckout(rates);
   const showCollapsed = collapsed && selectedRate && !syncing;
 
@@ -241,7 +258,7 @@ export function CheckoutShippingOptions({
           <CollapsedShippingSelection
             rate={selectedRate}
             onChange={() => setCollapsed(false)}
-            freeLabel={t.free}
+            priceLabels={priceLabels}
             locale={locale}
             changeLabel={t.change}
           />
@@ -252,7 +269,7 @@ export function CheckoutShippingOptions({
               rates={pickup}
               selectedRateId={selectedRateId}
               onSelect={handleSelect}
-              freeLabel={t.free}
+              priceLabels={priceLabels}
               locale={locale}
             />
             <ShippingRateSection
@@ -260,7 +277,7 @@ export function CheckoutShippingOptions({
               rates={courier}
               selectedRateId={selectedRateId}
               onSelect={handleSelect}
-              freeLabel={t.free}
+              priceLabels={priceLabels}
               locale={locale}
             />
           </>

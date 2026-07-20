@@ -30,12 +30,14 @@ export async function generateMetadata({
     return {
       title: `${dict.search.resultsTitle}: ${query}`,
       description: dict.search.resultsDescription.replace("your query", query),
+      robots: { index: false, follow: false },
     };
   }
 
   return {
     title: dict.search.pageTitle,
     description: dict.search.pageDescription,
+    robots: { index: false, follow: false },
   };
 }
 

@@ -92,6 +92,7 @@ export type Dictionary = {
     productThumbnails: string;
     thumbnailNavigation: string;
     closeGallery: string;
+    moreImages: string;
   };
   hero: {
     motorcycles: string;
@@ -215,6 +216,17 @@ export type Dictionary = {
     features: string;
     oneSize: string;
     shippingReturnsBody: string;
+    shippingFrom: string;
+    shippingFree: string;
+    shippingByAgreement: string;
+    shippingVia: string;
+    shippingCountry: string;
+    shippingLoading: string;
+    shippingFallback: string;
+    shippingEstimateDisclaimer: string;
+    shippingInfoLink: string;
+    motorcycleShippingNote: string;
+    shippingMethodsHeading: string;
   };
   catalog: {
     sort: string;
@@ -421,16 +433,33 @@ export type Dictionary = {
     homeTitle: string;
     homeDescription: string;
     brandDescription: string;
+    /** `{product}` + `{price}` — used when CMS description is missing/short. */
+    productMetaDescription: string;
   };
   pages: {
     cartTitle: string;
     cartDescription: string;
+    wishlistTitle: string;
+    wishlistDescription: string;
     motorcyclesTitle: string;
     motorcyclesDescription: string;
     testRideTitle: string;
     testRideDescription: string;
     orderThankYouTitle: string;
     orderThankYouDescription: string;
+  };
+  wishlist: {
+    eyebrow: string;
+    title: string;
+    empty: string;
+    emptyCta: string;
+    add: string;
+    saved: string;
+    remove: string;
+    item: string;
+    items: string;
+    viewProduct: string;
+    open: string;
   };
   giveaway: {
     drawClosed: string;
@@ -629,6 +658,7 @@ export const en: Dictionary = {
     productThumbnails: "Product image thumbnails",
     thumbnailNavigation: "Thumbnail navigation",
     closeGallery: "Close gallery",
+    moreImages: "+{count} more",
   },
   hero: {
     motorcycles: "Motorcycles",
@@ -764,6 +794,17 @@ export const en: Dictionary = {
     oneSize: "One size",
     shippingReturnsBody:
       "EU delivery via SmartPosti, Omniva, DPD, courier or showroom pickup. Shipping costs are shown at checkout. 14-day withdrawal — contact info@motorock.eu.",
+    shippingFrom: "Shipping from {price}",
+    shippingFree: "Free shipping",
+    shippingByAgreement: "Shipping by agreement",
+    shippingVia: "{method}",
+    shippingCountry: "Delivery country",
+    shippingLoading: "Checking shipping…",
+    shippingFallback: "Shipping costs at checkout",
+    shippingEstimateDisclaimer: "Final cost at checkout.",
+    shippingInfoLink: "Shipping info",
+    motorcycleShippingNote: "Motorcycle transport by agreement.",
+    shippingMethodsHeading: "Delivery options",
   },
   catalog: {
     sort: "Sort",
@@ -1001,11 +1042,15 @@ export const en: Dictionary = {
     homeDescription:
       "Motorcycles from Brixton, Mutt, Motron and Malaguti. Premium riding gear and equipment for riders who refuse to blend in — Motorock.eu.",
     brandDescription: "Shop {brand} riding gear at Motorock.eu.",
+    productMetaDescription:
+      "Buy {product} from {price}. EU shipping available. Shop at Motorock.eu.",
   },
   pages: {
     cartTitle: "Cart",
     cartDescription:
       "Review your order, choose delivery, and checkout at Motorock.eu.",
+    wishlistTitle: "Wishlist",
+    wishlistDescription: "Saved products at Motorock.eu.",
     motorcyclesTitle: "Motorcycles",
     motorcyclesDescription:
       "Premium motorcycles from Brixton, Mutt, Motron and Malaguti.",
@@ -1014,6 +1059,19 @@ export const en: Dictionary = {
       "Book a motorcycle test ride at Motorock showroom in Tallinn.",
     orderThankYouTitle: "Order confirmed",
     orderThankYouDescription: "Your Motorock order summary after checkout.",
+  },
+  wishlist: {
+    eyebrow: "Saved",
+    title: "Wishlist",
+    empty: "No saved products yet.",
+    emptyCta: "Browse equipment",
+    add: "Save for later",
+    saved: "Saved",
+    remove: "Remove",
+    item: "item",
+    items: "items",
+    viewProduct: "View product",
+    open: "Wishlist",
   },
   giveaway: {
     drawClosed: "Draw closed",

@@ -1,17 +1,24 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { BlogPostView } from "@/components/blog/blog-post-view";
 import { ProductLocaleAlternates } from "@/components/locale-alternates";
 import { isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/get-dictionary";
+import { localizedHref } from "@/i18n/paths";
 import {
   getBlogPostBySlug,
   getBlogPostSlugAlternates,
   getBlogPostSlugs,
   getRelatedBlogPosts,
 } from "@/lib/blog/posts";
-import { normalizeBlogSlug } from "@/lib/blog/slug";
+import { blogSlugsMatch, normalizeBlogSlug } from "@/lib/blog/slug";
+import { JsonLd } from "@/components/seo/json-ld";
 import { buildPageMetadata } from "@/lib/seo/metadata";
+import {
+  buildBlogPostingJsonLd,
+  buildBreadcrumbJsonLd,
+} from "@/lib/seo/site-schema";
+import { getStorefrontUrl } from "@/lib/storefront/url";
 
 type BlogPostPageProps = {
   params: Promise<{ locale: string; slug: string }>;
@@ -61,7 +68,7 @@ export async function generateMetadata({
       ...base.openGraph,
       type: "article",
       publishedTime: post.publishedAt,
-      images: post.image ? [{ url: post.image }] : undefined,
+      ...(post.image ? { images: [{ url: post.image }] } : {}),
     },
   };
 }
@@ -80,10 +87,32 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
     notFound();
   }
 
+  const canonicalSlug = slugAlternates[locale] ?? post.slug;
+  if (canonicalSlug && !blogSlugsMatch(canonicalSlug, slug)) {
+    redirect(localizedHref(locale, `/blog/${canonicalSlug}`));
+  }
+
   const relatedPosts = await getRelatedBlogPosts(slug, locale);
+
+  const base = getStorefrontUrl();
+  const canonicalUrl = `${base}${localizedHref(locale, `/blog/${post.slug}`)}`;
 
   return (
     <>
+      <JsonLd schema={buildBlogPostingJsonLd(post, canonicalUrl)} />
+      <JsonLd
+        schema={buildBreadcrumbJsonLd([
+          {
+            name: dict.pdp.breadcrumbHome,
+            url: `${base}${localizedHref(locale, "/")}`,
+          },
+          {
+            name: dict.blog.pageTitle,
+            url: `${base}${localizedHref(locale, "/blog")}`,
+          },
+          { name: post.title },
+        ])}
+      />
       <ProductLocaleAlternates alternates={slugAlternates} />
       <BlogPostView
         post={post}

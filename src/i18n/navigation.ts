@@ -343,6 +343,7 @@ export function getFooterQuickLinks(locale: Locale, dict: Dictionary) {
   const links = [
     { href: localizedHref(locale, "/search"), label: dict.footer.search },
     { href: localizedHref(locale, "/shop/motorcycles"), label: dict.footer.brands },
+    { href: localizedHref(locale, "/wishlist"), label: dict.wishlist.open },
     { href: localizedHref(locale, "/cart"), label: dict.footer.cartCheckout },
     { href: localizedHref(locale, "/test-ride"), label: dict.footer.testRide },
   ];

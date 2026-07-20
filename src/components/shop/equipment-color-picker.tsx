@@ -30,7 +30,7 @@ export function EquipmentColorPicker({
           <span className="font-normal text-ink/60"> · {selectedLabel}</span>
         ) : null}
       </p>
-      <div className="mt-2.5 flex flex-wrap gap-1.5">
+      <div className="mt-2 flex flex-wrap gap-1.5">
         {options.map((option) => {
           const key = optionValue(option);
           const selected = value === key;
@@ -43,7 +43,7 @@ export function EquipmentColorPicker({
               aria-pressed={selected}
               aria-label={option.label}
               title={option.label}
-              className={`size-8 shrink-0 overflow-hidden border transition-colors sm:size-9 ${
+              className={`size-6 shrink-0 overflow-hidden rounded-full border transition-colors sm:size-7 ${
                 selected
                   ? "border-ink ring-1 ring-ink ring-offset-1"
                   : "border-ink/20 hover:border-ink"

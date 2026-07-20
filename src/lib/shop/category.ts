@@ -135,7 +135,17 @@ export function filterProductsByRoute(
       route.wcCategorySlug &&
       !productMatchesWcCategoryRoute(product.wcCategorySlugs, route.wcCategorySlug)
     ) {
-      return false;
+      // Gender roots: products often only list the child slug (e.g. pants-jeans).
+      // Fall back to shopAudiences, which already accounts for parent categories.
+      const audienceFallback =
+        (route.wcCategorySlug === "for-women" &&
+          product.shopAudiences?.includes("women")) ||
+        (route.wcCategorySlug === "for-men" &&
+          product.shopAudiences?.includes("men"));
+
+      if (!audienceFallback) {
+        return false;
+      }
     }
 
     if (route.protectionOnly && !productInProtectionBranch(product.wcCategorySlugs)) {
@@ -172,7 +182,9 @@ export function resolveCategoryFilterFacets(
   route: CategoryRoute,
   products: readonly CatalogProduct[],
 ): CategoryFilterFacets {
-  const brands = new Set(products.map((product) => product.brand));
+  const brands = new Set(
+    products.map((product) => product.brand).filter(Boolean),
+  );
 
   if (route.category === "motorcycles") {
     return {
@@ -190,9 +202,11 @@ export function resolveCategoryFilterFacets(
     };
   }
 
+  // Equipment categories (for-women, for-men, accessories, …):
+  // always expose brand filter unless this is a single-brand archive page.
   return {
     showSizeFilter: products.some(productHasSizeOptions),
-    showBrandFilter: brands.size > 1,
+    showBrandFilter: !route.brand,
     showCategoryFilter: true,
   };
 }

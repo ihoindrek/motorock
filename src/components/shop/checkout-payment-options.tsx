@@ -100,8 +100,8 @@ export function filterMontonioOptionsForGateway(
 
 const SYNTHETIC_MONTONIO_GATEWAY_ORDER = [
   MONTONIO_PAYMENT_METHOD_ID,
-  "wc_montonio_hire_purchase",
   "wc_montonio_card",
+  "wc_montonio_hire_purchase",
   "wc_montonio_bnpl",
   "wc_montonio_blik",
 ] as const;
@@ -135,14 +135,14 @@ export function expandMontonioPaymentGateways(
     }
   }
 
-  if (extras.length === 0) {
-    return gateways.map((gateway) => localizePaymentGateway(gateway, locale));
-  }
+  const localized = gateways.map((gateway) =>
+    localizePaymentGateway(gateway, locale),
+  );
 
-  const merged = [
-    ...gateways.map((gateway) => localizePaymentGateway(gateway, locale)),
-    ...extras,
-  ];
+  const merged =
+    extras.length === 0
+      ? localized
+      : [...localized, ...extras];
 
   return merged.sort((left, right) => {
     const leftIndex = SYNTHETIC_MONTONIO_GATEWAY_ORDER.indexOf(
@@ -395,9 +395,16 @@ function MontonioProviderList({
       option.kind === "bank" && option.systemName === "paymentInitiation",
   );
   const card = scopedOptions.filter((option) => option.kind === "card");
-  const financing = scopedOptions.filter(
-    (option) => option.kind === "bnpl" || option.kind === "hirePurchase",
-  );
+  const financing = scopedOptions
+    .filter((option) => option.kind === "bnpl" || option.kind === "hirePurchase")
+    .sort((left, right) => {
+      // Hire purchase (järelmaks) before BNPL (maksa hiljem).
+      const order = { hirePurchase: 0, bnpl: 1 } as const;
+      return (
+        (order[left.kind as keyof typeof order] ?? 99) -
+        (order[right.kind as keyof typeof order] ?? 99)
+      );
+    });
   const blik = scopedOptions.filter((option) => option.kind === "blik");
   const isSelected = (option: MontonioPaymentOption) =>
     selectedKey === montonioOptionKey(option);

@@ -27,6 +27,29 @@ describe("resolveWordPressLegacyRedirect", () => {
     ).toBe("/blog/my-post-slug");
   });
 
+  it("maps legacy WordPress root post URLs to /blog/{slug}", () => {
+    expect(
+      resolveWordPressLegacyRedirect("/moto-125-motorcycles-2026-guide", "en"),
+    ).toBe("/blog/moto-125-motorcycles-2026-guide");
+    expect(
+      resolveWordPressLegacyRedirect(
+        "/voida-brixton-crossfire-500-storr-motorocki-auhinnamang-2026",
+        "et",
+      ),
+    ).toBe("/blog/voida-brixton-crossfire-500-storr-motorocki-auhinnamang-2026");
+  });
+
+  it("infers locale from legacy blog root slug language", () => {
+    expect(inferLocaleFromLegacyPath("/moto-125-motorcycles-2026-guide")).toBe(
+      "en",
+    );
+    expect(
+      inferLocaleFromLegacyPath(
+        "/voida-brixton-crossfire-500-storr-motorocki-auhinnamang-2026",
+      ),
+    ).toBe("et");
+  });
+
   it("maps shop landing pages to equipment hubs", () => {
     expect(resolveWordPressLegacyRedirect("/shop", "en")).toBe("/shop/equipment");
     expect(resolveWordPressLegacyRedirect("/pood", "et")).toBe("/tootekategooria");

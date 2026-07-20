@@ -9,8 +9,13 @@ import { ScrollToTopOnNavigate } from "@/components/navigation/scroll-to-top-on-
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { MainContent } from "@/components/layout/main-content";
+import { JsonLd } from "@/components/seo/json-ld";
 import { isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/get-dictionary";
+import {
+  buildOrganizationJsonLd,
+  buildWebsiteJsonLd,
+} from "@/lib/seo/site-schema";
 import { fetchEquipmentCategoryIndex, navTreeFromIndex } from "@/lib/graphql/categories";
 import { TOOLS_WC_SLUG } from "@/lib/shop/wc-categories";
 
@@ -41,6 +46,9 @@ export default async function LocaleLayout({
       <ConsentProvider>
         <CategoryTreeProvider tree={categoryTree} toolsCategory={toolsCategory}>
           <LocaleAlternatesProvider>
+            <JsonLd schema={buildOrganizationJsonLd()} />
+            <JsonLd schema={buildWebsiteJsonLd(localeParam)} />
+
             <a href="#main-content" className="sr-only-focusable">
               {dictionary.common.skipToContent}
             </a>

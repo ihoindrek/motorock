@@ -36,6 +36,70 @@ describe("expandMontonioPaymentGateways", () => {
     expect(ids).toContain("wc_montonio_card");
   });
 
+  it("orders bank link before card before hire purchase before BNPL", () => {
+    const gateways: PaymentGateway[] = [
+      {
+        id: "wc_montonio_bnpl",
+        title: "BNPL",
+        description: "",
+        icon: null,
+      },
+      {
+        id: "wc_montonio_card",
+        title: "Card",
+        description: "",
+        icon: null,
+      },
+      {
+        id: MONTONIO_PAYMENT_METHOD_ID,
+        title: "Bank",
+        description: "",
+        icon: null,
+      },
+      {
+        id: "wc_montonio_hire_purchase",
+        title: "HP",
+        description: "",
+        icon: null,
+      },
+    ];
+
+    const hirePurchaseOption: MontonioPaymentOption = {
+      kind: "hirePurchase",
+      code: "hirePurchase",
+      systemName: "hirePurchase",
+      name: "Hire purchase",
+      logoUrl: null,
+    };
+    const bnplOption: MontonioPaymentOption = {
+      kind: "bnpl",
+      code: "bnpl",
+      systemName: "bnpl",
+      name: "BNPL",
+      logoUrl: null,
+    };
+    const cardOption: MontonioPaymentOption = {
+      kind: "card",
+      code: "cardPayments",
+      systemName: "cardPayments",
+      name: "Card",
+      logoUrl: null,
+    };
+
+    const expanded = expandMontonioPaymentGateways(
+      gateways,
+      [...bankOptions, cardOption, hirePurchaseOption, bnplOption],
+      "et",
+    );
+
+    expect(expanded.map((gateway) => gateway.id)).toEqual([
+      MONTONIO_PAYMENT_METHOD_ID,
+      "wc_montonio_card",
+      "wc_montonio_hire_purchase",
+      "wc_montonio_bnpl",
+    ]);
+  });
+
   it("keeps Woo gateway when wc_montonio_payments is already present", () => {
     const gateways: PaymentGateway[] = [
       {

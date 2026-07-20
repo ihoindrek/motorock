@@ -8,6 +8,7 @@ import {
   fetchEquipmentCategoryIndex,
   findCategoryByPathSlug,
   getLocalizedCategorySlug,
+  plainTextFromHtml,
 } from "@/lib/graphql/categories";
 import { getEquipmentCatalogForRoute } from "@/lib/graphql/products";
 import {
@@ -45,7 +46,7 @@ export async function generateMetadata({
   return buildPageMetadata({
     locale: localeParam,
     title: route.title,
-    description: route.description || undefined,
+    description: plainTextFromHtml(route.description) || undefined,
     pathname: buildShopCategoryHref(node, localeParam),
   });
 }

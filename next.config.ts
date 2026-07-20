@@ -37,9 +37,11 @@ const nextConfig: NextConfig = {
     ];
   },
   images: {
-    // WooCommerce images are served from shop.motorock.eu; bypass Vercel /_next/image
-    // (Image Optimization quota returns 402 on this project).
-    unoptimized: true,
+    // Vercel /_next/image quota returns 402 on this project, so WooCommerce
+    // images are resized via wsrv.nl in a custom loader instead.
+    loader: "custom",
+    loaderFile: "./src/lib/image-loader.ts",
+    qualities: [75],
     remotePatterns: [
       {
         protocol: "https",

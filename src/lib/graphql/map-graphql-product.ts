@@ -21,10 +21,10 @@ import { getCanonicalBrandName } from "@/lib/shop/brands";
 import { parseSpecsFromDescriptionHtml } from "@/lib/shop/parse-product-description";
 import {
   canonicalizeWcCategorySlug,
-  canonicalizeWcCategorySlugs,
+  collectProductWcCategorySlugs,
   resolveCategoryFromWcNodes,
 } from "@/lib/shop/wc-categories";
-import { formatSizeLabel } from "@/lib/shop/size-label";
+import { formatSizeLabel, resolveSizeOptionLabel } from "@/lib/shop/size-label";
 import { sortProductSizes } from "@/lib/shop/sort-sizes";
 import { resolveShowroomAvailableFromSources } from "@/lib/shop/resolve-showroom-available";
 import type { ShowroomMetaSource } from "@/lib/shop/resolve-showroom-available";
@@ -233,9 +233,20 @@ function sizesFromVariableProduct(product: GraphQLVariableProduct) {
   const sizeAttribute = product.attributes?.nodes.find((attribute) =>
     isSizeAttributeName(attribute.name),
   );
+  const terms = sizeAttribute?.terms?.nodes ?? [];
 
   if (sizeAttribute?.options?.length) {
-    return sortProductSizes(sizeAttribute.options.map(formatSizeLabel));
+    return sortProductSizes(
+      sizeAttribute.options.map((option) =>
+        resolveSizeOptionLabel(option, terms),
+      ),
+    );
+  }
+
+  if (terms.length > 0) {
+    return sortProductSizes(
+      [...new Set(terms.map((term) => formatSizeLabel(term.name)))],
+    );
   }
 
   const fromVariations = (product.variations?.nodes ?? [])
@@ -245,7 +256,7 @@ function sizesFromVariableProduct(product: GraphQLVariableProduct) {
       ),
     )
     .filter(Boolean)
-    .map((attribute) => formatSizeLabel(attribute!.value));
+    .map((attribute) => resolveSizeOptionLabel(attribute!.value, terms));
 
   return sortProductSizes([...new Set(fromVariations)]);
 }
@@ -272,6 +283,10 @@ function mapVariations(product: GraphQLVariableProduct) {
 
 function variationIdsFromProduct(product: GraphQLVariableProduct) {
   const variationIds: Record<string, number> = {};
+  const sizeTerms =
+    product.attributes?.nodes.find((attribute) =>
+      isSizeAttributeName(attribute.name),
+    )?.terms?.nodes ?? [];
 
   for (const variation of product.variations?.nodes ?? []) {
     const attributes = variation.attributes?.nodes ?? [];
@@ -283,7 +298,11 @@ function variationIdsFromProduct(product: GraphQLVariableProduct) {
     );
 
     if (size) {
-      variationIds[formatSizeLabel(size.value)] = variation.databaseId;
+      const raw = size.value;
+      const label = resolveSizeOptionLabel(raw, sizeTerms);
+      variationIds[raw] = variation.databaseId;
+      variationIds[formatSizeLabel(raw)] = variation.databaseId;
+      variationIds[label] = variation.databaseId;
     } else if (color) {
       variationIds[color.value] = variation.databaseId;
     }
@@ -444,8 +463,8 @@ export function mapGraphqlToCatalogProduct(
   const shopAudiences = isMotorcycle
     ? undefined
     : resolveShopAudiences(product.productCategories?.nodes ?? []);
-  const wcCategorySlugs = canonicalizeWcCategorySlugs(
-    (product.productCategories?.nodes ?? []).map((node) => node.slug),
+  const wcCategorySlugs = collectProductWcCategorySlugs(
+    product.productCategories?.nodes ?? [],
   );
   const galleryUrls = normalizeWordPressMediaUrls(
     (product.galleryImages?.nodes ?? []).map((image) => image.sourceUrl),
@@ -545,8 +564,8 @@ export function mapGraphqlCardToCatalogProduct(
   const shopAudiences = isMotorcycle
     ? undefined
     : resolveShopAudiences(product.productCategories?.nodes ?? []);
-  const wcCategorySlugs = canonicalizeWcCategorySlugs(
-    (product.productCategories?.nodes ?? []).map((node) => node.slug),
+  const wcCategorySlugs = collectProductWcCategorySlugs(
+    product.productCategories?.nodes ?? [],
   );
   const image = normalizeWordPressMediaUrl(
     product.image?.sourceUrl ?? "/brixton-image.webp",

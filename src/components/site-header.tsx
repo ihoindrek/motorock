@@ -9,6 +9,7 @@ import { useCheckoutStep } from "@/context/checkout-step-context";
 import { useCategoryTree, useToolsCategory } from "@/context/category-tree-context";
 import { useDictionary, useLocale } from "@/context/locale-context";
 import { useLocaleAlternates } from "@/context/locale-alternates-context";
+import { useWishlist } from "@/context/wishlist-context";
 import type { Locale } from "@/i18n/config";
 import {
   getShopNav,
@@ -43,6 +44,23 @@ function CartIcon() {
       <path d="M6 6L5 3H2" />
       <circle cx="9" cy="20" r="1" />
       <circle cx="18" cy="20" r="1" />
+    </svg>
+  );
+}
+
+function WishlistIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="square"
+      className="size-5"
+      aria-hidden="true"
+    >
+      <path d="M12 21s-6.5-4.35-9.33-8.04C.74 10.4 1.1 6.9 3.7 5.2c1.9-1.25 4.35-.9 5.8.7L12 8.35l2.5-2.45c1.45-1.6 3.9-1.95 5.8-.7 2.6 1.7 2.96 5.2 1.03 7.76C18.5 16.65 12 21 12 21z" />
     </svg>
   );
 }
@@ -141,6 +159,7 @@ export function SiteHeader() {
     [shopNav],
   );
   const { itemCount, toggleCart, drawerOpen } = useCart();
+  const { count: wishlistCount } = useWishlist();
   const { checkoutStep } = useCheckoutStep();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [equipmentOpen, setEquipmentOpen] = useState(false);
@@ -363,6 +382,23 @@ export function SiteHeader() {
           />
 
           <HeaderSearch inverted={scrolled} />
+
+          <Link
+            href={localizedHref(locale, "/wishlist")}
+            aria-label={`${dictionary.wishlist.open}${wishlistCount > 0 ? `, ${wishlistCount}` : ""}`}
+            className={cn(
+              "relative inline-flex size-10 items-center justify-center transition-colors hover:text-accent",
+              scrolled ? "text-paper" : "text-ink",
+              isCheckoutHeader && "hidden",
+            )}
+          >
+            <WishlistIcon />
+            {wishlistCount > 0 ? (
+              <span className="absolute right-0.5 top-0.5 inline-flex min-w-4 items-center justify-center rounded-full bg-accent px-1 font-body text-[9px] font-bold leading-4 text-paper">
+                {wishlistCount}
+              </span>
+            ) : null}
+          </Link>
 
           <button
             type="button"

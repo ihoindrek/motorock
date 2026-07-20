@@ -21,6 +21,7 @@ import { MotorcycleCtaBar } from "@/components/shop/motorcycle-cta-bar";
 import { MotorcycleOverviewSection } from "@/components/shop/motorcycle-overview-section";
 import { MotorcycleProductGallery } from "@/components/shop/motorcycle-product-gallery";
 import { MotorcycleRelatedProducts } from "@/components/shop/motorcycle-related-products";
+import { MotorcycleShippingNote } from "@/components/shop/motorcycle-shipping-note";
 import { TestRideIcon } from "@/components/ui/test-ride-icon";
 import { ZoomParallax } from "@/components/ui/zoom-parallax";
 import { trackViewMotorcycleProduct } from "@/lib/analytics";
@@ -255,6 +256,8 @@ function RichMotorcycleProductView({
                   {dict.pdp.contactAvailability}
                 </p>
               )}
+
+              <MotorcycleShippingNote className="mt-4" />
 
               {showColorPicker && colorSwatches.length > 0 ? (
                 <div className="mt-8">

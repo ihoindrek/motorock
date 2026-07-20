@@ -9,7 +9,9 @@ const LOCALES = ["en", "et"] as const;
 export function revalidateStorefront() {
   revalidateTag("woocommerce", "max");
   revalidateTag("categories", "max");
+  revalidateTag("sitemap", "max");
   revalidatePath("/sitemap.xml");
+  revalidatePath("/sitemaps/main.xml");
   revalidatePath("/robots.txt");
 
   for (const locale of LOCALES) {

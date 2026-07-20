@@ -4,7 +4,10 @@ import { CategoryView } from "@/components/shop/category-view";
 import type { Locale } from "@/i18n/config";
 import { localizedHref } from "@/i18n/paths";
 import { getDictionary } from "@/i18n/get-dictionary";
-import { fetchEquipmentCategoryIndex } from "@/lib/graphql/categories";
+import {
+  fetchEquipmentCategoryIndex,
+  plainTextFromHtml,
+} from "@/lib/graphql/categories";
 import { getEquipmentCatalogForRoute } from "@/lib/graphql/products";
 import {
   buildEquipmentCategoryHref,
@@ -48,7 +51,7 @@ export async function generateEquipmentCategoryMetadata({
   return buildPageMetadata({
     locale,
     title: route.title,
-    description: route.description,
+    description: plainTextFromHtml(route.description) || undefined,
     pathname: buildEquipmentCategoryHref(locale, ...canonicalSlug),
   });
 }

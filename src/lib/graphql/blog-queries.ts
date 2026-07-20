@@ -11,6 +11,7 @@ const BLOG_POST_CARD_FIELDS = `
     }
   }
   date
+  modified
   excerpt
   featuredImage {
     node {

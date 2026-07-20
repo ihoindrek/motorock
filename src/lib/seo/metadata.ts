@@ -25,6 +25,16 @@ const OPEN_GRAPH_LOCALE: Record<Locale, string> = {
   et: "et_EE",
 };
 
+export const SITE_NAME = "Motorock.eu";
+
+/** Fallback share image for pages without their own (home, categories, static). */
+export const DEFAULT_OG_IMAGE = {
+  url: "/og-default.jpg",
+  width: 1200,
+  height: 630,
+  alt: SITE_NAME,
+};
+
 function absoluteUrl(path: string) {
   const base = getStorefrontUrl();
   const normalized = path.startsWith("/") ? path : `/${path}`;
@@ -116,19 +126,29 @@ export function buildPageMetadata(input: PageMetadataInput): Metadata {
     .filter((code) => code !== locale)
     .map((code) => OPEN_GRAPH_LOCALE[code]);
 
+  const canonicalUrl = absoluteUrl(canonicalPath);
+
   const metadata: Metadata = {
     title,
     description,
     alternates: {
-      canonical: absoluteUrl(canonicalPath),
+      canonical: canonicalUrl,
       languages,
     },
     openGraph: {
       title,
       description,
+      url: canonicalUrl,
+      siteName: SITE_NAME,
       locale: OPEN_GRAPH_LOCALE[locale],
       alternateLocale: alternateOpenGraphLocales,
       type: "website",
+      images: [DEFAULT_OG_IMAGE],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
     },
   };
 

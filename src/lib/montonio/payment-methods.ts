@@ -51,8 +51,8 @@ function sortOptions(options: MontonioPaymentOption[]) {
       const order: MontonioPaymentOptionKind[] = [
         "bank",
         "card",
-        "bnpl",
         "hirePurchase",
+        "bnpl",
         "blik",
       ];
       return order.indexOf(left.kind) - order.indexOf(right.kind);

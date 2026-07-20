@@ -36,10 +36,19 @@ export type GraphQLProductVariation = {
   } | null;
 };
 
+export type GraphQLAttributeTerm = {
+  name: string;
+  slug: string;
+};
+
 export type GraphQLProductAttribute = {
   name: string;
   options: string[] | null;
   variation: boolean | null;
+  /** Present on GlobalProductAttribute — taxonomy term name/slug for display. */
+  terms?: {
+    nodes: GraphQLAttributeTerm[];
+  } | null;
 };
 
 export type GraphQLProductBase = {
@@ -48,6 +57,7 @@ export type GraphQLProductBase = {
   slug: string;
   sku: string | null;
   date?: string | null;
+  modified?: string | null;
   languageCode?: string | null;
   translations?: {
     databaseId?: number | null;

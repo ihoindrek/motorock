@@ -258,21 +258,35 @@ export async function fetchBlogPostSlugAlternates(
   }
 }
 
-export async function fetchBlogSitemapEntries(): Promise<
-  Array<Partial<Record<Locale, string>>>
-> {
+export type BlogSitemapEntry = {
+  slugAlternates: Partial<Record<Locale, string>>;
+  lastModified?: Date;
+};
+
+export async function fetchBlogSitemapEntries(): Promise<BlogSitemapEntry[]> {
   const nodes = await fetchBlogSourceNodes();
   const seen = new Set<string>();
 
   return nodes
-    .map((node) => buildPostSlugAlternates(node))
-    .filter((alternates) => {
-      const key = JSON.stringify(alternates);
+    .map((node) => {
+      const modified = node.modified ?? node.date;
+      const lastModified = modified ? new Date(modified) : undefined;
+
+      return {
+        slugAlternates: buildPostSlugAlternates(node),
+        lastModified:
+          lastModified && !Number.isNaN(lastModified.getTime())
+            ? lastModified
+            : undefined,
+      };
+    })
+    .filter((entry) => {
+      const key = JSON.stringify(entry.slugAlternates);
       if (seen.has(key)) {
         return false;
       }
 
       seen.add(key);
-      return Boolean(alternates.en ?? alternates.et);
+      return Boolean(entry.slugAlternates.en ?? entry.slugAlternates.et);
     });
 }

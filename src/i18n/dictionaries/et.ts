@@ -96,6 +96,7 @@ export const et: Dictionary = {
     productThumbnails: "Toote pildid",
     thumbnailNavigation: "Pisipiltide navigatsioon",
     closeGallery: "Sulge galerii",
+    moreImages: "+{count} veel",
   },
   hero: {
     motorcycles: "Mootorrattad",
@@ -234,6 +235,17 @@ export const et: Dictionary = {
     oneSize: "Üks suurus",
     shippingReturnsBody:
       "Tarne üle EL-i SmartPosti, Omniva, DPD, kulleri või salongist kättesaamisega. Tarnekulud kuvatakse kassas. 14-päevane taganemisõigus — kirjuta info@motorock.eu.",
+    shippingFrom: "Tarne alates {price}",
+    shippingFree: "Tasuta tarne",
+    shippingByAgreement: "Tarne kokkuleppel",
+    shippingVia: "{method}",
+    shippingCountry: "Tarneriik",
+    shippingLoading: "Kontrollin tarnehinda…",
+    shippingFallback: "Tarnekulud kuvatakse kassas",
+    shippingEstimateDisclaimer: "Lõplik hind kassas.",
+    shippingInfoLink: "Tarneinfo",
+    motorcycleShippingNote: "Mootorratta transport kokkuleppel.",
+    shippingMethodsHeading: "Tarneviisid",
   },
   catalog: {
     sort: "Sorteeri",
@@ -475,11 +487,15 @@ export const et: Dictionary = {
     homeDescription:
       "Mootorrattad Brixtonilt, Muttilt, Motronilt ja Malagutilt. Premium sõiduriided ja varustus sõitjatele, kes ei taha massi sulanduda — Motorock.eu.",
     brandDescription: "Osta {brand} sõiduriideid Motorock.eu poes.",
+    productMetaDescription:
+      "Osta {product} — {price}. Tarne üle EL-i. Motorock.eu.",
   },
   pages: {
     cartTitle: "Ostukorv",
     cartDescription:
       "Vaata tellimust, vali tarne ja maksa Motorock.eu-s.",
+    wishlistTitle: "Lemmikud",
+    wishlistDescription: "Salvestatud tooted Motorock.eu-s.",
     motorcyclesTitle: "Mootorrattad",
     motorcyclesDescription:
       "Premium mootorrattad Brixtonilt, Muttilt, Motronilt ja Malagutilt.",
@@ -488,6 +504,19 @@ export const et: Dictionary = {
       "Broneeri mootorratta proovisõit Motorocki salongis Tallinnas.",
     orderThankYouTitle: "Tellimus kinnitatud",
     orderThankYouDescription: "Sinu Motorock tellimuse kokkuvõte pärast makset.",
+  },
+  wishlist: {
+    eyebrow: "Salvestatud",
+    title: "Lemmikud",
+    empty: "Salvestatud tooteid veel pole.",
+    emptyCta: "Sirvi varustust",
+    add: "Salvesta hilisemaks",
+    saved: "Salvestatud",
+    remove: "Eemalda",
+    item: "toode",
+    items: "toodet",
+    viewProduct: "Vaata toodet",
+    open: "Lemmikud",
   },
   giveaway: {
     drawClosed: "Loosimine lõppenud",

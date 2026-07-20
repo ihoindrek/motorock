@@ -1,5 +1,4 @@
 import {
-  defaultCategoryGuides,
   sizeGuidesByBrandCategory,
 } from "@/data/size-guides/demo";
 import type { CatalogProduct } from "@/types/catalog-product";
@@ -36,6 +35,10 @@ function filterRowsForProduct(
   return { ...guide, rows };
 }
 
+/**
+ * Brand-specific charts only. Category demo fallbacks are disabled until
+ * real manufacturer size tables are loaded into `sizeGuidesByBrandCategory`.
+ */
 export function resolveSizeGuide(product: CatalogProduct): SizeGuide | null {
   if (product.type !== "equipment") {
     return null;
@@ -48,14 +51,9 @@ export function resolveSizeGuide(product: CatalogProduct): SizeGuide | null {
   const slug = brandSlug(product.brand);
   const brandGuide = sizeGuidesByBrandCategory[slug]?.[product.category];
 
-  if (brandGuide) {
-    return filterRowsForProduct(brandGuide, product.sizes);
+  if (!brandGuide) {
+    return null;
   }
 
-  const categoryFallback = defaultCategoryGuides[product.category];
-  if (categoryFallback) {
-    return filterRowsForProduct(categoryFallback, product.sizes);
-  }
-
-  return null;
+  return filterRowsForProduct(brandGuide, product.sizes);
 }

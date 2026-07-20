@@ -15,6 +15,18 @@ export function parseShippingRateCost(cost: string | null | undefined) {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
+/** Zero-cost rate whose price is agreed later (not free shipping). */
+export function isShippingByAgreement(rate: Pick<ShippingRate, "label" | "methodId">) {
+  const haystack = `${rate.methodId} ${rate.label}`.toLowerCase();
+
+  return (
+    haystack.includes("by agreement") ||
+    haystack.includes("kokkuleppel") ||
+    haystack.includes("transport by agreement") ||
+    haystack.includes("transport kokkuleppel")
+  );
+}
+
 /** Parcel locker / pickup — no street address needed at checkout. */
 export function shippingMethodNeedsAddress(rate: ShippingRate) {
   const methodId = rate.methodId.toLowerCase();

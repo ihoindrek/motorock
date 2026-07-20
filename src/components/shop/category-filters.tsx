@@ -8,7 +8,7 @@ import { PriceRangeSlider } from "@/components/shop/price-range-slider";
 import { getEquipmentMegaMenu } from "@/i18n/navigation";
 import { buildEquipmentCategoryHref, buildEquipmentRootCategoryHref } from "@/lib/shop/equipment-route";
 import { localizedHref } from "@/i18n/paths";
-import { allSizes } from "@/types/catalog-product";
+import { sortProductSizes } from "@/lib/shop/sort-sizes";
 import type { CategoryRoute } from "@/lib/shop/category";
 
 export type ActiveFilters = {
@@ -24,6 +24,7 @@ type CategoryFiltersProps = {
   activeFilters: ActiveFilters;
   priceBounds: { min: number; max: number };
   availableBrands: readonly string[];
+  availableSizes?: readonly string[];
   showSizeFilter?: boolean;
   showBrandFilter?: boolean;
   showCategoryFilter?: boolean;
@@ -162,15 +163,17 @@ function BrandControls({
 }
 
 function SizeControls({
+  availableSizes,
   activeFilters,
   onToggleSize,
 }: {
+  availableSizes: readonly string[];
   activeFilters: ActiveFilters;
   onToggleSize: (size: string) => void;
 }) {
   return (
-    <div className="grid max-w-[18rem] grid-cols-4 gap-2 sm:max-w-none sm:grid-cols-5">
-      {allSizes.map((size) => {
+    <div className="grid w-full max-w-[28rem] grid-cols-4 gap-2 sm:grid-cols-5 lg:grid-cols-6">
+      {availableSizes.map((size) => {
         const selected = activeFilters.sizes.includes(size);
 
         return (
@@ -178,11 +181,12 @@ function SizeControls({
             key={size}
             type="button"
             onClick={() => onToggleSize(size)}
-            className={`min-h-11 min-w-11 border px-3 py-2.5 font-body text-xs font-bold uppercase tracking-wide transition-colors ${
+            className={`min-h-11 min-w-0 border px-2 py-2.5 text-center font-body text-[11px] font-bold uppercase tracking-wide transition-colors ${
               selected
                 ? "border-accent bg-accent text-paper"
                 : "border-ink/15 bg-white text-ink hover:border-accent hover:text-accent"
             }`}
+            title={size}
           >
             {size}
           </button>
@@ -267,6 +271,7 @@ export function CategoryFilters({
   activeFilters,
   priceBounds,
   availableBrands,
+  availableSizes = [],
   showSizeFilter = true,
   showBrandFilter = true,
   showCategoryFilter = true,
@@ -305,9 +310,47 @@ export function CategoryFilters({
   const availabilityFilterDrawerLabel = isMotorcycleCatalog
     ? dict.catalog.inStoreOnly
     : dict.catalog.inStockOnly;
-  const showSubcategoryNav = Boolean(route.gender) && !route.wcCategorySlug;
+
+  // Show sibling subcategory links on gender/accessories roots AND deeper pages,
+  // so shoppers can switch jackets → pants without going back to the mega menu.
+  const rootSlug = route.wcCategoryPath?.[0];
+  const isGenderBranch = route.gender === "men" || route.gender === "women";
+  const isAccessoriesBranch =
+    Boolean(route.accessoriesOnly) ||
+    rootSlug === "accessories" ||
+    route.wcCategorySlug === "accessories";
+  const showSubcategoryNav =
+    isGenderBranch ||
+    isAccessoriesBranch ||
+    (Boolean(route.gender) && !route.wcCategorySlug);
+
+  const subcategoryColumnId: "men" | "women" | "accessories" | null =
+    isAccessoriesBranch
+      ? "accessories"
+      : route.gender === "men" || rootSlug === "for-men"
+        ? "men"
+        : route.gender === "women" || rootSlug === "for-women"
+          ? "women"
+          : null;
+
+  const subcategoryColumn = useMemo(() => {
+    if (!subcategoryColumnId) {
+      return null;
+    }
+
+    return (
+      equipmentMegaMenu.columns.find(
+        (column) => column.id === subcategoryColumnId,
+      ) ?? null
+    );
+  }, [equipmentMegaMenu.columns, subcategoryColumnId]);
+
+  const subcategoryLinks = subcategoryColumn?.links ?? [];
+  const currentCategoryHref = route.breadcrumbs.at(-1)?.href;
+
   const showCategoryDropdown =
-    showCategoryFilter && (showGenderNav || showSubcategoryNav);
+    showCategoryFilter &&
+    (showGenderNav || (showSubcategoryNav && subcategoryLinks.length > 0));
 
   const priceIsActive =
     activeFilters.priceMin > priceBounds.min ||
@@ -386,19 +429,44 @@ export function CategoryFilters({
     </ul>
   ) : (
     <ul className="min-w-[14rem] space-y-3">
-      {equipmentMegaMenu.columns
-        .find((column) => column.id === (route.gender === "men" ? "men" : "women"))
-        ?.links.map((link) => (
+      {subcategoryColumn?.viewAll ? (
+        <li>
+          <Link
+            href={subcategoryColumn.viewAll.href}
+            className={`block py-1 text-base font-medium transition-colors hover:text-accent ${
+              currentCategoryHref &&
+              subcategoryColumn.viewAll.href.endsWith(currentCategoryHref)
+                ? "text-accent"
+                : "text-ink"
+            }`}
+            onClick={() => setOpenFilter(null)}
+          >
+            {subcategoryColumn.viewAll.label}
+          </Link>
+        </li>
+      ) : null}
+      {subcategoryLinks.map((link) => {
+        const isActive = Boolean(
+          currentCategoryHref &&
+            (link.href === localizedHref(locale, currentCategoryHref) ||
+              link.href.endsWith(currentCategoryHref)),
+        );
+
+        return (
           <li key={link.href}>
             <Link
               href={link.href}
-              className="block py-1 text-base font-medium text-ink transition-colors hover:text-accent"
+              aria-current={isActive ? "page" : undefined}
+              className={`block py-1 text-base font-medium transition-colors hover:text-accent ${
+                isActive ? "text-accent" : "text-ink"
+              }`}
               onClick={() => setOpenFilter(null)}
             >
               {link.label}
             </Link>
           </li>
-        ))}
+        );
+      })}
     </ul>
   );
 
@@ -450,10 +518,11 @@ export function CategoryFilters({
               activeCount={activeFilters.sizes.length}
               open={openFilter === "size"}
               onToggle={() => toggleFilter("size")}
-              panelClassName="min-w-[18rem]"
+              panelClassName="min-w-[22rem] lg:min-w-[30rem]"
               whiteBackground={triggerWhiteBackground}
             >
               <SizeControls
+                availableSizes={availableSizes}
                 activeFilters={activeFilters}
                 onToggleSize={onToggleSize}
               />
@@ -539,6 +608,7 @@ export function CategoryFilters({
       {showSizeFilter ? (
         <FilterSection title={dict.catalog.size}>
           <SizeControls
+            availableSizes={availableSizes}
             activeFilters={activeFilters}
             onToggleSize={onToggleSize}
           />

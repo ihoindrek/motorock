@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { ProductLocaleAlternates } from "@/components/locale-alternates";
+import { JsonLd } from "@/components/seo/json-ld";
 import { ProductJsonLd } from "@/components/seo/product-json-ld";
 import { EquipmentProductView } from "@/components/shop/equipment-product-view";
 import { MotorcycleProductView } from "@/components/shop/motorcycle-product-view";
@@ -14,7 +15,13 @@ import {
   getProductSlugAlternates,
   getSimilarProducts,
 } from "@/lib/graphql/products";
+import { getDictionary } from "@/i18n/get-dictionary";
 import { buildPageMetadata } from "@/lib/seo/metadata";
+import type { ProductSchemaShipping } from "@/lib/seo/product-schema";
+import { buildBreadcrumbJsonLd } from "@/lib/seo/site-schema";
+import { estimateProductShipping } from "@/lib/shop/estimate-product-shipping";
+import { getStorefrontUrl } from "@/lib/storefront/url";
+import type { CatalogProduct } from "@/types/catalog-product";
 import {
   buildProductOpenGraphImages,
   buildProductSeoSnapshotFromCatalog,
@@ -28,6 +35,7 @@ import {
 } from "@/lib/shop/product-url";
 import { pickSimilarProducts, RELATED_PRODUCTS_LIMIT } from "@/lib/shop/similar-products";
 import { productsShareWcSubcategory } from "@/lib/shop/wc-categories";
+import { getRequestCountry } from "@/lib/geo/request-country";
 
 type ProductPageParams = {
   locale: Locale;
@@ -43,8 +51,8 @@ function buildProductPageMetadataFromSnapshot(
 ): Metadata {
   const base = buildPageMetadata({
     locale,
-    title: snapshot.name,
-    description: snapshot.description,
+    title: snapshot.seoTitle,
+    description: snapshot.seoDescription,
     pathname: buildProductHref(slugAlternates[locale] ?? slug, locale),
     slugAlternates,
     slugPathTemplate: PRODUCT_SLUG_PATH_TEMPLATES,
@@ -56,13 +64,13 @@ function buildProductPageMetadataFromSnapshot(
     ...base,
     openGraph: {
       ...base.openGraph,
-      images,
+      ...(images ? { images } : {}),
     },
     twitter: {
-      card: images ? "summary_large_image" : "summary",
-      title: snapshot.name,
-      description: snapshot.description,
-      images: images?.map((image) => image.url),
+      card: "summary_large_image",
+      title: snapshot.seoTitle,
+      description: snapshot.seoDescription,
+      ...(images ? { images: images.map((image) => image.url) } : {}),
     },
   };
 }
@@ -95,6 +103,65 @@ export async function generateProductPageMetadata({
     slugAlternates,
     buildProductSeoSnapshotFromCatalog(product, locale),
   );
+}
+
+const SCHEMA_SHIPPING_TIMEOUT_MS = 4000;
+
+/**
+ * Cheapest EE delivery rate for JSON-LD shippingDetails. Best-effort: the
+ * estimate needs a Woo cart session, so failures/slowness just omit the field.
+ */
+async function resolveSchemaShipping(
+  product: CatalogProduct,
+): Promise<ProductSchemaShipping | undefined> {
+  if (!product.databaseId || !product.inStock) {
+    return undefined;
+  }
+
+  const variationId =
+    product.variations?.find((variation) => variation.databaseId)?.databaseId ??
+    Object.values(product.variationIds ?? {})[0];
+
+  try {
+    const estimate = await Promise.race([
+      estimateProductShipping({
+        country: "EE",
+        productId: product.databaseId,
+        variationId,
+      }),
+      new Promise<null>((resolve) =>
+        setTimeout(() => resolve(null), SCHEMA_SHIPPING_TIMEOUT_MS),
+      ),
+    ]);
+
+    if (!estimate || estimate.cost === null) {
+      return undefined;
+    }
+
+    return { cost: estimate.cost, country: estimate.country };
+  } catch {
+    return undefined;
+  }
+}
+
+function buildProductBreadcrumbJsonLd(
+  locale: Locale,
+  product: { name: string; backHref: string; backLabel: string },
+) {
+  const base = getStorefrontUrl();
+  const dict = getDictionary(locale);
+
+  return buildBreadcrumbJsonLd([
+    {
+      name: dict.pdp.breadcrumbHome,
+      url: `${base}${localizedHref(locale, "/")}`,
+    },
+    {
+      name: product.backLabel,
+      url: `${base}${localizedHref(locale, product.backHref)}`,
+    },
+    { name: product.name },
+  ]);
 }
 
 export async function renderProductPage({
@@ -130,6 +197,13 @@ export async function renderProductPage({
         <ProductJsonLd
           product={buildProductSeoSnapshotFromMotorcycle(motorcycle, locale)}
         />
+        <JsonLd
+          schema={buildProductBreadcrumbJsonLd(locale, {
+            name: motorcycle.sync.name,
+            backHref: motorcycle.backHref,
+            backLabel: motorcycle.backLabel,
+          })}
+        />
         <ProductLocaleAlternates alternates={slugAlternates} />
         <MotorcycleProductView
           product={motorcycle}
@@ -145,11 +219,16 @@ export async function renderProductPage({
     notFound();
   }
 
-  const relatedProducts = (
-    product.relatedSlugs?.length
-      ? await getCatalogProductsBySlugs(product.relatedSlugs, locale)
-      : await getSimilarProducts(product, RELATED_PRODUCTS_LIMIT, locale)
-  )
+  const [defaultShippingCountry, schemaShipping, relatedCandidates] =
+    await Promise.all([
+      getRequestCountry("EE"),
+      resolveSchemaShipping(product),
+      product.relatedSlugs?.length
+        ? getCatalogProductsBySlugs(product.relatedSlugs, locale)
+        : getSimilarProducts(product, RELATED_PRODUCTS_LIMIT, locale),
+    ]);
+
+  const relatedProducts = relatedCandidates
     .filter((candidate) => productsShareWcSubcategory(product, candidate))
     .slice(0, RELATED_PRODUCTS_LIMIT);
 
@@ -157,9 +236,15 @@ export async function renderProductPage({
     <>
       <ProductJsonLd
         product={buildProductSeoSnapshotFromCatalog(product, locale)}
+        shipping={schemaShipping}
       />
+      <JsonLd schema={buildProductBreadcrumbJsonLd(locale, product)} />
       <ProductLocaleAlternates alternates={slugAlternates} />
-      <EquipmentProductView product={product} relatedProducts={relatedProducts} />
+      <EquipmentProductView
+        product={product}
+        relatedProducts={relatedProducts}
+        defaultShippingCountry={defaultShippingCountry}
+      />
     </>
   );
 }

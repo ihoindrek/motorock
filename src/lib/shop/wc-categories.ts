@@ -82,7 +82,34 @@ export function canonicalizeWcCategorySlugs(
     return [];
   }
 
-  return slugs.map(canonicalizeWcCategorySlug);
+  return [...new Set(slugs.map(canonicalizeWcCategorySlug))];
+}
+
+/**
+ * Collect WooCommerce category slugs for a product, including parent slugs.
+ * Needed so routes like `for-women` match products assigned only to child
+ * categories (e.g. `pants-jeans`).
+ */
+export function collectProductWcCategorySlugs(
+  nodes: readonly {
+    slug: string;
+    parent?: { node?: { slug?: string | null } | null } | null;
+  }[],
+): readonly string[] {
+  const slugs: string[] = [];
+
+  for (const node of nodes) {
+    if (node.slug) {
+      slugs.push(node.slug);
+    }
+
+    const parentSlug = node.parent?.node?.slug;
+    if (parentSlug) {
+      slugs.push(parentSlug);
+    }
+  }
+
+  return canonicalizeWcCategorySlugs(slugs);
 }
 
 const WC_PARENT_SLUGS = new Set([

@@ -24,6 +24,7 @@ export type GraphQLBlogPostCard = {
     } | null;
   }> | null;
   date: string;
+  modified?: string | null;
   excerpt: string | null;
   featuredImage: {
     node: {

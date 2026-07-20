@@ -2,12 +2,11 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState, useEffect, type ReactNode } from "react";
+import { useMemo, useState, useEffect, useRef, type ReactNode } from "react";
 import type { CatalogProduct } from "@/types/catalog-product";
 import { useCart } from "@/context/cart-context";
 import { useDictionary, useLocale } from "@/context/locale-context";
 import { localizedHref } from "@/i18n/paths";
-import { formatPrice } from "@/lib/shop/category";
 import { trackViewItem } from "@/lib/analytics";
 import { resolveLineVariationId } from "@/lib/shop/resolve-cart-variation";
 import { formatSizeLabel } from "@/lib/shop/size-label";
@@ -21,6 +20,9 @@ import { EquipmentReturnPromise } from "@/components/shop/equipment-return-promi
 import { ShowroomPickupNote } from "@/components/shop/showroom-pickup-panel";
 import { SizeGuideModal } from "@/components/shop/size-guide-modal";
 import { EquipmentColorPicker } from "@/components/shop/equipment-color-picker";
+import { EquipmentStickyAtc } from "@/components/shop/equipment-sticky-atc";
+import { WishlistButton } from "@/components/shop/wishlist-button";
+import { ProductShippingReturnsPanel } from "@/components/shop/product-shipping-returns-panel";
 import { resolveSizeGuide } from "@/lib/shop/resolve-size-guide";
 import {
   buildProductColorOptions,
@@ -31,43 +33,91 @@ import {
 type EquipmentProductViewProps = {
   product: CatalogProduct;
   relatedProducts?: readonly CatalogProduct[];
+  defaultShippingCountry?: string;
 };
+
+function firstVariationId(product: CatalogProduct) {
+  const fromVariations = product.variations?.find(
+    (variation) => variation.databaseId,
+  )?.databaseId;
+  if (fromVariations) {
+    return fromVariations;
+  }
+
+  const ids = product.variationIds
+    ? Object.values(product.variationIds)
+    : [];
+  return ids[0];
+}
 
 function isVideoSrc(src: string) {
   return src.endsWith(".mp4") || src.endsWith(".webm");
 }
 
-function CraftAccordion({
-  title,
+function CollapsiblePanel({
+  open,
   children,
-  defaultOpen = false,
+  collapsedSize = "0fr",
+  className,
 }: {
-  title: string;
+  open: boolean;
   children: ReactNode;
-  defaultOpen?: boolean;
+  /** CSS track size when closed — `0fr` or e.g. `7rem` for a peek. */
+  collapsedSize?: string;
+  className?: string;
 }) {
   return (
-    <details
-      className="group border-t border-ink/10"
-      open={defaultOpen || undefined}
+    <div
+      className={`grid transition-[grid-template-rows] duration-300 ease-out motion-reduce:transition-none ${className ?? ""}`}
+      style={{ gridTemplateRows: open ? "1fr" : collapsedSize }}
     >
-      <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-4 font-body text-[11px] font-bold uppercase tracking-aggressive text-ink [&::-webkit-details-marker]:hidden">
+      <div className="min-h-0 overflow-hidden">{children}</div>
+    </div>
+  );
+}
+
+function CraftAccordion({
+  open,
+  title,
+  children,
+  onOpenChange,
+}: {
+  open: boolean;
+  title: string;
+  children: ReactNode;
+  onOpenChange?: (open: boolean) => void;
+}) {
+  return (
+    <div className="border-t border-ink/10">
+      <button
+        type="button"
+        aria-expanded={open}
+        onClick={() => {
+          onOpenChange?.(!open);
+        }}
+        className="flex w-full cursor-pointer list-none items-center justify-between gap-4 py-4 text-left font-body text-[11px] font-bold uppercase tracking-aggressive text-ink"
+      >
         {title}
         <span
-          className="text-lg font-normal leading-none text-ink/40 transition-transform duration-200 group-open:rotate-45"
+          className={`text-lg font-normal leading-none text-ink/40 transition-transform duration-300 ease-out motion-reduce:transition-none ${
+            open ? "rotate-45" : "rotate-0"
+          }`}
           aria-hidden="true"
         >
           +
         </span>
-      </summary>
-      <div className="pb-5">{children}</div>
-    </details>
+      </button>
+      <CollapsiblePanel open={open}>
+        <div className="pb-5">{children}</div>
+      </CollapsiblePanel>
+    </div>
   );
 }
 
 export function EquipmentProductView({
   product,
   relatedProducts = [],
+  defaultShippingCountry = "EE",
 }: EquipmentProductViewProps) {
   const router = useRouter();
   const locale = useLocale();
@@ -93,6 +143,13 @@ export function EquipmentProductView({
   const [added, setAdded] = useState(false);
   const [descriptionExpanded, setDescriptionExpanded] = useState(false);
   const [sizeGuideOpen, setSizeGuideOpen] = useState(false);
+  const [stickyAtcVisible, setStickyAtcVisible] = useState(false);
+  const [activeAccordion, setActiveAccordion] = useState<
+    "features" | "specifications" | "shipping" | null
+  >(null);
+  const atcSentinelRef = useRef<HTMLDivElement | null>(null);
+  const descriptionBodyRef = useRef<HTMLDivElement | null>(null);
+  const [descriptionMaxHeight, setDescriptionMaxHeight] = useState<number>(112);
 
   const sizeGuide = useMemo(() => resolveSizeGuide(product), [product]);
 
@@ -103,6 +160,28 @@ export function EquipmentProductView({
   useEffect(() => {
     setColor(selectableColors[0] ?? "");
   }, [product.slug, selectableColors]);
+
+  useEffect(() => {
+    setActiveAccordion(null);
+    setDescriptionExpanded(false);
+  }, [product.slug]);
+
+  useEffect(() => {
+    const node = atcSentinelRef.current;
+    if (!node) {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setStickyAtcVisible(!entry.isIntersecting);
+      },
+      { threshold: 0 },
+    );
+
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [product.slug]);
 
   const activeColorImage = useMemo(() => {
     if (!showColorPicker || !color) {
@@ -129,6 +208,27 @@ export function EquipmentProductView({
   const hasLongDescription =
     (product.descriptionHtml?.length ?? 0) > 320 ||
     product.description.length > 220;
+
+  useEffect(() => {
+    const node = descriptionBodyRef.current;
+    if (!node) {
+      return;
+    }
+
+    const measure = () => {
+      setDescriptionMaxHeight(node.scrollHeight);
+    };
+
+    measure();
+
+    if (typeof ResizeObserver === "undefined") {
+      return;
+    }
+
+    const observer = new ResizeObserver(measure);
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [product.description, product.descriptionHtml, galleryImages.length]);
 
   useEffect(() => {
     trackViewItem(product);
@@ -161,7 +261,7 @@ export function EquipmentProductView({
 
   return (
     <>
-    <div className="bg-detail">
+    <div className="bg-detail pb-24 lg:pb-0">
       <div className="site-container max-lg:pt-0 py-6 lg:py-10">
       <div className="flex flex-col gap-10 max-lg:gap-6 lg:grid lg:grid-cols-12 lg:items-start lg:gap-x-12 xl:gap-x-16">
         <nav aria-label="Breadcrumb" className="order-1 max-lg:order-2 lg:hidden">
@@ -280,7 +380,7 @@ export function EquipmentProductView({
           <EquipmentReturnPromise className="pt-1" />
           <ShowroomPickupNote className="pt-2" />
 
-          <div className="space-y-3 pt-2">
+          <div className="space-y-3 pt-2" ref={atcSentinelRef}>
             <button
               type="button"
               disabled={!product.inStock}
@@ -302,6 +402,18 @@ export function EquipmentProductView({
                 {dict.pdp.buyNow}
               </button>
             ) : null}
+            <WishlistButton
+              variant="text"
+              item={{
+                slug: product.slug,
+                name: product.name,
+                price: product.price,
+                image: activeColorImage,
+                brand: product.brand,
+                type: product.type,
+                productId: product.databaseId,
+              }}
+            />
           </div>
 
           <p className="text-xs leading-relaxed text-ink/50 sm:text-sm">
@@ -346,31 +458,43 @@ export function EquipmentProductView({
               >
                 {dict.pdp.description}
               </h2>
-              {product.descriptionHtml ? (
+              <div className="relative mt-4">
                 <div
-                  className={`product-description mt-4 text-base leading-relaxed text-ink/70 [&_p]:mb-3 ${
-                    !descriptionExpanded && hasLongDescription
-                      ? "max-h-28 overflow-hidden"
-                      : ""
-                  }`}
-                  dangerouslySetInnerHTML={{ __html: product.descriptionHtml }}
-                />
-              ) : (
-                <p
-                  className={`mt-4 text-base leading-relaxed text-ink/70 ${
-                    !descriptionExpanded && hasLongDescription
-                      ? "line-clamp-4"
-                      : ""
-                  }`}
+                  className="overflow-hidden transition-[max-height] duration-500 ease-out motion-reduce:transition-none"
+                  style={{
+                    maxHeight:
+                      descriptionExpanded || !hasLongDescription
+                        ? `${descriptionMaxHeight || 2000}px`
+                        : "7rem",
+                  }}
                 >
-                  {product.description}
-                </p>
-              )}
+                  <div ref={descriptionBodyRef}>
+                    {product.descriptionHtml ? (
+                      <div
+                        className="product-description text-base leading-relaxed text-ink/70 [&_p]:mb-3"
+                        dangerouslySetInnerHTML={{
+                          __html: product.descriptionHtml,
+                        }}
+                      />
+                    ) : (
+                      <p className="text-base leading-relaxed text-ink/70">
+                        {product.description}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                {hasLongDescription && !descriptionExpanded ? (
+                  <div
+                    className="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-detail to-transparent"
+                    aria-hidden="true"
+                  />
+                ) : null}
+              </div>
               {hasLongDescription ? (
                 <button
                   type="button"
                   onClick={() => setDescriptionExpanded((open) => !open)}
-                  className="mt-3 text-sm font-medium text-ink underline-offset-2 hover:underline"
+                  className="mt-3 text-sm font-medium text-ink underline-offset-2 transition-colors hover:text-accent hover:underline"
                 >
                   {descriptionExpanded ? dict.pdp.readLess : dict.pdp.readMore}
                 </button>
@@ -380,7 +504,13 @@ export function EquipmentProductView({
 
           <div className="border-b border-ink/10">
             {product.features.length > 0 ? (
-              <CraftAccordion title={dict.pdp.features}>
+              <CraftAccordion
+                title={dict.pdp.features}
+                open={activeAccordion === "features"}
+                onOpenChange={(open) =>
+                  setActiveAccordion(open ? "features" : null)
+                }
+              >
                 <ul className="flex flex-wrap gap-2">
                   {product.features.map((feature) => (
                     <li
@@ -395,15 +525,30 @@ export function EquipmentProductView({
             ) : null}
 
             {product.specs.length > 0 ? (
-              <CraftAccordion title={dict.pdp.specifications}>
+              <CraftAccordion
+                title={dict.pdp.specifications}
+                open={activeAccordion === "specifications"}
+                onOpenChange={(open) =>
+                  setActiveAccordion(open ? "specifications" : null)
+                }
+              >
                 <ProductSpecs specs={product.specs} />
               </CraftAccordion>
             ) : null}
 
-            <CraftAccordion title={dict.pdp.shippingReturns}>
-              <p className="text-base leading-relaxed text-ink/65">
-                {dict.pdp.shippingReturnsBody}
-              </p>
+            <CraftAccordion
+              title={dict.pdp.shippingReturns}
+              open={activeAccordion === "shipping"}
+              onOpenChange={(open) =>
+                setActiveAccordion(open ? "shipping" : null)
+              }
+            >
+              <ProductShippingReturnsPanel
+                productId={product.databaseId}
+                variationId={firstVariationId(product)}
+                defaultCountry={defaultShippingCountry}
+                active={activeAccordion === "shipping"}
+              />
             </CraftAccordion>
           </div>
           </div>
@@ -424,6 +569,15 @@ export function EquipmentProductView({
         selectedSize={size}
       />
     ) : null}
+
+    <EquipmentStickyAtc
+      name={product.name}
+      price={product.price}
+      inStock={product.inStock}
+      added={added}
+      visible={stickyAtcVisible}
+      onAdd={handleAdd}
+    />
     </>
   );
 }

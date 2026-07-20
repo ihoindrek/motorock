@@ -49,6 +49,69 @@ const LEGACY_STATIC_PAGE_SLUGS: Record<string, string> = {
   "proovisõit": "/test-ride",
 };
 
+/**
+ * WordPress served posts at `/{slug}`; the storefront uses `/blog/{slug}`.
+ * Keep in sync with published WP posts. Locale is inferred from which set matches.
+ */
+const LEGACY_BLOG_ROOT_SLUGS_EN = new Set([
+  "brixton-crossfire-125-review-the-full-125cc-comparison",
+  "mutt-motorcycles-lineup-review",
+  "brixton-cromwell-125-review",
+  "brixton-crossfire-500-storr-review-2",
+  "brixton-cromwell-1200-review",
+  "holyfreedom-primaloft-vs-standard-tubulars",
+  "win-a-brixton-crossfire-500-storr-motorock-giveaway-2026",
+  "moto-125-motorcycles-2026-guide",
+  "holyfreedom-stealth-helmet-before-you-buy",
+  "motogirl-motorcycle-gear-for-women-riders",
+  "motorcycle-bushcraft-backpack",
+  "scrambler-motorcycle-gear",
+  "brixton-motorcycle-accessories-guide",
+  "motorcycle-neck-gaiter-stay-warm-while-riding",
+]);
+
+const LEGACY_BLOG_ROOT_SLUGS_ET = new Set([
+  "brixton-crossfire-125-ulevaade-125-cm³-mootorrataste-pohjalik-vordlus",
+  "parimad-mutt-250cc-mootorrattad-milline-mudel-sobib-just-sulle",
+  "brixton-cromwell-125-ulevaade-nutikas-esimene-jalgratas-linnasoitjatele",
+  "brixton-crossfire-500-storr-ulevaade-koos-pagasiga-alla-8-000-euro",
+  "brixton-cromwell-1200-ulevaade-toeliste-teede-jaoks-loodud-scrambler",
+  "holyfreedom-primaloft-vs-tavalised-torukujulised-soojendajad-milline-on-erinevus",
+  "voida-brixton-crossfire-500-storr-motorocki-auhinnamang-2026",
+  "moto-125-mootorrattad-parimad-125-cm³-mootorrattad-2026-aastal",
+  "holyfreedom-stealth-kiiver-enne-ostmist",
+  "motogirl-mootorratturi-varustus-naissoost-soitjatele",
+  "parimad-mootorratta-ja-bushcraft-seljakotid",
+  "scrambleri-mootorratturi-varustus-mis-oma-hinda-vaart-on",
+  "brixtoni-mootorratta-tarvikud-mida-sa-tana-vajad",
+  "mootorratta-kaelussall-hoiab-soidu-ajal-soojas",
+]);
+
+const LEGACY_BLOG_ROOT_SLUGS = new Set([
+  ...LEGACY_BLOG_ROOT_SLUGS_EN,
+  ...LEGACY_BLOG_ROOT_SLUGS_ET,
+]);
+
+function decodePathSegment(segment: string) {
+  try {
+    return decodeURIComponent(segment);
+  } catch {
+    return segment;
+  }
+}
+
+function inferLocaleFromBlogRootSlug(slug: string): Locale | null {
+  if (LEGACY_BLOG_ROOT_SLUGS_EN.has(slug)) {
+    return "en";
+  }
+
+  if (LEGACY_BLOG_ROOT_SLUGS_ET.has(slug)) {
+    return "et";
+  }
+
+  return null;
+}
+
 const ET_LEGACY_STATIC_SLUGS = new Set(Object.keys(LEGACY_STATIC_PAGE_SLUGS));
 
 function normalizePath(pathname: string) {
@@ -171,9 +234,16 @@ export function inferLocaleFromLegacyPath(pathname: string): Locale | null {
     return "et";
   }
 
-  const staticSlug = normalized.slice(1);
-  if (staticSlug && !staticSlug.includes("/") && ET_LEGACY_STATIC_SLUGS.has(staticSlug)) {
-    return "et";
+  const staticSlug = decodePathSegment(normalized.slice(1));
+  if (staticSlug && !staticSlug.includes("/")) {
+    if (ET_LEGACY_STATIC_SLUGS.has(staticSlug)) {
+      return "et";
+    }
+
+    const blogLocale = inferLocaleFromBlogRootSlug(staticSlug);
+    if (blogLocale) {
+      return blogLocale;
+    }
   }
 
   if (
@@ -216,11 +286,15 @@ export function resolveWordPressLegacyRedirect(
     return `/blog/${normalized.slice("/blogi/".length)}`;
   }
 
-  const staticSlug = normalized.slice(1);
+  const staticSlug = decodePathSegment(normalized.slice(1));
   if (staticSlug && !staticSlug.includes("/")) {
     const staticTarget = LEGACY_STATIC_PAGE_SLUGS[staticSlug];
     if (staticTarget) {
       return redirectUnlessSame(normalized, staticTarget);
+    }
+
+    if (LEGACY_BLOG_ROOT_SLUGS.has(staticSlug)) {
+      return `/blog/${staticSlug}`;
     }
   }
 

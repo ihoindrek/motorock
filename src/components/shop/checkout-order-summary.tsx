@@ -6,6 +6,8 @@ import { useDictionary, useLocale } from "@/context/locale-context";
 import { countryLabel } from "@/hooks/use-checkout-shipping";
 import { localizedHref } from "@/i18n/paths";
 import type { ShippingRate } from "@/lib/shop/shipping-method";
+import { isShippingByAgreement } from "@/lib/shop/shipping-method";
+import { localizeShippingRateLabel } from "@/lib/shop/localize-shipping-label";
 import { formatCheckoutPrice } from "@/lib/shop/category";
 import { cn } from "@/lib/utils";
 import { SHOWROOM } from "@/data/showroom";
@@ -87,6 +89,7 @@ export function CheckoutOrderSummary({
           items: "Tooted",
           shipping: "Tarne",
           free: "Tasuta",
+          byAgreement: "Kokkuleppel",
           chooseDelivery: "Vali tarneviis",
           total: "Kokku",
           agreeTerms: "Nõustun",
@@ -99,6 +102,7 @@ export function CheckoutOrderSummary({
           items: "Items",
           shipping: "Shipping",
           free: "Free",
+          byAgreement: "By agreement",
           chooseDelivery: "Choose a delivery option",
           total: "Total",
           agreeTerms: "I agree to the",
@@ -106,6 +110,13 @@ export function CheckoutOrderSummary({
           processing: "Processing…",
           pay: "Pay",
         };
+
+  const shippingLabel =
+    selectedRate && isShippingByAgreement(selectedRate)
+      ? t.byAgreement
+      : shippingTotal === 0
+        ? t.free
+        : formatCheckoutPrice(shippingTotal, locale);
 
   return (
     <div
@@ -137,12 +148,13 @@ export function CheckoutOrderSummary({
         <div className="flex justify-between gap-4">
           <dt className="text-ink/70">{t.shipping}</dt>
           <dd className="font-body font-extrabold tabular-nums">
-            {shippingTotal === 0 ? t.free : formatCheckoutPrice(shippingTotal, locale)}
+            {shippingLabel}
           </dd>
         </div>
         {selectedRate ? (
           <p className="text-xs text-ink/50">
-            {selectedRate.label} · {countryLabel(country)}
+            {localizeShippingRateLabel(selectedRate, locale)} ·{" "}
+            {countryLabel(country)}
           </p>
         ) : (
           <p className="text-xs text-ink/50">{t.chooseDelivery}</p>

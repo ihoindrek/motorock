@@ -1,5 +1,46 @@
 import type { ProductSeoSnapshot } from "@/lib/seo/product-metadata";
 
+/** Cheapest delivery rate for schema.org OfferShippingDetails. */
+export type ProductSchemaShipping = {
+  cost: number;
+  /** ISO 3166-1 alpha-2, e.g. "EE". */
+  country: string;
+};
+
+type QuantitativeValue = {
+  "@type": "QuantitativeValue";
+  minValue: number;
+  maxValue: number;
+  unitCode: "DAY";
+};
+
+type OfferShippingDetails = {
+  "@type": "OfferShippingDetails";
+  shippingRate: {
+    "@type": "MonetaryAmount";
+    value: string;
+    currency: "EUR";
+  };
+  shippingDestination: {
+    "@type": "DefinedRegion";
+    addressCountry: string;
+  };
+  deliveryTime: {
+    "@type": "ShippingDeliveryTime";
+    handlingTime: QuantitativeValue;
+    transitTime: QuantitativeValue;
+  };
+};
+
+type MerchantReturnPolicy = {
+  "@type": "MerchantReturnPolicy";
+  applicableCountry: string[];
+  returnPolicyCategory: "https://schema.org/MerchantReturnFiniteReturnWindow";
+  merchantReturnDays: number;
+  returnMethod: "https://schema.org/ReturnByMail";
+  returnFees: "https://schema.org/ReturnFeesCustomerResponsibility";
+};
+
 type ProductSchema = {
   "@context": "https://schema.org";
   "@type": "Product";
@@ -18,8 +59,17 @@ type ProductSchema = {
     price: string;
     availability: string;
     itemCondition: "https://schema.org/NewCondition";
+    shippingDetails?: OfferShippingDetails;
+    hasMerchantReturnPolicy?: MerchantReturnPolicy;
   };
 };
+
+/** EU countries the store ships to; used for the consumer-rights return policy. */
+const RETURN_POLICY_COUNTRIES = [
+  "EE", "LV", "LT", "FI", "SE", "DK", "DE", "PL", "NL", "BE",
+  "AT", "FR", "IE", "IT", "ES", "PT", "CZ", "SK", "SI", "HR",
+  "HU", "RO", "BG", "GR", "LU", "MT", "CY",
+];
 
 function schemaAvailability(inStock: boolean) {
   return inStock
@@ -27,7 +77,54 @@ function schemaAvailability(inStock: boolean) {
     : "https://schema.org/OutOfStock";
 }
 
-export function buildProductJsonLd(snapshot: ProductSeoSnapshot): ProductSchema {
+function buildShippingDetails(
+  shipping: ProductSchemaShipping,
+): OfferShippingDetails {
+  return {
+    "@type": "OfferShippingDetails",
+    shippingRate: {
+      "@type": "MonetaryAmount",
+      value: shipping.cost.toFixed(2),
+      currency: "EUR",
+    },
+    shippingDestination: {
+      "@type": "DefinedRegion",
+      addressCountry: shipping.country,
+    },
+    // PDP promise: "In stock — ships in 1–3 business days".
+    deliveryTime: {
+      "@type": "ShippingDeliveryTime",
+      handlingTime: {
+        "@type": "QuantitativeValue",
+        minValue: 1,
+        maxValue: 3,
+        unitCode: "DAY",
+      },
+      transitTime: {
+        "@type": "QuantitativeValue",
+        minValue: 1,
+        maxValue: 3,
+        unitCode: "DAY",
+      },
+    },
+  };
+}
+
+function buildReturnPolicy(): MerchantReturnPolicy {
+  return {
+    "@type": "MerchantReturnPolicy",
+    applicableCountry: RETURN_POLICY_COUNTRIES,
+    returnPolicyCategory: "https://schema.org/MerchantReturnFiniteReturnWindow",
+    merchantReturnDays: 14,
+    returnMethod: "https://schema.org/ReturnByMail",
+    returnFees: "https://schema.org/ReturnFeesCustomerResponsibility",
+  };
+}
+
+export function buildProductJsonLd(
+  snapshot: ProductSeoSnapshot,
+  options?: { shipping?: ProductSchemaShipping },
+): ProductSchema {
   const schema: ProductSchema = {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -39,11 +136,15 @@ export function buildProductJsonLd(snapshot: ProductSeoSnapshot): ProductSchema 
       price: snapshot.price.toFixed(2),
       availability: schemaAvailability(snapshot.inStock),
       itemCondition: "https://schema.org/NewCondition",
+      hasMerchantReturnPolicy: buildReturnPolicy(),
+      ...(options?.shipping
+        ? { shippingDetails: buildShippingDetails(options.shipping) }
+        : {}),
     },
   };
 
-  if (snapshot.description) {
-    schema.description = snapshot.description;
+  if (snapshot.seoDescription || snapshot.description) {
+    schema.description = snapshot.seoDescription ?? snapshot.description;
   }
 
   if (snapshot.images.length > 0) {

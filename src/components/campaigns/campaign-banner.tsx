@@ -55,6 +55,8 @@ export function CampaignBanner({
           </p>
           <Link
             href={ctaHref}
+            target="_blank"
+            rel="noopener noreferrer"
             className="shrink-0 font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/45 transition-colors hover:text-accent"
           >
             {ctaLabel}
@@ -104,6 +106,8 @@ export function CampaignBanner({
         </div>
         <Link
           href={ctaHref}
+          target="_blank"
+          rel="noopener noreferrer"
           className="font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/45 transition-colors hover:text-accent"
         >
           {ctaLabel} →

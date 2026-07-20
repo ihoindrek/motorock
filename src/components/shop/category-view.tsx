@@ -8,12 +8,16 @@ import {
   defaultSortForRoute,
   filterProductsByRoute,
   resolveCategoryFilterFacets,
+  productHasSizeOptions,
   sortProducts,
   type CategoryRoute,
   type SortOption,
 } from "@/lib/shop/category";
+import { isLikelyFilterSizeLabel } from "@/lib/shop/size-label";
+import { sortProductSizes } from "@/lib/shop/sort-sizes";
 import { CatalogLoadMore } from "@/components/shop/catalog-load-more";
 import { CatalogProductGrid } from "@/components/shop/catalog-product-grid";
+import { CategoryDescription } from "@/components/shop/category-description";
 import { CategoryFilters, type ActiveFilters } from "@/components/shop/category-filters";
 import { MotorcycleBrandLogoFilter } from "@/components/shop/motorcycle-brand-logo-filter";
 import { MobileFilterDrawer } from "@/components/ui/mobile-filter-drawer";
@@ -183,6 +187,19 @@ export function CategoryView({
     );
   }, [availableBrandsProp, routeProducts]);
 
+  const availableSizes = useMemo(
+    () =>
+      sortProductSizes(
+        [...new Set(
+          routeProducts
+            .filter(productHasSizeOptions)
+            .flatMap((product) => product.sizes)
+            .filter((size) => isLikelyFilterSizeLabel(size)),
+        )],
+      ),
+    [routeProducts],
+  );
+
   const priceBounds = useMemo(() => {
     if (routeProducts.length === 0) {
       return { min: 0, max: 500 };
@@ -283,8 +300,14 @@ export function CategoryView({
     activeFilters: filters,
     priceBounds,
     availableBrands,
+    availableSizes,
     showSizeFilter: showSizeFilter && filterFacets.showSizeFilter,
-    showBrandFilter: !useBrandLogos && filterFacets.showBrandFilter,
+    // Prefer live available brands so the Brand control is not hidden when facets
+    // under-count unique brands (equipment main categories).
+    showBrandFilter:
+      !useBrandLogos &&
+      !route.brand &&
+      (filterFacets.showBrandFilter || availableBrands.length > 0),
     showCategoryFilter: filterFacets.showCategoryFilter,
     whiteFilterTriggers: !useBrandLogos,
     onToggleBrand: toggleBrand,
@@ -327,7 +350,11 @@ export function CategoryView({
       </nav>
 
       <header
-        className={`relative mb-8 ${sectionBackgroundHeading ? "min-h-[5.5rem] overflow-hidden sm:min-h-[6.5rem] lg:min-h-[7.5rem]" : "max-w-2xl"}`}
+        className={cn(
+          "relative mb-8",
+          sectionBackgroundHeading &&
+            "min-h-[5.5rem] overflow-hidden sm:min-h-[6.5rem] lg:min-h-[7.5rem]",
+        )}
       >
         {sectionBackgroundHeading ? (
           <p
@@ -338,28 +365,39 @@ export function CategoryView({
           </p>
         ) : null}
 
-        <div className={`relative z-10 ${sectionBackgroundHeading ? "max-w-2xl" : ""}`}>
-        <p className="section-eyebrow">{dict.common.shop}</p>
-        <div className="mt-2">
-          <h1
-            className={cn(
-              "heading-category",
-              hasLongCategoryTitle &&
-                "block max-w-full text-balance leading-[0.95] text-[clamp(1.25rem,5vw,2.2rem)] sm:text-6xl",
-            )}
-          >
-            {route.title}
-          </h1>
-          <p className="mt-1 font-body text-sm text-ink/50">
-            <span className="font-bold text-ink">{filteredProducts.length}</span>{" "}
-            {filteredProducts.length === 1
-              ? dict.catalog.productSingular
-              : dict.catalog.productPlural}
-          </p>
-        </div>
-        {route.description ? (
-          <p className="mt-3 text-base text-ink/70">{route.description}</p>
-        ) : null}
+        <div
+          className={cn(
+            "relative z-10",
+            "lg:grid lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:items-end lg:gap-12 xl:gap-20",
+            sectionBackgroundHeading && "max-w-2xl lg:max-w-none",
+          )}
+        >
+          <div>
+            <p className="section-eyebrow">{dict.common.shop}</p>
+            <div className="mt-2">
+              <h1
+                className={cn(
+                  "heading-category",
+                  hasLongCategoryTitle &&
+                    "block max-w-full text-balance leading-[0.95] text-[clamp(1.25rem,5vw,2.2rem)] sm:text-6xl",
+                )}
+              >
+                {route.title}
+              </h1>
+              <p className="mt-1 font-body text-sm text-ink/50">
+                <span className="font-bold text-ink">
+                  {filteredProducts.length}
+                </span>{" "}
+                {filteredProducts.length === 1
+                  ? dict.catalog.productSingular
+                  : dict.catalog.productPlural}
+              </p>
+            </div>
+          </div>
+
+          {route.description ? (
+            <CategoryDescription text={route.description} />
+          ) : null}
         </div>
       </header>
 

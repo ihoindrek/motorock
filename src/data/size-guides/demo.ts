@@ -58,41 +58,25 @@ const holyfreedomHoodie: SizeGuide = {
   ],
 };
 
-/** brand slug → category → guide */
+/** brand slug → category → guide (official manufacturer charts only). */
 export const sizeGuidesByBrandCategory: Partial<
   Record<string, Partial<Record<ProductCategory, SizeGuide>>>
 > = {
-  "pando-moto": {
-    jackets: pandoMotoJacketMen,
-    vests: pandoMotoJacketMen,
-  },
-  "johnny-reb": {
-    pants: johnnyRebPantsMen,
-  },
-  holyfreedom: {
-    hoodies: holyfreedomHoodie,
-    "t-shirts": holyfreedomHoodie,
-  },
+  // Temporarily empty — demo charts were misleading customers.
+  // Re-enable per brand when official size tables are verified, e.g.:
+  // "pando-moto": { jackets: pandoMotoJacketMen, vests: pandoMotoJacketMen },
 };
 
-/** Demo fallback for any jacket without a brand-specific chart */
+/** @deprecated Category fallbacks intentionally unused (showed as “demo”). */
 export const defaultCategoryGuides: Partial<Record<ProductCategory, SizeGuide>> =
-  {
-    jackets: {
-      id: "generic-jackets-demo",
-      title: "Jacket size guide (demo)",
-      brand: "General",
-      note: "Demo chart — replace with brand-specific measurements.",
-      columns: [
-        { key: "chest", label: "Chest" },
-        { key: "waist", label: "Waist" },
-        { key: "length", label: "Back length" },
-      ],
-      rows: [
-        { size: "S", measurements: { chest: 92, waist: 78, length: 64 } },
-        { size: "M", measurements: { chest: 98, waist: 84, length: 66 } },
-        { size: "L", measurements: { chest: 104, waist: 90, length: 68 } },
-        { size: "XL", measurements: { chest: 110, waist: 96, length: 70 } },
-      ],
-    },
-  };
+  {};
+
+// Keep draft charts below for when real brand tables are confirmed.
+const _draftGuides = {
+  pandoMotoJacketMen,
+  johnnyRebPantsMen,
+  holyfreedomHoodie,
+} as const;
+
+void _draftGuides;
+

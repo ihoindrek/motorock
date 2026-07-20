@@ -98,6 +98,7 @@ export function proxy(request: NextRequest) {
   if (
     pathname.startsWith("/api") ||
     pathname.startsWith("/_next") ||
+    pathname.startsWith("/sitemaps/") ||
     pathname === "/robots.txt" ||
     pathname === "/sitemap.xml" ||
     pathname === "/favicon.ico" ||
@@ -118,11 +119,17 @@ export function proxy(request: NextRequest) {
     }
 
     const response = NextResponse.next();
-    response.cookies.set(localeCookieName, segment, {
-      path: "/",
-      maxAge: 60 * 60 * 24 * 365,
-      sameSite: "lax",
-    });
+
+    // Set-Cookie makes the response uncacheable downstream — only send it
+    // when the preference actually changes.
+    if (request.cookies.get(localeCookieName)?.value !== segment) {
+      response.cookies.set(localeCookieName, segment, {
+        path: "/",
+        maxAge: 60 * 60 * 24 * 365,
+        sameSite: "lax",
+      });
+    }
+
     return withLocaleHeader(response, segment);
   }
 
@@ -153,5 +160,11 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image).*)"],
+  matcher: [
+    /*
+     * Run proxy on app pages only. Exclude metadata/SEO files entirely —
+     * GSC is sensitive to middleware touching sitemap/robots.
+     */
+    "/((?!_next/static|_next/image|favicon\\.ico|robots\\.txt|sitemap\\.xml|sitemaps/).*)",
+  ],
 };

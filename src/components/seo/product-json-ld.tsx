@@ -1,12 +1,16 @@
-import { buildProductJsonLd } from "@/lib/seo/product-schema";
+import {
+  buildProductJsonLd,
+  type ProductSchemaShipping,
+} from "@/lib/seo/product-schema";
 import type { ProductSeoSnapshot } from "@/lib/seo/product-metadata";
 
 type ProductJsonLdProps = {
   product: ProductSeoSnapshot;
+  shipping?: ProductSchemaShipping;
 };
 
-export function ProductJsonLd({ product }: ProductJsonLdProps) {
-  const schema = buildProductJsonLd(product);
+export function ProductJsonLd({ product, shipping }: ProductJsonLdProps) {
+  const schema = buildProductJsonLd(product, { shipping });
 
   return (
     <script
