@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useDictionary, useLocale } from "@/context/locale-context";
 import type { CatalogProduct } from "@/types/catalog-product";
 import {
@@ -39,6 +39,29 @@ type CategoryViewProps = {
   motoBackground?: boolean;
   footer?: ReactNode;
 };
+
+const SORT_OPTIONS: readonly SortOption[] = [
+  "featured",
+  "price-asc",
+  "price-desc",
+  "newest",
+  "price-mid",
+];
+
+/** "Pando Moto" -> "pando-moto" for shareable filter URLs. */
+function filterValueSlug(value: string) {
+  return value.toLowerCase().replace(/\s+/g, "-");
+}
+
+function matchBySlug(param: string, available: readonly string[]) {
+  const wanted = param
+    .split(",")
+    .map((value) => value.trim())
+    .filter(Boolean)
+    .map(filterValueSlug);
+
+  return available.filter((value) => wanted.includes(filterValueSlug(value)));
+}
 
 function getInitialFilters(
   products: readonly CatalogProduct[],
@@ -229,6 +252,116 @@ export function CategoryView({
   const [sort, setSort] = useState<SortOption>(() => defaultSortForRoute(route));
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [visibleCount, setVisibleCount] = useState(pageSize);
+  const urlFiltersApplied = useRef(false);
+
+  // Apply filters from the query string once after mount. The pages are
+  // statically prerendered (ISR), so the server never sees search params —
+  // this is what makes filtered views shareable (e.g. ?brand=pando-moto).
+  useEffect(() => {
+    if (urlFiltersApplied.current) {
+      return;
+    }
+    urlFiltersApplied.current = true;
+
+    const params = new URLSearchParams(window.location.search);
+    const sortParam = params.get("sort");
+
+    if (sortParam && SORT_OPTIONS.includes(sortParam as SortOption)) {
+      setSort(sortParam as SortOption);
+    }
+
+    const brandParam = params.get("brand");
+    const sizeParam = params.get("size");
+    const stockParam = params.get("stock");
+    const priceParam = params.get("price");
+
+    if (!brandParam && !sizeParam && !stockParam && !priceParam) {
+      return;
+    }
+
+    setFilters((current) => {
+      const next = { ...current };
+
+      if (brandParam) {
+        const brands = matchBySlug(brandParam, availableBrands);
+        if (brands.length > 0) {
+          next.brands = brands;
+        }
+      }
+
+      if (sizeParam) {
+        const sizes = matchBySlug(sizeParam, availableSizes);
+        if (sizes.length > 0) {
+          next.sizes = sizes;
+        }
+      }
+
+      if (stockParam === "1") {
+        next.inStockOnly = true;
+      }
+
+      if (priceParam) {
+        const [min, max] = priceParam.split("-").map((value) => Number(value));
+        if (Number.isFinite(min) && Number.isFinite(max) && min <= max) {
+          next.priceMin = Math.max(min, priceBounds.min);
+          next.priceMax = Math.min(max, priceBounds.max);
+        }
+      }
+
+      return next;
+    });
+  }, [availableBrands, availableSizes, priceBounds]);
+
+  // Reflect the active filters back into the URL (replaceState keeps the
+  // navigation client-side) so the current view can be copied and shared.
+  useEffect(() => {
+    if (!urlFiltersApplied.current) {
+      return;
+    }
+
+    const params = new URLSearchParams(window.location.search);
+
+    const setOrDelete = (key: string, value: string | null) => {
+      if (value) {
+        params.set(key, value);
+      } else {
+        params.delete(key);
+      }
+    };
+
+    // When the brand is part of the route itself (brand catalogs, deep-linked
+    // motorcycle brand views), the brand param belongs to the outer route —
+    // leave it alone.
+    if (!route.brand) {
+      setOrDelete(
+        "brand",
+        filters.brands.length > 0
+          ? filters.brands.map(filterValueSlug).join(",")
+          : null,
+      );
+    }
+    setOrDelete(
+      "size",
+      filters.sizes.length > 0
+        ? filters.sizes.map(filterValueSlug).join(",")
+        : null,
+    );
+    setOrDelete("stock", filters.inStockOnly ? "1" : null);
+    const priceNarrowed =
+      filters.priceMin > priceBounds.min || filters.priceMax < priceBounds.max;
+    setOrDelete(
+      "price",
+      priceNarrowed ? `${filters.priceMin}-${filters.priceMax}` : null,
+    );
+    setOrDelete("sort", sort !== defaultSortForRoute(route) ? sort : null);
+
+    const query = params.toString();
+    const nextUrl = `${window.location.pathname}${query ? `?${query}` : ""}`;
+
+    if (nextUrl !== `${window.location.pathname}${window.location.search}`) {
+      window.history.replaceState(window.history.state, "", nextUrl);
+    }
+  }, [filters, sort, priceBounds, route]);
 
   const filteredProducts = useMemo(() => {
     const filtered = applyClientFilters(routeProducts, filters, route);
