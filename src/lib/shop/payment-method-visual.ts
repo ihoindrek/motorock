@@ -22,6 +22,14 @@ export function resolvePaymentMethodVisual(
 
   const id = gatewayId.toLowerCase();
 
+  if (id.includes("ppcp") || id.includes("paypal")) {
+    return {
+      kind: "logo",
+      src: `${DEFAULT_WOO_STORE_URL}/wp-content/plugins/woocommerce-paypal-payments/modules/ppcp-wc-gateway/assets/images/paypal.svg`,
+      alt: "PayPal",
+    };
+  }
+
   if (id.includes("montonio")) {
     return {
       kind: "logo",

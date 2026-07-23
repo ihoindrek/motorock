@@ -177,6 +177,8 @@ export type Dictionary = {
     paymentMethodsHirePurchaseDesc: string;
     paymentMethodsBlik: string;
     paymentMethodsBlikDesc: string;
+    paymentMethodsPaypal: string;
+    paymentMethodsPaypalDesc: string;
     paymentChooseBank: string;
     paymentFinancing: string;
     paymentLoading: string;
@@ -751,6 +753,8 @@ export const en: Dictionary = {
       "Montonio hire purchase at checkout — provided with Inbank. Available in Estonia only.",
     paymentMethodsBlik: "BLIK",
     paymentMethodsBlikDesc: "Pay with BLIK via Montonio.",
+    paymentMethodsPaypal: "PayPal",
+    paymentMethodsPaypalDesc: "Pay with your PayPal account.",
     paymentChooseBank: "Bank link",
     paymentFinancing: "Pay later & hire purchase",
     paymentLoading: "Loading payment methods…",

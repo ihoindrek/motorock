@@ -192,6 +192,8 @@ export const et: Dictionary = {
       "Montonio järelmaks kassas — koostöös Inbankiga. Saadaval ainult Eestis.",
     paymentMethodsBlik: "BLIK",
     paymentMethodsBlikDesc: "Maksa BLIK-iga Montonio kaudu.",
+    paymentMethodsPaypal: "PayPal",
+    paymentMethodsPaypalDesc: "Maksa oma PayPali kontoga.",
     paymentChooseBank: "Pangalink",
     paymentFinancing: "Järelmaks ja maksa hiljem",
     paymentLoading: "Laen makseviise…",

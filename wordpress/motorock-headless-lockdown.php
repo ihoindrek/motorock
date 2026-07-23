@@ -86,8 +86,28 @@ function motorock_lockdown_redirect_target() {
 	$storefront = motorock_lockdown_storefront_url();
 	$path       = motorock_lockdown_request_path();
 
-	if ( $path === '/' || $path === '' ) {
-		return $storefront . '/en';
+	// Payment gateways (e.g. PayPal) may send the buyer back to the classic
+	// order-received URL; forward them to the storefront thank-you page with
+	// the order context intact instead of dropping them on the homepage.
+	if ( preg_match( '#/order-received/(\d+)#', $path, $matches ) ) {
+		$order_id = (int) $matches[1];
+		$key      = isset( $_GET['key'] ) ? sanitize_text_field( (string) wp_unslash( $_GET['key'] ) ) : '';
+		$locale   = 'en';
+
+		if ( function_exists( 'wc_get_order' ) && function_exists( 'motorock_get_checkout_locale' ) ) {
+			$order = wc_get_order( $order_id );
+			if ( $order instanceof WC_Order ) {
+				$locale = motorock_get_checkout_locale( $order );
+			}
+		}
+
+		return add_query_arg(
+			array(
+				'order' => $order_id,
+				'key'   => $key,
+			),
+			$storefront . '/' . $locale . '/order/thank-you'
+		);
 	}
 
 	return $storefront . '/en';

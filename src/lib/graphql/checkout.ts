@@ -486,6 +486,26 @@ type CheckoutResponse = {
   } | null;
 };
 
+/**
+ * PayPal Payments gateways that require the PayPal JS SDK on the page (card
+ * fields, Fastlane, wallet buttons). The headless checkout mutation cannot
+ * complete them — only the redirect-based "ppcp-gateway" works. Verified
+ * against live: these either error ("Invalid payment method") or create a
+ * stuck pending order.
+ */
+const UNSUPPORTED_GATEWAY_IDS = new Set([
+  "ppcp-axo-gateway",
+  "ppcp-credit-card-gateway",
+  "ppcp-applepay",
+  "ppcp-googlepay",
+]);
+
+export function filterSupportedPaymentGateways(gateways: PaymentGateway[]) {
+  return gateways.filter(
+    (gateway) => !UNSUPPORTED_GATEWAY_IDS.has(gateway.id),
+  );
+}
+
 export async function fetchPaymentGateways(sessionToken?: string | null) {
   const { data } = await checkoutGraphqlRequest<PaymentGatewaysResponse>(
     PAYMENT_GATEWAYS,
@@ -493,7 +513,7 @@ export async function fetchPaymentGateways(sessionToken?: string | null) {
     sessionToken,
   );
 
-  return data.paymentGateways?.nodes ?? [];
+  return filterSupportedPaymentGateways(data.paymentGateways?.nodes ?? []);
 }
 
 export async function resolveCheckoutPaymentMethod(

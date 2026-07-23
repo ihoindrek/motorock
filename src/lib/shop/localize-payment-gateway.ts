@@ -71,6 +71,10 @@ export function localizePaymentGateway(
       title: dict.paymentMethodsBlik,
       description: dict.paymentMethodsBlikDesc,
     },
+    "ppcp-gateway": {
+      title: dict.paymentMethodsPaypal,
+      description: dict.paymentMethodsPaypalDesc,
+    },
   };
 
   const localized = byId[gateway.id];

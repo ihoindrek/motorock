@@ -4,7 +4,10 @@ import {
   filterMontonioOptionsForGateway,
   isBankMontonioGateway,
 } from "@/components/shop/checkout-payment-options";
-import { MONTONIO_PAYMENT_METHOD_ID } from "@/lib/graphql/checkout";
+import {
+  filterSupportedPaymentGateways,
+  MONTONIO_PAYMENT_METHOD_ID,
+} from "@/lib/graphql/checkout";
 import type { PaymentGateway } from "@/lib/graphql/checkout";
 import type { MontonioPaymentOption } from "@/types/montonio-payment";
 
@@ -126,5 +129,23 @@ describe("filterMontonioOptionsForGateway", () => {
 
     expect(filterMontonioOptionsForGateway(gateway, bankOptions)).toEqual(bankOptions);
     expect(isBankMontonioGateway(gateway)).toBe(true);
+  });
+});
+
+describe("filterSupportedPaymentGateways", () => {
+  it("keeps redirect-capable PayPal but drops JS-SDK-only PPCP gateways", () => {
+    const gateways: PaymentGateway[] = [
+      { id: "ppcp-axo-gateway", title: "Debit & Credit Cards", icon: null },
+      { id: "ppcp-credit-card-gateway", title: "Debit & Credit Cards", icon: null },
+      { id: "ppcp-applepay", title: "Apple Pay", icon: null },
+      { id: "ppcp-googlepay", title: "Google Pay", icon: null },
+      { id: "ppcp-gateway", title: "PayPal", icon: null },
+      { id: MONTONIO_PAYMENT_METHOD_ID, title: "Pay with your bank", icon: null },
+    ];
+
+    expect(filterSupportedPaymentGateways(gateways).map((gateway) => gateway.id)).toEqual([
+      "ppcp-gateway",
+      MONTONIO_PAYMENT_METHOD_ID,
+    ]);
   });
 });
