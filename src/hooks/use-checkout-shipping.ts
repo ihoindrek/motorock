@@ -52,6 +52,7 @@ type CheckoutShippingState = {
   setCountry: (country: string) => void;
   setSelectedRateId: (rateId: string) => void;
   refreshShipping: () => Promise<void>;
+  retryBootstrap: () => void;
   applyCoupon: (code: string) => Promise<{ ok: boolean }>;
   removeCoupon: (code: string) => Promise<{ ok: boolean }>;
   commitDeliveryAddress: () => void;
@@ -87,6 +88,7 @@ export function useCheckoutShipping(
   const [couponError, setCouponError] = useState<string | null>(null);
   const [wcSubtotal, setWcSubtotal] = useState<number | null>(null);
   const [wcTotal, setWcTotal] = useState<number | null>(null);
+  const [bootstrapNonce, setBootstrapNonce] = useState(0);
   const sessionRef = useRef<string | null>(null);
   const bootstrapReadyRef = useRef(false);
   const syncedLinesKeyRef = useRef("");
@@ -453,7 +455,15 @@ export function useCheckoutShipping(
     return () => {
       cancelled = true;
     };
-  }, [linesKey, pushCustomerShipping, rememberSession]);
+  }, [linesKey, bootstrapNonce, pushCustomerShipping, rememberSession]);
+
+  /** Re-run the full cart sync after a transient failure (e.g. network). */
+  const retryBootstrap = useCallback(() => {
+    resetCheckoutSyncState();
+    syncedLinesKeyRef.current = "";
+    bootstrapReadyRef.current = false;
+    setBootstrapNonce((nonce) => nonce + 1);
+  }, []);
 
   useEffect(() => {
     if (!bootstrapReadyRef.current || loading || syncedLinesKeyRef.current === linesKey) {
@@ -511,6 +521,7 @@ export function useCheckoutShipping(
     setCountry,
     setSelectedRateId,
     refreshShipping,
+    retryBootstrap,
     applyCoupon,
     removeCoupon,
     commitDeliveryAddress,

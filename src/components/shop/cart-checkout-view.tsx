@@ -114,6 +114,13 @@ function friendlyCheckoutError(
     return null;
   }
 
+  // Browser-level network failures (offline, backend briefly unreachable).
+  if (/failed to fetch|networkerror|network request failed|load failed/i.test(message)) {
+    return locale === "et"
+      ? "Ühendus serveriga katkes. Kontrolli internetiühendust ja proovi uuesti."
+      : "Connection to the server was lost. Check your internet connection and try again.";
+  }
+
   if (/please select a pickup point/i.test(message)) {
     return locale === "et"
       ? "Valitud pakiautomaat ei jõudnud tellimusele. Värskenda lehte ja proovi uuesti."
@@ -1414,7 +1421,16 @@ export function CartCheckoutView() {
                     shipping.rates.length === 0 ? (
                       <CheckoutShippingOptionsSkeleton />
                     ) : shippingError ? (
-                      <p className="text-sm text-accent">{shippingError}</p>
+                      <div className="space-y-3">
+                        <p className="text-sm text-accent">{shippingError}</p>
+                        <button
+                          type="button"
+                          onClick={shipping.retryBootstrap}
+                          className="border border-ink/20 px-4 py-2 font-body text-[11px] font-bold uppercase tracking-aggressive text-ink transition-colors hover:border-accent hover:text-accent"
+                        >
+                          {dict.error.retry}
+                        </button>
+                      </div>
                     ) : shipping.rates.length === 0 ? (
                       <p className="text-sm text-ink/60">{t.noDeliveryOptions}</p>
                     ) : (
