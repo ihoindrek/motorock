@@ -250,9 +250,14 @@ async function fetchAllCatalogNodes(
       categoryNotIn: where.categoryNotIn ?? null,
     };
 
+    // Paging through the whole catalog is inherently sequential and is by
+    // far the most expensive fetch chain (similar products, category pages).
+    // A long revalidate is safe: WooCommerce changes purge the "woocommerce"
+    // tag via the revalidation webhook, so this TTL is only a fallback.
     const data = await graphqlRequest<CatalogPageResponse, CatalogPageVariables>(
       PRODUCT_CATALOG_PAGE,
       variables,
+      { next: { revalidate: 3600 } },
     );
 
     rawNodes.push(...data.products.nodes);
