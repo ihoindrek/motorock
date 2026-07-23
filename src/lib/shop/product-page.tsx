@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
+import { after } from "next/server";
 import { ProductLocaleAlternates } from "@/components/locale-alternates";
 import { JsonLd } from "@/components/seo/json-ld";
 import { ProductJsonLd } from "@/components/seo/product-json-ld";
@@ -78,8 +79,10 @@ export async function generateProductPageMetadata({
   locale,
   slug,
 }: Omit<ProductPageParams, "pathSegment">): Promise<Metadata> {
-  const slugAlternates = await getProductSlugAlternates(slug);
-  const motorcycle = await getMotorcycleProductBySlug(slug, locale);
+  const [slugAlternates, motorcycle] = await Promise.all([
+    getProductSlugAlternates(slug),
+    getMotorcycleProductBySlug(slug, locale),
+  ]);
 
   if (motorcycle) {
     return buildProductPageMetadataFromSnapshot(
@@ -104,11 +107,14 @@ export async function generateProductPageMetadata({
   );
 }
 
-const SCHEMA_SHIPPING_TIMEOUT_MS = 4000;
+const SCHEMA_SHIPPING_BUDGET_MS = 1200;
 
 /**
  * Cheapest EE delivery rate for JSON-LD shippingDetails. Best-effort: the
- * estimate needs a Woo cart session, so failures/slowness just omit the field.
+ * estimate needs a Woo cart session (several sequential GraphQL calls), so it
+ * only gets a short budget on top of the render. When it can't finish in
+ * time, the field is omitted and the estimate keeps running via after() so
+ * its unstable_cache entry is warm for the next ISR revalidation.
  */
 async function resolveSchemaShipping(
   product: CatalogProduct,
@@ -121,19 +127,27 @@ async function resolveSchemaShipping(
     product.variations?.find((variation) => variation.databaseId)?.databaseId ??
     Object.values(product.variationIds ?? {})[0];
 
+  const pending = estimateProductShipping({
+    country: "EE",
+    productId: product.databaseId,
+    variationId,
+  });
+  pending.catch(() => {});
+
   try {
     const estimate = await Promise.race([
-      estimateProductShipping({
-        country: "EE",
-        productId: product.databaseId,
-        variationId,
-      }),
+      pending,
       new Promise<null>((resolve) =>
-        setTimeout(() => resolve(null), SCHEMA_SHIPPING_TIMEOUT_MS),
+        setTimeout(() => resolve(null), SCHEMA_SHIPPING_BUDGET_MS),
       ),
     ]);
 
-    if (!estimate || estimate.cost === null) {
+    if (!estimate) {
+      after(() => pending.catch(() => {}));
+      return undefined;
+    }
+
+    if (estimate.cost === null) {
       return undefined;
     }
 
@@ -168,15 +182,18 @@ export async function renderProductPage({
   slug,
   pathSegment,
 }: ProductPageParams) {
-  const slugAlternates = await getProductSlugAlternates(slug);
+  // The three lookups share the same underlying (deduped) product fetch, so
+  // running them in parallel avoids a waterfall on uncached renders.
+  const [slugAlternates, motorcycle] = await Promise.all([
+    getProductSlugAlternates(slug),
+    getMotorcycleProductBySlug(slug, locale),
+  ]);
   const canonicalSlug = slugAlternates[locale] ?? slug;
   const canonicalSegment = PRODUCT_PATH_SEGMENTS[locale];
 
   if (pathSegment !== canonicalSegment || slug !== canonicalSlug) {
     redirect(localizedProductHref(canonicalSlug, locale));
   }
-
-  const motorcycle = await getMotorcycleProductBySlug(slug, locale);
 
   if (motorcycle) {
     const motorcycleCatalog = await getMotorcycleCatalog(locale);

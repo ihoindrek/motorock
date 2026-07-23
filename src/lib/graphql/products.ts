@@ -323,7 +323,10 @@ function mapCatalogNodesForRoute(
   );
 }
 
-export async function fetchGraphqlProductBySlug(slug: string) {
+// React.cache dedupes these within a single request: generateMetadata and the
+// page render both resolve the same product, and Next's request memoization
+// doesn't apply to POST (GraphQL) fetches.
+export const fetchGraphqlProductBySlug = cache(async (slug: string) => {
   try {
     const data = await graphqlRequest<ProductBySlugResponse>(PRODUCT_BY_SLUG, {
       slug,
@@ -332,9 +335,9 @@ export async function fetchGraphqlProductBySlug(slug: string) {
   } catch {
     return null;
   }
-}
+});
 
-export async function fetchGraphqlProductByDatabaseId(databaseId: number) {
+export const fetchGraphqlProductByDatabaseId = cache(async (databaseId: number) => {
   try {
     const data = await graphqlRequest<
       ProductBySlugResponse,
@@ -344,7 +347,7 @@ export async function fetchGraphqlProductByDatabaseId(databaseId: number) {
   } catch {
     return null;
   }
-}
+});
 
 async function fetchEnglishPricingProduct(
   product: GraphQLProduct,
