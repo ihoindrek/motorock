@@ -185,6 +185,8 @@ export const et: Dictionary = {
     paymentMethodsCard: "Kaardimakse",
     paymentMethodsCardDesc:
       "Maksa krediit- või deebetkaardiga Montonio kaudu.",
+    paymentMethodsMobilePay: "MobilePay",
+    paymentMethodsMobilePayDesc: "Maksa MobilePay äpiga Montonio kaudu.",
     paymentMethodsBnpl: "Maksa hiljem",
     paymentMethodsBnplDesc: "Maksa osamaksetena Montonio kaudu.",
     paymentMethodsHirePurchase: "Järelmaks",

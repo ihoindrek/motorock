@@ -117,6 +117,9 @@ function appendMontonioProviderMeta(
         value: "cardPayments",
       });
       break;
+    case "mobilePay":
+      meta.push({ key: "montonio_preferred_provider", value: "mobilePay" });
+      break;
     case "blik":
       meta.push({ key: "montonio_preferred_provider", value: "blik" });
       break;

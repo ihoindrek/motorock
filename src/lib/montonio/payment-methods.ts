@@ -19,6 +19,8 @@ function kindForSystemName(systemName: string): MontonioPaymentOptionKind {
   switch (systemName) {
     case "cardPayments":
       return "card";
+    case "mobilePay":
+      return "mobilePay";
     case "bnpl":
       return "bnpl";
     case "hirePurchase":
@@ -30,10 +32,23 @@ function kindForSystemName(systemName: string): MontonioPaymentOptionKind {
   }
 }
 
+/** MobilePay is a Finnish/Danish app; Montonio processes it in EUR, so FI only. */
+const MOBILEPAY_COUNTRIES = new Set(["FI"]);
+
+function systemNameAvailableForCountry(systemName: string, iso: string) {
+  if (systemName === "mobilePay") {
+    return MOBILEPAY_COUNTRIES.has(iso);
+  }
+
+  return true;
+}
+
 function labelForSystemName(systemName: string) {
   switch (systemName) {
     case "cardPayments":
       return "Card payment";
+    case "mobilePay":
+      return "MobilePay";
     case "bnpl":
       return "Buy now, pay later";
     case "hirePurchase":
@@ -51,6 +66,7 @@ function sortOptions(options: MontonioPaymentOption[]) {
       const order: MontonioPaymentOptionKind[] = [
         "bank",
         "card",
+        "mobilePay",
         "hirePurchase",
         "bnpl",
         "blik",
@@ -129,7 +145,8 @@ export function parseMontonioPaymentMethods(
       if (
         systemName &&
         systemName !== "paymentInitiation" &&
-        kindForSystemName(systemName) !== "bank"
+        kindForSystemName(systemName) !== "bank" &&
+        systemNameAvailableForCountry(systemName, iso)
       ) {
         options.push({
           code: systemName,
@@ -158,6 +175,10 @@ export function parseMontonioPaymentMethods(
         if (countrySetup?.paymentMethods?.length) {
           pushBankOptions(options, countrySetup.paymentMethods, systemName);
         }
+        continue;
+      }
+
+      if (!systemNameAvailableForCountry(systemName, iso)) {
         continue;
       }
 

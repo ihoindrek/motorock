@@ -254,6 +254,7 @@ add_filter(
 
 		$display_names = array(
 			'cardPayments' => __( 'Card payment', 'montonio-for-woocommerce' ),
+			'mobilePay'    => 'MobilePay',
 			'blik'         => 'BLIK',
 			'bnpl'         => __( 'Buy now, pay later', 'montonio-for-woocommerce' ),
 			'hirePurchase' => __( 'Hire purchase', 'montonio-for-woocommerce' ),

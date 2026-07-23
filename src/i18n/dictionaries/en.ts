@@ -171,6 +171,8 @@ export type Dictionary = {
     paymentMethodsBankDesc: string;
     paymentMethodsCard: string;
     paymentMethodsCardDesc: string;
+    paymentMethodsMobilePay: string;
+    paymentMethodsMobilePayDesc: string;
     paymentMethodsBnpl: string;
     paymentMethodsBnplDesc: string;
     paymentMethodsHirePurchase: string;
@@ -746,6 +748,8 @@ export const en: Dictionary = {
     paymentMethodsCard: "Card payment",
     paymentMethodsCardDesc:
       "Pay with your credit or debit card via Montonio.",
+    paymentMethodsMobilePay: "MobilePay",
+    paymentMethodsMobilePayDesc: "Pay with the MobilePay app via Montonio.",
     paymentMethodsBnpl: "Pay later",
     paymentMethodsBnplDesc: "Pay in instalments via Montonio.",
     paymentMethodsHirePurchase: "Hire purchase",

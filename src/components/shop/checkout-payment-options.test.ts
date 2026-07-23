@@ -130,6 +130,35 @@ describe("filterMontonioOptionsForGateway", () => {
     expect(filterMontonioOptionsForGateway(gateway, bankOptions)).toEqual(bankOptions);
     expect(isBankMontonioGateway(gateway)).toBe(true);
   });
+
+  it("scopes MobilePay option to the MobilePay gateway only", () => {
+    const mobilePayOption: MontonioPaymentOption = {
+      kind: "mobilePay",
+      code: "mobilePay",
+      systemName: "mobilePay",
+      name: "MobilePay",
+      logoUrl: null,
+    };
+    const options = [...bankOptions, mobilePayOption];
+
+    const mobilePayGateway: PaymentGateway = {
+      id: "wc_montonio_mobilepay",
+      title: "Montonio MobilePay",
+      description: "",
+      icon: null,
+    };
+    const bankGateway: PaymentGateway = {
+      id: MONTONIO_PAYMENT_METHOD_ID,
+      title: "Pay with your bank",
+      description: "",
+      icon: null,
+    };
+
+    expect(filterMontonioOptionsForGateway(mobilePayGateway, options)).toEqual([
+      mobilePayOption,
+    ]);
+    expect(filterMontonioOptionsForGateway(bankGateway, options)).toEqual(bankOptions);
+  });
 });
 
 describe("filterSupportedPaymentGateways", () => {

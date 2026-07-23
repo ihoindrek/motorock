@@ -62,6 +62,10 @@ export function filterMontonioOptionsForGateway(
 ) {
   const haystack = `${gateway.id} ${gateway.title}`.toLowerCase();
 
+  if (haystack.includes("mobilepay") || haystack.includes("mobile pay")) {
+    return options.filter((option) => option.kind === "mobilePay");
+  }
+
   if (haystack.includes("card")) {
     return options.filter((option) => option.kind === "card");
   }
@@ -101,6 +105,7 @@ export function filterMontonioOptionsForGateway(
 const SYNTHETIC_MONTONIO_GATEWAY_ORDER = [
   MONTONIO_PAYMENT_METHOD_ID,
   "wc_montonio_card",
+  "wc_montonio_mobilepay",
   "wc_montonio_hire_purchase",
   "wc_montonio_bnpl",
   "wc_montonio_blik",

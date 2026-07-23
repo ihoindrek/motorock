@@ -1,6 +1,7 @@
 export type MontonioPaymentOptionKind =
   | "bank"
   | "card"
+  | "mobilePay"
   | "bnpl"
   | "hirePurchase"
   | "blik";
@@ -29,6 +30,8 @@ export function montonioOptionLabel(
         return "Osta nüüd, maksa hiljem";
       case "hirePurchase":
         return "Järelmaks";
+      case "mobilePay":
+        return "MobilePay";
       case "blik":
         return "BLIK";
       default:
@@ -43,6 +46,8 @@ export function montonioOptionLabel(
       return "Buy now, pay later";
     case "hirePurchase":
       return "Hire purchase";
+    case "mobilePay":
+      return "MobilePay";
     case "blik":
       return "BLIK";
     default:

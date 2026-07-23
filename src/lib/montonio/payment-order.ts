@@ -26,6 +26,7 @@ export type MontonioPaymentLineItem = {
 const GATEWAY_BY_KIND: Record<MontonioPaymentOption["kind"], string> = {
   bank: "wc_montonio_payments",
   card: "wc_montonio_card",
+  mobilePay: "wc_montonio_mobilepay",
   blik: "wc_montonio_blik",
   bnpl: "wc_montonio_bnpl",
   hirePurchase: "wc_montonio_hire_purchase",

@@ -8,6 +8,7 @@ import {
 const GATEWAY_IDS = {
   bank: MONTONIO_PAYMENT_METHOD_ID,
   card: "wc_montonio_card",
+  mobilePay: "wc_montonio_mobilepay",
   bnpl: "wc_montonio_bnpl",
   hirePurchase: "wc_montonio_hire_purchase",
   blik: "wc_montonio_blik",
@@ -26,6 +27,11 @@ export function getLocalizedMontonioGatewayDefs(locale: Locale) {
       id: GATEWAY_IDS.card,
       title: dict.paymentMethodsCard,
       description: dict.paymentMethodsCardDesc,
+    },
+    {
+      id: GATEWAY_IDS.mobilePay,
+      title: dict.paymentMethodsMobilePay,
+      description: dict.paymentMethodsMobilePayDesc,
     },
     {
       id: GATEWAY_IDS.bnpl,
@@ -58,6 +64,10 @@ export function localizePaymentGateway(
     [GATEWAY_IDS.card]: {
       title: dict.paymentMethodsCard,
       description: dict.paymentMethodsCardDesc,
+    },
+    [GATEWAY_IDS.mobilePay]: {
+      title: dict.paymentMethodsMobilePay,
+      description: dict.paymentMethodsMobilePayDesc,
     },
     [GATEWAY_IDS.bnpl]: {
       title: dict.paymentMethodsBnpl,
