@@ -12,8 +12,8 @@ import { createPortal } from "react-dom";
  */
 const STORAGE_KEY = "motorock_popup_seen:crossfire-500-storr-2026";
 const SHOW_DELAY_MS = 2500;
-/** Prize draw day (26 Sep 2026, Estonian time) — no point promoting after. */
-const CAMPAIGN_ENDS = Date.parse("2026-09-26T23:59:59+03:00");
+/** Prize draw day (19 Sep 2026, Estonian time) — no point promoting after. */
+const CAMPAIGN_ENDS = Date.parse("2026-09-19T23:59:59+03:00");
 const CAMPAIGN_HREF = "/en/blog/win-a-brixton-crossfire-500-storr-motorock-giveaway-2026";
 
 /** Don't interrupt buying or reading the campaign itself. */
