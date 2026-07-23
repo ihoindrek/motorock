@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { CookieConsentUi } from "@/components/consent/cookie-consent-ui";
+import { GiveawayPopup } from "@/components/marketing/giveaway-popup";
 import { CartDrawer } from "@/components/shop/cart-drawer";
 import { CategoryTreeProvider } from "@/context/category-tree-context";
 import { ConsentProvider } from "@/context/consent-context";
@@ -67,6 +68,7 @@ export default async function LocaleLayout({
 
             <CartDrawer />
             <CookieConsentUi />
+            {localeParam === "en" ? <GiveawayPopup /> : null}
           </LocaleAlternatesProvider>
         </CategoryTreeProvider>
       </ConsentProvider>
