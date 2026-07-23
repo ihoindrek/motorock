@@ -68,7 +68,7 @@ export default async function LocaleLayout({
 
             <CartDrawer />
             <CookieConsentUi />
-            {localeParam === "en" ? <GiveawayPopup /> : null}
+            <GiveawayPopup locale={localeParam} />
           </LocaleAlternatesProvider>
         </CategoryTreeProvider>
       </ConsentProvider>

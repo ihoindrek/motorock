@@ -5,21 +5,39 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import type { Locale } from "@/i18n/config";
 
 /**
- * One-time campaign popup (EN only). Bump the key suffix to re-show the
- * popup for a future campaign.
+ * One-time campaign popup. Bump the key suffix to re-show the popup for a
+ * future campaign. Shared across locales so switching language doesn't
+ * re-trigger it.
  */
 const STORAGE_KEY = "motorock_popup_seen:crossfire-500-storr-2026";
 const SHOW_DELAY_MS = 2500;
 /** Prize draw day (19 Sep 2026, Estonian time) — no point promoting after. */
 const CAMPAIGN_ENDS = Date.parse("2026-09-19T23:59:59+03:00");
-const CAMPAIGN_HREF = "/en/blog/win-a-brixton-crossfire-500-storr-motorock-giveaway-2026";
 
-/** Don't interrupt buying or reading the campaign itself. */
-const SUPPRESSED_PATHS = ["/en/cart", "/en/checkout", CAMPAIGN_HREF];
+const CAMPAIGN = {
+  en: {
+    href: "/en/blog/win-a-brixton-crossfire-500-storr-motorock-giveaway-2026",
+    image: "/giveaway.webp",
+    alt: "WIN a Brixton Crossfire 500 STORR — MotoRock Giveaway 2026. Every 100 euros spent enters you into the draw.",
+    ariaLabel: "MotoRock giveaway 2026",
+    closeLabel: "Close",
+    cta: "Read more & enter the draw →",
+  },
+  et: {
+    href: "/et/blog/voida-brixton-crossfire-500-storr-motorocki-auhinnamang-2026",
+    image: "/giveaway-est.webp",
+    alt: "VÕIDA Brixton Crossfire 500 STORR — MotoRocki auhinnamäng 2026. Iga kulutatud 100 euro eest üks osalus loosimises.",
+    ariaLabel: "MotoRocki auhinnamäng 2026",
+    closeLabel: "Sulge",
+    cta: "Loe lähemalt ja osale loosimises →",
+  },
+} satisfies Record<Locale, unknown>;
 
-export function GiveawayPopup() {
+export function GiveawayPopup({ locale }: { locale: Locale }) {
+  const campaign = CAMPAIGN[locale];
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
@@ -28,7 +46,9 @@ export function GiveawayPopup() {
       return;
     }
 
-    if (SUPPRESSED_PATHS.some((path) => pathname.startsWith(path))) {
+    // Don't interrupt buying or reading the campaign itself.
+    const suppressed = [`/${locale}/cart`, `/${locale}/checkout`, campaign.href];
+    if (suppressed.some((path) => pathname.startsWith(path))) {
       return;
     }
 
@@ -44,7 +64,7 @@ export function GiveawayPopup() {
 
     const timer = window.setTimeout(() => setOpen(true), SHOW_DELAY_MS);
     return () => window.clearTimeout(timer);
-  }, [pathname]);
+  }, [pathname, locale, campaign.href]);
 
   const dismiss = () => {
     setOpen(false);
@@ -84,12 +104,12 @@ export function GiveawayPopup() {
     <div
       role="dialog"
       aria-modal="true"
-      aria-label="MotoRock giveaway 2026"
+      aria-label={campaign.ariaLabel}
       className="fixed inset-0 z-[90] flex items-center justify-center p-4"
     >
       <button
         type="button"
-        aria-label="Close"
+        aria-label={campaign.closeLabel}
         onClick={dismiss}
         className="absolute inset-0 bg-ink/70 backdrop-blur-[2px]"
       />
@@ -98,7 +118,7 @@ export function GiveawayPopup() {
         <button
           type="button"
           onClick={dismiss}
-          aria-label="Close"
+          aria-label={campaign.closeLabel}
           className="absolute -top-3 -right-3 z-10 flex size-10 items-center justify-center border border-paper/30 bg-ink text-paper transition-colors hover:bg-accent"
         >
           <svg
@@ -115,10 +135,10 @@ export function GiveawayPopup() {
           </svg>
         </button>
 
-        <Link href={CAMPAIGN_HREF} onClick={dismiss} className="block">
+        <Link href={campaign.href} onClick={dismiss} className="block">
           <Image
-            src="/giveaway.webp"
-            alt="WIN a Brixton Crossfire 500 STORR — MotoRock Giveaway 2026. Every 100 euros spent enters you into the draw."
+            src={campaign.image}
+            alt={campaign.alt}
             width={1000}
             height={1241}
             sizes="(max-width: 640px) 90vw, 448px"
@@ -126,7 +146,7 @@ export function GiveawayPopup() {
             className="h-auto w-full"
           />
           <span className="flex min-h-12 items-center justify-center bg-accent px-6 py-3 text-center font-body text-xs font-bold uppercase tracking-aggressive text-paper transition-colors hover:bg-ink">
-            Read more &amp; enter the draw →
+            {campaign.cta}
           </span>
         </Link>
       </div>
