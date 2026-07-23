@@ -57,7 +57,6 @@ import { cn } from "@/lib/utils";
 import { buildEquipmentHubHref } from "@/lib/shop/category-url";
 import { EquipmentReturnPromise } from "@/components/shop/equipment-return-promise";
 import { CampaignCartPanels } from "@/components/campaigns/campaign-cart-panels";
-import { ShowroomPickupPanel } from "@/components/shop/showroom-pickup-panel";
 import { CheckoutPickupPointSelector } from "@/components/shop/checkout-pickup-point-selector";
 import { CheckoutPhoneField } from "@/components/shop/checkout-phone-field";
 import {
@@ -1405,14 +1404,6 @@ export function CartCheckoutView() {
                     </select>
                   </label>
                 </div>
-
-                {cartHasEquipment(lines) ? (
-                  <ShowroomPickupPanel
-                    rates={shipping.rates}
-                    selectedRateId={shipping.selectedRateId}
-                    onSelectRate={shipping.setSelectedRateId}
-                  />
-                ) : null}
 
                 <div>
                   <p className={labelClassName}>{t.deliveryMethod}</p>
