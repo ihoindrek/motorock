@@ -20,6 +20,7 @@ import { buildMontonioCheckoutMetaData, needsMontonioPaymentRemint, pickupPointR
 import {
   buildCheckoutInputAddresses,
   MONTONIO_PAYMENT_METHOD_ID,
+  resetCheckoutSyncState,
   submitCheckout,
   updateCheckoutCustomerShipping,
 } from "@/lib/graphql/checkout";
@@ -1136,9 +1137,13 @@ export function CartCheckoutView() {
       }
 
       if (redirectUrl) {
-        // Keep the cart intact for the external payment page — if the buyer
-        // cancels, they return to a working checkout. The thank-you page
-        // clears the cart after a successful payment.
+        // Keep the local cart intact for the external payment page — if the
+        // buyer cancels, they return to a working checkout. The thank-you
+        // page clears the cart after a successful payment. The Woo session
+        // must be dropped though: checkout consumed the backend cart, so a
+        // returning buyer needs a fresh session + resync to see shipping
+        // rates again.
+        resetCheckoutSyncState();
         window.location.assign(redirectUrl);
         return;
       }

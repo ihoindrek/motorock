@@ -203,6 +203,7 @@ export function useCheckoutShipping(
       rememberSession(sessionToken);
       const cart = await fetchCartShipping(activeSession());
       applyCart(cart, { country: nextCountry });
+      return cart.rates.length;
     },
     [activeSession, applyCart, rememberSession],
   );
@@ -424,7 +425,17 @@ export function useCheckoutShipping(
           setCountryState(shipCountry);
         }
 
-        await pushCustomerShipping(shipCountry, false);
+        const rateCount = await pushCustomerShipping(shipCountry, false);
+
+        // Zero rates with items in the cart usually means the stored session
+        // is stale — its backend cart was consumed by a previous checkout
+        // (e.g. the buyer came back from an external payment page). Retry
+        // once with a fresh session and a full cart resync.
+        if (rateCount === 0 && !forceResync && !cancelled) {
+          await bootstrap(true);
+          return;
+        }
+
         syncedLinesKeyRef.current = linesKey;
 
         if (!cancelled) {
