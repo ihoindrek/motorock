@@ -150,14 +150,14 @@ function CatalogSortSelect({
   onChange: (value: SortOption) => void;
 }) {
   return (
-    <label className="flex shrink-0 items-center gap-2">
-      <span className="font-body text-xs font-bold uppercase tracking-aggressive text-ink/50">
+    <label className="flex min-w-0 items-center gap-2">
+      <span className="shrink-0 font-body text-xs font-bold uppercase tracking-aggressive text-ink/50">
         Sort
       </span>
       <select
         value={value}
         onChange={(event) => onChange(event.target.value as SortOption)}
-        className="min-h-12 border border-ink/15 bg-white px-4 py-3 font-body text-xs font-bold uppercase tracking-aggressive text-ink focus:border-accent focus:outline-none"
+        className="min-h-12 min-w-0 border border-ink/15 bg-white px-4 py-3 font-body text-xs font-bold uppercase tracking-aggressive text-ink focus:border-accent focus:outline-none"
       >
         <option value="featured">Featured</option>
         <option value="newest">Newest</option>

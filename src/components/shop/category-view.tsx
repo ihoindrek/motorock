@@ -100,14 +100,16 @@ function CatalogSortSelect({
   const dict = useDictionary();
 
   return (
-    <label className="flex shrink-0 items-center gap-2">
-      <span className="font-body text-xs font-bold uppercase tracking-aggressive text-ink/50">
+    {/* min-w-0 lets the select shrink below the width of its longest option
+        so it cannot push the Filters button off-screen on narrow viewports. */}
+    <label className="flex min-w-0 items-center gap-2">
+      <span className="shrink-0 font-body text-xs font-bold uppercase tracking-aggressive text-ink/50">
         {dict.catalog.sort}
       </span>
       <select
         value={value}
         onChange={(event) => onChange(event.target.value as SortOption)}
-        className="min-h-12 border border-ink/15 bg-paper px-4 py-3 font-body text-xs font-bold uppercase tracking-aggressive text-ink focus:border-accent focus:outline-none"
+        className="min-h-12 min-w-0 border border-ink/15 bg-paper px-4 py-3 font-body text-xs font-bold uppercase tracking-aggressive text-ink focus:border-accent focus:outline-none"
       >
         {showMidRangeSort ? (
           <option value="price-mid">{dict.catalog.midRange}</option>
