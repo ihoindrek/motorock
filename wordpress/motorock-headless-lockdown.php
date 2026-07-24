@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Motorock Headless Public Lockdown
  * Description: Hides the WordPress/WooCommerce storefront on the backend domain; keeps admin, GraphQL, REST, and payment callbacks working.
- * Version: 1.2.0
+ * Version: 1.3.0
  *
  * Install: copy to wp-content/mu-plugins/motorock-headless-lockdown.php
  */
@@ -76,6 +76,13 @@ function motorock_lockdown_is_allowed_request() {
 	}
 
 	if ( ! empty( $_GET['wc-api'] ) ) {
+		return true;
+	}
+
+	// WooCommerce frontend AJAX endpoints. PayPal Payments returns the buyer
+	// to `?wc-ajax=ppc-return-url` after approval to capture the payment and
+	// mark the order paid — blocking it leaves orders stuck in pending.
+	if ( ! empty( $_GET['wc-ajax'] ) ) {
 		return true;
 	}
 
