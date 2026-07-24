@@ -534,8 +534,15 @@ export function CartCheckoutView() {
             'You selected "{method}". No WooCommerce order was created and no payment was taken.',
           backToCheckout: "Back to checkout",
         };
-  const { lines, itemCount, subtotal, updateQuantity, removeItem, clearCart } =
-    useCart();
+  const {
+    lines,
+    itemCount,
+    subtotal,
+    updateQuantity,
+    removeItem,
+    clearCart,
+    replaceCart,
+  } = useCart();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -550,6 +557,40 @@ export function CartCheckoutView() {
   const [mobileStepError, setMobileStepError] = useState<string | null>(null);
   const [textFieldFocused, setTextFieldFocused] = useState(false);
   const prevMobileStepRef = useRef<1 | 2 | 3>(1);
+
+  // Restore an abandoned order's cart from a payment reminder email link
+  // (?restore=<orderId>&key=<orderKey>). The params are stripped right away
+  // so a refresh doesn't re-run the restore over a possibly edited cart.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const restoreOrder = params.get("restore");
+    const restoreKey = params.get("key");
+
+    if (!restoreOrder || !restoreKey) {
+      return;
+    }
+
+    params.delete("restore");
+    params.delete("key");
+    const query = params.toString();
+    window.history.replaceState(
+      null,
+      "",
+      `${window.location.pathname}${query ? `?${query}` : ""}`,
+    );
+
+    const query2 = new URLSearchParams({ order: restoreOrder, key: restoreKey });
+    void fetch(`/api/order/restore?${query2}`)
+      .then((response) => (response.ok ? response.json() : null))
+      .then((payload: { lines?: CartLine[] } | null) => {
+        if (payload?.lines?.length) {
+          replaceCart(payload.lines);
+        }
+      })
+      .catch(() => {
+        // Restore is best-effort; the buyer still lands on a working checkout.
+      });
+  }, [replaceCart]);
 
   // Scroll to top after the step panel has actually swapped in the DOM —
   // scrolling before the re-render gets cancelled when the page height changes.

@@ -39,6 +39,8 @@ type CartContextValue = {
   removeItem: (slug: string, size?: string) => void;
   updateQuantity: (slug: string, quantity: number, size?: string) => void;
   clearCart: () => void;
+  /** Replace the whole cart, e.g. when restoring an abandoned order. */
+  replaceCart: (lines: CartLine[]) => void;
 };
 
 const CartContext = createContext<CartContextValue | null>(null);
@@ -198,6 +200,24 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const replaceCart = useCallback((nextLines: CartLine[]) => {
+    const normalized = nextLines.map((line) => ({
+      ...line,
+      size:
+        line.size && !isOneSizeLabel(line.size)
+          ? formatSizeLabel(line.size)
+          : line.size,
+      quantity: Math.max(1, line.quantity),
+    }));
+
+    setLines(normalized);
+    // Write through synchronously for the same hydration-race reason as
+    // clearCart: a restore link triggers this right after a fresh page load.
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
+    }
+  }, []);
+
   const itemCount = useMemo(
     () => lines.reduce((sum, line) => sum + line.quantity, 0),
     [lines],
@@ -222,6 +242,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       removeItem,
       updateQuantity,
       clearCart,
+      replaceCart,
     }),
     [
       lines,
@@ -235,6 +256,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       removeItem,
       updateQuantity,
       clearCart,
+      replaceCart,
     ],
   );
 
