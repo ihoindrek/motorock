@@ -100,8 +100,8 @@ function CatalogSortSelect({
   const dict = useDictionary();
 
   return (
-    {/* min-w-0 lets the select shrink below the width of its longest option
-        so it cannot push the Filters button off-screen on narrow viewports. */}
+    // min-w-0 lets the select shrink below the width of its longest option
+    // so it cannot push the Filters button off-screen on narrow viewports.
     <label className="flex min-w-0 items-center gap-2">
       <span className="shrink-0 font-body text-xs font-bold uppercase tracking-aggressive text-ink/50">
         {dict.catalog.sort}
