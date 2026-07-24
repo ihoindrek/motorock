@@ -189,6 +189,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const clearCart = useCallback(() => {
     setLines([]);
+    // Also clear storage synchronously: on a fresh page load (e.g. the
+    // thank-you page after an external payment) this runs before the
+    // provider's hydration effect, which would otherwise read the stored
+    // lines from localStorage and restore the cart right back.
+    if (typeof window !== "undefined") {
+      window.localStorage.removeItem(STORAGE_KEY);
+    }
   }, []);
 
   const itemCount = useMemo(
