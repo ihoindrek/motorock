@@ -1641,7 +1641,12 @@ export function CartCheckoutView() {
               />
               <span>
                 {t.termsPrefix}{" "}
-                <Link href={localizedHref(locale, "/terms")} className="text-ink hover:text-accent">
+                <Link
+                  href={localizedHref(locale, "/terms")}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-ink hover:text-accent"
+                >
                   {t.termsLink}
                 </Link>
               </span>

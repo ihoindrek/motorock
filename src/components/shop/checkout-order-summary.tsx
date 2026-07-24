@@ -178,6 +178,8 @@ export function CheckoutOrderSummary({
               {t.agreeTerms}{" "}
               <Link
                 href={localizedHref(locale, "/terms")}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="text-ink hover:text-accent"
               >
                 {t.terms}
