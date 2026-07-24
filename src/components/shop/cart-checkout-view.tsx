@@ -83,7 +83,11 @@ function checkoutPanelClass(mobileStep: 1 | 2 | 3, panelStep: 1 | 2 | 3) {
 
 function scrollCheckoutToTop() {
   if (typeof window !== "undefined") {
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    // Close the on-screen keyboard so the viewport is stable before scrolling.
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+    window.scrollTo(0, 0);
   }
 }
 
@@ -473,8 +477,6 @@ export function CartCheckoutView() {
           image: "Pilt",
           termsPrefix: "Nõustun",
           termsLink: "tingimustega",
-          securePayment:
-            "Turvaline makse Montonioga — pank, kaart, maksa hiljem ja järelmaks",
           paymentMethod: "Makseviis",
           paymentReturnError: "Makse katkestati või ebaõnnestus. Proovi uuesti.",
           testPayment: "Testi makset",
@@ -523,8 +525,6 @@ export function CartCheckoutView() {
           image: "Image",
           termsPrefix: "I agree to the",
           termsLink: "terms & conditions",
-          securePayment:
-            "Secure payment via Montonio — bank, card, pay later & järelmaks",
           paymentMethod: "Payment method",
           paymentReturnError: "Payment was cancelled or failed. Please try again.",
           testPayment: "Test payment",
@@ -547,6 +547,37 @@ export function CartCheckoutView() {
   const [couponCode, setCouponCode] = useState("");
   const [mobileStep, setMobileStep] = useState<1 | 2 | 3>(1);
   const [mobileStepError, setMobileStepError] = useState<string | null>(null);
+  const [textFieldFocused, setTextFieldFocused] = useState(false);
+  const prevMobileStepRef = useRef<1 | 2 | 3>(1);
+
+  // Scroll to top after the step panel has actually swapped in the DOM —
+  // scrolling before the re-render gets cancelled when the page height changes.
+  useEffect(() => {
+    if (prevMobileStepRef.current !== mobileStep) {
+      prevMobileStepRef.current = mobileStep;
+      window.scrollTo(0, 0);
+    }
+  }, [mobileStep]);
+
+  // Hide the fixed bottom bar while the on-screen keyboard is open so the
+  // form has usable space on small screens.
+  useEffect(() => {
+    const isTextField = (node: Element | null) =>
+      node instanceof HTMLElement &&
+      node.matches(
+        "input:not([type='checkbox']):not([type='radio']), select, textarea",
+      );
+    const sync = () => setTextFieldFocused(isTextField(document.activeElement));
+    const syncDeferred = () => window.setTimeout(sync, 0);
+
+    document.addEventListener("focusin", sync);
+    document.addEventListener("focusout", syncDeferred);
+
+    return () => {
+      document.removeEventListener("focusin", sync);
+      document.removeEventListener("focusout", syncDeferred);
+    };
+  }, []);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -1208,6 +1239,7 @@ export function CartCheckoutView() {
     total: displayTotal,
     selectedRate: shipping.selectedRate,
     country: shipping.country,
+    pickupPointName: needsPickupPoint ? pickupPoint?.name ?? null : null,
     termsAccepted,
     onTermsChange: setTermsAccepted,
     canSubmit,
@@ -1613,7 +1645,6 @@ export function CartCheckoutView() {
               </span>
             </label>
             <ul className="mt-4 space-y-1 text-xs text-ink/55">
-              <li>{t.securePayment}</li>
               <li className="text-xs text-ink/60">
                 {dict.returns.headline}
               </li>
@@ -1631,7 +1662,7 @@ export function CartCheckoutView() {
         </CheckoutSummaryShell>
       </div>
 
-      {mobileStep === 1 ? (
+      {mobileStep === 1 && !textFieldFocused ? (
         <CheckoutMobileStepBar
           continueLabel={dict.checkout.continueToDelivery}
           onContinue={handleContinueToDelivery}
@@ -1640,7 +1671,7 @@ export function CartCheckoutView() {
         />
       ) : null}
 
-      {mobileStep === 2 ? (
+      {mobileStep === 2 && !textFieldFocused ? (
         <CheckoutMobileStepBar
           continueLabel={dict.checkout.continueToPayment}
           onContinue={handleContinueToPayment}

@@ -20,6 +20,7 @@ type CheckoutOrderSummaryProps = {
   total: number;
   selectedRate: ShippingRate | null;
   country: string;
+  pickupPointName?: string | null;
   termsAccepted: boolean;
   onTermsChange: (accepted: boolean) => void;
   canSubmit: boolean;
@@ -36,20 +37,11 @@ function TrustCopy() {
   const dict = useDictionary();
   const t =
     locale === "et"
-      ? {
-          securePayment:
-            "Turvaline makse Montonioga — pank, kaart, maksa hiljem ja järelmaks",
-          questions: "Küsimusi?",
-        }
-      : {
-          securePayment:
-            "Secure payment via Montonio — bank, card, pay later & järelmaks",
-          questions: "Questions?",
-        };
+      ? { questions: "Küsimusi?" }
+      : { questions: "Questions?" };
 
   return (
     <ul className="space-y-1.5 text-xs leading-relaxed text-ink/55">
-      <li>{t.securePayment}</li>
       <li className="text-xs text-ink/60">{dict.returns.headline}</li>
       <li>
         {t.questions}{" "}
@@ -69,6 +61,7 @@ export function CheckoutOrderSummary({
   total,
   selectedRate,
   country,
+  pickupPointName,
   termsAccepted,
   onTermsChange,
   canSubmit,
@@ -155,6 +148,7 @@ export function CheckoutOrderSummary({
           <p className="text-xs text-ink/50">
             {localizeShippingRateLabel(selectedRate, locale)} ·{" "}
             {countryLabel(country)}
+            {pickupPointName ? <> · {pickupPointName}</> : null}
           </p>
         ) : (
           <p className="text-xs text-ink/50">{t.chooseDelivery}</p>

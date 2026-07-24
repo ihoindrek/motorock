@@ -39,7 +39,7 @@ export function EquipmentMegaMenu({
       aria-hidden={!open}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
-      className={`mega-menu-shell absolute inset-x-0 top-full z-50 -mt-3 pt-3 transition-[opacity,transform] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none ${
+      className={`mega-menu-shell absolute inset-x-0 top-full z-50 -mt-3 hidden pt-3 transition-[opacity,transform] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none lg:block ${
         open
           ? "translate-y-0 opacity-100"
           : "pointer-events-none -translate-y-2 opacity-0"
