@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Motorock Headless Public Lockdown
  * Description: Hides the WordPress/WooCommerce storefront on the backend domain; keeps admin, GraphQL, REST, and payment callbacks working.
- * Version: 1.1.0
+ * Version: 1.2.0
  *
  * Install: copy to wp-content/mu-plugins/motorock-headless-lockdown.php
  */
@@ -131,6 +131,19 @@ function motorock_lockdown_redirect_target() {
 
 	return $storefront . '/en';
 }
+
+// wp_safe_redirect() only allows same-host targets by default and silently
+// falls back to wp-admin for anything else — the storefront host must be
+// whitelisted or every lockdown redirect ends up on /wp-admin/.
+function motorock_lockdown_allowed_redirect_hosts( $hosts ) {
+	$storefront_host = wp_parse_url( motorock_lockdown_storefront_url(), PHP_URL_HOST );
+	if ( $storefront_host && ! in_array( $storefront_host, (array) $hosts, true ) ) {
+		$hosts[] = $storefront_host;
+	}
+
+	return $hosts;
+}
+add_filter( 'allowed_redirect_hosts', 'motorock_lockdown_allowed_redirect_hosts' );
 
 function motorock_lockdown_public_storefront() {
 	if ( motorock_lockdown_is_allowed_request() ) {
