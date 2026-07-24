@@ -76,8 +76,15 @@ export function OrderThankYouView({
     }
 
     let cancelled = false;
+    let retryTimer: number | undefined;
 
-    async function loadSummary() {
+    // Payment capture can land in WooCommerce moments after the buyer
+    // reaches this page, so a pending order is re-polled until it flips to a
+    // paid status — otherwise the purchase event would be skipped forever.
+    const PENDING_RETRY_MS = 4000;
+    const MAX_PENDING_RETRIES = 8;
+
+    async function loadSummary(attempt: number) {
       const key = orderKey;
       if (!key) {
         return;
@@ -97,6 +104,13 @@ export function OrderThankYouView({
         if (!cancelled) {
           setSummary(payload);
           trackPurchase(payload);
+
+          if (payload.status === "pending" && attempt < MAX_PENDING_RETRIES) {
+            retryTimer = window.setTimeout(
+              () => void loadSummary(attempt + 1),
+              PENDING_RETRY_MS,
+            );
+          }
         }
       } catch (cause) {
         if (!cancelled) {
@@ -105,10 +119,13 @@ export function OrderThankYouView({
       }
     }
 
-    void loadSummary();
+    void loadSummary(0);
 
     return () => {
       cancelled = true;
+      if (retryTimer) {
+        window.clearTimeout(retryTimer);
+      }
     };
   }, [orderId, orderKey, t.error]);
 
