@@ -208,6 +208,8 @@ export type Dictionary = {
     addToCart: string;
     addedToCart: string;
     buyNow: string;
+    share: string;
+    linkCopied: string;
     paymentAtCheckout: string;
     selectSize: string;
     selectColor: string;
@@ -788,6 +790,8 @@ export const en: Dictionary = {
     addToCart: "Add to cart",
     addedToCart: "Added to cart",
     buyNow: "Buy now",
+    share: "Share",
+    linkCopied: "Link copied",
     paymentAtCheckout:
       "Montonio pay later & hire purchase at checkout.",
     selectSize: "Select a size",

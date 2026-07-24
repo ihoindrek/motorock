@@ -22,6 +22,7 @@ import { SizeGuideModal } from "@/components/shop/size-guide-modal";
 import { EquipmentColorPicker } from "@/components/shop/equipment-color-picker";
 import { EquipmentStickyAtc } from "@/components/shop/equipment-sticky-atc";
 import { WishlistButton } from "@/components/shop/wishlist-button";
+import { ShareButton } from "@/components/shop/share-button";
 import { ProductShippingReturnsPanel } from "@/components/shop/product-shipping-returns-panel";
 import { resolveSizeGuide } from "@/lib/shop/resolve-size-guide";
 import {
@@ -402,18 +403,21 @@ export function EquipmentProductView({
                 {dict.pdp.buyNow}
               </button>
             ) : null}
-            <WishlistButton
-              variant="text"
-              item={{
-                slug: product.slug,
-                name: product.name,
-                price: product.price,
-                image: activeColorImage,
-                brand: product.brand,
-                type: product.type,
-                productId: product.databaseId,
-              }}
-            />
+            <div className="flex items-center gap-6">
+              <WishlistButton
+                variant="text"
+                item={{
+                  slug: product.slug,
+                  name: product.name,
+                  price: product.price,
+                  image: activeColorImage,
+                  brand: product.brand,
+                  type: product.type,
+                  productId: product.databaseId,
+                }}
+              />
+              <ShareButton title={product.name} />
+            </div>
           </div>
 
           <p className="text-xs leading-relaxed text-ink/50 sm:text-sm">

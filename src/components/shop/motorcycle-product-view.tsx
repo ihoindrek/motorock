@@ -11,6 +11,7 @@ import {
   hasMotorcycleTechnical,
 } from "@/lib/shop/normalize-motorcycle-content";
 import { BrandLogo } from "@/components/shop/brand-logo";
+import { ShareButton } from "@/components/shop/share-button";
 import { FinancingPriceTeaser } from "@/components/shop/financing-price-teaser";
 import {
   MotorcycleActionModals,
@@ -327,6 +328,11 @@ function RichMotorcycleProductView({
                   </button>
                 </div>
               )}
+
+              <ShareButton
+                title={`${sync.brand} ${sync.name}`}
+                className="mt-6"
+              />
             </div>
 
             <div className="order-1 min-w-0 lg:order-none lg:col-span-8 xl:col-span-8">
