@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Motorock Headless Public Lockdown
  * Description: Hides the WordPress/WooCommerce storefront on the backend domain; keeps admin, GraphQL, REST, and payment callbacks working.
- * Version: 1.0.0
+ * Version: 1.1.0
  *
  * Install: copy to wp-content/mu-plugins/motorock-headless-lockdown.php
  */
@@ -82,6 +82,17 @@ function motorock_lockdown_is_allowed_request() {
 	return false;
 }
 
+function motorock_lockdown_order_locale( $order_id ) {
+	if ( $order_id && function_exists( 'wc_get_order' ) && function_exists( 'motorock_get_checkout_locale' ) ) {
+		$order = wc_get_order( $order_id );
+		if ( $order instanceof WC_Order ) {
+			return motorock_get_checkout_locale( $order );
+		}
+	}
+
+	return 'en';
+}
+
 function motorock_lockdown_redirect_target() {
 	$storefront = motorock_lockdown_storefront_url();
 	$path       = motorock_lockdown_request_path();
@@ -92,22 +103,30 @@ function motorock_lockdown_redirect_target() {
 	if ( preg_match( '#/order-received/(\d+)#', $path, $matches ) ) {
 		$order_id = (int) $matches[1];
 		$key      = isset( $_GET['key'] ) ? sanitize_text_field( (string) wp_unslash( $_GET['key'] ) ) : '';
-		$locale   = 'en';
-
-		if ( function_exists( 'wc_get_order' ) && function_exists( 'motorock_get_checkout_locale' ) ) {
-			$order = wc_get_order( $order_id );
-			if ( $order instanceof WC_Order ) {
-				$locale = motorock_get_checkout_locale( $order );
-			}
-		}
 
 		return add_query_arg(
 			array(
 				'order' => $order_id,
 				'key'   => $key,
 			),
-			$storefront . '/' . $locale . '/order/thank-you'
+			$storefront . '/' . motorock_lockdown_order_locale( $order_id ) . '/order/thank-you'
 		);
+	}
+
+	// Cancelled payments (PayPal "Cancel and return") come back to the classic
+	// cart/checkout page with cancel_order args; send the buyer back to the
+	// storefront checkout with the same error marker the UI already localizes.
+	if ( isset( $_GET['cancel_order'] ) ) {
+		$order_id = isset( $_GET['order_id'] ) ? (int) $_GET['order_id'] : 0;
+
+		return $storefront . '/' . motorock_lockdown_order_locale( $order_id )
+			. '/checkout?payment_error=' . rawurlencode( 'Payment cancelled' );
+	}
+
+	// Any other classic cart/checkout URL: continue shopping on the storefront
+	// checkout rather than the homepage.
+	if ( preg_match( '#^/(cart|checkout|ostukorv|kassa)(/|$)#', $path ) ) {
+		return $storefront . '/en/checkout';
 	}
 
 	return $storefront . '/en';

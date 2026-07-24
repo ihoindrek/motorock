@@ -1136,7 +1136,9 @@ export function CartCheckoutView() {
       }
 
       if (redirectUrl) {
-        clearCart();
+        // Keep the cart intact for the external payment page — if the buyer
+        // cancels, they return to a working checkout. The thank-you page
+        // clears the cart after a successful payment.
         window.location.assign(redirectUrl);
         return;
       }
