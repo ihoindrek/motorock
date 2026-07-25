@@ -227,6 +227,7 @@ export const et: Dictionary = {
     buyNow: "Osta kohe",
     share: "Jaga",
     linkCopied: "Link kopeeritud",
+    recentlyViewed: "Hiljuti vaadatud",
     paymentAtCheckout:
       "Montonio maksa hiljem ja järelmaks kassas.",
     selectSize: "Vali suurus",

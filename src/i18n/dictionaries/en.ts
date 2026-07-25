@@ -210,6 +210,7 @@ export type Dictionary = {
     buyNow: string;
     share: string;
     linkCopied: string;
+    recentlyViewed: string;
     paymentAtCheckout: string;
     selectSize: string;
     selectColor: string;
@@ -792,6 +793,7 @@ export const en: Dictionary = {
     buyNow: "Buy now",
     share: "Share",
     linkCopied: "Link copied",
+    recentlyViewed: "Recently viewed",
     paymentAtCheckout:
       "Montonio pay later & hire purchase at checkout.",
     selectSize: "Select a size",

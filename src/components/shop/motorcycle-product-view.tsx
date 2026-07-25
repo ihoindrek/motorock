@@ -22,6 +22,8 @@ import { MotorcycleCtaBar } from "@/components/shop/motorcycle-cta-bar";
 import { MotorcycleOverviewSection } from "@/components/shop/motorcycle-overview-section";
 import { MotorcycleProductGallery } from "@/components/shop/motorcycle-product-gallery";
 import { MotorcycleRelatedProducts } from "@/components/shop/motorcycle-related-products";
+import { RecentlyViewedProducts } from "@/components/shop/recently-viewed-products";
+import { recordRecentlyViewed } from "@/lib/shop/recently-viewed";
 import { MotorcycleShippingNote } from "@/components/shop/motorcycle-shipping-note";
 import { TestRideIcon } from "@/components/ui/test-ride-icon";
 import { ZoomParallax } from "@/components/ui/zoom-parallax";
@@ -123,6 +125,14 @@ function RichMotorcycleProductView({
 
   useEffect(() => {
     trackViewMotorcycleProduct(product);
+    recordRecentlyViewed({
+      slug: product.slug,
+      name: `${product.sync.brand} ${product.sync.name}`,
+      price: product.sync.price,
+      image: product.sync.images[0] ?? "",
+      brand: product.sync.brand,
+      type: "motorcycle",
+    });
   }, [product]);
 
   const openPrimaryAction = () => {
@@ -452,6 +462,17 @@ function RichMotorcycleProductView({
           reserveMobileCtaSpace={sync.inStock}
         />
       ) : null}
+
+      {/* Extra bottom space so the fixed mobile CTA bar does not cover the list. */}
+      <div
+        className={
+          sync.inStock
+            ? "pb-[calc(5.5rem+env(safe-area-inset-bottom))] lg:pb-0"
+            : undefined
+        }
+      >
+        <RecentlyViewedProducts excludeSlug={product.slug} />
+      </div>
 
       <MotorcycleCtaBar
         name={sync.name}

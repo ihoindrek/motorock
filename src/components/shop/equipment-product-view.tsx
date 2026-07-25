@@ -8,6 +8,7 @@ import { useCart } from "@/context/cart-context";
 import { useDictionary, useLocale } from "@/context/locale-context";
 import { localizedHref } from "@/i18n/paths";
 import { trackViewItem } from "@/lib/analytics";
+import { recordRecentlyViewed } from "@/lib/shop/recently-viewed";
 import { resolveLineVariationId } from "@/lib/shop/resolve-cart-variation";
 import { formatSizeLabel } from "@/lib/shop/size-label";
 import { sortProductSizes } from "@/lib/shop/sort-sizes";
@@ -15,6 +16,7 @@ import { BrandLogo } from "@/components/shop/brand-logo";
 import { FinancingPriceTeaser } from "@/components/shop/financing-price-teaser";
 import { ProductImageGallery } from "@/components/shop/product-image-gallery";
 import { ProductSpecs } from "@/components/shop/product-specs";
+import { RecentlyViewedProducts } from "@/components/shop/recently-viewed-products";
 import { RelatedProducts } from "@/components/shop/related-products";
 import { EquipmentReturnPromise } from "@/components/shop/equipment-return-promise";
 import { ShowroomPickupNote } from "@/components/shop/showroom-pickup-panel";
@@ -233,6 +235,14 @@ export function EquipmentProductView({
 
   useEffect(() => {
     trackViewItem(product);
+    recordRecentlyViewed({
+      slug: product.slug,
+      name: product.name,
+      price: product.price,
+      image: product.image,
+      brand: product.brand,
+      type: product.type,
+    });
   }, [product]);
 
   const cartPayload = {
@@ -564,6 +574,8 @@ export function EquipmentProductView({
     {relatedProducts.length > 0 ? (
       <RelatedProducts products={relatedProducts} />
     ) : null}
+
+    <RecentlyViewedProducts excludeSlug={product.slug} />
 
     {sizeGuide ? (
       <SizeGuideModal
