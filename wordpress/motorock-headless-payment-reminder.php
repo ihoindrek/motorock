@@ -2,18 +2,22 @@
 /**
  * Plugin Name: Motorock Abandoned Payment Reminder
  * Description: Emails buyers whose payment never completed (pending/failed orders) with a link that restores their cart on the headless storefront.
- * Version: 1.0.0
+ * Version: 1.1.0
  *
  * Install: copy to wp-content/mu-plugins/motorock-headless-payment-reminder.php
  * Requires motorock-headless-montonio.php for the storefront URL / locale helpers.
+ *
+ * Timing: orders aged 30 minutes … 72 hours, status pending/failed, once per order.
+ * Scheduling: Action Scheduler (preferred) with WP-Cron fallback.
  */
 
 defined( 'ABSPATH' ) || exit;
 
 const MOTOROCK_REMINDER_META      = '_motorock_payment_reminder_sent';
-const MOTOROCK_REMINDER_MIN_AGE   = HOUR_IN_SECONDS;      // Wait before nudging.
-const MOTOROCK_REMINDER_MAX_AGE   = DAY_IN_SECONDS;       // Too old = stale intent.
-const MOTOROCK_REMINDER_BATCH     = 20;
+const MOTOROCK_REMINDER_MIN_AGE   = 30 * MINUTE_IN_SECONDS; // Wait before nudging.
+const MOTOROCK_REMINDER_MAX_AGE   = 3 * DAY_IN_SECONDS;     // Too old = stale intent.
+const MOTOROCK_REMINDER_BATCH     = 30;
+const MOTOROCK_REMINDER_CRON_HOOK = 'motorock_payment_reminder_cron';
 
 /* -------------------------------------------------------------------------
  * Cart restore REST endpoint
@@ -41,8 +45,50 @@ add_action(
 				),
 			)
 		);
+
+		// Manual / external cron trigger:
+		// GET /wp-json/motorock/v1/payment-reminder-run?secret=YOUR_SECRET
+		register_rest_route(
+			'motorock/v1',
+			'/payment-reminder-run',
+			array(
+				'methods'             => 'GET',
+				'callback'            => 'motorock_rest_payment_reminder_run',
+				'permission_callback' => 'motorock_rest_payment_reminder_permission',
+			)
+		);
 	}
 );
+
+function motorock_reminder_run_secret() {
+	if ( defined( 'MOTOROCK_REMINDER_SECRET' ) && MOTOROCK_REMINDER_SECRET ) {
+		return (string) MOTOROCK_REMINDER_SECRET;
+	}
+
+	$env = getenv( 'MOTOROCK_REMINDER_SECRET' );
+	if ( $env ) {
+		return (string) $env;
+	}
+
+	// Stable per-site fallback so the endpoint works before a custom secret is set.
+	return hash_hmac( 'sha256', 'motorock-payment-reminder', wp_salt( 'auth' ) );
+}
+
+function motorock_rest_payment_reminder_permission( WP_REST_Request $request ) {
+	$provided = (string) $request->get_param( 'secret' );
+	$expected = motorock_reminder_run_secret();
+
+	return $provided !== '' && hash_equals( $expected, $provided );
+}
+
+function motorock_rest_payment_reminder_run() {
+	$sent = motorock_send_payment_reminders();
+
+	return array(
+		'sent'    => $sent,
+		'message' => sprintf( 'Payment reminder run finished. Emails sent: %d.', $sent ),
+	);
+}
 
 function motorock_restore_product_type( $product_id ) {
 	$terms = get_the_terms( $product_id, 'product_cat' );
@@ -144,39 +190,77 @@ function motorock_rest_order_restore( WP_REST_Request $request ) {
 }
 
 /* -------------------------------------------------------------------------
- * Hourly reminder cron
+ * Scheduling — Action Scheduler first, WP-Cron as fallback
  * ---------------------------------------------------------------------- */
 
-add_action( 'init', function () {
-	if ( ! wp_next_scheduled( 'motorock_payment_reminder_cron' ) ) {
-		wp_schedule_event( time() + MINUTE_IN_SECONDS, 'hourly', 'motorock_payment_reminder_cron' );
-	}
-} );
+function motorock_schedule_payment_reminders() {
+	if ( function_exists( 'as_next_scheduled_action' ) && function_exists( 'as_schedule_recurring_action' ) ) {
+		if ( ! as_next_scheduled_action( MOTOROCK_REMINDER_CRON_HOOK ) ) {
+			as_schedule_recurring_action(
+				time() + MINUTE_IN_SECONDS,
+				HOUR_IN_SECONDS,
+				MOTOROCK_REMINDER_CRON_HOOK,
+				array(),
+				'motorock'
+			);
+		}
 
-add_action( 'motorock_payment_reminder_cron', 'motorock_send_payment_reminders' );
+		// Avoid duplicate WP-Cron events when Action Scheduler is available.
+		$timestamp = wp_next_scheduled( MOTOROCK_REMINDER_CRON_HOOK );
+		if ( $timestamp ) {
+			wp_unschedule_event( $timestamp, MOTOROCK_REMINDER_CRON_HOOK );
+		}
 
-function motorock_send_payment_reminders() {
-	if ( ! function_exists( 'wc_get_orders' ) ) {
 		return;
 	}
 
-	$orders = wc_get_orders(
+	if ( ! wp_next_scheduled( MOTOROCK_REMINDER_CRON_HOOK ) ) {
+		wp_schedule_event( time() + MINUTE_IN_SECONDS, 'hourly', MOTOROCK_REMINDER_CRON_HOOK );
+	}
+}
+
+add_action( 'init', 'motorock_schedule_payment_reminders', 20 );
+add_action( MOTOROCK_REMINDER_CRON_HOOK, 'motorock_send_payment_reminders' );
+
+/**
+ * Find eligible unfinished orders and send reminders.
+ *
+ * @return int Number of emails successfully sent.
+ */
+function motorock_send_payment_reminders() {
+	if ( ! function_exists( 'wc_get_orders' ) ) {
+		return 0;
+	}
+
+	$now     = time();
+	$orders  = wc_get_orders(
 		array(
 			'status'       => array( 'pending', 'failed' ),
-			'date_created' => ( time() - MOTOROCK_REMINDER_MAX_AGE ) . '...' . ( time() - MOTOROCK_REMINDER_MIN_AGE ),
+			'date_created' => ( $now - MOTOROCK_REMINDER_MAX_AGE ) . '...' . ( $now - MOTOROCK_REMINDER_MIN_AGE ),
 			'limit'        => MOTOROCK_REMINDER_BATCH,
-			'meta_query'   => array(
-				array(
-					'key'     => MOTOROCK_REMINDER_META,
-					'compare' => 'NOT EXISTS',
-				),
-			),
+			'orderby'      => 'date',
+			'order'        => 'ASC',
 		)
 	);
 
+	$sent = 0;
+
 	foreach ( $orders as $order ) {
-		motorock_maybe_send_payment_reminder( $order );
+		if ( ! $order instanceof WC_Order ) {
+			continue;
+		}
+
+		// Filter in PHP so we don't depend on HPOS/legacy meta_query quirks.
+		if ( $order->get_meta( MOTOROCK_REMINDER_META ) ) {
+			continue;
+		}
+
+		if ( motorock_maybe_send_payment_reminder( $order ) ) {
+			++$sent;
+		}
 	}
+
+	return $sent;
 }
 
 /** A newer paid order from the same buyer means they already completed the purchase. */
@@ -199,18 +283,23 @@ function motorock_buyer_completed_later_order( WC_Order $order ) {
 	return ! empty( $paid );
 }
 
+/**
+ * @return bool True when an email was successfully handed to wp_mail / WC mailer.
+ */
 function motorock_maybe_send_payment_reminder( WC_Order $order ) {
 	$email = $order->get_billing_email();
 	if ( ! $email ) {
-		return;
+		$order->add_order_note( 'Motorock: payment reminder skipped (no billing email).' );
+		$order->update_meta_data( MOTOROCK_REMINDER_META, 'skipped_no_email:' . time() );
+		$order->save();
+		return false;
 	}
 
-	// Mark first so a mail failure can never cause repeated sends.
-	$order->update_meta_data( MOTOROCK_REMINDER_META, time() );
-	$order->save();
-
 	if ( motorock_buyer_completed_later_order( $order ) ) {
-		return;
+		$order->add_order_note( 'Motorock: payment reminder skipped (newer paid order for same email).' );
+		$order->update_meta_data( MOTOROCK_REMINDER_META, 'skipped_later_paid:' . time() );
+		$order->save();
+		return false;
 	}
 
 	$locale     = function_exists( 'motorock_get_checkout_locale' ) ? motorock_get_checkout_locale( $order ) : 'en';
@@ -269,9 +358,16 @@ function motorock_maybe_send_payment_reminder( WC_Order $order ) {
 
 	$mailer  = WC()->mailer();
 	$wrapped = $mailer->wrap_message( $heading, $body );
-	$sent    = $mailer->send( $email, $subject, $wrapped );
+	$sent    = (bool) $mailer->send( $email, $subject, $wrapped );
 
 	if ( $sent ) {
+		$order->update_meta_data( MOTOROCK_REMINDER_META, time() );
 		$order->add_order_note( 'Motorock: payment reminder email sent to ' . $email . '.' );
+		$order->save();
+		return true;
 	}
+
+	$order->add_order_note( 'Motorock: payment reminder email FAILED for ' . $email . ' (will retry on next run).' );
+	$order->save();
+	return false;
 }

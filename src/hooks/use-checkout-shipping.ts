@@ -75,8 +75,8 @@ export function useCheckoutShipping(
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [countries, setCountries] = useState<string[]>(["EE"]);
-  const [country, setCountryState] = useState("EE");
+  const [countries, setCountries] = useState<string[]>([]);
+  const [country, setCountryState] = useState("");
   const [rates, setRates] = useState<ShippingRate[]>([]);
   const [selectedRateId, setSelectedRateIdState] = useState<string | null>(
     null,
@@ -92,7 +92,8 @@ export function useCheckoutShipping(
   const sessionRef = useRef<string | null>(null);
   const bootstrapReadyRef = useRef(false);
   const syncedLinesKeyRef = useRef("");
-  const countryRef = useRef("EE");
+  /** Empty until the buyer picks a country (or geo fills a valid one). */
+  const countryRef = useRef("");
   const linesRef = useRef(lines);
   const customerRef = useRef(customer);
   const committedAddressKeyRef = useRef("");
@@ -214,8 +215,15 @@ export function useCheckoutShipping(
       committedAddressKeyRef.current = "";
       setCountryState(nextCountry);
       setSelectedRateIdState(null);
-      setSyncing(true);
+      setRates([]);
       setError(null);
+
+      if (!nextCountry) {
+        setSyncing(false);
+        return;
+      }
+
+      setSyncing(true);
 
       void pushCustomerShipping(nextCountry, false)
         .catch((cause) => {
@@ -402,9 +410,14 @@ export function useCheckoutShipping(
       }
 
       try {
-        const [allowedCountries, session] = await Promise.all([
+        const [allowedCountries, session, geoPayload] = await Promise.all([
           fetchAllowedCountries(),
           syncLocalCartToWoo(currentLines, { linesKey }),
+          fetch("/api/geo")
+            .then(async (response) =>
+              response.ok ? ((await response.json()) as { country?: string }) : null,
+            )
+            .catch(() => null),
         ]);
 
         if (cancelled) {
@@ -415,14 +428,31 @@ export function useCheckoutShipping(
         const sorted = sortCountryCodes(allowedCountries);
         setCountries(sorted);
 
-        const defaultCountry = sorted.includes("EE") ? "EE" : sorted[0];
-        const shipCountry = bootstrapReadyRef.current
-          ? countryRef.current
-          : defaultCountry;
+        // Keep an already chosen country across cart edits; otherwise prefer
+        // IP geo when it maps to an allowed shipping country. Never force EE.
+        let shipCountry = "";
+        if (bootstrapReadyRef.current && countryRef.current) {
+          shipCountry = sorted.includes(countryRef.current)
+            ? countryRef.current
+            : "";
+        } else {
+          const detected = geoPayload?.country?.trim().toUpperCase() ?? "";
+          shipCountry =
+            detected && sorted.includes(detected) ? detected : "";
+        }
 
-        if (!bootstrapReadyRef.current) {
-          countryRef.current = shipCountry;
-          setCountryState(shipCountry);
+        countryRef.current = shipCountry;
+        setCountryState(shipCountry);
+
+        if (!shipCountry) {
+          setRates([]);
+          setSelectedRateIdState(null);
+          syncedLinesKeyRef.current = linesKey;
+          if (!cancelled) {
+            bootstrapReadyRef.current = true;
+            setLoading(false);
+          }
+          return;
         }
 
         const rateCount = await pushCustomerShipping(shipCountry, false);
@@ -488,10 +518,12 @@ export function useCheckoutShipping(
     void syncLocalCartToWoo(linesRef.current, { linesKey })
       .then(async (session) => {
         rememberSession(session);
-        await pushCustomerShipping(
-          countryRef.current,
-          needsAddress && Boolean(customerRef.current.address1),
-        );
+        if (countryRef.current) {
+          await pushCustomerShipping(
+            countryRef.current,
+            needsAddress && Boolean(customerRef.current.address1),
+          );
+        }
         syncedLinesKeyRef.current = linesKey;
       })
       .catch((cause) => {
