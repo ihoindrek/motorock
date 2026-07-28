@@ -62,6 +62,7 @@ export type Dictionary = {
     cookies: string;
     needHelp: string;
     rights: string;
+    trademarkNotice: string;
   };
   common: {
     skipToContent: string;
@@ -635,6 +636,7 @@ export const en: Dictionary = {
     cookies: "Cookie Policy (EU)",
     needHelp: "Need help?",
     rights: "All rights reserved.",
+    trademarkNotice: "MotoRock® is a registered trademark of MotoMad OÜ.",
   },
   common: {
     skipToContent: "Skip to content",

@@ -195,6 +195,9 @@ function CheckoutFooter() {
               <small className="text-xs text-paper/35">
                 &copy; {new Date().getFullYear()} Motorock.eu
               </small>
+              <small className="text-[10px] text-paper/25">
+                {dictionary.footer.trademarkNotice}
+              </small>
             </div>
           </div>
         </div>
@@ -322,9 +325,14 @@ export function SiteFooter() {
           </div>
 
           <div className="flex flex-col items-start justify-between gap-4 border-t border-paper/10 py-6 sm:flex-row sm:items-center">
-            <small className="text-xs text-paper/35">
-              &copy; {new Date().getFullYear()} Motorock.eu. {dictionary.footer.rights}
-            </small>
+            <div className="flex flex-col gap-1">
+              <small className="text-xs text-paper/35">
+                &copy; {new Date().getFullYear()} Motorock.eu. {dictionary.footer.rights}
+              </small>
+              <small className="text-[10px] text-paper/25">
+                {dictionary.footer.trademarkNotice}
+              </small>
+            </div>
             <nav aria-label="Legal">
               <ul className="flex flex-wrap gap-x-6 gap-y-2">
                 {legalLinks.map((link) => (

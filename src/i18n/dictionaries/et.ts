@@ -66,6 +66,7 @@ export const et: Dictionary = {
     cookies: "Küpsiste poliitika (EL)",
     needHelp: "Vajad abi?",
     rights: "Kõik õigused kaitstud.",
+    trademarkNotice: "MotoRock® on MotoMad OÜ registreeritud kaubamärk.",
   },
   common: {
     skipToContent: "Liigu sisuni",
