@@ -3,7 +3,6 @@ import { Suspense } from "react";
 import { LatestBlogPostsSection } from "@/components/blog/latest-blog-posts-section";
 import { Hero } from "@/components/hero";
 import { HomeBelowFoldSkeleton } from "@/components/home-below-fold-skeleton";
-import { RecentlyViewedProducts } from "@/components/shop/recently-viewed-products";
 import { RidersFavorites } from "@/components/riders-favorites";
 import { isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/get-dictionary";
@@ -50,7 +49,6 @@ export default async function Home({ params }: HomePageProps) {
       <Suspense fallback={<HomeBelowFoldSkeleton />}>
         <RidersFavorites locale={localeParam} />
       </Suspense>
-      <RecentlyViewedProducts />
       <Suspense fallback={<HomeBelowFoldSkeleton />}>
         <LatestBlogPostsSection locale={localeParam} />
       </Suspense>
