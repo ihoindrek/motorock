@@ -7,6 +7,7 @@ import { BrandLogo } from "@/components/shop/brand-logo";
 import { Price } from "@/components/shop/price";
 import { useDictionary, useLocale } from "@/context/locale-context";
 import { localizedProductHref } from "@/lib/shop/product-url";
+import { cn } from "@/lib/utils";
 import {
   readRecentlyViewed,
   type RecentlyViewedItem,
@@ -51,7 +52,10 @@ export function RecentlyViewedProducts({
         {dict.pdp.recentlyViewed}
       </h2>
       <ul className="-mx-4 flex snap-x gap-4 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0">
-        {items.map((item) => (
+        {items.map((item) => {
+          const isMotorcycle = item.type === "motorcycle";
+
+          return (
           <li
             key={item.slug}
             className="w-40 shrink-0 snap-start border border-ink/10 bg-paper sm:w-48"
@@ -60,13 +64,22 @@ export function RecentlyViewedProducts({
               href={localizedProductHref(item.slug, locale)}
               className="flex h-full flex-col outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
             >
-              <figure className="relative aspect-[4/5] overflow-hidden bg-detail">
+              <figure
+                className={cn(
+                  "relative overflow-hidden",
+                  isMotorcycle ? "aspect-[4/3] bg-moto" : "aspect-[4/5] bg-detail",
+                )}
+              >
                 <Image
                   src={item.image}
                   alt={item.name}
                   fill
                   sizes="(max-width: 640px) 40vw, 192px"
-                  className="object-cover object-center"
+                  className={cn(
+                    isMotorcycle
+                      ? "object-contain object-center p-2 mix-blend-multiply sm:p-3"
+                      : "object-cover object-center",
+                  )}
                 />
               </figure>
               <div className="flex flex-1 flex-col gap-1 p-3">
@@ -78,7 +91,8 @@ export function RecentlyViewedProducts({
               </div>
             </Link>
           </li>
-        ))}
+          );
+        })}
       </ul>
     </section>
   );
