@@ -21,4 +21,12 @@ describe("category description HTML", () => {
       ),
     ).toBe("Motorcycle gear designed for women riders — jackets.");
   });
+
+  it("strips anchor tags from category blurbs", () => {
+    expect(
+      sanitizeCategoryDescriptionHtml(
+        '<a href="/relative">Loe edasi</a> and <a href="https://example.com">link</a>.',
+      ),
+    ).toBe("Loe edasi and link .");
+  });
 });

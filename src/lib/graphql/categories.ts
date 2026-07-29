@@ -128,7 +128,6 @@ const CATEGORY_DESCRIPTION_ALLOWED_TAGS = new Set([
   "ul",
   "ol",
   "li",
-  "a",
 ]);
 
 /** Plain text for meta descriptions / fallbacks. */
@@ -163,19 +162,17 @@ export function sanitizeCategoryDescriptionHtml(
         return " ";
       }
 
+      if (tag === "a") {
+        // Category blurbs are expand-only — drop links to avoid broken/legacy URLs.
+        return "";
+      }
+
       if (tag === "br") {
         return "<br />";
       }
 
       if (match.startsWith("</")) {
         return `</${tag}>`;
-      }
-
-      if (tag === "a") {
-        const href = match.match(/href\s*=\s*["'](https?:\/\/[^"']+)["']/i)?.[1];
-        return href
-          ? `<a href="${href}" rel="noopener noreferrer">`
-          : "";
       }
 
       return `<${tag}>`;

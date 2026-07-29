@@ -293,6 +293,8 @@ export const et: Dictionary = {
       "Avasta {brand} mootorrattad Motorockis — premium masinad sõitjatele, kes ei taha sulguda massi.",
     contentAvailableInEnglish:
       "Selle mudeli kirjeldus on hetkel saadaval ainult inglise keeles. Eestikeelne tõlge on peagi tulemas.",
+    readMore: "Loe edasi",
+    readLess: "Näita vähem",
   },
   showroom: {
     pickupTitle: "Tule salongi järgi ja proovi",

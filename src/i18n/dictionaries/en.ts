@@ -272,6 +272,8 @@ export type Dictionary = {
     brandMotorcyclesTitle: string;
     brandMotorcyclesDescription: string;
     contentAvailableInEnglish: string;
+    readMore: string;
+    readLess: string;
   };
   showroom: {
     pickupTitle: string;
@@ -860,6 +862,8 @@ export const en: Dictionary = {
       "Explore {brand} motorcycles at Motorock — premium machines for riders who refuse to blend in.",
     contentAvailableInEnglish:
       "This model description is currently available in English only. An Estonian translation is coming soon.",
+    readMore: "Read more",
+    readLess: "Show less",
   },
   showroom: {
     pickupTitle: "Pick up at showroom & try on",
