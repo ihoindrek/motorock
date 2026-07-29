@@ -454,9 +454,6 @@ export function EquipmentProductView({
             </div>
           </div>
 
-          <p className="text-xs leading-relaxed text-ink/50 sm:text-sm">
-            {dict.pdp.paymentAtCheckout}
-          </p>
         </div>
 
         <div className="order-2 flex flex-col gap-8 max-lg:contents lg:order-2 lg:col-span-6 xl:col-span-7">

@@ -213,7 +213,6 @@ export type Dictionary = {
     share: string;
     linkCopied: string;
     recentlyViewed: string;
-    paymentAtCheckout: string;
     selectSize: string;
     selectColor: string;
     description: string;
@@ -801,8 +800,6 @@ export const en: Dictionary = {
     share: "Share",
     linkCopied: "Link copied",
     recentlyViewed: "Recently viewed",
-    paymentAtCheckout:
-      "Montonio pay later & hire purchase at checkout.",
     selectSize: "Select a size",
     selectColor: "Select a color",
     description: "Description",
