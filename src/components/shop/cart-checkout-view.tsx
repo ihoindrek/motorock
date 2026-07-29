@@ -6,6 +6,11 @@ import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, useCallback, type ReactNode } from "react";
 import { useCart, type CartLine } from "@/context/cart-context";
 import { useCheckoutStep } from "@/context/checkout-step-context";
+import { useMinLgViewport } from "@/hooks/use-min-lg-viewport";
+import {
+  deriveCheckoutProgressStep,
+  scrollToCheckoutStep,
+} from "@/lib/checkout/progress-step";
 import { useDictionary, useLocale } from "@/context/locale-context";
 import { localizedHref } from "@/i18n/paths";
 import { localizedProductHref } from "@/lib/shop/product-url";
@@ -91,17 +96,6 @@ function scrollCheckoutToTop() {
     }
     window.scrollTo(0, 0);
   }
-}
-
-function deriveCheckoutProgressStep(input: {
-  itemCount: number;
-  mobileStep: 1 | 2 | 3;
-}): 1 | 2 | 3 {
-  if (input.itemCount === 0) {
-    return 1;
-  }
-
-  return input.mobileStep;
 }
 
 const inputClassName =
@@ -561,6 +555,7 @@ export function CartCheckoutView() {
   const [city, setCity] = useState("");
   const [postcode, setPostcode] = useState("");
   const [couponCode, setCouponCode] = useState("");
+  const isDesktopLayout = useMinLgViewport();
   const [mobileStep, setMobileStep] = useState<1 | 2 | 3>(1);
   const [mobileStepError, setMobileStepError] = useState<string | null>(null);
   const [textFieldFocused, setTextFieldFocused] = useState(false);
@@ -801,6 +796,8 @@ export function CartCheckoutView() {
   const progressStep = deriveCheckoutProgressStep({
     itemCount,
     mobileStep,
+    deliveryReady,
+    isDesktopLayout,
   });
 
   const goToMobileStep = useCallback((step: 1 | 2 | 3) => {
@@ -996,8 +993,17 @@ export function CartCheckoutView() {
     registerCheckoutStepNavigator((step) => {
       if (step === 3 && !deliveryReady) {
         setMobileStepError(dict.checkout.completeDeliveryFirst);
-        setMobileStep(2);
-        scrollCheckoutToTop();
+        if (isDesktopLayout) {
+          scrollToCheckoutStep(2);
+        } else {
+          setMobileStep(2);
+          scrollCheckoutToTop();
+        }
+        return;
+      }
+
+      if (isDesktopLayout) {
+        scrollToCheckoutStep(step);
         return;
       }
 
@@ -1011,6 +1017,7 @@ export function CartCheckoutView() {
     deliveryReady,
     dict.checkout.completeDeliveryFirst,
     goToMobileStep,
+    isDesktopLayout,
     registerCheckoutStepNavigator,
   ]);
 
@@ -1334,7 +1341,7 @@ export function CartCheckoutView() {
 
       <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(18rem,22rem)] lg:items-start lg:gap-12 xl:gap-16">
         <div className="min-w-0">
-          <div className={checkoutPanelClass(mobileStep, 1)}>
+          <div id="checkout-step-cart" className={checkoutPanelClass(mobileStep, 1)}>
           <CheckoutBlock
             title={dict.checkout.yourCart}
             hideTitleOnMobile
@@ -1448,7 +1455,7 @@ export function CartCheckoutView() {
           </div>
 
           <form id={FORM_ID} onSubmit={handleSubmit} noValidate>
-            <div className={checkoutPanelClass(mobileStep, 2)}>
+            <div id="checkout-step-delivery" className={checkoutPanelClass(mobileStep, 2)}>
             <CheckoutBlock
               title={dict.checkout.deliveryContact}
               action={
@@ -1660,7 +1667,7 @@ export function CartCheckoutView() {
             </CheckoutBlock>
             </div>
 
-            <div className={checkoutPanelClass(mobileStep, 3)}>
+            <div id="checkout-step-payment" className={checkoutPanelClass(mobileStep, 3)}>
             <CheckoutBlock
               title={dict.checkout.pay}
               action={
