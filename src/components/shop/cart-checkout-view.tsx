@@ -68,6 +68,7 @@ import {
   gatewayNeedsMontonioSubselection,
   isBankMontonioGateway,
 } from "@/components/shop/checkout-payment-options";
+import { CheckoutSupportNotice } from "@/components/shop/checkout-support-notice";
 import {
   resolvePickupPointSources,
   shippingMethodNeedsPickupPoint,
@@ -862,7 +863,6 @@ export function CartCheckoutView() {
     dict.checkout.shippingError,
     locale,
   );
-
   useEffect(() => {
     setPickupPoint(null);
     setSelectedMontonioOption(null);
@@ -1504,6 +1504,13 @@ export function CartCheckoutView() {
                     {shippingError ? (
                       <p className="mt-2 text-sm text-accent">{shippingError}</p>
                     ) : null}
+                    {!shipping.countriesLoading &&
+                    shipping.countries.length === 0 &&
+                    itemCount > 0 ? (
+                      <div className="mt-3">
+                        <CheckoutSupportNotice locale={locale} />
+                      </div>
+                    ) : null}
                   </label>
                 </div>
 
@@ -1524,6 +1531,7 @@ export function CartCheckoutView() {
                         >
                           {dict.error.retry}
                         </button>
+                        <CheckoutSupportNotice locale={locale} />
                       </div>
                     ) : !shipping.country &&
                       !shipping.loading &&
@@ -1532,7 +1540,10 @@ export function CartCheckoutView() {
                         {t.chooseCountryForDelivery}
                       </p>
                     ) : shipping.rates.length === 0 ? (
-                      <p className="text-sm text-ink/60">{t.noDeliveryOptions}</p>
+                      <div className="space-y-3">
+                        <p className="text-sm text-ink/60">{t.noDeliveryOptions}</p>
+                        <CheckoutSupportNotice locale={locale} />
+                      </div>
                     ) : (
                       <CheckoutShippingOptions
                         rates={shipping.rates}

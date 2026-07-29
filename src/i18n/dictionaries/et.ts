@@ -202,6 +202,8 @@ export const et: Dictionary = {
     paymentLoading: "Laen makseviise…",
     paymentWaiting: "Makseviisid ilmuvad pärast tarneviisi valimist.",
     paymentEmpty: "Makseviise ei leitud.",
+    checkoutSupportHint:
+      "Kui tarne- või makseviisid ei ilmu, värskenda lehte või kirjuta aadressil",
     paymentPreview:
       "Testrežiim — makseviisid laetakse WooCommerce'ist. Tellimust ei looda ega makset ei võeta.",
     paymentNotConfigured:

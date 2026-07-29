@@ -187,6 +187,7 @@ export type Dictionary = {
     paymentLoading: string;
     paymentWaiting: string;
     paymentEmpty: string;
+    checkoutSupportHint: string;
     paymentPreview: string;
     paymentNotConfigured: string;
     paymentMethodsEmpty: string;
@@ -771,6 +772,8 @@ export const en: Dictionary = {
     paymentLoading: "Loading payment methods…",
     paymentWaiting: "Payment methods appear after you choose delivery.",
     paymentEmpty: "No payment methods found.",
+    checkoutSupportHint:
+      "If delivery or payment options don't appear, refresh the page or contact us at",
     paymentPreview:
       "Test mode — payment methods load from WooCommerce. No order is created and no payment is taken.",
     paymentNotConfigured:

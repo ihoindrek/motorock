@@ -22,6 +22,7 @@ import {
   montonioOptionLabel,
 } from "@/types/montonio-payment";
 import { cn } from "@/lib/utils";
+import { CheckoutSupportNotice } from "@/components/shop/checkout-support-notice";
 
 function isMontonioGateway(gateway: PaymentGateway) {
   return gateway.id.toLowerCase().includes("montonio");
@@ -675,9 +676,15 @@ export function CheckoutPaymentOptions({
       ) : loading ? (
         <CheckoutPaymentOptionsSkeleton message={copy.paymentLoading} />
       ) : error ? (
-        <p className="text-sm text-accent">{error}</p>
+        <div className="space-y-3">
+          <p className="text-sm text-accent">{error}</p>
+          <CheckoutSupportNotice locale={locale} />
+        </div>
       ) : localizedGateways.length === 0 ? (
-        <p className="text-sm text-ink/60">{copy.paymentEmpty}</p>
+        <div className="space-y-3">
+          <p className="text-sm text-ink/60">{copy.paymentEmpty}</p>
+          <CheckoutSupportNotice locale={locale} />
+        </div>
       ) : (
         <ul className="grid gap-2">
           {localizedGateways.map((gateway) => {
