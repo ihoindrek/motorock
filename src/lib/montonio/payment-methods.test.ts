@@ -44,6 +44,25 @@ describe("parseMontonioPaymentMethods", () => {
     ).toEqual(["cardPayments"]);
   });
 
+  it("includes Pay Later for Baltic customers only", () => {
+    const payload = {
+      paymentMethods: [{ systemName: "bnpl" }, { systemName: "cardPayments" }],
+    };
+
+    expect(
+      parseMontonioPaymentMethods(payload, "EE").map((option) => option.systemName),
+    ).toEqual(["cardPayments", "bnpl"]);
+    expect(
+      parseMontonioPaymentMethods(payload, "LT").map((option) => option.systemName),
+    ).toEqual(["cardPayments", "bnpl"]);
+    expect(
+      parseMontonioPaymentMethods(payload, "LV").map((option) => option.systemName),
+    ).toEqual(["cardPayments", "bnpl"]);
+    expect(
+      parseMontonioPaymentMethods(payload, "DE").map((option) => option.systemName),
+    ).toEqual(["cardPayments"]);
+  });
+
   it("applies the same country gate to the array payload shape", () => {
     const arrayPayload = {
       paymentMethods: [
