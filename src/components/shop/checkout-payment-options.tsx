@@ -80,9 +80,7 @@ export function filterMontonioOptionsForGateway(
     haystack.includes("pay later") ||
     haystack.includes("maksa hiljem")
   ) {
-    return options.filter(
-      (option) => option.kind === "bnpl" || option.kind === "hirePurchase",
-    );
+    return options.filter((option) => option.kind === "bnpl");
   }
 
   if (

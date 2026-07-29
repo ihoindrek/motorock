@@ -35,9 +35,16 @@ function kindForSystemName(systemName: string): MontonioPaymentOptionKind {
 /** MobilePay is a Finnish/Danish app; Montonio processes it in EUR, so FI only. */
 const MOBILEPAY_COUNTRIES = new Set(["FI"]);
 
+/** Inbank hire purchase via Montonio is only offered to Estonian customers. */
+const HIRE_PURCHASE_COUNTRIES = new Set(["EE"]);
+
 function systemNameAvailableForCountry(systemName: string, iso: string) {
   if (systemName === "mobilePay") {
     return MOBILEPAY_COUNTRIES.has(iso);
+  }
+
+  if (systemName === "hirePurchase") {
+    return HIRE_PURCHASE_COUNTRIES.has(iso);
   }
 
   return true;

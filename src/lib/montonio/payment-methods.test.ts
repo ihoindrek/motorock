@@ -31,6 +31,19 @@ describe("parseMontonioPaymentMethods", () => {
     expect(options.map((option) => option.systemName)).toContain("cardPayments");
   });
 
+  it("includes hire purchase for Estonian customers only", () => {
+    const payload = {
+      paymentMethods: [{ systemName: "hirePurchase" }, { systemName: "cardPayments" }],
+    };
+
+    expect(
+      parseMontonioPaymentMethods(payload, "EE").map((option) => option.systemName),
+    ).toEqual(["cardPayments", "hirePurchase"]);
+    expect(
+      parseMontonioPaymentMethods(payload, "LT").map((option) => option.systemName),
+    ).toEqual(["cardPayments"]);
+  });
+
   it("applies the same country gate to the array payload shape", () => {
     const arrayPayload = {
       paymentMethods: [
