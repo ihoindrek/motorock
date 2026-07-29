@@ -102,7 +102,7 @@ export function resetCheckoutSyncState() {
 }
 
 function lineCacheKey(line: CartLine) {
-  return `${line.slug}:${line.size ?? ""}:${line.color ?? ""}`;
+  return `${line.slug}:${line.size ?? ""}:${line.color ?? ""}:${line.variationId ?? ""}`;
 }
 
 export function flattenShippingRates(
@@ -205,6 +205,7 @@ export async function resolveCartLineIds(line: CartLine): Promise<{
   let resolved = resolveCheckoutProductIds(englishProduct, line, {
     isOneSizeLabel,
     sizesMatch,
+    variationId: line.variationId,
   });
 
   if (

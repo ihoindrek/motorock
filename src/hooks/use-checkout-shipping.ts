@@ -410,8 +410,18 @@ export function useCheckoutShipping(
       }
 
       try {
-        const [allowedCountries, session, geoPayload] = await Promise.all([
-          fetchAllowedCountries(),
+        // Load countries before cart sync so the dropdown stays usable when sync
+        // fails (e.g. variation mismatch) — previously Promise.all blocked both.
+        const allowedCountries = await fetchAllowedCountries();
+
+        if (cancelled) {
+          return;
+        }
+
+        const sorted = sortCountryCodes(allowedCountries);
+        setCountries(sorted);
+
+        const [session, geoPayload] = await Promise.all([
           syncLocalCartToWoo(currentLines, { linesKey }),
           fetch("/api/geo")
             .then(async (response) =>
@@ -425,8 +435,6 @@ export function useCheckoutShipping(
         }
 
         rememberSession(session);
-        const sorted = sortCountryCodes(allowedCountries);
-        setCountries(sorted);
 
         // Keep an already chosen country across cart edits; otherwise prefer
         // IP geo when it maps to an allowed shipping country. Never force EE.
@@ -437,8 +445,11 @@ export function useCheckoutShipping(
             : "";
         } else {
           const detected = geoPayload?.country?.trim().toUpperCase() ?? "";
+          const phoneHint =
+            customerRef.current.phoneCountry?.trim().toUpperCase() ?? "";
           shipCountry =
-            detected && sorted.includes(detected) ? detected : "";
+            (detected && sorted.includes(detected) ? detected : "") ||
+            (phoneHint && sorted.includes(phoneHint) ? phoneHint : "");
         }
 
         countryRef.current = shipCountry;
@@ -486,6 +497,7 @@ export function useCheckoutShipping(
               ? cause.message
               : "Could not prepare checkout",
           );
+          bootstrapReadyRef.current = true;
           setLoading(false);
         }
       }

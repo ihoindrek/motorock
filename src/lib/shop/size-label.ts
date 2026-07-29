@@ -44,8 +44,19 @@ export function formatSizeLabel(value: string) {
   return trimmed;
 }
 
+function normalizeCompoundSizeKey(value: string) {
+  return formatSizeLabel(value)
+    .trim()
+    .toLowerCase()
+    .replace(/\//g, "-");
+}
+
 export function sizesMatch(left: string, right: string) {
-  return formatSizeLabel(left).toLowerCase() === formatSizeLabel(right).toLowerCase();
+  if (formatSizeLabel(left).toLowerCase() === formatSizeLabel(right).toLowerCase()) {
+    return true;
+  }
+
+  return normalizeCompoundSizeKey(left) === normalizeCompoundSizeKey(right);
 }
 
 /** Prefer taxonomy term name over WPML option slug for UI labels. */
@@ -162,4 +173,25 @@ export function isLikelyFilterSizeLabel(value: string | undefined | null) {
   }
 
   return false;
+}
+
+/** Split multi-region size labels (e.g. UK10/EU38/US8) for stacked button UI. */
+export function formatSizeButtonParts(label: string): readonly string[] {
+  const formatted = formatSizeLabel(label).trim();
+  if (!formatted) {
+    return [];
+  }
+
+  if (formatted.includes("/")) {
+    return formatted
+      .split("/")
+      .map((part) => part.trim())
+      .filter(Boolean);
+  }
+
+  return [formatted];
+}
+
+export function isCompoundSizeLabel(label: string) {
+  return formatSizeButtonParts(label).length > 1;
 }

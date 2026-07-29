@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  formatSizeButtonParts,
   formatSizeLabel,
+  isCompoundSizeLabel,
   resolveSizeOptionLabel,
   sizesMatch,
   stripSizeLocaleSuffix,
@@ -50,5 +52,31 @@ describe("sizesMatch", () => {
   it("matches locale-suffixed slugs to display labels", () => {
     expect(sizesMatch("s-et", "S")).toBe(true);
     expect(sizesMatch("m-et", "M")).toBe(true);
+  });
+
+  it("matches compound UK/EU/US labels to Woo slugs", () => {
+    expect(sizesMatch("uk26-eu54-us24", "UK26/EU54/US24")).toBe(true);
+    expect(sizesMatch("UK10/EU38/US8", "uk10-eu38-us8")).toBe(true);
+  });
+});
+
+describe("formatSizeButtonParts", () => {
+  it("splits multi-region labels for stacked buttons", () => {
+    expect(formatSizeButtonParts("UK10/EU38/US8")).toEqual([
+      "UK10",
+      "EU38",
+      "US8",
+    ]);
+  });
+
+  it("returns a single part for simple labels", () => {
+    expect(formatSizeButtonParts("M")).toEqual(["M"]);
+  });
+});
+
+describe("isCompoundSizeLabel", () => {
+  it("detects slash-separated labels", () => {
+    expect(isCompoundSizeLabel("UK10/EU38/US8")).toBe(true);
+    expect(isCompoundSizeLabel("M")).toBe(false);
   });
 });

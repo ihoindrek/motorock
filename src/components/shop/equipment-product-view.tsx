@@ -10,7 +10,7 @@ import { localizedHref } from "@/i18n/paths";
 import { trackViewItem } from "@/lib/analytics";
 import { recordRecentlyViewed } from "@/lib/shop/recently-viewed";
 import { resolveLineVariationId } from "@/lib/shop/resolve-cart-variation";
-import { formatSizeLabel } from "@/lib/shop/size-label";
+import { formatSizeButtonParts, formatSizeLabel, isCompoundSizeLabel } from "@/lib/shop/size-label";
 import { sortProductSizes } from "@/lib/shop/sort-sizes";
 import { BrandLogo } from "@/components/shop/brand-logo";
 import { FinancingPriceTeaser } from "@/components/shop/financing-price-teaser";
@@ -129,6 +129,10 @@ export function EquipmentProductView({
   const sizes = useMemo(
     () => sortProductSizes(product.sizes),
     [product.sizes],
+  );
+  const hasCompoundSizes = useMemo(
+    () => sizes.some((option) => isCompoundSizeLabel(option)),
+    [sizes],
   );
   const selectableColors = useMemo(
     () => getSelectableColors(product.colors),
@@ -369,21 +373,41 @@ export function EquipmentProductView({
                   </button>
                 ) : null}
               </div>
-              <div className="mt-3 grid grid-cols-4 gap-2 sm:grid-cols-5">
-                {sizes.map((option) => (
+              <div
+                className={
+                  hasCompoundSizes
+                    ? "mt-3 grid grid-cols-3 gap-2 sm:grid-cols-4"
+                    : "mt-3 grid grid-cols-4 gap-2 sm:grid-cols-5"
+                }
+              >
+                {sizes.map((option) => {
+                  const parts = formatSizeButtonParts(option);
+
+                  return (
                   <button
                     key={option}
                     type="button"
                     onClick={() => setSize(option)}
-                    className={`min-h-11 border px-1 py-2 text-center font-body text-xs font-bold uppercase tracking-aggressive transition-colors ${
+                    className={`min-h-11 min-w-0 border px-1.5 py-2 text-center font-body leading-tight transition-colors ${
+                      hasCompoundSizes
+                        ? "text-[10px] font-semibold tracking-normal whitespace-normal"
+                        : "text-xs font-bold uppercase tracking-aggressive"
+                    } ${
                       size === option
                         ? "border-ink bg-ink text-paper"
                         : "border-ink/20 text-ink hover:border-ink"
                     }`}
                   >
-                    {option}
+                    {parts.length > 1
+                      ? parts.map((part) => (
+                          <span key={part} className="block">
+                            {part}
+                          </span>
+                        ))
+                      : parts[0]}
                   </button>
-                ))}
+                  );
+                })}
               </div>
             </div>
           ) : null}

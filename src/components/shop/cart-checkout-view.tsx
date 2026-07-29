@@ -462,6 +462,7 @@ export function CartCheckoutView() {
           email: "E-post",
           country: "Riik",
           chooseCountry: "Vali riik",
+          loadingCountries: "Laen riike…",
           chooseCountryForDelivery: "Vali riik, et näha tarneviise.",
           deliveryMethod: "Tarneviis",
           noDeliveryOptions: "Tarneviisid puuduvad — tühjenda ostukorv ja lisa toode uuesti tootelehelt (vali suurus).",
@@ -511,6 +512,7 @@ export function CartCheckoutView() {
           email: "Email",
           country: "Country",
           chooseCountry: "Choose country",
+          loadingCountries: "Loading countries…",
           chooseCountryForDelivery: "Choose a country to see delivery options.",
           deliveryMethod: "Delivery method",
           noDeliveryOptions:
@@ -1479,11 +1481,17 @@ export function CartCheckoutView() {
                       name="country"
                       required
                       value={shipping.country}
+                      disabled={
+                        shipping.loading &&
+                        shipping.countries.length === 0
+                      }
                       onChange={(event) => shipping.setCountry(event.target.value)}
                       className={inputClassName}
                     >
                       <option value="" disabled>
-                        {t.chooseCountry}
+                        {shipping.loading && shipping.countries.length === 0
+                          ? t.loadingCountries
+                          : t.chooseCountry}
                       </option>
                       {shipping.countries.map((code) => (
                         <option key={code} value={code}>
@@ -1491,20 +1499,18 @@ export function CartCheckoutView() {
                         </option>
                       ))}
                     </select>
+                    {shippingError ? (
+                      <p className="mt-2 text-sm text-accent">{shippingError}</p>
+                    ) : null}
                   </label>
                 </div>
 
                 <div>
                   <p className={labelClassName}>{t.deliveryMethod}</p>
                   <div className="mt-2">
-                    {!shipping.country &&
-                    !shipping.loading &&
-                    !shipping.syncing ? (
-                      <p className="text-sm text-ink/60">
-                        {t.chooseCountryForDelivery}
-                      </p>
-                    ) : (shipping.loading || shipping.syncing) &&
-                      shipping.rates.length === 0 ? (
+                    {(shipping.loading || shipping.syncing) &&
+                    shipping.rates.length === 0 &&
+                    !shippingError ? (
                       <CheckoutShippingOptionsSkeleton />
                     ) : shippingError ? (
                       <div className="space-y-3">
@@ -1517,6 +1523,12 @@ export function CartCheckoutView() {
                           {dict.error.retry}
                         </button>
                       </div>
+                    ) : !shipping.country &&
+                      !shipping.loading &&
+                      !shipping.syncing ? (
+                      <p className="text-sm text-ink/60">
+                        {t.chooseCountryForDelivery}
+                      </p>
                     ) : shipping.rates.length === 0 ? (
                       <p className="text-sm text-ink/60">{t.noDeliveryOptions}</p>
                     ) : (
