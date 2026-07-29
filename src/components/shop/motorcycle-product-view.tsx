@@ -24,6 +24,7 @@ import { MotorcycleProductGallery } from "@/components/shop/motorcycle-product-g
 import { MotorcycleRelatedProducts } from "@/components/shop/motorcycle-related-products";
 import { RecentlyViewedProducts } from "@/components/shop/recently-viewed-products";
 import { recordRecentlyViewed } from "@/lib/shop/recently-viewed";
+import { ShowroomPickupNote } from "@/components/shop/showroom-pickup-panel";
 import { MotorcycleShippingNote } from "@/components/shop/motorcycle-shipping-note";
 import { TestRideIcon } from "@/components/ui/test-ride-icon";
 import { ZoomParallax } from "@/components/ui/zoom-parallax";
@@ -343,6 +344,7 @@ function RichMotorcycleProductView({
                 title={`${sync.brand} ${sync.name}`}
                 className="mt-6"
               />
+              <ShowroomPickupNote className="mt-4" />
             </div>
 
             <div className="order-1 min-w-0 lg:order-none lg:col-span-8 xl:col-span-8">

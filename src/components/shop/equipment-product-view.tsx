@@ -19,7 +19,6 @@ import { ProductSpecs } from "@/components/shop/product-specs";
 import { RecentlyViewedProducts } from "@/components/shop/recently-viewed-products";
 import { RelatedProducts } from "@/components/shop/related-products";
 import { EquipmentReturnPromise } from "@/components/shop/equipment-return-promise";
-import { ShowroomPickupNote } from "@/components/shop/showroom-pickup-panel";
 import { SizeGuideModal } from "@/components/shop/size-guide-modal";
 import { EquipmentColorPicker } from "@/components/shop/equipment-color-picker";
 import { EquipmentStickyAtc } from "@/components/shop/equipment-sticky-atc";
@@ -413,7 +412,6 @@ export function EquipmentProductView({
           ) : null}
 
           <EquipmentReturnPromise className="pt-1" />
-          <ShowroomPickupNote className="pt-2" />
 
           <div className="space-y-3 pt-2" ref={atcSentinelRef}>
             <button
