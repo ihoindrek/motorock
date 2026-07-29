@@ -31,6 +31,8 @@ type CartContextValue = {
   lines: CartLine[];
   itemCount: number;
   subtotal: number;
+  /** True after localStorage cart has been read on the client. */
+  hydrated: boolean;
   drawerOpen: boolean;
   openCart: () => void;
   closeCart: () => void;
@@ -234,6 +236,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       lines,
       itemCount,
       subtotal,
+      hydrated,
       drawerOpen,
       openCart,
       closeCart,
@@ -248,6 +251,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       lines,
       itemCount,
       subtotal,
+      hydrated,
       drawerOpen,
       openCart,
       closeCart,

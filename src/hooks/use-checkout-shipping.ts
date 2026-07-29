@@ -34,6 +34,7 @@ import { filterShippingRatesForCountry } from "@/lib/shop/shipping-showroom-pick
 
 type CheckoutShippingState = {
   loading: boolean;
+  countriesLoading: boolean;
   syncing: boolean;
   error: string | null;
   countries: string[];
@@ -70,6 +71,7 @@ export function useCheckoutShipping(
     city: string;
     postcode: string;
   },
+  cartHydrated = true,
 ): CheckoutShippingState {
   const dict = useDictionary();
   const [loading, setLoading] = useState(true);
@@ -89,6 +91,7 @@ export function useCheckoutShipping(
   const [wcSubtotal, setWcSubtotal] = useState<number | null>(null);
   const [wcTotal, setWcTotal] = useState<number | null>(null);
   const [bootstrapNonce, setBootstrapNonce] = useState(0);
+  const [countriesLoading, setCountriesLoading] = useState(true);
   const sessionRef = useRef<string | null>(null);
   const bootstrapReadyRef = useRef(false);
   const syncedLinesKeyRef = useRef("");
@@ -97,6 +100,8 @@ export function useCheckoutShipping(
   const linesRef = useRef(lines);
   const customerRef = useRef(customer);
   const committedAddressKeyRef = useRef("");
+  const countriesRef = useRef(countries);
+  countriesRef.current = countries;
 
   customerRef.current = customer;
   countryRef.current = country;
@@ -208,6 +213,39 @@ export function useCheckoutShipping(
     },
     [activeSession, applyCart, rememberSession],
   );
+
+  const pushCustomerShippingRef = useRef(pushCustomerShipping);
+  pushCustomerShippingRef.current = pushCustomerShipping;
+
+  /** Always load allowed countries on mount — independent of cart sync success. */
+  useEffect(() => {
+    let cancelled = false;
+
+    void fetchAllowedCountries()
+      .then((allowedCountries) => {
+        if (!cancelled) {
+          setCountries(sortCountryCodes(allowedCountries));
+        }
+      })
+      .catch((cause) => {
+        if (!cancelled) {
+          setError(
+            cause instanceof Error
+              ? cause.message
+              : "Could not load shipping countries",
+          );
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setCountriesLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const setCountry = useCallback(
     (nextCountry: string) => {
@@ -382,6 +420,10 @@ export function useCheckoutShipping(
   }, [rates, selectedRateId, loading, syncing, setSelectedRateId]);
 
   useEffect(() => {
+    if (!cartHydrated) {
+      return;
+    }
+
     const currentLines = linesRef.current;
 
     if (currentLines.length === 0) {
@@ -410,16 +452,18 @@ export function useCheckoutShipping(
       }
 
       try {
-        // Load countries before cart sync so the dropdown stays usable when sync
-        // fails (e.g. variation mismatch) — previously Promise.all blocked both.
-        const allowedCountries = await fetchAllowedCountries();
+        const sorted =
+          countriesRef.current.length > 0
+            ? countriesRef.current
+            : sortCountryCodes(await fetchAllowedCountries());
 
         if (cancelled) {
           return;
         }
 
-        const sorted = sortCountryCodes(allowedCountries);
-        setCountries(sorted);
+        if (countriesRef.current.length === 0) {
+          setCountries(sorted);
+        }
 
         const [session, geoPayload] = await Promise.all([
           syncLocalCartToWoo(currentLines, { linesKey }),
@@ -466,7 +510,10 @@ export function useCheckoutShipping(
           return;
         }
 
-        const rateCount = await pushCustomerShipping(shipCountry, false);
+        const rateCount = await pushCustomerShippingRef.current(
+          shipCountry,
+          false,
+        );
 
         // Zero rates with items in the cart usually means the stored session
         // is stale — its backend cart was consumed by a previous checkout
@@ -508,7 +555,7 @@ export function useCheckoutShipping(
     return () => {
       cancelled = true;
     };
-  }, [linesKey, bootstrapNonce, pushCustomerShipping, rememberSession]);
+  }, [linesKey, bootstrapNonce, cartHydrated]);
 
   /** Re-run the full cart sync after a transient failure (e.g. network). */
   const retryBootstrap = useCallback(() => {
@@ -558,6 +605,7 @@ export function useCheckoutShipping(
 
   return {
     loading,
+    countriesLoading,
     syncing,
     error,
     countries,

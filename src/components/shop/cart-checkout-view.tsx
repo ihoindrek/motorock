@@ -544,6 +544,7 @@ export function CartCheckoutView() {
     lines,
     itemCount,
     subtotal,
+    hydrated: cartHydrated,
     updateQuantity,
     removeItem,
     clearCart,
@@ -658,7 +659,7 @@ export function CartCheckoutView() {
     [email, firstName, lastName, phone, phoneCountry, address1, city, postcode],
   );
 
-  const shipping = useCheckoutShipping(lines, customer);
+  const shipping = useCheckoutShipping(lines, customer, cartHydrated);
   const paymentReady =
     !shipping.loading && shipping.rates.length > 0 && !shipping.syncing;
   const paymentRefreshKey = `${shipping.country}:${shipping.selectedRateId ?? ""}:${shipping.rates.map((rate) => rate.id).join("|")}`;
@@ -1482,14 +1483,15 @@ export function CartCheckoutView() {
                       required
                       value={shipping.country}
                       disabled={
-                        shipping.loading &&
+                        shipping.countriesLoading &&
                         shipping.countries.length === 0
                       }
                       onChange={(event) => shipping.setCountry(event.target.value)}
                       className={inputClassName}
                     >
                       <option value="" disabled>
-                        {shipping.loading && shipping.countries.length === 0
+                        {shipping.countriesLoading &&
+                        shipping.countries.length === 0
                           ? t.loadingCountries
                           : t.chooseCountry}
                       </option>
