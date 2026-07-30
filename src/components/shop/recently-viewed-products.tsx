@@ -58,7 +58,7 @@ function RecentlyViewedCard({
           src={item.image}
           alt={item.name}
           fill
-          sizes="(max-width: 640px) 40vw, 192px"
+          sizes="(max-width: 640px) 40vw, (max-width: 1024px) 30vw, 25vw"
           className={cn(
             isMotorcycle
               ? "object-contain object-center p-2 mix-blend-multiply sm:p-3"
@@ -91,15 +91,18 @@ export function RecentlyViewedProducts({
     next: false,
   });
 
-  const updateNavState = useCallback((swiper: SwiperInstance) => {
-    const hasOverflow = !swiper.isBeginning || !swiper.isEnd;
+  const updateNavState = useCallback(
+    (swiper: SwiperInstance) => {
+      const hasOverflow = !swiper.isBeginning || !swiper.isEnd;
 
-    setNavState({
-      show: hasOverflow,
-      prev: !swiper.isBeginning,
-      next: !swiper.isEnd,
-    });
-  }, []);
+      setNavState({
+        show: items.length > 1 && hasOverflow,
+        prev: !swiper.isBeginning,
+        next: !swiper.isEnd,
+      });
+    },
+    [items.length],
+  );
 
   // localStorage is only readable after mount; first-time visitors simply
   // never see this section.
@@ -128,14 +131,14 @@ export function RecentlyViewedProducts({
   return (
     <section
       aria-label={dict.pdp.recentlyViewed}
-      className={`overflow-hidden py-10 sm:py-14 ${className}`}
+      className={`relative overflow-hidden py-10 sm:py-14 ${className}`}
     >
       <div className="site-container">
-        <h2 className="mb-6 font-body text-xl font-extrabold uppercase tracking-tight text-ink sm:text-2xl">
+        <h2 className="mb-6 font-body text-xl font-extrabold uppercase tracking-tight text-ink sm:mb-5 sm:text-2xl">
           {dict.pdp.recentlyViewed}
         </h2>
 
-        <div className="min-w-0 w-full overflow-hidden">
+        <div className="w-full overflow-visible">
           <Swiper
             modules={[A11y]}
             onSwiper={(swiper) => {
@@ -152,50 +155,47 @@ export function RecentlyViewedProducts({
             observeParents
             resizeObserver
             spaceBetween={16}
-            slidesPerView="auto"
+            slidesPerView={1.15}
             slidesPerGroup={1}
             grabCursor
             speed={600}
             breakpoints={{
-              640: { spaceBetween: 20 },
-              1024: { spaceBetween: 28 },
+              640: { slidesPerView: 2, spaceBetween: 20 },
+              1024: { slidesPerView: 3, spaceBetween: 28 },
             }}
-            className="w-full"
+            className="w-full !overflow-visible"
             aria-label={dict.pdp.recentlyViewed}
           >
             {items.map((item) => (
-              <SwiperSlide
-                key={item.slug}
-                className="!h-auto !w-40 sm:!w-48"
-              >
+              <SwiperSlide key={item.slug} className="!h-auto">
                 <RecentlyViewedCard item={item} locale={locale} />
               </SwiperSlide>
             ))}
           </Swiper>
 
-        {navState.show ? (
-          <nav
-            aria-label={dict.carousel.navigation}
-            className="mt-6 flex items-center justify-between sm:mt-8"
-          >
-            <CarouselArrow
-              direction="prev"
-              label={dict.carousel.previousProduct}
-              text={dict.carousel.previous}
-              onClick={() => swiperRef.current?.slidePrev()}
-              disabled={!navState.prev}
-              theme="light"
-            />
-            <CarouselArrow
-              direction="next"
-              label={dict.carousel.nextProduct}
-              text={dict.carousel.next}
-              onClick={() => swiperRef.current?.slideNext()}
-              disabled={!navState.next}
-              theme="light"
-            />
-          </nav>
-        ) : null}
+          {navState.show ? (
+            <nav
+              aria-label={dict.carousel.navigation}
+              className="mt-6 flex items-center justify-between sm:mt-8"
+            >
+              <CarouselArrow
+                direction="prev"
+                label={dict.carousel.previousProduct}
+                text={dict.carousel.previous}
+                onClick={() => swiperRef.current?.slidePrev()}
+                disabled={!navState.prev}
+                theme="light"
+              />
+              <CarouselArrow
+                direction="next"
+                label={dict.carousel.nextProduct}
+                text={dict.carousel.next}
+                onClick={() => swiperRef.current?.slideNext()}
+                disabled={!navState.next}
+                theme="light"
+              />
+            </nav>
+          ) : null}
         </div>
       </div>
     </section>
