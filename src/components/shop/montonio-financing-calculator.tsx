@@ -42,7 +42,7 @@ export const MontonioFinancingCalculator = forwardRef<
   MontonioFinancingCalculatorHandle,
   MontonioFinancingCalculatorProps
 >(function MontonioFinancingCalculator(
-  { amount, countryCode = "EE", eyebrow, calculateLabel, className = "" },
+  { amount, countryCode, eyebrow, calculateLabel, className = "" },
   ref,
 ) {
   const locale = useLocale();

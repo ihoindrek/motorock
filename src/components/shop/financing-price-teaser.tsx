@@ -1,7 +1,8 @@
 "use client";
 
 import { useDictionary } from "@/context/locale-context";
-import { FINANCING_COUNTRY_CODE, isFinancingAvailable } from "@/data/financing";
+import { isFinancingAvailable } from "@/data/financing";
+import { useVisitorCountry } from "@/hooks/use-visitor-country";
 import {
   getInbankCalculatorConfig,
   isInbankCalculatorAmount,
@@ -15,6 +16,7 @@ type FinancingPriceTeaserProps = {
   variant?: "hero" | "compact";
   priceVariant?: ComponentProps<typeof Price>["variant"];
   className?: string;
+  /** Override geo-detected country (e.g. tests). */
   countryCode?: string;
 };
 
@@ -23,21 +25,25 @@ export function FinancingPriceTeaser({
   variant = "hero",
   priceVariant,
   className,
-  countryCode = FINANCING_COUNTRY_CODE,
+  countryCode,
 }: FinancingPriceTeaserProps) {
   const dict = useDictionary();
+  const { country: visitorCountry, loading: geoLoading } = useVisitorCountry();
   const config = getInbankCalculatorConfig();
   const resolvedPriceVariant = priceVariant ?? (variant === "hero" ? "xl" : "md");
+  const resolvedCountry = countryCode ?? visitorCountry;
+  const geoReady = countryCode !== undefined || !geoLoading;
   const showCalculator =
+    geoReady &&
     config.enabled &&
-    isFinancingAvailable(countryCode) &&
+    isFinancingAvailable(resolvedCountry) &&
     isInbankCalculatorAmount(price) &&
     price > 0;
 
   const financing = showCalculator ? (
     <MontonioFinancingCalculator
       amount={price}
-      countryCode={countryCode}
+      countryCode={resolvedCountry ?? undefined}
       eyebrow={dict.financing.finance}
       calculateLabel={dict.financing.calculateFinancing}
     />
