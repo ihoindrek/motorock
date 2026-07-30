@@ -58,7 +58,7 @@ type RidersFavoritesBlockProps = {
     imageMultiply: boolean;
     compact: boolean;
     slideDividers: boolean;
-    figureBackground?: "moto" | "ink" | "detail" | "none";
+    figureBackground?: "moto" | "ink" | "detail" | "white" | "none";
   };
 };
 

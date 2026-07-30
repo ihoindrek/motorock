@@ -29,12 +29,13 @@ export type FavoriteProduct = {
 };
 
 type CarouselTheme = "light" | "dark";
-type FigureBackground = "moto" | "ink" | "detail" | "none";
+type FigureBackground = "moto" | "ink" | "detail" | "white" | "none";
 
 const figureBackgroundClass: Record<FigureBackground, string> = {
   moto: "bg-moto",
   ink: "bg-ink",
   detail: "bg-detail",
+  white: "bg-white",
   none: "",
 };
 
@@ -95,7 +96,9 @@ export function FavoriteProductCard({
   const resolvedFigureBackground =
     figureBackground ?? (theme === "light" ? "moto" : "ink");
   const figureBg = figureBackgroundClass[resolvedFigureBackground];
-  const bareFigure = resolvedFigureBackground === "none";
+  const bareFigure =
+    resolvedFigureBackground === "none" ||
+    resolvedFigureBackground === "white";
 
   return (
     <article className="flex h-full w-full flex-col">

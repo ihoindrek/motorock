@@ -124,10 +124,9 @@ export function PopularGearSection({
             key={activeTab?.id}
             products={products}
             theme="light"
-            imageMultiply={activeTab?.id === "accessories"}
             compact={false}
             slideDividers={false}
-            figureBackground={activeTab?.id === "accessories" ? "moto" : "none"}
+            figureBackground="white"
             slideGroup={2}
           />
         </div>
