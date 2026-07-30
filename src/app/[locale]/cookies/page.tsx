@@ -42,7 +42,8 @@ export default async function CookiesPage({ params }: CookiesPageProps) {
 
   return (
     <LegalDocumentView
-      eyebrow={dict.legal.eyebrow}
+      locale={localeParam}
+      currentId="cookies"
       title={dict.legal.cookiesTitle}
       description={cookiePolicyScopeText(localeParam)}
       updated={cookiePolicyUpdatedLabel(localeParam)}

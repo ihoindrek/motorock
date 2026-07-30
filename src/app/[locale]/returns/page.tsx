@@ -38,7 +38,7 @@ export default async function ReturnsPage({ params }: ReturnsPageProps) {
 
   return (
     <ReturnsWithFormView
-      eyebrow={dict.legal.eyebrow}
+      locale={localeParam}
       title={dict.legal.returnsTitle}
       description={dict.legal.returnsDescription}
       updated="10 July 2026"

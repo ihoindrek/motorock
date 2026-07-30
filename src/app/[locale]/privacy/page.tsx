@@ -35,7 +35,8 @@ export default async function PrivacyPage({ params }: PrivacyPageProps) {
 
   return (
     <LegalDocumentView
-      eyebrow={dict.legal.eyebrow}
+      locale={localeParam}
+      currentId="privacy"
       title={dict.legal.privacyTitle}
       description={dict.legal.privacyDescription}
       updated="6 July 2026"

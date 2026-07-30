@@ -573,6 +573,7 @@ export const et: Dictionary = {
     cookiesTitle: "Küpsised",
     cookiesDescription:
       "Küpsiste kasutamine motorock.eu lehel Euroopa Majanduspiirkonna ja Šveitsi külastajatele.",
+    customerServiceTitle: "Klienditeenindus",
     emailPrompt: "või kirjuta",
     supportContact: {
       emailLabel: "E-post",

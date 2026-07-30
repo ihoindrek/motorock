@@ -35,7 +35,8 @@ export default async function TermsPage({ params }: TermsPageProps) {
 
   return (
     <LegalDocumentView
-      eyebrow={dict.legal.eyebrow}
+      locale={localeParam}
+      currentId="terms"
       title={dict.legal.termsTitle}
       description={dict.legal.termsDescription}
       updated="6 July 2026"

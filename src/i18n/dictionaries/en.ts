@@ -507,6 +507,7 @@ export type Dictionary = {
     supportDescription: string;
     cookiesTitle: string;
     cookiesDescription: string;
+    customerServiceTitle: string;
     emailPrompt: string;
     supportContact: {
       emailLabel: string;
@@ -1136,6 +1137,7 @@ export const en: Dictionary = {
     cookiesTitle: "Cookie Policy (EU)",
     cookiesDescription:
       "Cookie use on motorock.eu for visitors in the European Economic Area and Switzerland.",
+    customerServiceTitle: "Customer service",
     emailPrompt: "or email",
     supportContact: {
       emailLabel: "Email",

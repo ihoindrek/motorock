@@ -35,7 +35,8 @@ export default async function ShippingPage({ params }: ShippingPageProps) {
 
   return (
     <LegalDocumentView
-      eyebrow={dict.legal.eyebrow}
+      locale={localeParam}
+      currentId="shipping"
       title={dict.legal.shippingTitle}
       description={dict.legal.shippingDescription}
       updated="6 July 2026"

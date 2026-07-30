@@ -38,7 +38,7 @@ export default async function SupportPage({ params }: SupportPageProps) {
 
   return (
     <CustomerSupportView
-      eyebrow={dict.legal.supportEyebrow}
+      locale={localeParam}
       title={dict.legal.supportTitle}
       description={dict.legal.supportDescription}
       updated="6 July 2026"
@@ -48,14 +48,6 @@ export default async function SupportPage({ params }: SupportPageProps) {
       contactHref={localizedHref(localeParam, "/contact")}
       emailPrompt={dict.legal.emailPrompt}
       contactStrip={dict.legal.supportContact}
-      locale={localeParam}
-      policyLinks={[
-        { href: localizedHref(localeParam, "/terms"), label: dict.footer.terms },
-        { href: localizedHref(localeParam, "/privacy"), label: dict.footer.privacy },
-        { href: localizedHref(localeParam, "/returns"), label: dict.footer.returns },
-        { href: localizedHref(localeParam, "/shipping"), label: dict.footer.shipping },
-        { href: localizedHref(localeParam, "/cookies"), label: dict.footer.cookies },
-      ]}
     />
   );
 }
