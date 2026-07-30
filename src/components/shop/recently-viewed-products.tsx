@@ -128,49 +128,50 @@ export function RecentlyViewedProducts({
   return (
     <section
       aria-label={dict.pdp.recentlyViewed}
-      className={`site-container py-10 sm:py-14 ${className}`}
+      className={`overflow-hidden py-10 sm:py-14 ${className}`}
     >
-      <h2 className="mb-6 font-body text-xl font-extrabold uppercase tracking-tight text-ink sm:text-2xl">
-        {dict.pdp.recentlyViewed}
-      </h2>
+      <div className="site-container">
+        <h2 className="mb-6 font-body text-xl font-extrabold uppercase tracking-tight text-ink sm:text-2xl">
+          {dict.pdp.recentlyViewed}
+        </h2>
 
-      <div className="w-full overflow-visible">
-        <Swiper
-          modules={[A11y]}
-          onSwiper={(swiper) => {
-            swiperRef.current = swiper;
-            updateNavState(swiper);
-          }}
-          onInit={updateNavState}
-          onSlideChange={updateNavState}
-          onResize={updateNavState}
-          onBreakpoint={updateNavState}
-          onReachBeginning={updateNavState}
-          onReachEnd={updateNavState}
-          observer
-          observeParents
-          resizeObserver
-          spaceBetween={16}
-          slidesPerView="auto"
-          slidesPerGroup={1}
-          grabCursor
-          speed={600}
-          breakpoints={{
-            640: { spaceBetween: 20 },
-            1024: { spaceBetween: 28 },
-          }}
-          className="w-full !overflow-visible"
-          aria-label={dict.pdp.recentlyViewed}
-        >
-          {items.map((item) => (
-            <SwiperSlide
-              key={item.slug}
-              className="!h-auto !w-40 sm:!w-48"
-            >
-              <RecentlyViewedCard item={item} locale={locale} />
-            </SwiperSlide>
-          ))}
-        </Swiper>
+        <div className="min-w-0 w-full overflow-hidden">
+          <Swiper
+            modules={[A11y]}
+            onSwiper={(swiper) => {
+              swiperRef.current = swiper;
+              updateNavState(swiper);
+            }}
+            onInit={updateNavState}
+            onSlideChange={updateNavState}
+            onResize={updateNavState}
+            onBreakpoint={updateNavState}
+            onReachBeginning={updateNavState}
+            onReachEnd={updateNavState}
+            observer
+            observeParents
+            resizeObserver
+            spaceBetween={16}
+            slidesPerView="auto"
+            slidesPerGroup={1}
+            grabCursor
+            speed={600}
+            breakpoints={{
+              640: { spaceBetween: 20 },
+              1024: { spaceBetween: 28 },
+            }}
+            className="w-full"
+            aria-label={dict.pdp.recentlyViewed}
+          >
+            {items.map((item) => (
+              <SwiperSlide
+                key={item.slug}
+                className="!h-auto !w-40 sm:!w-48"
+              >
+                <RecentlyViewedCard item={item} locale={locale} />
+              </SwiperSlide>
+            ))}
+          </Swiper>
 
         {navState.show ? (
           <nav
@@ -195,6 +196,7 @@ export function RecentlyViewedProducts({
             />
           </nav>
         ) : null}
+        </div>
       </div>
     </section>
   );
