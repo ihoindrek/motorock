@@ -757,7 +757,7 @@ export const en: Dictionary = {
     paymentMethodsBankDesc: "Choose your bank and pay securely via Montonio.",
     paymentMethodsCard: "Card payment",
     paymentMethodsCardDesc:
-      "Pay with your credit or debit card via Montonio.",
+      "Google Pay, Apple Pay, Visa, Maestro and other cards — secure payment via Montonio.",
     paymentMethodsMobilePay: "MobilePay",
     paymentMethodsMobilePayDesc: "Pay with the MobilePay app via Montonio.",
     paymentMethodsBnpl: "Pay later",

@@ -185,7 +185,7 @@ export const et: Dictionary = {
       "Vali pank ja maksa turvaliselt Montonio kaudu.",
     paymentMethodsCard: "Kaardimakse",
     paymentMethodsCardDesc:
-      "Maksa krediit- või deebetkaardiga Montonio kaudu.",
+      "Google Pay, Apple Pay, Visa, Maestro ja teised kaardid — Montonio turvalises maksekeskkonnas.",
     paymentMethodsMobilePay: "MobilePay",
     paymentMethodsMobilePayDesc: "Maksa MobilePay äpiga Montonio kaudu.",
     paymentMethodsBnpl: "Maksa hiljem",
