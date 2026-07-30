@@ -623,10 +623,10 @@ export function CategoryView({
       ) : (
         <div className="flex min-h-[20rem] flex-col items-start justify-center border border-dashed border-ink/15 bg-surface/50 p-8">
           <p className="font-body text-sm font-bold uppercase tracking-aggressive text-ink">
-            No products found
+            {dict.catalog.noProductsFound}
           </p>
           <p className="mt-2 max-w-sm text-sm text-ink/60">
-            Try adjusting your filters or browse a broader category.
+            {dict.catalog.noProductsHint}
           </p>
           <button
             type="button"

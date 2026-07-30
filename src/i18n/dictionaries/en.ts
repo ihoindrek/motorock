@@ -267,6 +267,8 @@ export type Dictionary = {
     productSingular: string;
     productPlural: string;
     clearFilters: string;
+    noProductsFound: string;
+    noProductsHint: string;
     lookingForGear: string;
     shopEquipmentCta: string;
     brandMotorcyclesTitle: string;
@@ -856,6 +858,9 @@ export const en: Dictionary = {
     productSingular: "product",
     productPlural: "products",
     clearFilters: "Clear filters",
+    noProductsFound: "No products found",
+    noProductsHint:
+      "Try adjusting your filters or browse a broader category.",
     lookingForGear: "Looking for gear?",
     shopEquipmentCta: "Shop driving equipment →",
     brandMotorcyclesTitle: "{brand} motorcycles",

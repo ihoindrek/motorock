@@ -286,6 +286,8 @@ export const et: Dictionary = {
     productSingular: "toode",
     productPlural: "toodet",
     clearFilters: "Tühista filtrid",
+    noProductsFound: "Tooteid ei leitud",
+    noProductsHint: "Proovi filtreid muuta või sirvi laiemat kategooriat.",
     lookingForGear: "Otsid varustust?",
     shopEquipmentCta: "Vaata sõiduvarustust →",
     brandMotorcyclesTitle: "{brand} mootorrattad",
