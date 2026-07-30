@@ -131,7 +131,7 @@ export function RecentlyViewedProducts({
   return (
     <section
       aria-label={dict.pdp.recentlyViewed}
-      className={`relative overflow-hidden py-10 sm:py-14 ${className}`}
+      className={`relative overflow-hidden border-t border-ink/10 bg-paper pt-12 pb-10 sm:pt-16 sm:pb-14 ${className}`}
     >
       <div className="site-container">
         <h2 className="mb-6 font-body text-xl font-extrabold uppercase tracking-tight text-ink sm:mb-5 sm:text-2xl">
