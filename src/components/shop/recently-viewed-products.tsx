@@ -52,7 +52,7 @@ function RecentlyViewedCard({
       <figure
         className={cn(
           "relative overflow-hidden",
-          isMotorcycle ? "aspect-[4/3] bg-moto" : "aspect-[4/5] bg-detail",
+          isMotorcycle ? "aspect-[4/3] bg-moto" : "aspect-[4/5] bg-white",
         )}
       >
         <Image

@@ -52,7 +52,7 @@ export function ProductCard({ product }: ProductCardProps) {
           className={
             isMotorcycle
               ? "relative aspect-[4/3] overflow-hidden bg-moto"
-              : "relative overflow-hidden rounded-sm border border-ink/10 shadow-none transition-[transform,box-shadow,border-color] duration-300 ease-out motion-reduce:transition-none group-hover:-translate-y-1 group-hover:border-accent group-hover:shadow-[0_20px_50px_-20px_rgba(255,90,0,0.35),0_8px_24px_-12px_rgba(11,11,11,0.12)] aspect-[4/5]"
+              : "relative overflow-hidden rounded-sm border border-ink/10 bg-white shadow-none transition-[transform,box-shadow,border-color] duration-300 ease-out motion-reduce:transition-none group-hover:-translate-y-1 group-hover:border-accent group-hover:shadow-[0_20px_50px_-20px_rgba(255,90,0,0.35),0_8px_24px_-12px_rgba(11,11,11,0.12)] aspect-[4/5]"
           }
           onMouseLeave={() => setPreviewIndex(0)}
           onMouseMove={(event) => {

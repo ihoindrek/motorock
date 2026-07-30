@@ -57,7 +57,7 @@ export function CategoryViewSkeleton({
       <ul className={catalogProductGridClassName(4)}>
         {Array.from({ length: productCount }).map((_, index) => (
           <li key={index} className="flex flex-col">
-            <SkeletonBar className="aspect-[4/5] w-full rounded-sm" />
+            <SkeletonBar className="aspect-[4/5] w-full rounded-sm bg-white" />
             <SkeletonBar className="mt-3 h-3 w-16" />
             <SkeletonBar className="mt-2 h-4 w-full" />
             <SkeletonBar className="mt-2 h-4 w-20" />
