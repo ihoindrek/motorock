@@ -335,17 +335,6 @@ export function EquipmentProductView({
               variant="compact"
               priceVariant="xl"
             />
-            {product.inStock ? (
-              <p className="flex items-center gap-2 text-xs text-ink/60">
-                <span
-                  className="size-1.5 shrink-0 rounded-full bg-emerald-600"
-                  aria-hidden="true"
-                />
-                {dict.pdp.inStock}
-              </p>
-            ) : (
-              <p className="text-xs text-ink/50">{dict.pdp.contactAvailability}</p>
-            )}
           </div>
 
           {showColorPicker ? (

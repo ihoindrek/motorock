@@ -7,13 +7,6 @@ export type ProductSchemaShipping = {
   country: string;
 };
 
-type QuantitativeValue = {
-  "@type": "QuantitativeValue";
-  minValue: number;
-  maxValue: number;
-  unitCode: "DAY";
-};
-
 type OfferShippingDetails = {
   "@type": "OfferShippingDetails";
   shippingRate: {
@@ -24,11 +17,6 @@ type OfferShippingDetails = {
   shippingDestination: {
     "@type": "DefinedRegion";
     addressCountry: string;
-  };
-  deliveryTime: {
-    "@type": "ShippingDeliveryTime";
-    handlingTime: QuantitativeValue;
-    transitTime: QuantitativeValue;
   };
 };
 
@@ -90,22 +78,6 @@ function buildShippingDetails(
     shippingDestination: {
       "@type": "DefinedRegion",
       addressCountry: shipping.country,
-    },
-    // PDP promise: "In stock — ships in 1–3 business days".
-    deliveryTime: {
-      "@type": "ShippingDeliveryTime",
-      handlingTime: {
-        "@type": "QuantitativeValue",
-        minValue: 1,
-        maxValue: 3,
-        unitCode: "DAY",
-      },
-      transitTime: {
-        "@type": "QuantitativeValue",
-        minValue: 1,
-        maxValue: 3,
-        unitCode: "DAY",
-      },
     },
   };
 }

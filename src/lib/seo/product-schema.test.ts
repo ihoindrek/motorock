@@ -77,9 +77,6 @@ describe("buildProductJsonLd", () => {
         "@type": "DefinedRegion",
         addressCountry: "EE",
       },
-      deliveryTime: expect.objectContaining({
-        "@type": "ShippingDeliveryTime",
-      }),
     });
     expect(schema.offers.hasMerchantReturnPolicy?.applicableCountry).toContain(
       "EE",
