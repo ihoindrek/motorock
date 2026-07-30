@@ -69,21 +69,6 @@ export function ProductCard({ product }: ProductCardProps) {
             setPreviewIndex(nextIndex);
           }}
         >
-          {!isMotorcycle ? (
-            <div
-              className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-t from-ink/30 via-ink/5 to-transparent"
-              aria-hidden="true"
-            />
-          ) : (
-            <div className="moto-catalog-glow" aria-hidden="true" />
-          )}
-          {!isMotorcycle ? (
-            <div
-              className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-t from-accent/20 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-              aria-hidden="true"
-            />
-          ) : null}
-
           {product.isNew ? (
             <span className="absolute left-3 top-3 z-10 bg-accent px-2.5 py-1 font-body text-[9px] font-bold uppercase tracking-aggressive text-paper">
               {dict.motorcycle.newBadge}

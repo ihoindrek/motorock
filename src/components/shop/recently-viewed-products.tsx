@@ -17,6 +17,7 @@ import {
   type RecentlyViewedItem,
 } from "@/lib/shop/recently-viewed";
 import { cn } from "@/lib/utils";
+import { PRODUCT_CAROUSEL_SPACE } from "@/lib/shop/product-grid-layout";
 
 import "swiper/css";
 
@@ -154,14 +155,20 @@ export function RecentlyViewedProducts({
             observer
             observeParents
             resizeObserver
-            spaceBetween={16}
+            spaceBetween={PRODUCT_CAROUSEL_SPACE.base}
             slidesPerView={1.15}
             slidesPerGroup={1}
             grabCursor
             speed={600}
             breakpoints={{
-              640: { slidesPerView: 2.15, spaceBetween: 20 },
-              1024: { slidesPerView: 6.15, spaceBetween: 20 },
+              640: {
+                slidesPerView: 2.15,
+                spaceBetween: PRODUCT_CAROUSEL_SPACE.md,
+              },
+              1024: {
+                slidesPerView: 6.15,
+                spaceBetween: PRODUCT_CAROUSEL_SPACE.md,
+              },
             }}
             className="w-full !overflow-visible"
             aria-label={dict.pdp.recentlyViewed}

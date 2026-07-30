@@ -8,6 +8,7 @@ import type { CatalogProduct } from "@/types/catalog-product";
 import { ProductCard } from "@/components/shop/product-card";
 import { CarouselArrow } from "@/components/ui/carousel-arrow";
 import { useDictionary } from "@/context/locale-context";
+import { PRODUCT_CAROUSEL_SPACE } from "@/lib/shop/product-grid-layout";
 
 import "swiper/css";
 
@@ -88,14 +89,20 @@ export function RelatedProducts({
             observer
             observeParents
             resizeObserver
-            spaceBetween={16}
+            spaceBetween={PRODUCT_CAROUSEL_SPACE.base}
             slidesPerView={1.15}
             slidesPerGroup={1}
             grabCursor
             speed={600}
             breakpoints={{
-              640: { slidesPerView: 2, spaceBetween: 20 },
-              1024: { slidesPerView: 3, spaceBetween: 28 },
+              640: {
+                slidesPerView: 2,
+                spaceBetween: PRODUCT_CAROUSEL_SPACE.md,
+              },
+              1024: {
+                slidesPerView: 3,
+                spaceBetween: PRODUCT_CAROUSEL_SPACE.lg,
+              },
             }}
             className="w-full !overflow-visible"
             aria-label={dict.carousel.similarProducts}

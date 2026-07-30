@@ -10,6 +10,7 @@ import { useWishlist } from "@/context/wishlist-context";
 import { localizedHref } from "@/i18n/paths";
 import { localizedProductHref } from "@/lib/shop/product-url";
 import { buildEquipmentHubHref } from "@/lib/shop/category-url";
+import { wishlistProductGridClassName } from "@/lib/shop/product-grid-layout";
 
 export function WishlistView() {
   const locale = useLocale();
@@ -54,7 +55,7 @@ export function WishlistView() {
             </Link>
           </div>
         ) : (
-          <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <ul className={wishlistProductGridClassName}>
             {items.map((item) => (
               <li
                 key={item.slug}

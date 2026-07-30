@@ -10,6 +10,7 @@ import { buildEquipmentHubHref } from "@/lib/shop/category-url";
 import type { CatalogProduct } from "@/types/catalog-product";
 import { CatalogLoadMore } from "@/components/shop/catalog-load-more";
 import { CatalogProductGrid } from "@/components/shop/catalog-product-grid";
+import { catalogProductGridClassName } from "@/lib/shop/product-grid-layout";
 import {
   CategoryFilters,
   type ActiveFilters,
@@ -398,7 +399,7 @@ export function SearchResultsView({
             <>
               <CatalogProductGrid
                 products={visibleProducts}
-                listClassName="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 xl:gap-x-6 xl:gap-y-10"
+                listClassName={catalogProductGridClassName(4)}
                 resetKey={catalogResetKey}
               />
 

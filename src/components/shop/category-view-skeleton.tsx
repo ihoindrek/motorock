@@ -1,3 +1,5 @@
+import { catalogProductGridClassName } from "@/lib/shop/product-grid-layout";
+
 type CategoryViewSkeletonProps = {
   productCount?: number;
   loadingLabel?: string;
@@ -52,7 +54,7 @@ export function CategoryViewSkeleton({
         <SkeletonBar className="h-12 w-36 shrink-0" />
       </div>
 
-      <ul className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 xl:gap-x-6">
+      <ul className={catalogProductGridClassName(4)}>
         {Array.from({ length: productCount }).map((_, index) => (
           <li key={index} className="flex flex-col">
             <SkeletonBar className="aspect-[4/5] w-full rounded-sm" />

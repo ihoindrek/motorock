@@ -11,6 +11,10 @@ import { CarouselArrow } from "@/components/ui/carousel-arrow";
 import { Price } from "@/components/shop/price";
 import { useDictionary, useLocale } from "@/context/locale-context";
 import { localizedProductHref } from "@/lib/shop/product-url";
+import {
+  PRODUCT_CAROUSEL_SPACE,
+  favoritesProductGridClassName,
+} from "@/lib/shop/product-grid-layout";
 import { cn } from "@/lib/utils";
 
 import "swiper/css";
@@ -231,7 +235,7 @@ export function RidersFavoritesCarousel({
         observer
         observeParents
         resizeObserver
-        spaceBetween={16}
+        spaceBetween={PRODUCT_CAROUSEL_SPACE.base}
         slidesPerView={grouped ? 2 : mobilePeek ? 1.15 : "auto"}
         slidesPerGroup={grouped ? slideGroup : 1}
         grabCursor
@@ -242,19 +246,19 @@ export function RidersFavoritesCarousel({
                 640: {
                   slidesPerView: 2,
                   slidesPerGroup: slideGroup,
-                  spaceBetween: 20,
+                  spaceBetween: PRODUCT_CAROUSEL_SPACE.md,
                 },
                 1024: {
                   slidesPerView: 4,
                   slidesPerGroup: slideGroup,
-                  spaceBetween: 28,
+                  spaceBetween: PRODUCT_CAROUSEL_SPACE.lg,
                 },
               }
             : mobilePeek
               ? undefined
               : {
-                  640: { spaceBetween: 20 },
-                  1024: { spaceBetween: 28 },
+                  640: { spaceBetween: PRODUCT_CAROUSEL_SPACE.md },
+                  1024: { spaceBetween: PRODUCT_CAROUSEL_SPACE.lg },
                 }
         }
         className="w-full !overflow-visible"
@@ -329,7 +333,7 @@ export function RidersFavoritesGrid({
 
   return (
     <ul
-      className={`grid grid-cols-1 gap-x-6 gap-y-10 ${columnClass}`}
+      className={favoritesProductGridClassName(columnClass)}
       aria-label={dict.carousel.featuredProducts}
     >
       {products.map((product, index) => (

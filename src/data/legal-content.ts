@@ -4,15 +4,18 @@ import type { Locale } from "@/i18n/config";
 import { localizedHref } from "@/i18n/paths";
 import { SHOWROOM, getShowroomCopy } from "@/data/showroom";
 import {
-  COURIER_DELIVERY,
   DELIVERY_TIMES,
   INTERNATIONAL_CARRIERS_NOTE,
   ORDER_PROCESSING_DAYS,
-  PARCEL_LOCKERS,
+  PAYMENT_CHECKOUT_NOTE,
   PAYMENT_METHODS_CHECKOUT,
+  PAYMENT_REGIONS,
   POLICY_EMAILS,
   POLICY_PHONE,
+  SHIPPING_REGIONS,
+  paymentRegionIntro,
   shippingCostsCheckoutText,
+  shippingRegionIntro,
   showroomPickupLabel,
 } from "@/data/storefront-policies";
 
@@ -446,9 +449,11 @@ function buildPrivacySections(locale: Locale): readonly LegalSection[] {
 }
 
 function termsDeliveryBullets(locale: Locale) {
+  const isEt = locale === "et";
   return [
-    ...PARCEL_LOCKERS[locale],
-    COURIER_DELIVERY[locale],
+    isEt
+      ? "Tarneviisid riigiti (SmartPosti, Omniva, DPD, GLS, AlzaBox, Nova Post, kuller, salongist kättesaamine Eestis) — täpsed valikud checkoutis"
+      : "Delivery methods by country (SmartPosti, Omniva, DPD, GLS, AlzaBox, Nova Post, courier, showroom pickup in Estonia) — exact options at checkout",
     showroomPickupLabel(locale),
   ];
 }
@@ -490,6 +495,15 @@ function buildTermsSections(locale: Locale): readonly LegalSection[] {
         bullets: [...PAYMENT_METHODS_CHECKOUT.et],
       },
       {
+        id: "payment-by-country",
+        title: "Makseviisid riigiti",
+        paragraphs: [PAYMENT_CHECKOUT_NOTE.et, paymentRegionIntro("et")],
+        bullets: PAYMENT_REGIONS.flatMap(
+          (region) =>
+            [`${region.title.et}: ${region.methods.et.join(", ")}`] as const,
+        ),
+      },
+      {
         id: "payment",
         title: "Maksete töötlemine",
         paragraphs: [
@@ -518,11 +532,23 @@ function buildTermsSections(locale: Locale): readonly LegalSection[] {
         bullets: termsDeliveryBullets("et"),
       },
       {
+        id: "delivery-by-country",
+        title: "Tarne riigiti",
+        paragraphs: [shippingRegionIntro("et")],
+        bullets: SHIPPING_REGIONS.flatMap(
+          (region) =>
+            [
+              `${region.title.et}: ${region.methods.et.join("; ")}. ${region.deliveryTime.et}.`,
+            ] as const,
+        ),
+      },
+      {
         id: "delivery-times",
         title: "Tarneajad ja kulud",
         paragraphs: [
           "Saatmiskulud kannab ostja ja need kuvatakse checkoutis tarneviisi kõrval.",
           DELIVERY_TIMES.estonia.et,
+          DELIVERY_TIMES.baltics.et,
           DELIVERY_TIMES.finland.et,
           DELIVERY_TIMES.eu.et,
           `Tellimusi töödeldakse tavaliselt ${ORDER_PROCESSING_DAYS.et} enne väljasaatmist.`,
@@ -621,6 +647,15 @@ function buildTermsSections(locale: Locale): readonly LegalSection[] {
       bullets: [...PAYMENT_METHODS_CHECKOUT.en],
     },
     {
+      id: "payment-by-country",
+      title: "Payment methods by country",
+      paragraphs: [PAYMENT_CHECKOUT_NOTE.en, paymentRegionIntro("en")],
+      bullets: PAYMENT_REGIONS.flatMap(
+        (region) =>
+          [`${region.title.en}: ${region.methods.en.join(", ")}`] as const,
+      ),
+    },
+    {
       id: "payment",
       title: "Payment processing",
       paragraphs: [
@@ -649,11 +684,23 @@ function buildTermsSections(locale: Locale): readonly LegalSection[] {
       bullets: termsDeliveryBullets("en"),
     },
     {
+      id: "delivery-by-country",
+      title: "Delivery by country",
+      paragraphs: [shippingRegionIntro("en")],
+      bullets: SHIPPING_REGIONS.flatMap(
+        (region) =>
+          [
+            `${region.title.en}: ${region.methods.en.join("; ")}. ${region.deliveryTime.en}.`,
+          ] as const,
+      ),
+    },
+    {
       id: "delivery-times",
       title: "Delivery times and costs",
       paragraphs: [
         "The shipping cost is covered by the buyer and displayed at checkout next to the delivery method.",
         DELIVERY_TIMES.estonia.en,
+        DELIVERY_TIMES.baltics.en,
         DELIVERY_TIMES.finland.en,
         DELIVERY_TIMES.eu.en,
         `Orders are typically processed within ${ORDER_PROCESSING_DAYS.en} before dispatch.`,
@@ -727,7 +774,13 @@ function buildTermsSections(locale: Locale): readonly LegalSection[] {
 
 function buildShippingSections(locale: Locale): readonly LegalSection[] {
   const isEt = locale === "et";
-  const parcelLockers = PARCEL_LOCKERS[locale];
+
+  const regionSections: LegalSection[] = SHIPPING_REGIONS.map((region) => ({
+    id: `shipping-${region.id}`,
+    title: region.title[locale],
+    paragraphs: [region.deliveryTime[locale]],
+    bullets: [...region.methods[locale]],
+  }));
 
   return [
     {
@@ -735,26 +788,12 @@ function buildShippingSections(locale: Locale): readonly LegalSection[] {
       title: isEt ? "Tarneinfo" : "Delivery Information",
       paragraphs: [
         isEt
-          ? `Me tarnime kõikidesse Euroopa Liidu liikmesriikidesse. Tellimused töödeldakse tavaliselt ${ORDER_PROCESSING_DAYS.et}.`
-          : `We deliver to all European Union member states. Orders are typically processed within ${ORDER_PROCESSING_DAYS.en}.`,
+          ? `Me tarnime kõikidesse Euroopa Liidu liikmesriikidesse. Tellimused töödeldakse tavaliselt ${ORDER_PROCESSING_DAYS.et} enne väljasaatmist. ${INTERNATIONAL_CARRIERS_NOTE.et}`
+          : `We deliver to all European Union member states. Orders are typically processed within ${ORDER_PROCESSING_DAYS.en} before dispatch. ${INTERNATIONAL_CARRIERS_NOTE.en}`,
+        shippingRegionIntro(locale),
       ],
     },
-    {
-      id: "methods",
-      title: isEt ? "Tarneviisid" : "Delivery Methods",
-      paragraphs: [isEt ? "Enamiku toodete puhul checkoutis:" : "For most products at checkout:"],
-      bullets: parcelLockers,
-    },
-    {
-      id: "courier",
-      title: isEt ? "Kullertarne" : "Courier delivery",
-      paragraphs: [COURIER_DELIVERY[locale]],
-    },
-    {
-      id: "pickup",
-      title: isEt ? "Salongist kättesaamine" : "Showroom pickup",
-      paragraphs: [showroomPickupLabel(locale)],
-    },
+    ...regionSections,
     {
       id: "motorcycle-delivery",
       title: isEt ? "Mootorratastele" : "For Motorcycles",
@@ -762,16 +801,6 @@ function buildShippingSections(locale: Locale): readonly LegalSection[] {
         isEt
           ? "Transport kokkuleppel — võtke meiega ühendust mootorrataste kohandatud tarnekorralduse saamiseks. Tarnekulud lepitakse eraldi kokku."
           : "Transport by Agreement – Contact us for custom delivery arrangements for motorcycles. Delivery cost will be agreed upon separately.",
-      ],
-    },
-    {
-      id: "times",
-      title: isEt ? "Tarneajad" : "Delivery Times",
-      paragraphs: [],
-      bullets: [
-        DELIVERY_TIMES.estonia[locale],
-        DELIVERY_TIMES.finland[locale],
-        DELIVERY_TIMES.eu[locale],
       ],
     },
     {
@@ -789,13 +818,20 @@ function buildShippingSections(locale: Locale): readonly LegalSection[] {
       ],
     },
     {
+      id: "payment",
+      title: isEt ? "Makseviisid riigiti" : "Payment methods by country",
+      paragraphs: [PAYMENT_CHECKOUT_NOTE[locale], paymentRegionIntro(locale)],
+      bullets: PAYMENT_REGIONS.flatMap((region) => [
+        `${region.title[locale]}: ${region.methods[locale].join(", ")}`,
+      ]),
+    },
+    {
       id: "international",
       title: isEt ? "Rahvusvaheline tarne" : "International Shipping",
       paragraphs: [
         isEt
           ? "Me tarnime kõikidesse ELi liikmesriikidesse. Väljaspool ELi toimingute puhul võtke meiega ühendust, et leppida kokku tolli- ja veokorraldus."
           : "We ship to all EU member states. For deliveries outside the EU, please contact us for custom and shipping arrangements.",
-        INTERNATIONAL_CARRIERS_NOTE[locale],
       ],
     },
     {
@@ -922,7 +958,10 @@ function buildSupportSections(locale: Locale): readonly LegalSection[] {
         paragraphs: [],
         bullets: [
           "Tellimuse kinnitus saadetakse pärast checkouti e-postiga",
-          "Checkoutis on saadaval pangalingid, kaardimaksed, Montonio BNPL ja järelmaks (sõltuvalt riigist ja tellimusest)",
+          PAYMENT_CHECKOUT_NOTE.et,
+          ...PAYMENT_REGIONS.map(
+            (region) => `${region.title.et}: ${region.methods.et.join(", ")}`,
+          ),
           "Kui makse ebaõnnestub, mine tagasi ostukorvi ja proovi uuesti või vali teine checkoutis nähtav makseviis",
           "Pärast pangalingi makset klõpsa panga lehel „Tagasi kaupmehe juurde“",
           "Montonio või makseprobleemide puhul lisa ühendust võttes tellimuse number",
@@ -932,10 +971,15 @@ function buildSupportSections(locale: Locale): readonly LegalSection[] {
         id: "delivery",
         title: "Tarne ja jälgimine",
         paragraphs: [
-          `Tarnevõimalused (SmartPosti, Omniva, DPD, kuller, salongist kättesaamine) ja hinnad kuvatakse checkoutis. Tellimusi töödeldakse tavaliselt ${ORDER_PROCESSING_DAYS.et}.`,
+          shippingRegionIntro("et"),
+          `Tellimusi töödeldakse tavaliselt ${ORDER_PROCESSING_DAYS.et} enne väljasaatmist.`,
           "Kui tellimus väljastatakse, peaksid saama jälgimisnumbri e-postiga, kui vedaja seda pakub.",
           `Hilinenud või kahjustatud pakk: kirjuta ${POLICY_EMAILS.shop}, lisa tellimuse number.`,
         ],
+        bullets: SHIPPING_REGIONS.map(
+          (region) =>
+            `${region.title.et}: ${region.methods.et.join(", ")} (${region.deliveryTime.et})`,
+        ),
       },
       {
         id: "returns",
@@ -989,7 +1033,10 @@ function buildSupportSections(locale: Locale): readonly LegalSection[] {
       paragraphs: [],
       bullets: [
         "Order confirmation is sent by email after checkout",
-        "Checkout offers bank links, card payments, Montonio BNPL and hire purchase (depending on country and order)",
+        PAYMENT_CHECKOUT_NOTE.en,
+        ...PAYMENT_REGIONS.map(
+          (region) => `${region.title.en}: ${region.methods.en.join(", ")}`,
+        ),
         "If payment fails, return to the cart and try again or choose another method shown at checkout",
         "After paying via bank link, click \"Return to merchant\" on your bank's page",
         "For Montonio or payment issues, include your order number when you contact us",
@@ -999,10 +1046,15 @@ function buildSupportSections(locale: Locale): readonly LegalSection[] {
       id: "delivery",
       title: "Delivery & tracking",
       paragraphs: [
-        `Delivery options (SmartPosti, Omniva, DPD, courier, showroom pickup) and costs are shown at checkout. Orders are typically processed within ${ORDER_PROCESSING_DAYS.en}.`,
+        shippingRegionIntro("en"),
+        `Orders are typically processed within ${ORDER_PROCESSING_DAYS.en} before dispatch.`,
         "When your order ships, you should receive tracking details by email where the carrier provides them.",
         `Delayed or damaged parcels: email ${POLICY_EMAILS.shop} with your order number.`,
       ],
+      bullets: SHIPPING_REGIONS.map(
+        (region) =>
+          `${region.title.en}: ${region.methods.en.join(", ")} (${region.deliveryTime.en})`,
+      ),
     },
     {
       id: "returns",

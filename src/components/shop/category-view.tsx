@@ -17,6 +17,10 @@ import { isLikelyFilterSizeLabel } from "@/lib/shop/size-label";
 import { sortProductSizes } from "@/lib/shop/sort-sizes";
 import { CatalogLoadMore } from "@/components/shop/catalog-load-more";
 import { CatalogProductGrid } from "@/components/shop/catalog-product-grid";
+import {
+  PRODUCT_GRID_DIVIDER_ROW_OFFSET,
+  catalogProductGridClassName,
+} from "@/lib/shop/product-grid-layout";
 import { CategoryDescription } from "@/components/shop/category-description";
 import { CategoryFilters, type ActiveFilters } from "@/components/shop/category-filters";
 import { MotorcycleBrandLogoFilter } from "@/components/shop/motorcycle-brand-logo-filter";
@@ -180,17 +184,11 @@ export function CategoryView({
   const dict = useDictionary();
   const locale = useLocale();
   const useBrandLogos = brandFilterVariant === "logos";
-  const gridClassName = gridDividers
-    ? gridColumns === 3
-      ? "grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 lg:grid-cols-3 lg:gap-x-6"
-      : "grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 xl:gap-x-6"
-    : gridColumns === 3
-      ? "grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 lg:grid-cols-3 lg:gap-x-6"
-      : "grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 xl:gap-x-6";
+  const gridClassName = catalogProductGridClassName(gridColumns);
   const gridItemClassName = gridDividers
     ? gridColumns === 3
-      ? "relative bg-moto p-4 sm:p-5 lg:p-6 before:pointer-events-none before:absolute before:-bottom-4 before:left-1/2 before:z-10 before:hidden before:h-px before:w-[100px] before:-translate-x-1/2 before:bg-white before:content-[''] after:pointer-events-none after:absolute after:top-1/2 after:z-10 after:hidden after:h-[100px] after:w-px after:-translate-y-1/2 after:bg-white after:content-[''] after:-right-2 lg:after:-right-3 max-sm:[&:not(:last-child)]:before:block sm:max-lg:[&:not(:nth-last-child(-n+2))]:before:block lg:[&:not(:nth-last-child(-n+3))]:before:block sm:max-lg:[&:not(:nth-child(2n))]:after:block lg:[&:not(:nth-child(3n))]:after:block"
-      : "relative bg-moto p-4 sm:p-5 lg:p-6 before:pointer-events-none before:absolute before:-bottom-4 before:left-1/2 before:z-10 before:hidden before:h-px before:w-[100px] before:-translate-x-1/2 before:bg-white before:content-[''] after:pointer-events-none after:absolute after:top-1/2 after:z-10 after:hidden after:h-[100px] after:w-px after:-translate-y-1/2 after:bg-white after:content-[''] after:-right-2 xl:after:-right-3 max-sm:[&:not(:last-child)]:before:block sm:max-lg:[&:not(:nth-last-child(-n+2))]:before:block lg:max-xl:[&:not(:nth-last-child(-n+3))]:before:block xl:[&:not(:nth-last-child(-n+4))]:before:block max-sm:[&:not(:last-child)]:after:hidden sm:max-lg:[&:not(:nth-child(2n))]:after:block lg:max-xl:[&:not(:nth-child(3n))]:after:block xl:[&:not(:nth-child(4n))]:after:block"
+      ? `relative bg-moto p-4 sm:p-5 lg:p-6 before:pointer-events-none before:absolute ${PRODUCT_GRID_DIVIDER_ROW_OFFSET} before:left-1/2 before:z-10 before:hidden before:h-px before:w-[100px] before:-translate-x-1/2 before:bg-white before:content-[''] after:pointer-events-none after:absolute after:top-1/2 after:z-10 after:hidden after:h-[100px] after:w-px after:-translate-y-1/2 after:bg-white after:content-[''] after:-right-2 lg:after:-right-3 max-sm:[&:not(:last-child)]:before:block sm:max-lg:[&:not(:nth-last-child(-n+2))]:before:block lg:[&:not(:nth-last-child(-n+3))]:before:block sm:max-lg:[&:not(:nth-child(2n))]:after:block lg:[&:not(:nth-child(3n))]:after:block`
+      : `relative bg-moto p-4 sm:p-5 lg:p-6 before:pointer-events-none before:absolute ${PRODUCT_GRID_DIVIDER_ROW_OFFSET} before:left-1/2 before:z-10 before:hidden before:h-px before:w-[100px] before:-translate-x-1/2 before:bg-white before:content-[''] after:pointer-events-none after:absolute after:top-1/2 after:z-10 after:hidden after:h-[100px] after:w-px after:-translate-y-1/2 after:bg-white after:content-[''] after:-right-2 xl:after:-right-3 max-sm:[&:not(:last-child)]:before:block sm:max-lg:[&:not(:nth-last-child(-n+2))]:before:block lg:max-xl:[&:not(:nth-last-child(-n+3))]:before:block xl:[&:not(:nth-last-child(-n+4))]:before:block max-sm:[&:not(:last-child)]:after:hidden sm:max-lg:[&:not(:nth-child(2n))]:after:block lg:max-xl:[&:not(:nth-child(3n))]:after:block xl:[&:not(:nth-child(4n))]:after:block`
     : undefined;
   const routeProducts = useMemo(
     () => filterProductsByRoute(products, route),
