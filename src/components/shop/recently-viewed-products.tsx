@@ -160,8 +160,8 @@ export function RecentlyViewedProducts({
             grabCursor
             speed={600}
             breakpoints={{
-              640: { slidesPerView: 2, spaceBetween: 20 },
-              1024: { slidesPerView: 3, spaceBetween: 28 },
+              640: { slidesPerView: 2.15, spaceBetween: 20 },
+              1024: { slidesPerView: 6.15, spaceBetween: 20 },
             }}
             className="w-full !overflow-visible"
             aria-label={dict.pdp.recentlyViewed}
