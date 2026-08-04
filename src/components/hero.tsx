@@ -115,7 +115,7 @@ export function Hero({ locale, dictionary }: HeroProps) {
             />
             <div className="relative z-10 flex flex-col items-center gap-5 px-4 sm:gap-7">
               <h2
-                className={`whitespace-pre-line text-center font-body font-bold normal-case leading-[0.95] tracking-normal text-paper drop-shadow-[0_4px_24px_rgba(0,0,0,0.6)] transition-transform duration-300 group-hover:scale-[1.02] ${banner.titleClass}`}
+                className={`whitespace-pre-line text-center font-display font-extrabold uppercase leading-[0.95] tracking-tight text-paper drop-shadow-[0_4px_24px_rgba(0,0,0,0.6)] transition-transform duration-300 group-hover:scale-[1.02] ${banner.titleClass}`}
               >
                 {banner.label}
               </h2>

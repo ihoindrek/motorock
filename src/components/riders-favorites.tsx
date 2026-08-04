@@ -18,7 +18,7 @@ import {
 } from "@/lib/shop/favorite-product";
 
 const headingVideoClass =
-  "font-body text-5xl font-bold normal-case leading-[0.95] tracking-normal sm:text-6xl lg:text-8xl";
+  "font-display text-5xl font-extrabold uppercase leading-[0.95] tracking-tight sm:text-6xl lg:text-8xl";
 
 const blocks = [
   {
