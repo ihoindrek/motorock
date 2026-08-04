@@ -223,6 +223,9 @@ export type Dictionary = {
     relatedProducts: string;
     features: string;
     faq: string;
+    faqDescription: string;
+    faqSupportPrefix: string;
+    faqSupportLink: string;
     oneSize: string;
     shippingReturnsBody: string;
     shippingFrom: string;
@@ -814,6 +817,9 @@ export const en: Dictionary = {
     relatedProducts: "You may also like",
     features: "Features",
     faq: "FAQ",
+    faqDescription: "Common questions about this product",
+    faqSupportPrefix: "Can't find what you're looking for? Contact our",
+    faqSupportLink: "customer support team",
     oneSize: "One size",
     shippingReturnsBody:
       "EU delivery via SmartPosti, Omniva, DPD, courier or showroom pickup. Shipping costs are shown at checkout. 14-day withdrawal — contact info@motorock.eu.",

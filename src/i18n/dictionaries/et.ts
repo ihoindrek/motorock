@@ -241,6 +241,9 @@ export const et: Dictionary = {
     relatedProducts: "Sulle võib meeldida ka",
     features: "Omadused",
     faq: "KKK",
+    faqDescription: "Korduma kippuvad küsimused selle toote kohta",
+    faqSupportPrefix: "Ei leidnud vastust? Võta ühendust",
+    faqSupportLink: "klienditoega",
     oneSize: "Üks suurus",
     shippingReturnsBody:
       "Tarne üle EL-i SmartPosti, Omniva, DPD, kulleri või salongist kättesaamisega. Tarnekulud kuvatakse kassas. 14-päevane taganemisõigus — kirjuta info@motorock.eu.",

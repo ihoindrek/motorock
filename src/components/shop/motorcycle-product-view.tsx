@@ -460,7 +460,11 @@ function RichMotorcycleProductView({
 
       {product.faq && product.faq.length > 0 ? (
         <section className="site-container border-t border-ink/10 py-12 lg:py-16">
-          <ProductFaqSection title={dict.pdp.faq} items={product.faq} bordered={false} />
+          <ProductFaqSection
+            title={dict.pdp.faq}
+            items={product.faq}
+            variant="section"
+          />
         </section>
       ) : null}
 
