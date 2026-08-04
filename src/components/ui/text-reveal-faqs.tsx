@@ -118,7 +118,7 @@ function FaqProductImage({
 }) {
   return (
     <figure className={cn("overflow-hidden", className)}>
-      <div className="relative aspect-[4/3] bg-surface/60">
+      <div className="relative aspect-[4/3]">
         <Image
           src={image.src}
           alt={image.alt}
