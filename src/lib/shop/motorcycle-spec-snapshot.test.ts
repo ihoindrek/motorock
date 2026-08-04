@@ -35,6 +35,28 @@ describe("motorcycle spec snapshot", () => {
     expect(parsed?.engineSpecs).toEqual(snapshot?.engineSpecs);
   });
 
+  it("prefers ACF specs HTML over meta snapshot", () => {
+    const tableHtml = `<table><tr><td>Engine Type</td><td>1 cylinder</td></tr></table>`;
+    const snapshot = buildMotorcycleSpecSnapshot(tableHtml, "", "en");
+
+    const overrides = resolveMotorcycleSpecOverrides({
+      longHtml: "<p>AI marketing only</p>",
+      shortHtml: "",
+      locale: "en",
+      meta: [
+        { key: "motorcycle_specs_html", value: tableHtml },
+        {
+          key: "_motorock_motorcycle_specs",
+          value: serializeMotorcycleSpecSnapshot(snapshot!),
+        },
+      ],
+    });
+
+    expect(overrides?.engineSpecs.some((spec) => /cylinder/i.test(spec.value))).toBe(
+      true,
+    );
+  });
+
   it("prefers stored meta snapshot over live description", () => {
     const snapshot = buildMotorcycleSpecSnapshot(supplierHtml, "", "en");
     const overrides = resolveMotorcycleSpecOverrides({

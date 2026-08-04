@@ -34,6 +34,7 @@ export type MotomadSyncFields = {
 
 /**
  * Editorial content added on Motorock.eu (ACF / manual), not from Motomad sync.
+ * Technical specs: ACF `motorcycle_specs_html` (paste from manufacturer).
  */
 export type MotorockEnrichment = {
   tagline?: string;

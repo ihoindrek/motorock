@@ -5,9 +5,16 @@ import { specLabelCategoryBucket } from "@/lib/shop/motorcycle-spec-labels";
 import type { MotorcycleContentOverrides } from "@/lib/shop/normalize-motorcycle-content";
 
 export const MOTORCYCLE_SPEC_META_KEYS = {
+  specsHtml: "motorcycle_specs_html",
+  specsSourceUrl: "motorcycle_specs_source_url",
   supplierDescription: "_motorock_supplier_description",
   specsSnapshot: "_motorock_motorcycle_specs",
 } as const;
+
+const MOTORCYCLE_SPECS_HTML_KEYS = [
+  MOTORCYCLE_SPEC_META_KEYS.specsHtml,
+  "_motorcycle_specs_html",
+] as const;
 
 export type MotorcycleSpecSnapshot = {
   highlightSpecs: ProductSpec[];
@@ -127,12 +134,37 @@ export function readMetaString(
   return value || null;
 }
 
+export function readMotorcycleSpecsHtmlFromMeta(
+  meta: readonly { key?: string | null; value?: string | null }[] | null | undefined,
+) {
+  for (const key of MOTORCYCLE_SPECS_HTML_KEYS) {
+    const value = readMetaString(meta, key);
+    if (value) {
+      return value;
+    }
+  }
+
+  return null;
+}
+
 export function resolveMotorcycleSpecOverrides(input: {
   longHtml: string;
   shortHtml: string;
   locale: Locale;
   meta?: readonly { key?: string | null; value?: string | null }[] | null;
 }): MotorcycleContentOverrides | undefined {
+  const acfSpecsHtml = readMotorcycleSpecsHtmlFromMeta(input.meta);
+  if (acfSpecsHtml) {
+    const fromAcf = buildMotorcycleSpecSnapshot(
+      acfSpecsHtml,
+      input.shortHtml,
+      input.locale,
+    );
+    if (fromAcf) {
+      return motorcycleSpecSnapshotToOverrides(fromAcf);
+    }
+  }
+
   const snapshotJson = readMetaString(
     input.meta,
     MOTORCYCLE_SPEC_META_KEYS.specsSnapshot,

@@ -1,7 +1,9 @@
 /**
  * Backfill motorcycle spec meta for products whose supplier HTML was overwritten by AI.
  *
- * Usage (after restoring original description in Woo from revision / Motomad sync):
+ * Prefer filling ACF `motorcycle_specs_html` in Woo instead — this script is for legacy backfill.
+ *
+ * Usage (after restoring original description in Woo or pasting specs HTML into ACF):
  *   npx tsx scripts/snapshot-motorcycle-specs.ts 25800 en
  */
 import { getAiConfig } from "@/lib/ai/config";

@@ -63,6 +63,9 @@ class Motorock_Ai_Admin_Product {
 		<div id="motorock-ai-panel">
 			<p class="description">
 				<?php esc_html_e( 'Generate product description and SEO via the headless AI engine.', 'motorock-ai-writer' ); ?>
+				<br />
+				<strong><?php esc_html_e( 'Specs:', 'motorock-ai-writer' ); ?></strong>
+				<?php esc_html_e( 'Paste technical specifications in the Motorock toode → Technical specifications (HTML) field. AI does not update that field.', 'motorock-ai-writer' ); ?>
 			</p>
 
 			<?php if ( ! empty( $status['generatedAt'] ) ) : ?>

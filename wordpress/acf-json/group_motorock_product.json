@@ -22,6 +22,45 @@
       "ui": 1,
       "ui_on_text": "Jah",
       "ui_off_text": "Ei"
+    },
+    {
+      "key": "field_motorock_motorcycle_specs_html",
+      "label": "Technical specifications (HTML)",
+      "name": "motorcycle_specs_html",
+      "aria-label": "",
+      "type": "wysiwyg",
+      "instructions": "Ainult mootorrattadele. Kleebi tootja lehe spetsifikatsioonid siia (tabel või loendid). Storefront kuvab need eraldi sektsioonis. AI ei muuda seda välja — turundustekst jääb Product description kasti.",
+      "required": 0,
+      "conditional_logic": 0,
+      "wrapper": {
+        "width": "",
+        "class": "",
+        "id": ""
+      },
+      "default_value": "",
+      "allow_in_bindings": 0,
+      "tabs": "all",
+      "toolbar": "basic",
+      "media_upload": 0,
+      "delay": 0
+    },
+    {
+      "key": "field_motorock_motorcycle_specs_source_url",
+      "label": "Specs source URL",
+      "name": "motorcycle_specs_source_url",
+      "aria-label": "",
+      "type": "url",
+      "instructions": "Valikuline viide tootja lehele (sisekasutus, storefront'il ei kuvata).",
+      "required": 0,
+      "conditional_logic": 0,
+      "wrapper": {
+        "width": "",
+        "class": "",
+        "id": ""
+      },
+      "default_value": "",
+      "allow_in_bindings": 0,
+      "placeholder": "https://"
     }
   ],
   "location": [
@@ -34,7 +73,7 @@
     ]
   ],
   "menu_order": 0,
-  "position": "side",
+  "position": "normal",
   "style": "default",
   "label_placement": "top",
   "instruction_placement": "label",
@@ -42,5 +81,5 @@
   "active": true,
   "description": "Storefront'i tooteväljad (Motorock.eu). \"Uus\" märgis tuleb automaatselt 30 päeva jooksul alates avaldamise kuupäevast.",
   "show_in_rest": 1,
-  "modified": 1751880000
+  "modified": 1754300000
 }
