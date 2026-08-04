@@ -108,7 +108,7 @@ class Motorock_Ai_Content_Writer {
 				$items = self::sanitize_faq_items( $section['items'] );
 				if ( ! empty( $items ) ) {
 					$key = $publish_status === 'draft' ? '_motorock_ai_draft_faq' : '_motorock_ai_faq';
-					update_post_meta( $product_id, $key, wp_json_encode( $items ) );
+					update_post_meta( $product_id, $key, self::encode_json( $items ) );
 					$written['faq'] = true;
 				}
 			}
@@ -117,7 +117,7 @@ class Motorock_Ai_Content_Writer {
 				if ( $publish_status === 'draft' ) {
 					$draft_items = self::sanitize_alt_items( $section['items'] );
 					if ( ! empty( $draft_items ) ) {
-						update_post_meta( $product_id, '_motorock_ai_draft_alt_texts', wp_json_encode( $draft_items ) );
+						update_post_meta( $product_id, '_motorock_ai_draft_alt_texts', self::encode_json( $draft_items ) );
 						$written['altText'] = true;
 					}
 				} else {
@@ -296,6 +296,10 @@ class Motorock_Ai_Content_Writer {
 				)
 			)
 		);
+	}
+
+	private static function encode_json( $data ) {
+		return wp_json_encode( $data, JSON_UNESCAPED_UNICODE );
 	}
 
 	private static function sanitize_faq_items( $items ) {

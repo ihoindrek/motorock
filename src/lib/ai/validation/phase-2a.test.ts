@@ -88,4 +88,20 @@ describe("Phase 2A AI sections", () => {
 
     expect(faq).toBeUndefined();
   });
+
+  it("repairs broken unicode escapes in stored FAQ text", () => {
+    const faq = parseAiProductFaqFromMeta([
+      {
+        key: "_motorock_ai_faq",
+        value: JSON.stringify([
+          {
+            question: "Mis luba on vaja?",
+            answer: "Tu00e4pse info saamiseks vaata A1-kategooriat.",
+          },
+        ]),
+      },
+    ]);
+
+    expect(faq?.[0]?.answer).toContain("Täpse");
+  });
 });

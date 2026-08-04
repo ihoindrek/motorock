@@ -1,10 +1,8 @@
 <?php
 /**
- * Plugin Name: Motorock AI Writer
- * Description: Receives AI-generated product content from the headless storefront and writes it to WooCommerce + WPML products.
- * Version: 0.2.0
+ * Motorock AI Writer — bootstrap (loaded by ../motorock-ai-writer.php in mu-plugins).
+ * Version: 0.3.0
  *
- * Install: copy to wp-content/mu-plugins/motorock-ai-writer.php
  * Requires: WooCommerce. WPML optional but recommended.
  */
 

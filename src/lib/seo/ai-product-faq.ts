@@ -6,11 +6,47 @@ type MetaEntry = {
   value: string | null;
 };
 
+/** Repair FAQ text when WP meta stripped backslashes from JSON \\uXXXX escapes. */
+export function repairStoredUnicodeText(text: string): string {
+  return text
+    .replace(/\\u([0-9a-fA-F]{4})/g, (_, hex: string) =>
+      String.fromCodePoint(Number.parseInt(hex, 16)),
+    )
+    .replace(/u([0-9a-fA-F]{4})/g, (match, hex: string) => {
+      const code = Number.parseInt(hex, 16);
+      if (code >= 0x00a0 && code <= 0x024f) {
+        return String.fromCodePoint(code);
+      }
+
+      return match;
+    });
+}
+
 function readMetaValue(meta: readonly MetaEntry[] | null | undefined, key: string) {
   return meta?.find((entry) => entry.key === key)?.value ?? undefined;
 }
 
-function parseJsonArray<T>(raw: string | undefined, guard: (value: unknown) => value is T) {
+function normalizeFaqItem(value: unknown): ProductFaqItem | null {
+  if (!value || typeof value !== "object") {
+    return null;
+  }
+
+  const item = value as Partial<ProductFaqItem>;
+  if (typeof item.question !== "string" || typeof item.answer !== "string") {
+    return null;
+  }
+
+  const question = repairStoredUnicodeText(item.question.trim());
+  const answer = repairStoredUnicodeText(item.answer.trim());
+
+  if (question.length < 10 || answer.length < 20) {
+    return null;
+  }
+
+  return { question, answer };
+}
+
+function parseJsonArray(raw: string | undefined): ProductFaqItem[] | undefined {
   if (!raw) {
     return undefined;
   }
@@ -21,24 +57,14 @@ function parseJsonArray<T>(raw: string | undefined, guard: (value: unknown) => v
       return undefined;
     }
 
-    return parsed.filter(guard);
+    const items = parsed
+      .map((entry) => normalizeFaqItem(entry))
+      .filter((entry): entry is ProductFaqItem => entry !== null);
+
+    return items.length > 0 ? items : undefined;
   } catch {
     return undefined;
   }
-}
-
-function isFaqItem(value: unknown): value is ProductFaqItem {
-  if (!value || typeof value !== "object") {
-    return false;
-  }
-
-  const item = value as Partial<ProductFaqItem>;
-  return (
-    typeof item.question === "string" &&
-    typeof item.answer === "string" &&
-    item.question.trim().length >= 10 &&
-    item.answer.trim().length >= 20
-  );
 }
 
 export function isAiContentPublished(
@@ -55,29 +81,11 @@ export function parseAiProductFaqFromMeta(
     return undefined;
   }
 
-  const items = parseJsonArray(
-    readMetaValue(meta, AI_PRODUCT_META_KEYS.faq),
-    isFaqItem,
-  );
-
-  if (!items?.length) {
-    return undefined;
-  }
-
-  return items;
+  return parseJsonArray(readMetaValue(meta, AI_PRODUCT_META_KEYS.faq));
 }
 
 export function parseAiDraftProductFaqFromMeta(
   meta: readonly MetaEntry[] | null | undefined,
 ): ProductFaqItem[] | undefined {
-  const items = parseJsonArray(
-    readMetaValue(meta, AI_PRODUCT_META_KEYS.draftFaq),
-    isFaqItem,
-  );
-
-  if (!items?.length) {
-    return undefined;
-  }
-
-  return items;
+  return parseJsonArray(readMetaValue(meta, AI_PRODUCT_META_KEYS.draftFaq));
 }

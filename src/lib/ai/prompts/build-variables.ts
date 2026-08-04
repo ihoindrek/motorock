@@ -5,6 +5,7 @@ export function buildProductPromptVariables(product: NormalizedProduct) {
     locale: product.locale,
     name: product.name,
     brand: product.brand ?? "",
+    productType: product.productType,
     categoryPath: product.categoryPath.join(" > ") || product.category || "",
     price: String(product.price),
     inStock: product.inStock ? "yes" : "no",
