@@ -15,6 +15,8 @@ class Motorock_Ai_Meta_Registry {
 		'_motorock_ai_prompt_version',
 		'_motorock_ai_job_id',
 		'_motorock_ai_sections',
+		'_motorock_supplier_description',
+		'_motorock_motorcycle_specs',
 	);
 
 	public static function register() {

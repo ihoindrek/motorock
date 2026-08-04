@@ -23,6 +23,10 @@ import type { ProductWriteRepository } from "@/lib/ai/repositories/wp-ai-write.r
 import type { AiWritePayload } from "@/lib/ai/validation/schemas";
 import { revalidateStorefront } from "@/lib/revalidate/storefront";
 import { logStorefrontEvent } from "@/lib/monitoring/observability";
+import {
+  buildMotorcycleSpecSnapshot,
+  serializeMotorcycleSpecSnapshot,
+} from "@/lib/shop/motorcycle-spec-snapshot";
 
 type AiEngineDeps = {
   config: AiConfig;
@@ -54,6 +58,49 @@ function sectionHasExistingContent(
   }
 
   return hasExistingSeoContent(product.existing);
+}
+
+function buildMotorcycleWritePreserve(
+  product: NonNullable<Awaited<ReturnType<ProductReadRepository["getById"]>>>,
+  request: AiGenerateRequest,
+  writeSections: AiWritePayload["sections"],
+): Pick<AiWritePayload, "motorcycle"> {
+  if (product.productType !== "motorcycle") {
+    return {};
+  }
+
+  const writesDescription = writeSections.some(
+    (section) => section.section === "description",
+  );
+  if (!writesDescription) {
+    return {};
+  }
+
+  const supplierHtml = product.existing.description?.trim();
+  if (!supplierHtml) {
+    return {};
+  }
+
+  const snapshot = buildMotorcycleSpecSnapshot(
+    supplierHtml,
+    product.existing.shortDescription ?? "",
+    request.locale,
+  );
+
+  if (!snapshot) {
+    return {
+      motorcycle: {
+        supplierDescriptionHtml: supplierHtml,
+      },
+    };
+  }
+
+  return {
+    motorcycle: {
+      supplierDescriptionHtml: supplierHtml,
+      specsSnapshotJson: serializeMotorcycleSpecSnapshot(snapshot),
+    },
+  };
 }
 
 export class AiEngine {
@@ -233,6 +280,7 @@ export class AiEngine {
           generatedAt: new Date().toISOString(),
           jobId,
         },
+        ...buildMotorcycleWritePreserve(product, request, writeSections),
       });
 
       for (const result of results) {

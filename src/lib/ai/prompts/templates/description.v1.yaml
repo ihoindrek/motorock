@@ -19,6 +19,7 @@ user: |
 rules:
   - shortDescription: 1-2 sentences + optional bullet list
   - description: 3-5 sections with h2 headings
+  - do not include specification tables, engine data, dimensions, or technical bullet lists — specs are shown separately on the page
   - mention brand and primary use case
   - no medical/legal claims
   - no superlatives like best in the world

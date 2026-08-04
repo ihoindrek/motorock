@@ -163,8 +163,7 @@ function RichMotorcycleProductView({
   const showColorPicker = sync.colors.length > 1 || colorSwatches.length > 1;
   const showTechnical = hasMotorcycleTechnical(content);
   const supplementaryHtml = content.supplementaryHtml?.trim();
-  const showSupplementary =
-    Boolean(supplementaryHtml) && !showTechnical;
+  const showSupplementary = Boolean(supplementaryHtml);
   const showOverviewSection =
     content.overviewSections.length > 0 || showSupplementary;
   const parallaxImages = content.parallaxImages;

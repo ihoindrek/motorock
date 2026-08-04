@@ -15,6 +15,8 @@ const MOTOROCK_PRODUCT_GRAPHQL_META_KEYS = array(
 	'_motorock_ai_seo_title',
 	'_motorock_ai_seo_meta_description',
 	'_motorock_ai_seo_keywords',
+	'_motorock_supplier_description',
+	'_motorock_motorcycle_specs',
 );
 
 /**

@@ -91,6 +91,12 @@ export const AiWritePayloadSchema = z.object({
     generatedAt: z.string().datetime(),
     jobId: z.string(),
   }),
+  motorcycle: z
+    .object({
+      supplierDescriptionHtml: z.string().optional(),
+      specsSnapshotJson: z.string().optional(),
+    })
+    .optional(),
 });
 
 export type AiWritePayload = z.infer<typeof AiWritePayloadSchema>;

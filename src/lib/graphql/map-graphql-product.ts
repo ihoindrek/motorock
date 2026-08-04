@@ -32,6 +32,7 @@ import { resolveIsNewFromSources } from "@/lib/shop/resolve-is-new";
 import { buildToolsCategoryHref } from "@/lib/shop/shop-category-route";
 import { buildEquipmentHubHref } from "@/lib/shop/category-url";
 import { normalizeMotorcycleContent } from "@/lib/shop/normalize-motorcycle-content";
+import { resolveMotorcycleSpecOverrides } from "@/lib/shop/motorcycle-spec-snapshot";
 import { resolveProductVimeoIdFromMeta } from "@/lib/shop/parse-product-video";
 import {
   normalizeWordPressMediaUrl,
@@ -395,6 +396,12 @@ export function mapGraphqlToMotorcycleProduct(
     productName: displayName(product.name, brand),
     brand,
     locale: contentLocale,
+    manualEnrichment: resolveMotorcycleSpecOverrides({
+      longHtml,
+      shortHtml,
+      locale: contentLocale,
+      meta: product.metaData,
+    }),
   });
 
   return {

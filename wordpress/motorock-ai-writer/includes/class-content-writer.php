@@ -103,6 +103,29 @@ class Motorock_Ai_Content_Writer {
 			}
 		}
 
+		if ( ! empty( $payload['motorcycle'] ) && is_array( $payload['motorcycle'] ) ) {
+			$motorcycle = $payload['motorcycle'];
+
+			if ( ! empty( $motorcycle['supplierDescriptionHtml'] ) ) {
+				$existing_supplier = get_post_meta( $product_id, '_motorock_supplier_description', true );
+				if ( ! is_string( $existing_supplier ) || $existing_supplier === '' ) {
+					update_post_meta(
+						$product_id,
+						'_motorock_supplier_description',
+						wp_kses_post( (string) $motorcycle['supplierDescriptionHtml'] )
+					);
+				}
+			}
+
+			if ( ! empty( $motorcycle['specsSnapshotJson'] ) ) {
+				update_post_meta(
+					$product_id,
+					'_motorock_motorcycle_specs',
+					wp_kses_post( (string) $motorcycle['specsSnapshotJson'] )
+				);
+			}
+		}
+
 		update_post_meta( $product_id, '_motorock_ai_content_status', 'published' );
 		update_post_meta(
 			$product_id,

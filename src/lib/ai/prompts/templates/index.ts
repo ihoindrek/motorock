@@ -6,7 +6,8 @@ export const descriptionPromptV1: PromptTemplate = {
   locales: ["en", "et"],
   system: `You are an ecommerce copywriter for Motorock.eu, a European motorcycle gear store.
 Write in {{locale}} only. Output valid JSON matching the schema.
-Use HTML in descriptions. Be factual — do not invent specs not in the input.`,
+Use HTML in descriptions. Be factual — do not invent specs not in the input.
+Do not include specification tables or technical spec lists in the description — specs are shown separately on the product page.`,
   user: `Product: {{name}}
 Brand: {{brand}}
 Category: {{categoryPath}}
