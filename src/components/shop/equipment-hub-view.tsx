@@ -50,7 +50,7 @@ function MobileCategoryPanel({
         <p className="font-body text-[10px] font-bold uppercase tracking-[0.35em] text-paper/45">
           {category.index}
         </p>
-        <h2 className="mt-2 font-display text-4xl font-extrabold uppercase leading-[0.92] tracking-tight text-paper sm:text-5xl">
+        <h2 className="mt-2 font-body text-4xl font-bold normal-case leading-[0.92] tracking-normal text-paper sm:text-5xl">
           {category.titleLines?.map((line) => (
             <span key={line} className="block">
               {line}
@@ -105,7 +105,7 @@ function DesktopCategoryIndex({
               >
                 {category.index}
               </span>
-              <span className="font-display text-[clamp(1.9rem,3.5vw,3rem)] font-extrabold uppercase leading-[0.92] tracking-tight transition-transform duration-300 group-hover:translate-x-1 motion-reduce:transition-none motion-reduce:group-hover:translate-x-0">
+              <span className="font-body text-[clamp(1.9rem,3.5vw,3rem)] font-bold normal-case leading-[0.92] tracking-normal transition-transform duration-300 group-hover:translate-x-1 motion-reduce:transition-none motion-reduce:group-hover:translate-x-0">
                 {category.title}
               </span>
             </Link>
@@ -249,7 +249,7 @@ export function EquipmentHubView({
                     <p className="font-body text-[10px] font-bold uppercase tracking-[0.35em] text-paper/45">
                       {activeCategory.index}
                     </p>
-                    <h2 className="mt-2 font-display text-5xl font-extrabold uppercase leading-[0.92] tracking-tight text-paper xl:text-6xl">
+                    <h2 className="mt-2 font-body text-5xl font-bold normal-case leading-[0.92] tracking-normal text-paper xl:text-6xl">
                       {activeCategory.title}
                     </h2>
                     <p className="mt-3 text-sm leading-relaxed text-paper/70 sm:text-base">

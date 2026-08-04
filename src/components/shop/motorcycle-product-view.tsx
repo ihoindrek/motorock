@@ -382,7 +382,7 @@ function RichMotorcycleProductView({
                 <p className="font-body text-[9px] font-bold uppercase tracking-aggressive text-ink/40">
                   {spec.label}
                 </p>
-                <p className="mt-2 font-display text-[clamp(1.05rem,1.75vw,1.4rem)] font-extrabold uppercase leading-snug tracking-tight text-ink">
+                <p className="mt-2 font-body text-[clamp(1.05rem,1.75vw,1.4rem)] font-bold normal-case leading-snug tracking-normal text-ink">
                   {spec.value}
                 </p>
               </li>

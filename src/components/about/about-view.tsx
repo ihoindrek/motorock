@@ -72,7 +72,7 @@ const proseMutedClassName =
   "text-base font-medium leading-[1.7] text-ink/85 sm:text-lg";
 
 const headingClassName =
-  "font-display text-[clamp(1.9rem,4.4vw,3rem)] font-extrabold uppercase leading-[0.95] tracking-tight text-ink";
+  "font-body text-[clamp(1.9rem,4.4vw,3rem)] font-bold normal-case leading-[0.95] tracking-normal text-ink";
 
 type AboutViewProps = {
   locale: Locale;
@@ -198,7 +198,7 @@ export function AboutView({ locale }: AboutViewProps) {
             {t.originP2}
           </p>
 
-          <p className="relative z-20 mt-10 max-w-4xl font-display text-[clamp(2.75rem,11vw,7.15rem)] font-extrabold uppercase leading-[0.88] tracking-tight text-paper mix-blend-difference lg:ml-[8%] lg:mt-20 lg:max-w-3xl">
+          <p className="relative z-20 mt-10 max-w-4xl font-body text-[clamp(2.75rem,11vw,7.15rem)] font-bold normal-case leading-[0.88] tracking-normal text-paper mix-blend-difference lg:ml-[8%] lg:mt-20 lg:max-w-3xl">
             {t.crazies}
           </p>
 
@@ -212,7 +212,7 @@ export function AboutView({ locale }: AboutViewProps) {
             />
           </figure>
 
-          <p className="relative z-20 mt-10 max-w-2xl font-display text-[clamp(1.4rem,3.1vw,2.2rem)] font-extrabold leading-snug tracking-tight text-ink lg:ml-auto lg:mr-[8%] lg:mt-[52rem]">
+          <p className="relative z-20 mt-10 max-w-2xl font-body text-[clamp(1.4rem,3.1vw,2.2rem)] font-bold normal-case leading-snug tracking-normal text-ink lg:ml-auto lg:mr-[8%] lg:mt-[52rem]">
             {t.startBrand}
           </p>
         </section>
@@ -227,7 +227,7 @@ export function AboutView({ locale }: AboutViewProps) {
             aria-hidden="true"
           />
           <span
-            className="pointer-events-none absolute -right-4 top-4 select-none font-display text-[clamp(4.5rem,13vw,8.5rem)] font-extrabold uppercase leading-none tracking-tighter text-transparent [-webkit-text-stroke:1px_rgb(11_11_11/0.07)]"
+            className="pointer-events-none absolute -right-4 top-4 select-none font-body text-[clamp(4.5rem,13vw,8.5rem)] font-bold normal-case leading-none tracking-normal text-transparent [-webkit-text-stroke:1px_rgb(11_11_11/0.07)]"
             aria-hidden="true"
           >
             Free
@@ -247,7 +247,7 @@ export function AboutView({ locale }: AboutViewProps) {
             {t.whyP1}
           </p>
 
-          <p className="relative z-10 mt-6 max-w-xs font-display text-2xl font-extrabold uppercase leading-snug tracking-tight text-ink sm:ml-12 lg:ml-[42%] lg:mt-10 lg:max-w-sm lg:text-3xl">
+          <p className="relative z-10 mt-6 max-w-xs font-body text-2xl font-bold normal-case leading-snug tracking-normal text-ink sm:ml-12 lg:ml-[42%] lg:mt-10 lg:max-w-sm lg:text-3xl">
             {t.whyP2}
           </p>
 
@@ -292,7 +292,7 @@ export function AboutView({ locale }: AboutViewProps) {
                   strokeWidth={1.75}
                   aria-hidden
                 />
-                <h3 className="mt-3 font-display text-xl font-extrabold uppercase leading-tight tracking-tight text-ink sm:text-2xl">
+                <h3 className="mt-3 text-xl sm:text-2xl">
                   {title}
                 </h3>
                 <p className="mt-1 font-body text-[10px] font-bold uppercase tracking-aggressive text-accent">

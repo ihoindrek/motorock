@@ -76,7 +76,7 @@ export function WithdrawalForm() {
       onSubmit={handleSubmit}
     >
       <div>
-        <h3 className="font-display text-xl font-extrabold uppercase tracking-tight text-ink sm:text-2xl">
+        <h3 className="text-xl sm:text-2xl">
           {dict.forms.withdrawalFormTitle}
         </h3>
         <p className="mt-2 text-sm leading-relaxed text-ink/65">

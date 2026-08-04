@@ -275,7 +275,7 @@ export function ContactView({ locale }: ContactViewProps) {
           <div className="site-container pt-16 sm:pt-20 lg:pt-28">
             <h2
               id="find-us-heading"
-              className="max-w-2xl font-display text-[clamp(2.5rem,6.6vw,4.4rem)] font-extrabold uppercase leading-[0.9] tracking-tight text-ink"
+              className="max-w-2xl font-body text-[clamp(2.5rem,6.6vw,4.4rem)] font-bold normal-case leading-[0.9] tracking-normal text-ink"
             >
               {t.findUs} <span className="text-accent">Tallinn</span>
             </h2>
@@ -307,7 +307,7 @@ export function ContactView({ locale }: ContactViewProps) {
 
       <section className="relative overflow-hidden bg-moto pt-10 pb-16 lg:pt-14 lg:pb-24">
         <span
-          className="pointer-events-none absolute -right-6 top-10 hidden select-none font-display text-[clamp(5rem,18vw,12rem)] font-extrabold uppercase leading-none tracking-tighter text-ink/[0.05] lg:block"
+          className="pointer-events-none absolute -right-6 top-10 hidden select-none font-body text-[clamp(5rem,18vw,12rem)] font-bold normal-case leading-none tracking-normal text-ink/[0.05] lg:block"
           aria-hidden="true"
         >
           {t.talk}
@@ -318,7 +318,7 @@ export function ContactView({ locale }: ContactViewProps) {
               <p className="font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/40">
                 {t.replyWithin}
               </p>
-              <p className="mt-4 max-w-sm font-display text-[clamp(1.9rem,4.4vw,3rem)] font-extrabold uppercase leading-[0.95] tracking-tight text-ink">
+              <p className="mt-4 max-w-sm font-body text-[clamp(1.9rem,4.4vw,3rem)] font-bold normal-case leading-[0.95] tracking-normal text-ink">
                 {t.noCallCenter}
                 <br />
                 <span className="text-accent">{t.realPeople}</span>
@@ -331,7 +331,7 @@ export function ContactView({ locale }: ContactViewProps) {
             </div>
 
             <div className="rounded-sm border-2 border-ink/25 bg-paper p-6 shadow-[0_16px_48px_rgb(11_11_11_/_0.08)] sm:p-8 lg:col-span-7 lg:col-start-6 lg:p-10">
-              <h2 className="font-display text-3xl font-extrabold uppercase leading-tight tracking-tight text-ink sm:text-4xl">
+              <h2 className="font-body text-3xl font-bold normal-case leading-tight tracking-normal text-ink sm:text-4xl">
                 {t.sendLine}
               </h2>
               <p className="mt-2 max-w-md text-sm text-ink/65 lg:hidden">
@@ -340,7 +340,7 @@ export function ContactView({ locale }: ContactViewProps) {
 
               {submitted ? (
                 <div className="mt-10">
-                  <p className="font-display text-xl font-extrabold uppercase leading-snug tracking-tight text-ink">
+                  <p className="font-body text-xl font-bold normal-case leading-snug tracking-normal text-ink">
                     {t.submittedTitle}
                   </p>
                   <p className="mt-2 text-sm text-ink/60">

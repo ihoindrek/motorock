@@ -59,25 +59,22 @@
     font-feature-settings: "kern" 1, "liga" 1;
   }
 
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
-    @apply font-display font-bold uppercase tracking-tight text-balance;
-  }
-
   h1 {
-    @apply text-5xl sm:text-6xl;
+    @apply font-display font-bold uppercase tracking-tight text-balance text-5xl sm:text-6xl;
   }
 
   h2 {
-    @apply text-4xl sm:text-5xl;
+    @apply font-body text-4xl font-bold normal-case leading-tight tracking-normal text-balance sm:text-5xl;
   }
 
   h3 {
-    @apply text-2xl sm:text-3xl;
+    @apply font-body text-2xl font-semibold normal-case leading-snug tracking-normal text-balance sm:text-3xl;
+  }
+
+  h4,
+  h5,
+  h6 {
+    @apply font-body font-semibold normal-case leading-snug tracking-normal text-balance;
   }
 
   h4 {
@@ -145,7 +142,7 @@
 }
 
 @utility heading-block {
-  @apply font-display text-4xl font-extrabold uppercase leading-[0.95] tracking-tight sm:text-5xl lg:text-6xl;
+  @apply font-body text-4xl font-bold normal-case leading-[0.95] tracking-normal sm:text-5xl lg:text-6xl;
 }
 
 @utility heading-hero {
@@ -187,7 +184,7 @@
 }
 
 @utility section-outline-heading {
-  @apply pointer-events-none select-none font-display font-extrabold uppercase leading-none tracking-tight;
+  @apply pointer-events-none select-none font-body font-bold normal-case leading-none tracking-normal;
   color: transparent;
   -webkit-text-stroke: 1px rgb(255 255 255 / 0.38);
   paint-order: stroke fill;

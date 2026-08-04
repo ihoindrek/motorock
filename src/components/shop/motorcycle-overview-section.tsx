@@ -22,7 +22,7 @@ function OverviewHeader({
   return (
     <div className="max-w-3xl">
       <p className="section-eyebrow">{eyebrow}</p>
-      <h2 className="mt-5 font-display text-[clamp(2rem,5.5vw,3.75rem)] font-extrabold uppercase leading-[0.92] tracking-tight text-ink">
+      <h2 className="mt-5 font-body text-[clamp(2rem,5.5vw,3.75rem)] font-bold normal-case leading-[0.92] tracking-normal text-ink">
         {productName}
       </h2>
       <div
@@ -51,7 +51,7 @@ function EditorialSectionBlock({
     >
       {title ? (
         <header className="lg:col-span-4">
-          <h3 className="max-w-xs font-display text-xl font-extrabold uppercase leading-[0.95] tracking-tight text-ink sm:text-2xl lg:text-[1.65rem]">
+          <h3 className="max-w-xs text-xl sm:text-2xl lg:text-[1.65rem]">
             {title}
           </h3>
         </header>

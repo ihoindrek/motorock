@@ -185,7 +185,7 @@ export function TextRevealFaqs({
   return (
     <div className="grid gap-8 md:grid-cols-5 md:gap-12">
       <div className="md:col-span-2">
-        <h2 className="font-display text-3xl font-extrabold uppercase leading-tight tracking-tight text-ink sm:text-4xl">
+        <h2 className="font-body text-3xl font-bold normal-case leading-tight tracking-normal text-ink sm:text-4xl">
           {title}
         </h2>
         <p className="mt-4 text-balance text-base leading-relaxed text-ink/60 sm:text-lg">
