@@ -8,8 +8,10 @@ const SPEC_LABEL_ET: Record<string, string> = {
   displacement: "Töömaht",
   "max. power": "Max võimsus",
   "max power": "Max võimsus",
+  "maximum power": "Max võimsus",
   "max. torque": "Max pöördemoment",
   "max torque": "Max pöördemoment",
+  "maximum torque": "Max pöördemoment",
   transmission: "Käigukast",
   ignition: "Süüde",
   starter: "Käiviti",
@@ -26,18 +28,25 @@ const SPEC_LABEL_ET: Record<string, string> = {
   "rear tire": "Tagumine rehv",
   "fuel type": "Kütusetüüp",
   "mass in running order": "Sõiduvalmis mass",
+  "unladen weight": "Tühimass",
+  "maximum laden weight": "Max koormusega mass",
   "permissible maximum weight": "Lubatud max kaal",
   length: "Pikkus",
   width: "Laius",
   height: "Kõrgus",
   "seat height": "Istme kõrgus",
+  "ground clearance": "Läbipääs",
+  seats: "Istekohad",
   "number of seats": "Istekohtade arv",
   "fuel tank maximum capacity": "Kütusepaagi maht",
+  "tank capacity": "Paagi maht",
   "fuel consumption": "Kütusekulu",
   "fuel consumption*": "Kütusekulu",
   "kutusekulu*": "Kütusekulu",
   emissions: "Heitkogused",
   "emissions*": "Heitkogused",
+  "co2 emissions": "CO₂ heitkogused",
+  "co2 emmissions": "CO₂ heitkogused",
   "co2 heitkogused*": "CO₂ heitkogused",
   "standard equipment": "Standardvarustus",
   "top speed": "Tipkiirus",
@@ -65,10 +74,14 @@ const SPEC_LABEL_ET: Record<string, string> = {
 const SPEC_VALUE_ET: Record<string, string> = {
   "unleaded fuel only, ron/roz min. 95":
     "Ainult pliivaba kütus, RON/ROZ min 95",
+  "gasoline (95 octane)": "Bensiin (95 oktaani)",
   "5-speed manual": "5-käiguline manuaal",
   "6-speed manual": "6-käiguline manuaal",
+  "6-speed manual transmission": "6-käiguline manuaalkäigukast",
   "electric starter": "Elektriline käiviti",
   "disc / disc": "Ketas / ketas",
+  "1 cylinder, 4-stroke, water cooled":
+    "1 silinder, 4-taktiline, vedelsüljahutusega",
 };
 
 const EDITORIAL_SECTION_ET: Record<string, string> = {
@@ -109,10 +122,10 @@ export function localizeMotorcycleSpecValue(value: string, locale: Locale): stri
     return exact;
   }
 
-  const speedManual = key.match(/^(\d+)-speed manual$/);
+  const speedManual = key.match(/^(\d+)-speed manual( transmission)?$/);
 
   if (speedManual) {
-    return `${speedManual[1]}-käiguline manuaal`;
+    return `${speedManual[1]}-käiguline manuaal${speedManual[2] ? "käigukast" : ""}`;
   }
 
   return value;

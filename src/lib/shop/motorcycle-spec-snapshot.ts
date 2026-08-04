@@ -7,6 +7,7 @@ import {
   parsePlainTextMotorcycleSpecs,
 } from "@/lib/shop/parse-plain-text-motorcycle-specs";
 import type { MotorcycleContentOverrides } from "@/lib/shop/normalize-motorcycle-content";
+import { localizeMotorcycleSpecs } from "@/lib/shop/motorcycle-spec-labels";
 
 export const MOTORCYCLE_SPEC_META_KEYS = {
   specsHtml: "motorcycle_specs_html",
@@ -86,12 +87,13 @@ export function buildMotorcycleSpecSnapshot(
 
 export function motorcycleSpecSnapshotToOverrides(
   snapshot: MotorcycleSpecSnapshot,
+  locale: Locale = "en",
 ): MotorcycleContentOverrides {
   return {
-    highlightSpecs: snapshot.highlightSpecs,
-    engineSpecs: snapshot.engineSpecs,
-    moreEngineSpecs: snapshot.extendedSpecs,
-    generalSpecs: snapshot.dimensionSpecs,
+    highlightSpecs: localizeMotorcycleSpecs(snapshot.highlightSpecs, locale),
+    engineSpecs: localizeMotorcycleSpecs(snapshot.engineSpecs, locale),
+    moreEngineSpecs: localizeMotorcycleSpecs(snapshot.extendedSpecs, locale),
+    generalSpecs: localizeMotorcycleSpecs(snapshot.dimensionSpecs, locale),
   };
 }
 
@@ -199,7 +201,7 @@ export function resolveMotorcycleSpecOverrides(input: {
         input.locale,
       );
       if (fromAcf) {
-        return motorcycleSpecSnapshotToOverrides(fromAcf);
+        return motorcycleSpecSnapshotToOverrides(fromAcf, input.locale);
       }
     }
 
@@ -209,7 +211,7 @@ export function resolveMotorcycleSpecOverrides(input: {
     );
     const snapshot = parseMotorcycleSpecSnapshotJson(snapshotJson);
     if (snapshot) {
-      return motorcycleSpecSnapshotToOverrides(snapshot);
+      return motorcycleSpecSnapshotToOverrides(snapshot, input.locale);
     }
 
     const supplierHtml = readMetaString(
@@ -223,7 +225,7 @@ export function resolveMotorcycleSpecOverrides(input: {
         input.locale,
       );
       if (built) {
-        return motorcycleSpecSnapshotToOverrides(built);
+        return motorcycleSpecSnapshotToOverrides(built, input.locale);
       }
     }
   }
@@ -234,5 +236,5 @@ export function resolveMotorcycleSpecOverrides(input: {
     input.locale,
   );
 
-  return built ? motorcycleSpecSnapshotToOverrides(built) : undefined;
+  return built ? motorcycleSpecSnapshotToOverrides(built, input.locale) : undefined;
 }

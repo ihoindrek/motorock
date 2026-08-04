@@ -57,6 +57,44 @@ describe("motorcycle spec snapshot", () => {
     );
   });
 
+  it("localizes ET labels when resolving EN fallback specs", () => {
+    const tableHtml = `Engine Type
+1 cylinder, 4-stroke, water cooled
+Maximum power
+11 kW @ 10.750 min
+Maximum torque
+11 Nm @ 8.000 min
+Transmission
+6-speed manual transmission
+Fuel Type
+Gasoline (95 octane)
+seat height
+910 mm`;
+
+    const overrides = resolveMotorcycleSpecOverrides({
+      longHtml: "<p>AI marketing only</p>",
+      shortHtml: "",
+      locale: "et",
+      meta: [],
+      metaSources: [{ meta: [{ key: "motorcycle_specs_html", value: tableHtml }] }],
+    });
+
+    expect(overrides?.engineSpecs.some((spec) => spec.label === "Mootori tüüp")).toBe(
+      true,
+    );
+    expect(overrides?.engineSpecs.some((spec) => spec.label === "Max võimsus")).toBe(
+      true,
+    );
+    expect(
+      overrides?.engineSpecs.some((spec) =>
+        /käiguline manuaal/.test(spec.value),
+      ),
+    ).toBe(true);
+    expect(overrides?.generalSpecs.some((spec) => spec.label === "Istme kõrgus")).toBe(
+      true,
+    );
+  });
+
   it("falls back to sibling locale meta when current translation has no specs", () => {
     const tableHtml = `<table><tr><td>Engine Type</td><td>1 cylinder</td></tr></table>`;
 
