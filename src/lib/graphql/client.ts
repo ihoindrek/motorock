@@ -25,6 +25,8 @@ function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+const RETRYABLE_GRAPHQL_HTTP_STATUSES = new Set([500, 502, 503, 504]);
+
 function isTransientFetchError(error: unknown): boolean {
   if (!(error instanceof Error)) {
     return false;
@@ -46,6 +48,23 @@ function isTransientFetchError(error: unknown): boolean {
     haystack.includes("socket hang up") ||
     haystack.includes("network")
   );
+}
+
+function isRetryableGraphqlError(error: unknown): boolean {
+  if (isTransientFetchError(error)) {
+    return true;
+  }
+
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  const match = error.message.match(/^GraphQL HTTP (\d{3})$/);
+  if (!match) {
+    return false;
+  }
+
+  return RETRYABLE_GRAPHQL_HTTP_STATUSES.has(Number(match[1]));
 }
 
 async function graphqlRequestOnce<TData, TVariables>(
@@ -101,7 +120,7 @@ export async function graphqlRequest<TData, TVariables = Record<string, unknown>
     } catch (error) {
       lastError = error;
 
-      if (!isTransientFetchError(error) || attempt === attempts - 1) {
+      if (!isRetryableGraphqlError(error) || attempt === attempts - 1) {
         throw error;
       }
 

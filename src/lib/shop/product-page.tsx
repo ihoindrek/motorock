@@ -196,7 +196,14 @@ export async function renderProductPage({
   }
 
   if (motorcycle) {
-    const motorcycleCatalog = await getMotorcycleCatalog(locale);
+    let motorcycleCatalog: Awaited<ReturnType<typeof getMotorcycleCatalog>> = [];
+
+    try {
+      motorcycleCatalog = await getMotorcycleCatalog(locale);
+    } catch (error) {
+      console.error("[motorcycle-pdp] GraphQL catalog fetch failed:", error);
+    }
+
     const currentMotorcycle = motorcycleCatalog.find((item) => item.slug === slug);
 
     const relatedProducts = motorcycle.enrichment.relatedSlugs?.length

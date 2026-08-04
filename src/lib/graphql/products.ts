@@ -601,7 +601,7 @@ export async function getMotorcycleCatalog(
     );
   } catch (error) {
     console.error("[motorcycles] GraphQL catalog fetch failed:", error);
-    return [];
+    throw error;
   }
 }
 
@@ -619,7 +619,7 @@ export async function getEquipmentCatalog(
     return mapEquipmentCatalogNodes(nodes, locale, nodesById);
   } catch (error) {
     console.error("[equipment] GraphQL catalog fetch failed:", error);
-    return [];
+    throw error;
   }
 }
 
@@ -633,7 +633,7 @@ export async function getEquipmentCatalogForRoute(
     return mapCatalogNodesForRoute(nodes, route, locale, nodesById);
   } catch (error) {
     console.error("[equipment] GraphQL catalog fetch failed:", error);
-    return [];
+    throw error;
   }
 }
 
@@ -651,7 +651,7 @@ export async function getToolsCatalog(
     return mapToolsCatalogNodes(nodes, locale, nodesById);
   } catch (error) {
     console.error("[tools] GraphQL catalog fetch failed:", error);
-    return [];
+    throw error;
   }
 }
 
@@ -670,10 +670,15 @@ export async function getSimilarProducts(
   limit = RELATED_PRODUCTS_LIMIT,
   locale: Locale = "en",
 ): Promise<CatalogProduct[]> {
-  const catalog =
-    product.type === "motorcycle"
-      ? await getMotorcycleCatalog(locale)
-      : await getEquipmentCatalog(locale);
+  try {
+    const catalog =
+      product.type === "motorcycle"
+        ? await getMotorcycleCatalog(locale)
+        : await getEquipmentCatalog(locale);
 
-  return pickSimilarProducts(product, catalog, limit);
+    return pickSimilarProducts(product, catalog, limit);
+  } catch (error) {
+    console.error("[similar-products] GraphQL catalog fetch failed:", error);
+    return [];
+  }
 }
