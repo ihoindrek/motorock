@@ -42,6 +42,34 @@
       "placeholder": "https://"
     },
     {
+      "key": "field_motorock_motorcycle_lifestyle_gallery",
+      "label": "Lifestyle gallery (Closer look)",
+      "name": "motorcycle_lifestyle_gallery",
+      "aria-label": "",
+      "type": "gallery",
+      "instructions": "Ainult mootorrattadele. Lähem pilk sektsioon — lifestyle/action fotod. Tootefotod jäävad WooCommerce galeriisse. Laadi üles EN tootele; ET leht kasutab neid automaatselt. Min 3 pilti.",
+      "required": 0,
+      "conditional_logic": 0,
+      "wrapper": {
+        "width": "",
+        "class": "",
+        "id": ""
+      },
+      "return_format": "id",
+      "library": "all",
+      "min": 0,
+      "max": 7,
+      "min_width": "",
+      "min_height": "",
+      "min_size": "",
+      "max_width": "",
+      "max_height": "",
+      "max_size": "",
+      "mime_types": "jpg,jpeg,png,webp",
+      "insert": "append",
+      "preview_size": "medium"
+    },
+    {
       "key": "field_motorock_showroom_available",
       "label": "Praegu salongis",
       "name": "showroom_available",

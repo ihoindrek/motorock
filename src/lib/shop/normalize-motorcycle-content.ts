@@ -109,7 +109,8 @@ export type NormalizeMotorcycleContentInput = {
   shortHtml: string;
   longHtml: string;
   productImages: readonly string[];
-  lifestyleImages?: readonly string[];
+  /** Dedicated ACF lifestyle gallery — not Woo product gallery. */
+  lifestyleGallery?: readonly string[];
   vimeoId?: string;
   productName: string;
   brand: string;
@@ -179,14 +180,13 @@ export function normalizeMotorcycleContent(
       : parsedShort.editorialSections;
 
   const supplementaryHtml = catalog.descriptionHtml || undefined;
-  const parallaxSources = [
-    ...input.productImages,
-    ...(input.lifestyleImages ?? []),
-  ].filter(Boolean);
-  const parallaxImages = [...new Set(parallaxSources)].slice(0, 7).map((src) => ({
-    src,
-    alt: `${input.brand} ${input.productName}`,
-  }));
+  const parallaxImages = (input.lifestyleGallery ?? [])
+    .filter(Boolean)
+    .slice(0, 7)
+    .map((src) => ({
+      src,
+      alt: `${input.brand} ${input.productName}`,
+    }));
 
   return {
     tagline: manual?.tagline ?? parsedShort.tagline,

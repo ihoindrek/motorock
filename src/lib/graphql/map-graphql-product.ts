@@ -33,6 +33,7 @@ import { buildToolsCategoryHref } from "@/lib/shop/shop-category-route";
 import { buildEquipmentHubHref } from "@/lib/shop/category-url";
 import { normalizeMotorcycleContent } from "@/lib/shop/normalize-motorcycle-content";
 import { resolveMotorcycleSpecOverrides } from "@/lib/shop/motorcycle-spec-snapshot";
+import { resolveMotorcycleLifestyleGalleryUrls } from "@/lib/shop/motorcycle-lifestyle-gallery";
 import { resolveProductVimeoIdFromMeta } from "@/lib/shop/parse-product-video";
 import {
   normalizeWordPressMediaUrl,
@@ -374,10 +375,14 @@ export function mapGraphqlToMotorcycleProduct(
   const galleryUrls = normalizeWordPressMediaUrls(
     (product.galleryImages?.nodes ?? []).map((image) => image.sourceUrl),
   );
-  const { productImages, lifestyleImages } = splitCatalogImages(
+  const { productImages } = splitCatalogImages(
     normalizeWordPressMediaUrlOptional(product.image?.sourceUrl),
     galleryUrls,
   );
+  const lifestyleGallery = resolveMotorcycleLifestyleGalleryUrls({
+    meta: product.metaData,
+    metaSources: options?.showroomMetaSources,
+  });
 
   const isVariable = product.__typename === "VariableProduct";
   const colors = isVariable ? colorsFromVariableProduct(product) : [];
@@ -392,7 +397,7 @@ export function mapGraphqlToMotorcycleProduct(
     shortHtml,
     longHtml,
     productImages,
-    lifestyleImages,
+    lifestyleGallery,
     vimeoId: resolveProductVimeoIdFromMeta(product.metaData),
     productName: displayName(product.name, brand),
     brand,
@@ -448,7 +453,7 @@ export function mapGraphqlToMotorcycleProduct(
       generalSpecs:
         content.dimensionSpecs.length > 0 ? content.dimensionSpecs : undefined,
       lifestyleImages:
-        lifestyleImages.length > 0 ? lifestyleImages : undefined,
+        lifestyleGallery.length > 0 ? lifestyleGallery : undefined,
       vimeoId: content.vimeoId,
       isNew: resolveMappedIsNew(product.metaData, product.date, options),
     },

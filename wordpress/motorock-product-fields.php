@@ -1,19 +1,23 @@
 <?php
 /**
  * Plugin Name: Motorock Product Fields
- * Description: Exposes ACF product fields (showroom_available, motorcycle_specs_html, is_new) to REST and WPGraphQL metaData.
- * Version: 1.0.0
+ * Description: Exposes ACF product fields (showroom_available, motorcycle_specs_html, lifestyle gallery, is_new) to REST and WPGraphQL metaData.
+ * Version: 1.1.0
  *
  * Install: copy to wp-content/mu-plugins/motorock-product-fields.php
  */
 
 defined( 'ABSPATH' ) || exit;
 
+const MOTOROCK_LIFESTYLE_GALLERY_ACF = 'motorcycle_lifestyle_gallery';
+const MOTOROCK_LIFESTYLE_GALLERY_META = '_motorock_lifestyle_gallery';
+
 const MOTOROCK_PRODUCT_GRAPHQL_META_KEYS = array(
 	'showroom_available',
 	'is_new',
 	'motorcycle_specs_html',
 	'motorcycle_specs_source_url',
+	MOTOROCK_LIFESTYLE_GALLERY_META,
 	'_motorock_ai_seo_title',
 	'_motorock_ai_seo_meta_description',
 	'_motorock_ai_seo_keywords',
@@ -92,3 +96,49 @@ add_action(
 	},
 	99
 );
+
+/**
+ * Sync ACF lifestyle gallery attachment IDs to a JSON URL list for headless GraphQL.
+ */
+function motorock_sync_lifestyle_gallery_meta( $post_id ) {
+	if ( get_post_type( $post_id ) !== 'product' ) {
+		return;
+	}
+
+	if ( ! function_exists( 'get_field' ) ) {
+		return;
+	}
+
+	$attachment_ids = get_field( MOTOROCK_LIFESTYLE_GALLERY_ACF, $post_id );
+
+	if ( ! is_array( $attachment_ids ) || count( $attachment_ids ) === 0 ) {
+		delete_post_meta( $post_id, MOTOROCK_LIFESTYLE_GALLERY_META );
+		return;
+	}
+
+	$urls = array();
+
+	foreach ( $attachment_ids as $attachment_id ) {
+		$url = wp_get_attachment_image_url( (int) $attachment_id, 'full' );
+
+		if ( $url ) {
+			$urls[] = $url;
+		}
+	}
+
+	if ( count( $urls ) === 0 ) {
+		delete_post_meta( $post_id, MOTOROCK_LIFESTYLE_GALLERY_META );
+		return;
+	}
+
+	update_post_meta(
+		$post_id,
+		MOTOROCK_LIFESTYLE_GALLERY_META,
+		wp_json_encode(
+			array_values( $urls ),
+			JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+		)
+	);
+}
+
+add_action( 'acf/save_post', 'motorock_sync_lifestyle_gallery_meta', 20 );
