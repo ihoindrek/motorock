@@ -89,6 +89,12 @@ export type CatalogProduct = {
   vimeoId?: string;
   backHref: string;
   backLabel: string;
+  /** AI-generated SEO overrides from Woo meta (when present). */
+  aiSeo?: {
+    title?: string;
+    metaDescription?: string;
+    keywords?: string[];
+  };
 };
 
 export const allSizes = [

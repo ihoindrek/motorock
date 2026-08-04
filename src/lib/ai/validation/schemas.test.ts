@@ -1,0 +1,88 @@
+import { describe, expect, it } from "vitest";
+import {
+  DescriptionSectionSchema,
+  parseAiBatchRequestBody,
+  parseAiGenerateRequestBody,
+  SeoSectionSchema,
+} from "@/lib/ai/validation/schemas";
+import { hasExistingDescriptionContent } from "@/lib/ai/domain/normalized-product";
+import { findForbiddenHtmlTags } from "@/lib/ai/validation/html-safety";
+
+describe("AI validation schemas", () => {
+  it("accepts valid description output", () => {
+    const result = DescriptionSectionSchema.safeParse({
+      shortDescription: "<p>Rev'It! GT-R jacket for all-season riding with CE armor.</p>",
+      description:
+        "<h2>Overview</h2><p>Detailed copy about materials and fit.</p>".repeat(8),
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects SEO title that is too long", () => {
+    const result = SeoSectionSchema.safeParse({
+      title: "A".repeat(59),
+      metaDescription: "M".repeat(90),
+      keywords: ["jacket", "revit", "motorcycle"],
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("parses generate request body", () => {
+    const parsed = parseAiGenerateRequestBody({
+      productId: 123,
+      locale: "en",
+      sections: ["description", "seo"],
+      options: { dryRun: true },
+    });
+
+    expect(parsed).toEqual({
+      productId: 123,
+      locale: "en",
+      sections: ["description", "seo"],
+      options: { dryRun: true },
+    });
+  });
+
+  it("parses batch request body", () => {
+    const parsed = parseAiBatchRequestBody({
+      productIds: [25800, 25801],
+      locales: ["en", "et"],
+      sections: ["description"],
+      options: { dryRun: false, overwrite: "always" },
+    });
+
+    expect(parsed).toEqual({
+      productIds: [25800, 25801],
+      locales: ["en", "et"],
+      sections: ["description"],
+      options: { dryRun: false, overwrite: "always" },
+    });
+  });
+
+  it("rejects batch requests above job limit", () => {
+    const parsed = parseAiBatchRequestBody({
+      productIds: Array.from({ length: 20 }, (_, index) => index + 1),
+      locales: ["en", "et"],
+      sections: ["description"],
+    });
+
+    expect(parsed).toBeNull();
+  });
+});
+
+describe("AI domain helpers", () => {
+  it("detects existing description content", () => {
+    expect(
+      hasExistingDescriptionContent({
+        shortDescription: "<p>" + "Short copy ".repeat(5) + "</p>",
+        description: "<p>" + "Long copy ".repeat(40) + "</p>",
+      }),
+    ).toBe(true);
+  });
+
+  it("flags forbidden HTML tags", () => {
+    expect(findForbiddenHtmlTags('<p>ok</p><script>alert(1)</script>')).toContain("script");
+  });
+});

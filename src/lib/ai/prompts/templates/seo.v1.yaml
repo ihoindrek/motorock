@@ -1,0 +1,19 @@
+id: seo.v1
+section: seo
+locales: [en, et]
+system: |
+  You are an SEO specialist for Motorock.eu.
+  Write in {{locale}} only. Output valid JSON matching the schema.
+  Do not include the site suffix "| Motorock.eu" in the title.
+user: |
+  Product: {{name}}
+  Brand: {{brand}}
+  Category: {{categoryPath}}
+  Price: {{price}} EUR
+  Short description context:
+  {{existingShort}}
+rules:
+  - title max 58 characters
+  - metaDescription max 160 characters, plain text only
+  - keywords lowercase, unique, 3-12 items
+  - include brand when natural

@@ -1,5 +1,6 @@
 import type { Locale } from "@/i18n/config";
 import { getStorefrontUrl } from "@/lib/storefront/url";
+import type { AiProductSeoMeta } from "@/lib/seo/ai-product-seo";
 import {
   buildProductSeoDescription,
   buildProductSeoTitle,
@@ -96,6 +97,7 @@ function resolveCatalogDescription(product: CatalogProduct) {
 function withSeoCopy(
   snapshot: Omit<ProductSeoSnapshot, "seoTitle" | "seoDescription">,
   locale: Locale,
+  aiSeo?: AiProductSeoMeta,
 ): ProductSeoSnapshot {
   const copyInput = {
     name: snapshot.name,
@@ -107,8 +109,10 @@ function withSeoCopy(
 
   return {
     ...snapshot,
-    seoTitle: buildProductSeoTitle(copyInput, locale),
-    seoDescription: buildProductSeoDescription(copyInput, locale),
+    seoTitle: aiSeo?.title?.trim() || buildProductSeoTitle(copyInput, locale),
+    seoDescription:
+      aiSeo?.metaDescription?.trim() ||
+      buildProductSeoDescription(copyInput, locale),
   };
 }
 
@@ -137,6 +141,7 @@ export function buildProductSeoSnapshotFromMotorcycle(
       canonicalUrl: `${getStorefrontUrl()}${localizedProductHref(product.slug, locale)}`,
     },
     locale,
+    product.aiSeo,
   );
 }
 
@@ -167,6 +172,7 @@ export function buildProductSeoSnapshotFromCatalog(
       canonicalUrl: `${getStorefrontUrl()}${localizedProductHref(product.slug, locale)}`,
     },
     locale,
+    product.aiSeo,
   );
 }
 

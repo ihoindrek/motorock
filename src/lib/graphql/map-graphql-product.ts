@@ -40,6 +40,7 @@ import {
 } from "@/lib/shop/wordpress-media-url";
 import { getGraphqlLanguageCode, resolveLocalizedProductFields } from "@/lib/graphql/wpml";
 import { getDictionary } from "@/i18n/get-dictionary";
+import { parseAiProductSeoFromMeta } from "@/lib/seo/ai-product-seo";
 import { isLocale } from "@/i18n/config";
 
 const COLOR_ATTR_NAMES = new Set(["color", "colour", "värv", "finish"]);
@@ -443,6 +444,7 @@ export function mapGraphqlToMotorcycleProduct(
       isNew: resolveMappedIsNew(product.metaData, product.date, options),
     },
     parsedSpecs: catalogCopy.parsedSpecs,
+    aiSeo: parseAiProductSeoFromMeta(product.metaData),
   };
 }
 
@@ -541,6 +543,7 @@ export function mapGraphqlToCatalogProduct(
       : equipmentMeta.category === "tools"
         ? resolveCatalogBackLabel(locale, "tools")
         : resolveCatalogBackLabel(locale, "equipment"),
+    aiSeo: parseAiProductSeoFromMeta(product.metaData),
   };
 }
 

@@ -72,6 +72,12 @@ export type MotorcycleProduct = {
   /** Normalized PDP sections — same layout for every motorcycle. */
   content: MotorcyclePageContent;
   enrichment: MotorockEnrichment;
+  /** AI-generated SEO overrides from Woo meta (when present). */
+  aiSeo?: {
+    title?: string;
+    metaDescription?: string;
+    keywords?: string[];
+  };
   /** @deprecated Use content.keySpecs / content.engineSpecs — raw parse output. */
   parsedSpecs: readonly ProductSpec[];
 };

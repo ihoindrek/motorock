@@ -12,6 +12,9 @@ defined( 'ABSPATH' ) || exit;
 const MOTOROCK_PRODUCT_GRAPHQL_META_KEYS = array(
 	'showroom_available',
 	'is_new',
+	'_motorock_ai_seo_title',
+	'_motorock_ai_seo_meta_description',
+	'_motorock_ai_seo_keywords',
 );
 
 /**

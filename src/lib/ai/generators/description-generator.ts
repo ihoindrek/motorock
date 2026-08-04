@@ -1,0 +1,46 @@
+import type { GenerationContext, GenerationResult } from "@/lib/ai/core/types";
+import type { NormalizedProduct } from "@/lib/ai/domain/normalized-product";
+import type { ContentGenerator } from "@/lib/ai/generators/content-generator";
+import { runStructuredGeneration } from "@/lib/ai/generators/run-generation";
+import type { AiProvider } from "@/lib/ai/providers/ai-provider.interface";
+import {
+  DescriptionSectionSchema,
+  type DescriptionSectionOutput,
+} from "@/lib/ai/validation/schemas";
+import { ContentQualityValidator } from "@/lib/ai/validation/content-quality-validator";
+
+export class DescriptionGenerator implements ContentGenerator<DescriptionSectionOutput> {
+  readonly id = "description" as const;
+  readonly promptTemplateId = "description.v1";
+
+  constructor(
+    private readonly provider: AiProvider,
+    private readonly model: string,
+    private readonly validator = new ContentQualityValidator(),
+  ) {}
+
+  async generate(
+    product: NormalizedProduct,
+    context: GenerationContext,
+  ): Promise<GenerationResult<DescriptionSectionOutput>> {
+    return runStructuredGeneration({
+      provider: this.provider,
+      model: this.model,
+      promptTemplateId: this.promptTemplateId,
+      schema: DescriptionSectionSchema,
+      product,
+      context,
+      section: this.id,
+      validate: (output, currentProduct, currentContext) =>
+        this.validator.validateDescription(output, currentProduct, currentContext),
+    });
+  }
+
+  validate(
+    output: DescriptionSectionOutput,
+    product: NormalizedProduct,
+    context: GenerationContext,
+  ) {
+    return this.validator.validateDescription(output, product, context);
+  }
+}
