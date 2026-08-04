@@ -2,6 +2,10 @@ import type { Locale } from "@/i18n/config";
 import type { ProductSpec } from "@/types/catalog-product";
 import { resolveMotorcycleCatalogCopy } from "@/lib/shop/parse-brixton-html";
 import { specLabelCategoryBucket } from "@/lib/shop/motorcycle-spec-labels";
+import {
+  isMostlyPlainTextSpecs,
+  parsePlainTextMotorcycleSpecs,
+} from "@/lib/shop/parse-plain-text-motorcycle-specs";
 import type { MotorcycleContentOverrides } from "@/lib/shop/normalize-motorcycle-content";
 
 export const MOTORCYCLE_SPEC_META_KEYS = {
@@ -37,8 +41,21 @@ export function buildMotorcycleSpecSnapshot(
   let engineSpecs = [...catalog.engineSpecs];
   let extendedSpecs = [...catalog.moreEngineSpecs];
   let dimensionSpecs = [...catalog.generalSpecs];
+  let parsedSpecs = [...catalog.parsedSpecs];
+  let highlightSpecs = [...catalog.highlightSpecs];
 
-  for (const spec of catalog.parsedSpecs) {
+  if (
+    parsedSpecs.length === 0 &&
+    engineSpecs.length === 0 &&
+    extendedSpecs.length === 0 &&
+    dimensionSpecs.length === 0 &&
+    isMostlyPlainTextSpecs(trimmed)
+  ) {
+    parsedSpecs = parsePlainTextMotorcycleSpecs(trimmed);
+    highlightSpecs = parsedSpecs.slice(0, 4);
+  }
+
+  for (const spec of parsedSpecs) {
     const bucket = specLabelCategoryBucket(spec.label);
     if (bucket === "engine") {
       engineSpecs.push(spec);
@@ -50,7 +67,7 @@ export function buildMotorcycleSpecSnapshot(
   }
 
   const hasSpecs =
-    catalog.parsedSpecs.length > 0 ||
+    parsedSpecs.length > 0 ||
     engineSpecs.length > 0 ||
     extendedSpecs.length > 0 ||
     dimensionSpecs.length > 0;
@@ -60,7 +77,7 @@ export function buildMotorcycleSpecSnapshot(
   }
 
   return {
-    highlightSpecs: [...catalog.highlightSpecs],
+    highlightSpecs,
     engineSpecs,
     extendedSpecs,
     dimensionSpecs,
