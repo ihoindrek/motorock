@@ -401,6 +401,7 @@ export function mapGraphqlToMotorcycleProduct(
       shortHtml,
       locale: contentLocale,
       meta: product.metaData,
+      metaSources: options?.showroomMetaSources,
     }),
   });
 

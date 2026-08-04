@@ -57,6 +57,20 @@ describe("motorcycle spec snapshot", () => {
     );
   });
 
+  it("falls back to sibling locale meta when current translation has no specs", () => {
+    const tableHtml = `<table><tr><td>Engine Type</td><td>1 cylinder</td></tr></table>`;
+
+    const overrides = resolveMotorcycleSpecOverrides({
+      longHtml: "<p>AI marketing only</p>",
+      shortHtml: "",
+      locale: "et",
+      meta: [],
+      metaSources: [{ meta: [{ key: "motorcycle_specs_html", value: tableHtml }] }],
+    });
+
+    expect(overrides?.engineSpecs.length).toBeGreaterThan(0);
+  });
+
   it("prefers stored meta snapshot over live description", () => {
     const snapshot = buildMotorcycleSpecSnapshot(supplierHtml, "", "en");
     const overrides = resolveMotorcycleSpecOverrides({

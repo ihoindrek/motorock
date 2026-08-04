@@ -169,34 +169,67 @@ export function resolveMotorcycleSpecOverrides(input: {
   shortHtml: string;
   locale: Locale;
   meta?: readonly { key?: string | null; value?: string | null }[] | null;
+  /** WPML sibling products — specs fall back to EN when ET ACF field is empty. */
+  metaSources?: readonly {
+    meta?: readonly { key?: string | null; value?: string | null }[] | null;
+  }[];
 }): MotorcycleContentOverrides | undefined {
-  const acfSpecsHtml = readMotorcycleSpecsHtmlFromMeta(input.meta);
-  if (acfSpecsHtml) {
-    const fromAcf = buildMotorcycleSpecSnapshot(
-      acfSpecsHtml,
-      input.shortHtml,
-      input.locale,
+  const metaCandidates = [
+    input.meta,
+    ...(input.metaSources?.map((source) => source.meta) ?? []),
+  ].filter(
+    (meta): meta is readonly { key?: string | null; value?: string | null }[] =>
+      Boolean(meta?.length),
+  );
+
+  const seen = new Set<readonly { key?: string | null; value?: string | null }[]>();
+
+  for (const meta of metaCandidates) {
+    if (seen.has(meta)) {
+      continue;
+    }
+
+    seen.add(meta);
+
+    const acfSpecsHtml = readMotorcycleSpecsHtmlFromMeta(meta);
+    if (acfSpecsHtml) {
+      const fromAcf = buildMotorcycleSpecSnapshot(
+        acfSpecsHtml,
+        input.shortHtml,
+        input.locale,
+      );
+      if (fromAcf) {
+        return motorcycleSpecSnapshotToOverrides(fromAcf);
+      }
+    }
+
+    const snapshotJson = readMetaString(
+      meta,
+      MOTORCYCLE_SPEC_META_KEYS.specsSnapshot,
     );
-    if (fromAcf) {
-      return motorcycleSpecSnapshotToOverrides(fromAcf);
+    const snapshot = parseMotorcycleSpecSnapshotJson(snapshotJson);
+    if (snapshot) {
+      return motorcycleSpecSnapshotToOverrides(snapshot);
+    }
+
+    const supplierHtml = readMetaString(
+      meta,
+      MOTORCYCLE_SPEC_META_KEYS.supplierDescription,
+    );
+    if (supplierHtml) {
+      const built = buildMotorcycleSpecSnapshot(
+        supplierHtml,
+        input.shortHtml,
+        input.locale,
+      );
+      if (built) {
+        return motorcycleSpecSnapshotToOverrides(built);
+      }
     }
   }
 
-  const snapshotJson = readMetaString(
-    input.meta,
-    MOTORCYCLE_SPEC_META_KEYS.specsSnapshot,
-  );
-  const snapshot = parseMotorcycleSpecSnapshotJson(snapshotJson);
-  if (snapshot) {
-    return motorcycleSpecSnapshotToOverrides(snapshot);
-  }
-
-  const supplierHtml =
-    readMetaString(input.meta, MOTORCYCLE_SPEC_META_KEYS.supplierDescription) ??
-    input.longHtml;
-
   const built = buildMotorcycleSpecSnapshot(
-    supplierHtml,
+    input.longHtml,
     input.shortHtml,
     input.locale,
   );
