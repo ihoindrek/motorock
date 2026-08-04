@@ -218,6 +218,31 @@
   @apply mb-4 last:mb-0;
 }
 
+.product-description--marketing p:first-of-type {
+  @apply text-lg font-semibold leading-[1.65] text-ink sm:text-xl;
+}
+
+.product-description--marketing p {
+  @apply text-sm leading-relaxed text-ink/72 sm:text-base;
+}
+
+.product-description--marketing ul {
+  @apply my-5 list-none space-y-3 p-0;
+}
+
+.product-description--marketing li {
+  @apply relative pl-5 text-sm leading-relaxed text-ink/78 sm:text-base;
+}
+
+.product-description--marketing li::before {
+  content: "";
+  @apply absolute left-0 top-[0.65em] h-1.5 w-1.5 bg-accent;
+}
+
+.product-description--marketing strong {
+  @apply font-semibold text-ink;
+}
+
 .product-description table {
   @apply mt-6 w-full border-collapse text-base;
 }
