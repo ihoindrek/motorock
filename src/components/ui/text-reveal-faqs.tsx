@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
 
@@ -25,6 +26,10 @@ type TextRevealFaqsProps = {
   supportLinkLabel: string;
   supportHref: string;
   variant?: "inline" | "section";
+  image?: {
+    src: string;
+    alt: string;
+  };
 };
 
 export function BlurredStagger({ text }: { text: string }) {
@@ -104,6 +109,28 @@ function FaqSupportText({
   );
 }
 
+function FaqProductImage({
+  image,
+  className,
+}: {
+  image: { src: string; alt: string };
+  className?: string;
+}) {
+  return (
+    <figure className={cn("overflow-hidden", className)}>
+      <div className="relative aspect-[4/3] bg-surface/60">
+        <Image
+          src={image.src}
+          alt={image.alt}
+          fill
+          sizes="(min-width: 1024px) 28rem, (min-width: 768px) 40vw"
+          className="object-contain p-5"
+        />
+      </div>
+    </figure>
+  );
+}
+
 function FaqAccordion({ items }: { items: readonly TextRevealFaqItem[] }) {
   return (
     <Accordion type="single" collapsible>
@@ -127,6 +154,7 @@ export function TextRevealFaqs({
   supportLinkLabel,
   supportHref,
   variant = "section",
+  image,
 }: TextRevealFaqsProps) {
   if (items.length === 0) {
     return null;
@@ -163,6 +191,9 @@ export function TextRevealFaqs({
         <p className="mt-4 text-balance text-base leading-relaxed text-ink/60 sm:text-lg">
           {description}
         </p>
+        {image ? (
+          <FaqProductImage image={image} className="mt-8 hidden md:block" />
+        ) : null}
         <FaqSupportText
           prefix={supportPrefix}
           linkLabel={supportLinkLabel}

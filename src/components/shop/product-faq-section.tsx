@@ -13,6 +13,10 @@ type ProductFaqSectionProps = {
   title: string;
   items: readonly ProductFaqEntry[];
   variant?: "inline" | "section";
+  image?: {
+    src: string;
+    alt: string;
+  };
 };
 
 function toFaqItems(items: readonly ProductFaqEntry[]): TextRevealFaqItem[] {
@@ -27,6 +31,7 @@ export function ProductFaqSection({
   title,
   items,
   variant = "inline",
+  image,
 }: ProductFaqSectionProps) {
   const dict = useDictionary();
   const locale = useLocale();
@@ -41,6 +46,7 @@ export function ProductFaqSection({
       supportLinkLabel={dict.pdp.faqSupportLink}
       supportHref={supportHref}
       variant={variant}
+      image={image}
     />
   );
 }

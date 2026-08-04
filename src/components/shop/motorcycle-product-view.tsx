@@ -465,6 +465,11 @@ function RichMotorcycleProductView({
               title={dict.pdp.faq}
               items={product.faq}
               variant="section"
+              image={
+                sync.images[0]
+                  ? { src: sync.images[0], alt: sync.name }
+                  : undefined
+              }
             />
           </div>
         </section>
