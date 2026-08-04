@@ -22,6 +22,7 @@ import { MotorcycleCtaBar } from "@/components/shop/motorcycle-cta-bar";
 import { MotorcycleOverviewSection } from "@/components/shop/motorcycle-overview-section";
 import { MotorcycleProductGallery } from "@/components/shop/motorcycle-product-gallery";
 import { MotorcycleRelatedProducts } from "@/components/shop/motorcycle-related-products";
+import { ProductFaqSection } from "@/components/shop/product-faq-section";
 import { RecentlyViewedProducts } from "@/components/shop/recently-viewed-products";
 import { recordRecentlyViewed } from "@/lib/shop/recently-viewed";
 import { ShowroomPickupNote } from "@/components/shop/showroom-pickup-panel";
@@ -454,6 +455,12 @@ function RichMotorcycleProductView({
               ) : null}
             </div>
           </div>
+        </section>
+      ) : null}
+
+      {product.faq && product.faq.length > 0 ? (
+        <section className="site-container border-t border-ink/10 py-12 lg:py-16">
+          <ProductFaqSection title={dict.pdp.faq} items={product.faq} bordered={false} />
         </section>
       ) : null}
 

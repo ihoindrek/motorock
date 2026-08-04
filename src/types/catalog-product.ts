@@ -95,6 +95,10 @@ export type CatalogProduct = {
     metaDescription?: string;
     keywords?: string[];
   };
+  faq?: readonly {
+    question: string;
+    answer: string;
+  }[];
 };
 
 export const allSizes = [

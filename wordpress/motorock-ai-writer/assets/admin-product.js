@@ -4,6 +4,7 @@
   }
 
   var button = document.getElementById("motorock-ai-generate");
+  var publishButton = document.getElementById("motorock-ai-publish");
   var resultEl = document.getElementById("motorock-ai-result");
   if (!button || !resultEl) {
     return;
@@ -80,6 +81,16 @@
             "<br /><em>" +
             escapeHtml(result.preview.title || "") +
             "</em>";
+        } else if (result.preview.section === "faq") {
+          html +=
+            "<br /><em>" +
+            escapeHtml((result.preview.items[0]?.question || "").slice(0, 120)) +
+            "…</em>";
+        } else if (result.preview.section === "alt_text") {
+          html +=
+            "<br /><em>" +
+            escapeHtml((result.preview.items[0]?.altText || "").slice(0, 120)) +
+            "…</em>";
         }
       }
 
@@ -95,9 +106,10 @@
     var sections = checkedValues("motorock_ai_section");
     var dryRun = document.getElementById("motorock-ai-dry-run").checked;
     var overwrite = document.getElementById("motorock-ai-overwrite").value;
+    var publishStatus = document.getElementById("motorock-ai-publish-status").value;
 
     if (!locales.length || !sections.length) {
-      resultEl.innerHTML = "<p>Pick at least one locale and section.</p>";
+      resultEl.innerHTML = "<p>" + escapeHtml(MotorockAiAdmin.i18n.pickSections) + "</p>";
       return;
     }
 
@@ -116,6 +128,7 @@
         sections: sections,
         dryRun: dryRun,
         overwrite: overwrite,
+        publishStatus: publishStatus,
       },
     })
       .then(function (data) {
@@ -123,7 +136,9 @@
         var headline = dryRun
           ? MotorockAiAdmin.i18n.dryRunOk
           : ok
-            ? MotorockAiAdmin.i18n.saved
+            ? publishStatus === "draft"
+              ? MotorockAiAdmin.i18n.savedDraft
+              : MotorockAiAdmin.i18n.saved
             : MotorockAiAdmin.i18n.failed;
 
         resultEl.innerHTML =
@@ -131,6 +146,10 @@
           escapeHtml(headline) +
           "</strong></p>" +
           renderPreview(data);
+
+        if (!dryRun && publishStatus === "draft" && ok) {
+          window.location.reload();
+        }
       })
       .catch(function (error) {
         var message =
@@ -145,4 +164,40 @@
         button.disabled = false;
       });
   });
+
+  if (publishButton) {
+    publishButton.addEventListener("click", function () {
+      publishButton.disabled = true;
+      resultEl.innerHTML = "<p>" + escapeHtml(MotorockAiAdmin.i18n.publishing) + "</p>";
+
+      window.wp.apiFetch({
+        url: MotorockAiAdmin.publishUrl,
+        method: "POST",
+        headers: {
+          "X-WP-Nonce": MotorockAiAdmin.nonce,
+        },
+        data: {
+          productId: MotorockAiAdmin.productId,
+          locale: "en",
+        },
+      })
+        .then(function (data) {
+          if (data && data.ok) {
+            resultEl.innerHTML =
+              "<p><strong>" + escapeHtml(MotorockAiAdmin.i18n.published) + "</strong></p>";
+            window.location.reload();
+            return;
+          }
+
+          resultEl.innerHTML = "<p>" + escapeHtml(MotorockAiAdmin.i18n.failed) + "</p>";
+        })
+        .catch(function (error) {
+          resultEl.innerHTML =
+            "<p>" + escapeHtml((error && error.message) || MotorockAiAdmin.i18n.failed) + "</p>";
+        })
+        .finally(function () {
+          publishButton.disabled = false;
+        });
+    });
+  }
 })();

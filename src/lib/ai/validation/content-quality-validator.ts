@@ -3,6 +3,8 @@ import type { GenerationContext, ValidationReport } from "@/lib/ai/core/types";
 import type { NormalizedProduct } from "@/lib/ai/domain/normalized-product";
 import type {
   DescriptionSectionOutput,
+  FaqSectionOutput,
+  AltTextSectionOutput,
   SeoSectionOutput,
 } from "@/lib/ai/validation/schemas";
 import { findForbiddenHtmlTags } from "@/lib/ai/validation/html-safety";
@@ -60,6 +62,79 @@ export class ContentQualityValidator {
         errors.push(`Meta description language mismatch: expected ${context.locale}`);
       } else {
         warnings.push(`Meta description language may not match ${context.locale}`);
+      }
+    }
+
+    return report(errors, warnings);
+  }
+
+  validateFaq(
+    output: FaqSectionOutput,
+    product: NormalizedProduct,
+    context: GenerationContext,
+  ): ValidationReport {
+    const errors: string[] = [];
+    const warnings: string[] = [];
+
+    const questions = output.items.map((item) => item.question.trim().toLowerCase());
+    if (questions.length !== new Set(questions).size) {
+      errors.push("Duplicate FAQ questions");
+    }
+
+    for (const item of output.items) {
+      if (!item.question.trim().endsWith("?")) {
+        warnings.push("FAQ question should end with a question mark");
+      }
+
+      if (!matchesLocaleHeuristic(item.answer, context.locale)) {
+        if (context.locale === "et") {
+          errors.push(`FAQ answer language mismatch: expected ${context.locale}`);
+        } else {
+          warnings.push(`FAQ answer language may not match ${context.locale}`);
+        }
+      }
+    }
+
+    if (product.brand && !output.items.some((item) => mentionsBrand(item.answer, product.brand!))) {
+      warnings.push("Brand not mentioned in FAQ answers");
+    }
+
+    return report(errors, warnings);
+  }
+
+  validateAltText(
+    output: AltTextSectionOutput,
+    product: NormalizedProduct,
+    context: GenerationContext,
+  ): ValidationReport {
+    const errors: string[] = [];
+    const warnings: string[] = [];
+
+    if (product.images.length === 0) {
+      errors.push("Product has no images for ALT text generation");
+      return report(errors, warnings);
+    }
+
+    const indexes = output.items.map((item) => item.imageIndex);
+    if (indexes.length !== new Set(indexes).size) {
+      errors.push("Duplicate imageIndex values in ALT output");
+    }
+
+    for (const item of output.items) {
+      if (item.imageIndex >= product.images.length) {
+        errors.push(`ALT imageIndex ${item.imageIndex} is out of range`);
+      }
+
+      if (product.brand && !mentionsBrand(item.altText, product.brand)) {
+        warnings.push(`Brand not mentioned in ALT text for image ${item.imageIndex}`);
+      }
+
+      if (!matchesLocaleHeuristic(item.altText, context.locale)) {
+        if (context.locale === "et") {
+          errors.push(`ALT text language mismatch for image ${item.imageIndex}`);
+        } else {
+          warnings.push(`ALT text language may not match ${context.locale}`);
+        }
       }
     }
 

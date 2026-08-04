@@ -18,5 +18,14 @@ export function buildProductPromptVariables(product: NormalizedProduct) {
     ),
     variationCount: String(product.variations.length),
     existingShort: product.existing.shortDescription ?? "",
+    imagesJson: JSON.stringify(
+      product.images.map((image, index) => ({
+        index,
+        altText: image.altText ?? "",
+        url: image.url,
+      })),
+      null,
+      2,
+    ),
   };
 }

@@ -212,6 +212,7 @@ export async function renderProductPage({
       <>
         <ProductJsonLd
           product={buildProductSeoSnapshotFromMotorcycle(motorcycle, locale)}
+          faq={motorcycle.faq}
         />
         <JsonLd
           schema={buildProductBreadcrumbJsonLd(locale, {
@@ -251,6 +252,7 @@ export async function renderProductPage({
       <ProductJsonLd
         product={buildProductSeoSnapshotFromCatalog(product, locale)}
         shipping={schemaShipping}
+        faq={product.faq}
       />
       <JsonLd schema={buildProductBreadcrumbJsonLd(locale, product)} />
       <ProductLocaleAlternates alternates={slugAlternates} />

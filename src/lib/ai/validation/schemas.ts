@@ -19,6 +19,28 @@ export const SeoSectionSchema = z.object({
 
 export type SeoSectionOutput = z.infer<typeof SeoSectionSchema>;
 
+export const FaqItemSchema = z.object({
+  question: z.string().min(10).max(200),
+  answer: z.string().min(20).max(800),
+});
+
+export const FaqSectionSchema = z.object({
+  items: z.array(FaqItemSchema).min(3).max(8),
+});
+
+export type FaqSectionOutput = z.infer<typeof FaqSectionSchema>;
+
+export const AltTextItemSchema = z.object({
+  imageIndex: z.number().int().min(0).max(20),
+  altText: z.string().min(20).max(125),
+});
+
+export const AltTextSectionSchema = z.object({
+  items: z.array(AltTextItemSchema).min(1).max(12),
+});
+
+export type AltTextSectionOutput = z.infer<typeof AltTextSectionSchema>;
+
 /** Looser bounds for LLM parse — clamped before validation. */
 export const SeoSectionLooseSchema = z.object({
   title: z.string().min(10).max(120),
@@ -41,12 +63,26 @@ export const AiStructuredResponseSchema = z.discriminatedUnion("section", [
     output: SeoSectionSchema,
     confidence: z.number().min(0).max(1).optional(),
   }),
+  z.object({
+    section: z.literal("faq"),
+    locale: z.enum(["en", "et"]),
+    productId: z.number().int().positive(),
+    output: FaqSectionSchema,
+    confidence: z.number().min(0).max(1).optional(),
+  }),
+  z.object({
+    section: z.literal("alt_text"),
+    locale: z.enum(["en", "et"]),
+    productId: z.number().int().positive(),
+    output: AltTextSectionSchema,
+    confidence: z.number().min(0).max(1).optional(),
+  }),
 ]);
 
 export type AiStructuredResponse = z.infer<typeof AiStructuredResponseSchema>;
 
 export const SectionWriteResultSchema = z.object({
-  section: z.enum(["description", "seo"]),
+  section: z.enum(["description", "seo", "faq", "alt_text"]),
   locale: z.enum(["en", "et"]),
   status: z.enum(["written", "skipped", "failed", "validation_failed"]),
   message: z.string().optional(),
@@ -82,6 +118,20 @@ export const AiWritePayloadSchema = z.object({
         metaDescription: z.string(),
         keywords: z.array(z.string()),
       }),
+      z.object({
+        section: z.literal("faq"),
+        items: z.array(FaqItemSchema),
+      }),
+      z.object({
+        section: z.literal("alt_text"),
+        items: z.array(
+          z.object({
+            imageId: z.number().int().positive().optional(),
+            imageIndex: z.number().int().min(0),
+            altText: z.string(),
+          }),
+        ),
+      }),
     ]),
   ),
   meta: z.object({
@@ -91,6 +141,7 @@ export const AiWritePayloadSchema = z.object({
     generatedAt: z.string().datetime(),
     jobId: z.string(),
   }),
+  publishStatus: z.enum(["draft", "published"]).optional(),
   motorcycle: z
     .object({
       supplierDescriptionHtml: z.string().optional(),
@@ -106,13 +157,14 @@ const OverwriteStrategySchema = z.enum(["if_empty", "always", "never"]);
 export const AiGenerateRequestBodySchema = z.object({
   productId: z.number().int().positive(),
   locale: z.enum(["en", "et"]),
-  sections: z.array(z.enum(["description", "seo"])).min(1),
+  sections: z.array(z.enum(["description", "seo", "faq", "alt_text"])).min(1),
   options: z
     .object({
       dryRun: z.boolean().optional(),
       revalidate: z.boolean().optional(),
       overwrite: OverwriteStrategySchema.optional(),
       provider: z.enum(["openai", "anthropic"]).optional(),
+      publishStatus: z.enum(["draft", "published"]).optional(),
     })
     .optional(),
 });
@@ -122,7 +174,7 @@ const AiGenerateOptionsSchema = AiGenerateRequestBodySchema.shape.options;
 export const AiBatchRequestBodySchema = z.object({
   productIds: z.array(z.number().int().positive()).min(1).max(25),
   locales: z.array(z.enum(["en", "et"])).min(1).default(["en"]),
-  sections: z.array(z.enum(["description", "seo"])).min(1),
+  sections: z.array(z.enum(["description", "seo", "faq", "alt_text"])).min(1),
   options: AiGenerateOptionsSchema,
 });
 
@@ -148,6 +200,7 @@ export function parseAiGenerateRequestBody(body: unknown) {
       revalidate: parsed.data.options?.revalidate,
       overwrite: parsed.data.options?.overwrite as AiOverwriteStrategy | undefined,
       provider: parsed.data.options?.provider,
+      publishStatus: parsed.data.options?.publishStatus,
     },
   };
 }
@@ -179,6 +232,7 @@ export function parseAiBatchRequestBody(body: unknown) {
       revalidate: parsed.data.options?.revalidate,
       overwrite: parsed.data.options?.overwrite as AiOverwriteStrategy | undefined,
       provider: parsed.data.options?.provider,
+      publishStatus: parsed.data.options?.publishStatus,
     },
   };
 }

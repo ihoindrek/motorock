@@ -18,6 +18,28 @@ class Motorock_Ai_Rest_Write {
 				'permission_callback' => array( __CLASS__, 'verify_secret' ),
 			)
 		);
+
+		register_rest_route(
+			'motorock/v1',
+			'/ai/publish',
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( __CLASS__, 'handle_publish' ),
+				'permission_callback' => array( __CLASS__, 'verify_secret' ),
+			)
+		);
+
+		register_rest_route(
+			'motorock/v1',
+			'/ai/publish-admin',
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( __CLASS__, 'handle_publish_admin' ),
+				'permission_callback' => function () {
+					return current_user_can( 'edit_products' );
+				},
+			)
+		);
 	}
 
 	public static function verify_secret( WP_REST_Request $request ) {
@@ -47,6 +69,36 @@ class Motorock_Ai_Rest_Write {
 		Motorock_Ai_Logger::info( 'write request received', array( 'productId' => $payload['productId'] ?? null ) );
 
 		$result = Motorock_Ai_Content_Writer::write( $payload );
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+
+		return rest_ensure_response( $result );
+	}
+
+	public static function handle_publish( WP_REST_Request $request ) {
+		$payload = $request->get_json_params();
+		if ( ! is_array( $payload ) ) {
+			return new WP_Error( 'motorock_ai_invalid_body', 'Invalid JSON body', array( 'status' => 400 ) );
+		}
+
+		Motorock_Ai_Logger::info( 'publish request received', array( 'productId' => $payload['productId'] ?? null ) );
+
+		$result = Motorock_Ai_Content_Writer::publish( $payload );
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+
+		return rest_ensure_response( $result );
+	}
+
+	public static function handle_publish_admin( WP_REST_Request $request ) {
+		$payload = $request->get_json_params();
+		if ( ! is_array( $payload ) ) {
+			return new WP_Error( 'motorock_ai_invalid_body', 'Invalid JSON body', array( 'status' => 400 ) );
+		}
+
+		$result = Motorock_Ai_Content_Writer::publish( $payload );
 		if ( is_wp_error( $result ) ) {
 			return $result;
 		}

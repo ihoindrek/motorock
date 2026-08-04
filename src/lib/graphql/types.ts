@@ -1,4 +1,5 @@
 export type GraphQLImage = {
+  databaseId?: number | null;
   sourceUrl: string;
   altText?: string | null;
 };

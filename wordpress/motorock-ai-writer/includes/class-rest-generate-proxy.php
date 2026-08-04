@@ -39,6 +39,10 @@ class Motorock_Ai_Rest_Generate_Proxy {
 		$sections = self::normalize_sections( $payload['sections'] ?? array( 'description', 'seo' ) );
 		$dry_run = ! empty( $payload['dryRun'] );
 		$overwrite = isset( $payload['overwrite'] ) ? (string) $payload['overwrite'] : 'if_empty';
+		$publish_status = isset( $payload['publishStatus'] ) ? sanitize_key( (string) $payload['publishStatus'] ) : 'draft';
+		if ( ! in_array( $publish_status, array( 'draft', 'published' ), true ) ) {
+			$publish_status = 'draft';
+		}
 
 		if ( empty( $locales ) || empty( $sections ) ) {
 			return new WP_Error( 'motorock_ai_invalid_body', 'locales and sections are required', array( 'status' => 400 ) );
@@ -65,8 +69,9 @@ class Motorock_Ai_Rest_Generate_Proxy {
 				'locales'    => $locales,
 				'sections'   => $sections,
 				'options'    => array(
-					'dryRun'    => $dry_run,
-					'overwrite' => $overwrite,
+					'dryRun'        => $dry_run,
+					'overwrite'     => $overwrite,
+					'publishStatus' => $publish_status,
 				),
 			)
 			: array(
@@ -74,8 +79,9 @@ class Motorock_Ai_Rest_Generate_Proxy {
 				'locale'    => $locales[0],
 				'sections'  => $sections,
 				'options'   => array(
-					'dryRun'    => $dry_run,
-					'overwrite' => $overwrite,
+					'dryRun'        => $dry_run,
+					'overwrite'     => $overwrite,
+					'publishStatus' => $publish_status,
 				),
 			);
 
@@ -146,7 +152,7 @@ class Motorock_Ai_Rest_Generate_Proxy {
 			return array();
 		}
 
-		$allowed = array( 'description', 'seo' );
+		$allowed = array( 'description', 'seo', 'faq', 'alt_text' );
 		$normalized = array();
 
 		foreach ( $sections as $section ) {

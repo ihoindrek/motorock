@@ -93,11 +93,13 @@ const PRODUCT_DETAIL_FIELDS = `
   shortDescription
   description
   image {
+    databaseId
     sourceUrl
     altText
   }
   galleryImages {
     nodes {
+      databaseId
       sourceUrl
       altText
     }

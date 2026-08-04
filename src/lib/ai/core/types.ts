@@ -1,6 +1,7 @@
 import type { Locale } from "@/i18n/config";
+import type { AiPublishStatus } from "@/lib/ai/domain/content-section";
 
-export type AiContentSection = "description" | "seo";
+export type AiContentSection = "description" | "seo" | "faq" | "alt_text";
 
 export type AiOverwriteStrategy = "if_empty" | "always" | "never";
 
@@ -9,6 +10,8 @@ export type AiGenerateOptions = {
   revalidate?: boolean;
   overwrite?: AiOverwriteStrategy;
   provider?: "openai" | "anthropic";
+  /** When draft, content is stored for review before going live on the storefront. */
+  publishStatus?: AiPublishStatus;
 };
 
 export type AiGenerateRequest = {
@@ -24,6 +27,17 @@ export type SectionWriteStatus =
   | "failed"
   | "validation_failed";
 
+export type ProductFaqItem = {
+  question: string;
+  answer: string;
+};
+
+export type AltTextPreviewItem = {
+  imageId?: number;
+  imageIndex: number;
+  altText: string;
+};
+
 export type SectionPreview =
   | {
       section: "description";
@@ -35,6 +49,14 @@ export type SectionPreview =
       title: string;
       metaDescription: string;
       keywords: string[];
+    }
+  | {
+      section: "faq";
+      items: ProductFaqItem[];
+    }
+  | {
+      section: "alt_text";
+      items: AltTextPreviewItem[];
     };
 
 export type SectionWriteResult = {

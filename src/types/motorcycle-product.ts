@@ -79,6 +79,10 @@ export type MotorcycleProduct = {
     metaDescription?: string;
     keywords?: string[];
   };
+  faq?: readonly {
+    question: string;
+    answer: string;
+  }[];
   /** @deprecated Use content.keySpecs / content.engineSpecs — raw parse output. */
   parsedSpecs: readonly ProductSpec[];
 };

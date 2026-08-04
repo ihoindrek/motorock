@@ -81,7 +81,7 @@ const SPEC_VALUE_ET: Record<string, string> = {
   "electric starter": "Elektriline käiviti",
   "disc / disc": "Ketas / ketas",
   "1 cylinder, 4-stroke, water cooled":
-    "1 silinder, 4-taktiline, vedelsüljahutusega",
+    "1 silinder, 4-taktiline, vesijahutusega",
 };
 
 const EDITORIAL_SECTION_ET: Record<string, string> = {

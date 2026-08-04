@@ -1,5 +1,7 @@
 import type { Locale } from "@/i18n/config";
 import type { ProductCategory, ProductType } from "@/types/catalog-product";
+import type { ProductFaqItem } from "@/lib/ai/core/types";
+import type { AiContentStatus } from "@/lib/ai/domain/content-section";
 
 export type NormalizedProductAttribute = {
   name: string;
@@ -47,6 +49,8 @@ export type NormalizedProduct = {
     seoTitle?: string;
     seoMetaDescription?: string;
     seoKeywords?: string[];
+    faq?: ProductFaqItem[];
+    contentStatus?: AiContentStatus;
   };
   translations: NormalizedProductTranslation[];
   source: "shopify" | "manual" | "unknown";
@@ -76,6 +80,24 @@ export function hasExistingSeoContent(existing: ProductContentSnapshot & {
       existing.seoMetaDescription?.trim() &&
       existing.seoMetaDescription.trim().length >= 80,
   );
+}
+
+export function hasExistingFaqContent(existing: { faq?: ProductFaqItem[] }) {
+  return (
+    Array.isArray(existing.faq) &&
+    existing.faq.length >= 3 &&
+    existing.faq.every(
+      (item) => item.question.trim().length >= 10 && item.answer.trim().length >= 20,
+    )
+  );
+}
+
+export function hasExistingAltTextContent(product: Pick<NormalizedProduct, "images">) {
+  if (product.images.length === 0) {
+    return false;
+  }
+
+  return product.images.every((image) => (image.altText?.trim().length ?? 0) >= 20);
 }
 
 function stripHtml(html: string) {

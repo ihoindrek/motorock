@@ -222,6 +222,7 @@ export type Dictionary = {
     shippingReturns: string;
     relatedProducts: string;
     features: string;
+    faq: string;
     oneSize: string;
     shippingReturnsBody: string;
     shippingFrom: string;
@@ -812,6 +813,7 @@ export const en: Dictionary = {
     shippingReturns: "Shipping & returns",
     relatedProducts: "You may also like",
     features: "Features",
+    faq: "FAQ",
     oneSize: "One size",
     shippingReturnsBody:
       "EU delivery via SmartPosti, Omniva, DPD, courier or showroom pickup. Shipping costs are shown at checkout. 14-day withdrawal — contact info@motorock.eu.",

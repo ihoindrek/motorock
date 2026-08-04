@@ -25,6 +25,7 @@ import { EquipmentStickyAtc } from "@/components/shop/equipment-sticky-atc";
 import { WishlistButton } from "@/components/shop/wishlist-button";
 import { ShareButton } from "@/components/shop/share-button";
 import { ProductShippingReturnsPanel } from "@/components/shop/product-shipping-returns-panel";
+import { ProductFaqSection } from "@/components/shop/product-faq-section";
 import { resolveSizeGuide } from "@/lib/shop/resolve-size-guide";
 import {
   buildProductColorOptions,
@@ -556,6 +557,10 @@ export function EquipmentProductView({
               >
                 <ProductSpecs specs={product.specs} />
               </CraftAccordion>
+            ) : null}
+
+            {product.faq && product.faq.length > 0 ? (
+              <ProductFaqSection title={dict.pdp.faq} items={product.faq} />
             ) : null}
 
             <CraftAccordion

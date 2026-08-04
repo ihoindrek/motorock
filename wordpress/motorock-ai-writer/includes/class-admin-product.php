@@ -34,24 +34,31 @@ class Motorock_Ai_Admin_Product {
 			'motorock-ai-admin-product',
 			content_url( 'mu-plugins/motorock-ai-writer/assets/admin-product.js' ),
 			array( 'wp-api-fetch' ),
-			'0.2.0',
+			'0.3.0',
 			true
 		);
+
+		$product_id = (int) get_the_ID();
 
 		wp_localize_script(
 			'motorock-ai-admin-product',
 			'MotorockAiAdmin',
 			array(
-				'restUrl'  => rest_url( 'motorock/v1/ai/generate' ),
-				'nonce'    => wp_create_nonce( 'wp_rest' ),
-				'productId'=> (int) get_the_ID(),
-				'status'   => self::read_status( (int) get_the_ID() ),
-				'i18n'     => array(
-					'running'     => __( 'Generating… this can take 30–60 seconds.', 'motorock-ai-writer' ),
-					'dryRunOk'    => __( 'Dry run complete — preview below. Nothing saved.', 'motorock-ai-writer' ),
-					'saved'       => __( 'Content saved to WooCommerce.', 'motorock-ai-writer' ),
-					'failed'      => __( 'Generation failed.', 'motorock-ai-writer' ),
-					'notConfigured'=> __( 'AI API not configured on server (MOTOROCK_AI_API_SECRET).', 'motorock-ai-writer' ),
+				'restUrl'       => rest_url( 'motorock/v1/ai/generate' ),
+				'publishUrl'    => rest_url( 'motorock/v1/ai/publish-admin' ),
+				'nonce'         => wp_create_nonce( 'wp_rest' ),
+				'productId'     => $product_id,
+				'status'        => self::read_status( $product_id ),
+				'i18n'          => array(
+					'running'        => __( 'Generating… this can take 30–60 seconds.', 'motorock-ai-writer' ),
+					'dryRunOk'       => __( 'Dry run complete — preview below. Nothing saved.', 'motorock-ai-writer' ),
+					'saved'          => __( 'Content saved to WooCommerce.', 'motorock-ai-writer' ),
+					'savedDraft'     => __( 'Draft saved for review. Use Approve & publish when ready.', 'motorock-ai-writer' ),
+					'published'      => __( 'Draft content published.', 'motorock-ai-writer' ),
+					'failed'         => __( 'Generation failed.', 'motorock-ai-writer' ),
+					'notConfigured'  => __( 'AI API not configured on server (MOTOROCK_AI_API_SECRET).', 'motorock-ai-writer' ),
+					'pickSections'   => __( 'Pick at least one locale and section.', 'motorock-ai-writer' ),
+					'publishing'     => __( 'Publishing draft content…', 'motorock-ai-writer' ),
 				),
 			)
 		);
@@ -59,10 +66,11 @@ class Motorock_Ai_Admin_Product {
 
 	public static function render_meta_box( $post ) {
 		$status = self::read_status( (int) $post->ID );
+		$content_status = get_post_meta( (int) $post->ID, '_motorock_ai_content_status', true );
 		?>
 		<div id="motorock-ai-panel">
 			<p class="description">
-				<?php esc_html_e( 'Generate product description and SEO via the headless AI engine.', 'motorock-ai-writer' ); ?>
+				<?php esc_html_e( 'Generate product content via the headless AI engine. Select only the sections you want to regenerate.', 'motorock-ai-writer' ); ?>
 				<br />
 				<strong><?php esc_html_e( 'Specs:', 'motorock-ai-writer' ); ?></strong>
 				<?php esc_html_e( 'Paste technical specifications in the Motorock toode → Technical specifications (HTML) field. AI does not update that field.', 'motorock-ai-writer' ); ?>
@@ -75,6 +83,9 @@ class Motorock_Ai_Admin_Product {
 					<?php if ( ! empty( $status['sections'] ) ) : ?>
 						<br /><span class="description"><?php echo esc_html( implode( ', ', $status['sections'] ) ); ?></span>
 					<?php endif; ?>
+					<?php if ( is_string( $content_status ) && $content_status !== '' ) : ?>
+						<br /><span class="description"><?php esc_html_e( 'Status', 'motorock-ai-writer' ); ?>: <?php echo esc_html( $content_status ); ?></span>
+					<?php endif; ?>
 				</p>
 			<?php endif; ?>
 
@@ -85,7 +96,9 @@ class Motorock_Ai_Admin_Product {
 
 			<p>
 				<label><input type="checkbox" name="motorock_ai_section" value="description" checked /> <?php esc_html_e( 'Description', 'motorock-ai-writer' ); ?></label><br />
-				<label><input type="checkbox" name="motorock_ai_section" value="seo" checked /> SEO</label>
+				<label><input type="checkbox" name="motorock_ai_section" value="seo" checked /> SEO</label><br />
+				<label><input type="checkbox" name="motorock_ai_section" value="faq" /> FAQ</label><br />
+				<label><input type="checkbox" name="motorock_ai_section" value="alt_text" /> <?php esc_html_e( 'Image ALT text', 'motorock-ai-writer' ); ?></label>
 			</p>
 
 			<p>
@@ -105,10 +118,26 @@ class Motorock_Ai_Admin_Product {
 			</p>
 
 			<p>
+				<label for="motorock-ai-publish-status"><?php esc_html_e( 'Save as', 'motorock-ai-writer' ); ?></label><br />
+				<select id="motorock-ai-publish-status">
+					<option value="draft"><?php esc_html_e( 'Draft (review first)', 'motorock-ai-writer' ); ?></option>
+					<option value="published"><?php esc_html_e( 'Published (live immediately)', 'motorock-ai-writer' ); ?></option>
+				</select>
+			</p>
+
+			<p>
 				<button type="button" class="button button-primary" id="motorock-ai-generate">
 					<?php esc_html_e( 'Generate with AI', 'motorock-ai-writer' ); ?>
 				</button>
 			</p>
+
+			<?php if ( $content_status === 'draft' ) : ?>
+				<p>
+					<button type="button" class="button" id="motorock-ai-publish">
+						<?php esc_html_e( 'Approve & publish draft', 'motorock-ai-writer' ); ?>
+					</button>
+				</p>
+			<?php endif; ?>
 
 			<div id="motorock-ai-result" aria-live="polite"></div>
 		</div>

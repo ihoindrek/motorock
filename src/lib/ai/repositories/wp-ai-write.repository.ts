@@ -5,12 +5,15 @@ export type AiWriteResult = {
   ok: boolean;
   productId: number;
   locale: "en" | "et";
+  publishStatus?: "draft" | "published";
   written: {
     shortDescription?: boolean;
     description?: boolean;
     seoTitle?: boolean;
     seoMetaDescription?: boolean;
     seoKeywords?: boolean;
+    faq?: boolean;
+    altText?: boolean;
   };
 };
 

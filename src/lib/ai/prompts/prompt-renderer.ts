@@ -1,6 +1,6 @@
 export type PromptTemplate = {
   id: string;
-  section: "description" | "seo";
+  section: "description" | "seo" | "faq" | "alt_text";
   locales: string[];
   system: string;
   user: string;

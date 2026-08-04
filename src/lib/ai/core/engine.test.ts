@@ -2,7 +2,9 @@ import { describe, expect, it, vi } from "vitest";
 import type { AiConfig } from "@/lib/ai/config";
 import { AiEngine } from "@/lib/ai/core/engine";
 import type { NormalizedProduct } from "@/lib/ai/domain/normalized-product";
+import { AltTextGenerator } from "@/lib/ai/generators/alt-text-generator";
 import { DescriptionGenerator } from "@/lib/ai/generators/description-generator";
+import { FaqGenerator } from "@/lib/ai/generators/faq-generator";
 import { SeoGenerator } from "@/lib/ai/generators/seo-generator";
 import type { AiProvider } from "@/lib/ai/providers/ai-provider.interface";
 
@@ -82,6 +84,8 @@ function createEngine(overrides?: {
     generators: {
       description: new DescriptionGenerator(provider, "gpt-test"),
       seo: new SeoGenerator(provider, "gpt-test"),
+      faq: new FaqGenerator(provider, "gpt-test"),
+      alt_text: new AltTextGenerator(provider, "gpt-test"),
     },
   });
 }
@@ -122,6 +126,22 @@ describe("AiEngine", () => {
 
     expect(result.results[0]?.status).toBe("skipped");
     expect(result.results[0]?.message).toContain("if_empty");
+  });
+
+  it("skips revalidation when publishStatus is draft", async () => {
+    const write = vi.fn(async () => ({ ok: true, productId: 42, locale: "en", written: {} }));
+    const engine = createEngine({ write });
+
+    await engine.generate({
+      productId: 42,
+      locale: "en",
+      sections: ["description"],
+      options: { dryRun: false, overwrite: "always", publishStatus: "draft" },
+    });
+
+    expect(write).toHaveBeenCalledWith(
+      expect.objectContaining({ publishStatus: "draft" }),
+    );
   });
 
   it("continues batch when one product is missing", async () => {

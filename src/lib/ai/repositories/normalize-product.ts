@@ -43,6 +43,31 @@ function detectImportSource(meta: GraphQLMetaData[] | null | undefined) {
   return "unknown" as const;
 }
 
+function parseFaq(raw: string | undefined) {
+  if (!raw) {
+    return undefined;
+  }
+
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) {
+      return undefined;
+    }
+
+    return parsed.filter(
+      (item): item is { question: string; answer: string } =>
+        Boolean(
+          item &&
+            typeof item === "object" &&
+            typeof (item as { question?: string }).question === "string" &&
+            typeof (item as { answer?: string }).answer === "string",
+        ),
+    );
+  } catch {
+    return undefined;
+  }
+}
+
 function mapAttributes(product: GraphQLProduct) {
   return (product.attributes?.nodes ?? []).map((attribute) => ({
     name: attribute.name,
@@ -134,9 +159,14 @@ export function toNormalizedProduct(
 
   const images = [
     ...(product.image?.sourceUrl
-      ? [{ url: product.image.sourceUrl, altText: product.image.altText ?? undefined }]
+      ? [{
+          id: product.image.databaseId ?? undefined,
+          url: product.image.sourceUrl,
+          altText: product.image.altText ?? undefined,
+        }]
       : []),
     ...(product.galleryImages?.nodes ?? []).map((image) => ({
+      id: image.databaseId ?? undefined,
       url: image.sourceUrl,
       altText: image.altText ?? undefined,
     })),
@@ -169,6 +199,15 @@ export function toNormalizedProduct(
       seoKeywords: parseKeywords(
         readMetaValue(product.metaData, AI_PRODUCT_META_KEYS.seoKeywords),
       ),
+      faq: parseFaq(readMetaValue(product.metaData, AI_PRODUCT_META_KEYS.faq)),
+      contentStatus:
+        readMetaValue(product.metaData, AI_PRODUCT_META_KEYS.contentStatus) ===
+        "draft"
+          ? "draft"
+          : readMetaValue(product.metaData, AI_PRODUCT_META_KEYS.contentStatus) ===
+              "published"
+            ? "published"
+            : undefined,
     },
     translations: mapTranslations(product),
     source: detectImportSource(product.metaData),

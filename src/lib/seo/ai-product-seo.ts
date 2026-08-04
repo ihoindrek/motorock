@@ -35,6 +35,11 @@ function parseKeywords(raw: string | undefined) {
 export function parseAiProductSeoFromMeta(
   meta: readonly MetaEntry[] | null | undefined,
 ): AiProductSeoMeta | undefined {
+  const status = readMetaValue(meta, AI_PRODUCT_META_KEYS.contentStatus)?.trim();
+  if (status && status !== "published") {
+    return undefined;
+  }
+
   const title = readMetaValue(meta, AI_PRODUCT_META_KEYS.seoTitle)?.trim();
   const metaDescription = readMetaValue(
     meta,

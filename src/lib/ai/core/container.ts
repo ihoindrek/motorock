@@ -1,6 +1,8 @@
 import { getAiConfig, resolveActiveModel } from "@/lib/ai/config";
 import { AiEngine } from "@/lib/ai/core/engine";
 import { DescriptionGenerator } from "@/lib/ai/generators/description-generator";
+import { FaqGenerator } from "@/lib/ai/generators/faq-generator";
+import { AltTextGenerator } from "@/lib/ai/generators/alt-text-generator";
 import { SeoGenerator } from "@/lib/ai/generators/seo-generator";
 import { AnthropicProvider } from "@/lib/ai/providers/anthropic-provider";
 import { OpenAiProvider } from "@/lib/ai/providers/openai-provider";
@@ -24,6 +26,8 @@ export function createAiContainer() {
     generators: {
       description: new DescriptionGenerator(provider, model),
       seo: new SeoGenerator(provider, model),
+      faq: new FaqGenerator(provider, model),
+      alt_text: new AltTextGenerator(provider, model),
     },
   });
 
