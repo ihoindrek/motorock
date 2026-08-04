@@ -3,33 +3,12 @@
   "title": "Motorock toode",
   "fields": [
     {
-      "key": "field_motorock_showroom_available",
-      "label": "Praegu salongis",
-      "name": "showroom_available",
-      "aria-label": "",
-      "type": "true_false",
-      "instructions": "Näitab storefront'il märgist \"Praegu salongis\" / \"In store now\", kui toode on laos. Kasuta mootorrattade puhul, mis on Tallinnas saadaval.",
-      "required": 0,
-      "conditional_logic": 0,
-      "wrapper": {
-        "width": "",
-        "class": "",
-        "id": ""
-      },
-      "message": "",
-      "default_value": 0,
-      "allow_in_bindings": 0,
-      "ui": 1,
-      "ui_on_text": "Jah",
-      "ui_off_text": "Ei"
-    },
-    {
       "key": "field_motorock_motorcycle_specs_html",
       "label": "Technical specifications (HTML)",
       "name": "motorcycle_specs_html",
       "aria-label": "",
       "type": "wysiwyg",
-      "instructions": "Ainult mootorrattadele. Kleebi tootja lehe spetsifikatsioonid siia (tabel või loendid). Storefront kuvab need eraldi sektsioonis. AI ei muuda seda välja — turundustekst jääb Product description kasti.",
+      "instructions": "Ainult mootorrattadele. Kleebi tootja lehe spetsifikatsioonid siia (tabel või loendid). Storefront kuvab need eraldi sektsioonis. AI ei muuda seda välja — turundustekst jääb Product description kasti allpool.",
       "required": 0,
       "conditional_logic": 0,
       "wrapper": {
@@ -61,6 +40,27 @@
       "default_value": "",
       "allow_in_bindings": 0,
       "placeholder": "https://"
+    },
+    {
+      "key": "field_motorock_showroom_available",
+      "label": "Praegu salongis",
+      "name": "showroom_available",
+      "aria-label": "",
+      "type": "true_false",
+      "instructions": "Näitab storefront'il märgist \"Praegu salongis\" / \"In store now\", kui toode on laos. Kasuta mootorrattade puhul, mis on Tallinnas saadaval.",
+      "required": 0,
+      "conditional_logic": 0,
+      "wrapper": {
+        "width": "",
+        "class": "",
+        "id": ""
+      },
+      "message": "",
+      "default_value": 0,
+      "allow_in_bindings": 0,
+      "ui": 1,
+      "ui_on_text": "Jah",
+      "ui_off_text": "Ei"
     }
   ],
   "location": [
@@ -72,14 +72,14 @@
       }
     ]
   ],
-  "menu_order": 0,
+  "menu_order": 10,
   "position": "normal",
   "style": "default",
   "label_placement": "top",
   "instruction_placement": "label",
   "hide_on_screen": "",
   "active": true,
-  "description": "Storefront'i tooteväljad (Motorock.eu). \"Uus\" märgis tuleb automaatselt 30 päeva jooksul alates avaldamise kuupäevast.",
+  "description": "Storefront'i tooteväljad (Motorock.eu). Kuvatakse toote põhiosa all (mitte parempoolses sidebaris).",
   "show_in_rest": 1,
-  "modified": 1754300000
+  "modified": 1754303600
 }

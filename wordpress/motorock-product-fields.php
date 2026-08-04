@@ -63,3 +63,32 @@ add_filter(
 	10,
 	2
 );
+
+/**
+ * Keep the Motorock ACF group in the main product editor column (not the sidebar).
+ */
+add_filter(
+	'acf/load_field_group',
+	function ( $field_group ) {
+		if ( ! is_array( $field_group ) || ( $field_group['key'] ?? '' ) !== 'group_motorock_product' ) {
+			return $field_group;
+		}
+
+		$field_group['position']   = 'normal';
+		$field_group['menu_order'] = 10;
+
+		return $field_group;
+	}
+);
+
+add_action(
+	'add_meta_boxes',
+	function ( $post_type ) {
+		if ( $post_type !== 'product' ) {
+			return;
+		}
+
+		remove_meta_box( 'acf-group_motorock_product', 'product', 'side' );
+	},
+	99
+);
