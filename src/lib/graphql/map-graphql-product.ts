@@ -16,6 +16,7 @@ import {
   resolveMotorcycleCatalogCopy,
   splitCatalogImages,
 } from "@/lib/shop/parse-brixton-html";
+import { decodeHtmlEntities } from "@/lib/html/decode-html-entities";
 import { parseGraphqlPrice } from "@/lib/shop/parse-graphql-price";
 import { getCanonicalBrandName } from "@/lib/shop/brands";
 import { parseSpecsFromDescriptionHtml } from "@/lib/shop/parse-product-description";
@@ -430,11 +431,12 @@ export function mapGraphqlToMotorcycleProduct(
       price,
       shortDescription:
         parsedShort.tagline ??
-        (shortHtml
-          .replace(/<[^>]+>/g, " ")
-          .replace(/\s+/g, " ")
-          .trim()
-          .slice(0, 180) || ""),
+        (decodeHtmlEntities(
+          shortHtml
+            .replace(/<[^>]+>/g, " ")
+            .replace(/\s+/g, " ")
+            .trim(),
+        ).slice(0, 180) || ""),
       descriptionHtml,
       images: productImages,
       colors,

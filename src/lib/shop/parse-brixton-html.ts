@@ -1,5 +1,6 @@
 import type { Locale } from "@/i18n/config";
 import type { ProductSpec } from "@/types/catalog-product";
+import { decodeHtmlEntities } from "@/lib/html/decode-html-entities";
 import { parseSpecsFromDescriptionHtml } from "@/lib/shop/parse-product-description";
 import {
   localizeMotorcycleEditorialTitle,
@@ -8,20 +9,14 @@ import {
 } from "@/lib/shop/motorcycle-spec-labels";
 
 function stripHtml(html: string) {
-  return html
-    .replace(/<br\s*\/?>/gi, "\n")
-    .replace(/<\/p>/gi, "\n")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/&#8217;/g, "'")
-    .replace(/&#8216;/g, "'")
-    .replace(/&rsquo;/g, "'")
-    .replace(/&lsquo;/g, "'")
-    .replace(/&quot;/g, '"')
-    .replace(/&#215;/g, "×")
-    .replace(/\s+/g, " ")
-    .trim();
+  return decodeHtmlEntities(
+    html
+      .replace(/<br\s*\/?>/gi, "\n")
+      .replace(/<\/p>/gi, "\n")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim(),
+  );
 }
 
 function slugifyId(label: string) {

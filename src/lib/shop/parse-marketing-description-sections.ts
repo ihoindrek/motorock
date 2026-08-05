@@ -1,16 +1,17 @@
+import { decodeHtmlEntities } from "@/lib/html/decode-html-entities";
+
 export type MarketingDescriptionSection = {
   title: string;
   bodyHtml: string;
 };
 
 function stripHtml(value: string) {
-  return value
-    .replace(/<[^>]+>/g, " ")
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)))
-    .replace(/\s+/g, " ")
-    .trim();
+  return decodeHtmlEntities(
+    value
+      .replace(/<[^>]+>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim(),
+  );
 }
 
 /** Split AI / WC marketing HTML into h2-led editorial sections. */
