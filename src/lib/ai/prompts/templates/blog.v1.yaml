@@ -32,6 +32,6 @@ rules:
   - excerpt 120-220 characters, no HTML
   - contentHtml at least 4 sections with h2 headings, 900+ words equivalent
   - slugSuggestion lowercase latin, hyphens only, no locale prefix
-  - categorySlugs use existing journal themes when possible: guides, news, gear, riding
+  - "categorySlugs use existing journal themes when possible (guides, news, gear, riding)"
   - do not invent product specs not in product context
   - include 1-2 internal link suggestions as anchor tags when natural

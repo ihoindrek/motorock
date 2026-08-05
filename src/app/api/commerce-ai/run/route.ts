@@ -40,6 +40,11 @@ export async function POST(request: Request) {
 
     return Response.json(result, { status });
   } catch (error) {
-    throw error;
+    const message = error instanceof Error ? error.message : "Commerce AI run failed";
+
+    return Response.json(
+      { ok: false, error: message, code: "internal_error" },
+      { status: 500 },
+    );
   }
 }
