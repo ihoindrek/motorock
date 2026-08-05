@@ -86,9 +86,11 @@ class Motorock_Commerce_Ai_Admin_Dashboard {
 			array(
 				'id'          => 'seo.audit',
 				'domain'      => 'seo',
-				'status'      => 'planned',
+				'status'      => 'active',
 				'title'       => __( 'SEO audit', 'motorock-commerce-ai' ),
 				'description' => __( 'Score PDPs and posts for missing meta, thin content, and ALT gaps.', 'motorock-commerce-ai' ),
+				'action_url'  => admin_url( 'admin.php?page=motorock-commerce-ai-seo-audit' ),
+				'action_label'=> __( 'Open SEO audit', 'motorock-commerce-ai' ),
 			),
 			array(
 				'id'          => 'seo.internal_links',

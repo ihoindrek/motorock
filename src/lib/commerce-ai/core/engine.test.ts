@@ -36,7 +36,7 @@ describe("CommerceAiEngine", () => {
 
     expect(listed.find((entry) => entry.id === "product.content_writer")?.runnable).toBe(true);
     expect(listed.find((entry) => entry.id === "seo.audit")?.runnable).toBe(false);
-    expect(listed.find((entry) => entry.id === "seo.audit")?.status).toBe("planned");
+    expect(listed.find((entry) => entry.id === "seo.audit")?.status).toBe("active");
   });
 
   it("returns not_implemented for planned skills", async () => {

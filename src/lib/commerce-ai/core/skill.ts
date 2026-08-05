@@ -59,3 +59,23 @@ export function parseBlogTarget(target: CommerceAiRunRequest["target"]) {
     productId: hasProductId ? productId : undefined,
   };
 }
+
+export function parseSeoAuditTarget(target: CommerceAiRunRequest["target"]) {
+  const scope = target.scope;
+  const parsedScope =
+    scope === "products" || scope === "posts" || scope === "all" ? scope : undefined;
+
+  const category =
+    typeof target.category === "string" && target.category.trim()
+      ? target.category.trim()
+      : undefined;
+
+  const limit = Number(target.limit);
+  const parsedLimit = Number.isInteger(limit) && limit > 0 ? limit : undefined;
+
+  return {
+    scope: parsedScope,
+    category,
+    limit: parsedLimit,
+  };
+}

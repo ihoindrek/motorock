@@ -4,6 +4,7 @@ import { GraphqlProductReadRepository } from "@/lib/ai/repositories/graphql-prod
 import { BlogGenerateService } from "@/lib/commerce-ai/blog/blog-generate.service";
 import { WpBlogWriteRepository } from "@/lib/commerce-ai/blog/wp-blog-write.repository";
 import { CommerceAiEngine } from "@/lib/commerce-ai/core/engine";
+import { SeoAuditService } from "@/lib/commerce-ai/seo/seo-audit.service";
 import { createCommerceAiSkillRegistry } from "@/lib/commerce-ai/skills/registry";
 
 export function createCommerceAiContainer() {
@@ -15,7 +16,8 @@ export function createCommerceAiContainer() {
     productRead: new GraphqlProductReadRepository(),
     blogWrite: new WpBlogWriteRepository(config.wpWriteUrl, config.wpWriteSecret),
   });
-  const skills = createCommerceAiSkillRegistry({ aiEngine, blogGenerate });
+  const seoAudit = new SeoAuditService();
+  const skills = createCommerceAiSkillRegistry({ aiEngine, blogGenerate, seoAudit });
   const engine = new CommerceAiEngine(skills, { aiEngine });
 
   return {
@@ -23,6 +25,7 @@ export function createCommerceAiContainer() {
     providerRegistry,
     aiEngine,
     blogGenerate,
+    seoAudit,
     engine,
   };
 }

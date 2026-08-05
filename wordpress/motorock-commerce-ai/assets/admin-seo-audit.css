@@ -1,0 +1,38 @@
+.motorock-seo-audit-wrap #motorock-seo-audit-summary {
+  margin: 1rem 0;
+}
+
+.motorock-seo-audit-summary-grid {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  margin-bottom: 1rem;
+}
+
+.motorock-seo-audit-summary-card {
+  background: #fff;
+  border: 1px solid #c3c4c7;
+  border-radius: 4px;
+  padding: 0.75rem 0.9rem;
+}
+
+.motorock-seo-audit-summary-card strong {
+  display: block;
+  font-size: 1.25rem;
+}
+
+.motorock-seo-audit-table td.motorock-seo-audit-score {
+  font-weight: 600;
+}
+
+.motorock-seo-audit-table .severity-error {
+  color: #b32d2e;
+}
+
+.motorock-seo-audit-table .severity-warning {
+  color: #8a6d1f;
+}
+
+.motorock-seo-audit-table .severity-info {
+  color: #646970;
+}

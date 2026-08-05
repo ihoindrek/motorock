@@ -47,7 +47,7 @@ export const COMMERCE_AI_SKILL_CATALOG: readonly CommerceAiSkillDefinition[] = [
   {
     id: "seo.audit",
     domain: "seo",
-    status: "planned",
+    status: "active",
     title: "SEO audit",
     description: "Score PDPs and posts for missing meta, thin content, and ALT gaps.",
   },
