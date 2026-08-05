@@ -34,7 +34,7 @@ class Motorock_Ai_Admin_Product {
 			'motorock-ai-admin-product',
 			content_url( 'mu-plugins/motorock-ai-writer/assets/admin-product.js' ),
 			array( 'wp-api-fetch' ),
-			'0.3.0',
+			'0.3.1',
 			true
 		);
 
@@ -103,7 +103,7 @@ class Motorock_Ai_Admin_Product {
 
 			<p>
 				<label>
-					<input type="checkbox" id="motorock-ai-dry-run" checked />
+					<input type="checkbox" id="motorock-ai-dry-run" />
 					<?php esc_html_e( 'Dry run (preview only)', 'motorock-ai-writer' ); ?>
 				</label>
 			</p>
@@ -112,7 +112,7 @@ class Motorock_Ai_Admin_Product {
 				<label for="motorock-ai-overwrite"><?php esc_html_e( 'Overwrite', 'motorock-ai-writer' ); ?></label><br />
 				<select id="motorock-ai-overwrite">
 					<option value="if_empty"><?php esc_html_e( 'Only if empty', 'motorock-ai-writer' ); ?></option>
-					<option value="always"><?php esc_html_e( 'Always', 'motorock-ai-writer' ); ?></option>
+					<option value="always" selected><?php esc_html_e( 'Always', 'motorock-ai-writer' ); ?></option>
 					<option value="never"><?php esc_html_e( 'Never (fail if exists)', 'motorock-ai-writer' ); ?></option>
 				</select>
 			</p>
