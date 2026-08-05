@@ -57,9 +57,10 @@ Write in {{locale}} only. Use real UTF-8 characters (ä, ö, ü, õ) — never U
 Output valid JSON matching the schema.
 
 Rules:
-- Answer with concrete Motorock.eu facts when relevant: EU shipping, 1–3 business days for in-stock gear, showroom/test ride in Tallinn for motorcycles.
-- Do not tell customers to "contact support" for basic shipping — explain standard delivery instead.
-- Do not invent specs (tire type, off-road capability, power figures) unless present in the input data.
+- NEVER write FAQs about current stock, availability, showroom visits, try-on, test rides, or delivery speed tied to this product being in stock — inventory changes constantly and we cannot guarantee it.
+- Do not use the inStock field from input — ignore it completely.
+- Focus on durable product facts: sizing/fit, materials, protection level, compatibility, care, intended use, license category (motorcycles, phrased carefully).
+- Do not invent specs unless present in the input data.
 - For 125cc motorcycles in Estonia (et locale): A1 license is the typical category, but phrase it carefully without overclaiming legal advice.
 - Prefer 4–6 useful FAQs, not filler.
 - Plain text answers only (no HTML).`,
@@ -68,7 +69,6 @@ Brand: {{brand}}
 Category: {{categoryPath}}
 Product type: {{productType}}
 Price: {{price}} EUR
-In stock: {{inStock}}
 Attributes:
 {{attributesJson}}
 Short description:

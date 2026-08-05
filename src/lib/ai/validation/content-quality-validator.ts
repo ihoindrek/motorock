@@ -8,6 +8,7 @@ import type {
   SeoSectionOutput,
 } from "@/lib/ai/validation/schemas";
 import { findForbiddenHtmlTags } from "@/lib/ai/validation/html-safety";
+import { isForbiddenFaqTopic } from "@/lib/ai/validation/faq-forbidden-topics";
 
 export class ContentQualityValidator {
   validateDescription(
@@ -82,6 +83,13 @@ export class ContentQualityValidator {
     }
 
     for (const item of output.items) {
+      if (isForbiddenFaqTopic(item.question, item.answer)) {
+        errors.push(
+          "FAQ must not cover stock, showroom availability, or delivery tied to current inventory",
+        );
+        break;
+      }
+
       if (!item.question.trim().endsWith("?")) {
         warnings.push("FAQ question should end with a question mark");
       }

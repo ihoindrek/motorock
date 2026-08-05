@@ -8,6 +8,7 @@ import {
   type FaqSectionOutput,
 } from "@/lib/ai/validation/schemas";
 import { ContentQualityValidator } from "@/lib/ai/validation/content-quality-validator";
+import { filterForbiddenFaqItems } from "@/lib/ai/validation/faq-forbidden-topics";
 
 export class FaqGenerator implements ContentGenerator<FaqSectionOutput> {
   readonly id = "faq" as const;
@@ -23,7 +24,7 @@ export class FaqGenerator implements ContentGenerator<FaqSectionOutput> {
     product: NormalizedProduct,
     context: GenerationContext,
   ): Promise<GenerationResult<FaqSectionOutput>> {
-    return runStructuredGeneration({
+    const result = await runStructuredGeneration({
       provider: this.provider,
       model: this.model,
       promptTemplateId: this.promptTemplateId,
@@ -32,8 +33,18 @@ export class FaqGenerator implements ContentGenerator<FaqSectionOutput> {
       context,
       section: this.id,
       validate: (output, currentProduct, currentContext) =>
-        this.validator.validateFaq(output, currentProduct, currentContext),
+        this.validateFaqOutput(output, currentProduct, currentContext),
     });
+
+    if (!result.validation.ok) {
+      return result;
+    }
+
+    const { kept } = filterForbiddenFaqItems(result.output.items);
+    return {
+      ...result,
+      output: { items: kept },
+    };
   }
 
   validate(
@@ -41,6 +52,35 @@ export class FaqGenerator implements ContentGenerator<FaqSectionOutput> {
     product: NormalizedProduct,
     context: GenerationContext,
   ) {
-    return this.validator.validateFaq(output, product, context);
+    return this.validateFaqOutput(output, product, context);
+  }
+
+  private validateFaqOutput(
+    output: FaqSectionOutput,
+    product: NormalizedProduct,
+    context: GenerationContext,
+  ) {
+    const { kept, removed } = filterForbiddenFaqItems(output.items);
+    const sanitized: FaqSectionOutput = { items: kept };
+    const validation = this.validator.validateFaq(sanitized, product, context);
+
+    if (removed.length > 0) {
+      validation.warnings.push(
+        `Removed ${removed.length} FAQ item(s) about stock/showroom availability`,
+      );
+    }
+
+    if (kept.length < 3) {
+      return {
+        ok: false,
+        errors: [
+          ...validation.errors,
+          "Too few FAQ items after removing stock/showroom topics (need at least 3)",
+        ],
+        warnings: validation.warnings,
+      };
+    }
+
+    return validation;
   }
 }
