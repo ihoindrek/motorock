@@ -1,9 +1,10 @@
 import { clientRateLimitKey, isRateLimited } from "@/lib/forms/rate-limit";
 import { verifyAiRouteAuth } from "@/lib/ai/api/route-auth";
-import { createAiContainer } from "@/lib/ai/core/container";
-import { AiEngineError } from "@/lib/ai/core/errors";
 import { mapAiEngineErrorResponse } from "@/lib/ai/api/error-response";
+import { AiEngineError } from "@/lib/ai/core/errors";
 import { parseAiBatchRequestBody } from "@/lib/ai/validation/schemas";
+import { unwrapCommerceAiBatchResult } from "@/lib/commerce-ai/api/legacy-response";
+import { createCommerceAiContainer } from "@/lib/commerce-ai/core/container";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -41,11 +42,22 @@ export async function POST(request: Request) {
     );
   }
 
-  const { engine } = createAiContainer();
+  const { engine } = createCommerceAiContainer();
 
   try {
-    const result = await engine.generateBatch(parsed);
+    const commerceResult = await engine.runBatch({
+      skill: "product.content_writer",
+      productIds: parsed.productIds,
+      locales: parsed.locales,
+      options: {
+        ...parsed.options,
+        sections: parsed.sections,
+      },
+    });
+
+    const result = unwrapCommerceAiBatchResult(commerceResult);
     const status = result.succeeded > 0 ? 200 : 422;
+
     return Response.json(result, { status });
   } catch (error) {
     if (error instanceof AiEngineError) {

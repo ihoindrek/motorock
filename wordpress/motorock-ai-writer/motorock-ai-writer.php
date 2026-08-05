@@ -1,24 +1,13 @@
 <?php
 /**
- * Motorock AI Writer — bootstrap (loaded by ../motorock-ai-writer.php in mu-plugins).
- * Version: 0.4.0
- *
- * Requires: WooCommerce. WPML optional but recommended.
+ * Motorock AI Writer — module bootstrap.
+ * Loaded by Motorock Commerce AI Engine; do not require this file directly on production.
  */
 
 defined( 'ABSPATH' ) || exit;
 
-require_once __DIR__ . '/includes/class-meta-registry.php';
-require_once __DIR__ . '/includes/class-logger.php';
-require_once __DIR__ . '/includes/class-wpml-helper.php';
-require_once __DIR__ . '/includes/class-content-writer.php';
-require_once __DIR__ . '/includes/class-rest-write.php';
-require_once __DIR__ . '/includes/class-rest-generate-proxy.php';
-require_once __DIR__ . '/includes/class-admin-product.php';
-require_once __DIR__ . '/includes/class-admin-bulk.php';
+if ( defined( 'MOTOROCK_COMMERCE_AI_LOADED' ) ) {
+	return;
+}
 
-Motorock_Ai_Meta_Registry::register();
-Motorock_Ai_Rest_Write::register();
-Motorock_Ai_Rest_Generate_Proxy::register();
-Motorock_Ai_Admin_Product::register();
-Motorock_Ai_Admin_Bulk::register();
+require_once dirname( __DIR__ ) . '/motorock-commerce-ai/motorock-commerce-ai.php';

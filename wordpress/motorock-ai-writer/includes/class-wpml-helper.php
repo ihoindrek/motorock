@@ -27,7 +27,7 @@ class Motorock_Ai_Wpml_Helper {
 		return $translated ? (int) $translated : $product_id;
 	}
 
-	private static function map_locale_to_wpml_code( $locale ) {
+	public static function map_locale_to_wpml_code( $locale ) {
 		switch ( $locale ) {
 			case 'en':
 				return 'en';

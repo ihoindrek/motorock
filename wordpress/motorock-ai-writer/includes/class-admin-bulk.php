@@ -20,8 +20,8 @@ class Motorock_Ai_Admin_Bulk {
 	public static function register_menu() {
 		add_submenu_page(
 			'edit.php?post_type=product',
-			__( 'AI Bulk Generate', 'motorock-ai-writer' ),
-			__( 'AI Bulk', 'motorock-ai-writer' ),
+			__( 'Product content', 'motorock-commerce-ai' ),
+			__( '↳ Product content', 'motorock-commerce-ai' ),
 			'edit_products',
 			self::PAGE_SLUG,
 			array( __CLASS__, 'render_page' )
@@ -29,7 +29,7 @@ class Motorock_Ai_Admin_Bulk {
 	}
 
 	public static function register_bulk_action( $actions ) {
-		$actions['motorock_ai_generate'] = __( 'AI Generate (draft)', 'motorock-ai-writer' );
+		$actions['motorock_ai_generate'] = __( 'Commerce AI (draft)', 'motorock-commerce-ai' );
 		return $actions;
 	}
 
@@ -62,13 +62,19 @@ class Motorock_Ai_Admin_Bulk {
 
 	public static function register_status_column( $columns ) {
 		$new_columns = array();
+		$inserted    = false;
 
 		foreach ( $columns as $key => $label ) {
 			$new_columns[ $key ] = $label;
 
-			if ( $key === 'name' ) {
+			if ( ! $inserted && ( $key === 'thumb' || $key === 'name' ) ) {
 				$new_columns['motorock_ai_status'] = __( 'AI', 'motorock-ai-writer' );
+				$inserted = true;
 			}
+		}
+
+		if ( ! $inserted ) {
+			$new_columns['motorock_ai_status'] = __( 'AI', 'motorock-ai-writer' );
 		}
 
 		return $new_columns;
@@ -79,14 +85,85 @@ class Motorock_Ai_Admin_Bulk {
 			return;
 		}
 
-		$status = get_post_meta( (int) $post_id, '_motorock_ai_content_status', true );
-		if ( ! is_string( $status ) || $status === '' ) {
-			echo '<span aria-hidden="true">—</span><span class="screen-reader-text">' . esc_html__( 'No AI content', 'motorock-ai-writer' ) . '</span>';
+		$summary = self::get_ai_status_summary( (int) $post_id );
+		if ( $summary === null ) {
+			echo '<span class="motorock-ai-list-empty" aria-hidden="true">—</span>';
+			echo '<span class="screen-reader-text">' . esc_html__( 'No AI content', 'motorock-ai-writer' ) . '</span>';
 			return;
 		}
 
-		$class = $status === 'draft' ? 'motorock-ai-badge motorock-ai-badge--draft' : 'motorock-ai-badge motorock-ai-badge--published';
-		echo '<span class="' . esc_attr( $class ) . '">' . esc_html( $status ) . '</span>';
+		$icon_class = $summary['status'] === 'draft'
+			? 'dashicons-edit'
+			: 'dashicons-superhero';
+
+		$badge_class = $summary['status'] === 'draft'
+			? 'motorock-ai-list-badge motorock-ai-list-badge--draft'
+			: 'motorock-ai-list-badge motorock-ai-list-badge--published';
+
+		printf(
+			'<span class="%1$s" title="%2$s"><span class="dashicons %3$s" aria-hidden="true"></span><span class="screen-reader-text">%2$s</span></span>',
+			esc_attr( $badge_class ),
+			esc_attr( $summary['label'] ),
+			esc_attr( $icon_class )
+		);
+	}
+
+	/**
+	 * @return array{status: string, label: string, sections: string[]}|null
+	 */
+	private static function get_ai_status_summary( $post_id ) {
+		$status = get_post_meta( $post_id, '_motorock_ai_content_status', true );
+		if ( ! is_string( $status ) || $status === '' ) {
+			return null;
+		}
+
+		$sections = self::parse_sections_meta(
+			get_post_meta( $post_id, '_motorock_ai_sections', true )
+		);
+		$generated_at = get_post_meta( $post_id, '_motorock_ai_generated_at', true );
+		$sections_label = ! empty( $sections )
+			? implode( ', ', $sections )
+			: __( 'content', 'motorock-ai-writer' );
+
+		$status_label = $status === 'draft'
+			? __( 'AI draft', 'motorock-ai-writer' )
+			: __( 'AI published', 'motorock-ai-writer' );
+
+		$label = $status_label . ' — ' . $sections_label;
+		if ( is_string( $generated_at ) && $generated_at !== '' ) {
+			$label .= ' (' . $generated_at . ')';
+		}
+
+		return array(
+			'status'   => $status,
+			'label'    => $label,
+			'sections' => $sections,
+		);
+	}
+
+	/**
+	 * @return string[]
+	 */
+	private static function parse_sections_meta( $raw ) {
+		if ( ! is_string( $raw ) || $raw === '' ) {
+			return array();
+		}
+
+		$decoded = json_decode( $raw, true );
+		if ( ! is_array( $decoded ) ) {
+			return array();
+		}
+
+		return array_values(
+			array_filter(
+				array_map(
+					static function ( $section ) {
+						return is_string( $section ) ? $section : '';
+					},
+					$decoded
+				)
+			)
+		);
 	}
 
 	public static function enqueue_assets( $hook ) {
@@ -97,7 +174,7 @@ class Motorock_Ai_Admin_Bulk {
 					'motorock-ai-admin-bulk',
 					content_url( 'mu-plugins/motorock-ai-writer/assets/admin-bulk.css' ),
 					array(),
-					'0.4.0'
+					'0.4.1'
 				);
 			}
 			return;
@@ -160,10 +237,10 @@ class Motorock_Ai_Admin_Bulk {
 		$products = self::load_products( $selected_ids );
 		?>
 		<div class="wrap motorock-ai-bulk-wrap">
-			<h1><?php esc_html_e( 'Motorock AI Bulk Generate', 'motorock-ai-writer' ); ?></h1>
+			<h1><?php esc_html_e( 'Commerce AI — Product content', 'motorock-commerce-ai' ); ?></h1>
 
 			<p class="description">
-				<?php esc_html_e( 'Generate content for multiple products in small chunks (recommended: 2 products at a time). Results are saved as drafts for review.', 'motorock-ai-writer' ); ?>
+				<?php esc_html_e( 'Bulk-generate product descriptions, SEO, FAQ, and image ALT text. Part of the Commerce AI Engine.', 'motorock-commerce-ai' ); ?>
 			</p>
 
 			<div class="motorock-ai-bulk-grid">

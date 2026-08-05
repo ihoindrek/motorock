@@ -38,6 +38,35 @@
   color: #b32d2e;
 }
 
+.motorock-ai-list-badge {
+  align-items: center;
+  border-radius: 999px;
+  display: inline-flex;
+  height: 24px;
+  justify-content: center;
+  width: 24px;
+}
+
+.motorock-ai-list-badge .dashicons {
+  font-size: 16px;
+  height: 16px;
+  width: 16px;
+}
+
+.motorock-ai-list-badge--draft {
+  background: #fcf0cf;
+  color: #8a6d1f;
+}
+
+.motorock-ai-list-badge--published {
+  background: #d5f5e3;
+  color: #1e7e34;
+}
+
+.motorock-ai-list-empty {
+  color: #c3c4c7;
+}
+
 .motorock-ai-badge {
   border-radius: 3px;
   display: inline-block;

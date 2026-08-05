@@ -21,6 +21,16 @@ class Motorock_Ai_Rest_Write {
 
 		register_rest_route(
 			'motorock/v1',
+			'/ai/write-post',
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( __CLASS__, 'handle_write_post' ),
+				'permission_callback' => array( __CLASS__, 'verify_secret' ),
+			)
+		);
+
+		register_rest_route(
+			'motorock/v1',
 			'/ai/publish',
 			array(
 				'methods'             => 'POST',
@@ -58,6 +68,22 @@ class Motorock_Ai_Rest_Write {
 		}
 
 		return true;
+	}
+
+	public static function handle_write_post( WP_REST_Request $request ) {
+		$payload = $request->get_json_params();
+		if ( ! is_array( $payload ) ) {
+			return new WP_Error( 'motorock_ai_invalid_body', 'Invalid JSON body', array( 'status' => 400 ) );
+		}
+
+		Motorock_Ai_Logger::info( 'blog write request received', array( 'slug' => $payload['slug'] ?? null ) );
+
+		$result = Motorock_Ai_Blog_Writer::write( $payload );
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+
+		return rest_ensure_response( $result );
 	}
 
 	public static function handle_write( WP_REST_Request $request ) {

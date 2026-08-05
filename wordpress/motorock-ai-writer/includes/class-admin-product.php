@@ -12,7 +12,7 @@ class Motorock_Ai_Admin_Product {
 	public static function register_meta_box() {
 		add_meta_box(
 			'motorock-ai-writer',
-			__( 'Motorock AI', 'motorock-ai-writer' ),
+			__( 'Commerce AI', 'motorock-commerce-ai' ),
 			array( __CLASS__, 'render_meta_box' ),
 			'product',
 			'side',

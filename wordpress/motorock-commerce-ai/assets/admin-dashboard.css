@@ -1,0 +1,80 @@
+.motorock-commerce-ai-wrap {
+  max-width: 1200px;
+}
+
+.motorock-commerce-ai-domain {
+  margin-top: 2rem;
+}
+
+.motorock-commerce-ai-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+}
+
+.motorock-commerce-ai-card {
+  background: #fff;
+  border: 1px solid #c3c4c7;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem 1.1rem;
+}
+
+.motorock-commerce-ai-card header {
+  align-items: flex-start;
+  display: flex;
+  gap: 0.5rem;
+  justify-content: space-between;
+}
+
+.motorock-commerce-ai-card h3 {
+  font-size: 1rem;
+  margin: 0;
+}
+
+.motorock-commerce-ai-card p {
+  color: #50575e;
+  flex: 1;
+  margin: 0;
+}
+
+.motorock-commerce-ai-card footer {
+  align-items: center;
+  display: flex;
+  gap: 0.75rem;
+  justify-content: space-between;
+}
+
+.motorock-commerce-ai-card code {
+  color: #646970;
+  font-size: 11px;
+}
+
+.motorock-commerce-ai-badge {
+  background: #f0f0f1;
+  border-radius: 999px;
+  color: #1d2327;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 0.15rem 0.55rem;
+  text-transform: uppercase;
+}
+
+.motorock-commerce-ai-card--active .motorock-commerce-ai-badge {
+  background: #d5f5e3;
+  color: #1e7e34;
+}
+
+.motorock-commerce-ai-card--planned .motorock-commerce-ai-badge {
+  background: #f6f7f7;
+  color: #646970;
+}
+
+.motorock-commerce-ai-soon {
+  color: #646970;
+  font-size: 12px;
+  font-style: italic;
+}

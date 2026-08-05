@@ -1,12 +1,10 @@
 import { clientRateLimitKey, isRateLimited } from "@/lib/forms/rate-limit";
 import { verifyAiRouteAuth } from "@/lib/ai/api/route-auth";
-import { createAiContainer } from "@/lib/ai/core/container";
-import { AiEngineError } from "@/lib/ai/core/errors";
 import { mapAiEngineErrorResponse } from "@/lib/ai/api/error-response";
-import {
-  parseAiGenerateRequestBody,
-  parseLocale,
-} from "@/lib/ai/validation/schemas";
+import { AiEngineError } from "@/lib/ai/core/errors";
+import { parseAiGenerateRequestBody } from "@/lib/ai/validation/schemas";
+import { unwrapCommerceAiGenerateResult } from "@/lib/commerce-ai/api/legacy-response";
+import { createCommerceAiContainer } from "@/lib/commerce-ai/core/container";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
@@ -37,17 +35,27 @@ export async function POST(request: Request) {
     return Response.json({ ok: false, error: "Invalid generate request" }, { status: 400 });
   }
 
-  const { engine } = createAiContainer();
+  const { engine } = createCommerceAiContainer();
 
   try {
-    const result = await engine.generate({
-      productId: parsed.productId,
+    const commerceResult = await engine.run({
+      skill: "product.content_writer",
       locale: parsed.locale,
-      sections: parsed.sections,
-      options: parsed.options,
+      target: { productId: parsed.productId },
+      options: {
+        ...parsed.options,
+        sections: parsed.sections,
+      },
     });
 
-    const status = result.ok ? 200 : 422;
+    const result = unwrapCommerceAiGenerateResult(commerceResult);
+    const status =
+      "results" in result && result.ok
+        ? 200
+        : "code" in result && result.code === "not_implemented"
+          ? 501
+          : 422;
+
     return Response.json(result, { status });
   } catch (error) {
     if (error instanceof AiEngineError) {
@@ -66,9 +74,9 @@ export async function GET(request: Request) {
 
   const url = new URL(request.url);
   const productId = Number(url.searchParams.get("productId"));
-  const locale = parseLocale(url.searchParams.get("locale"));
+  const localeParam = url.searchParams.get("locale");
 
-  if (!Number.isInteger(productId) || productId <= 0 || !locale) {
+  if (!Number.isInteger(productId) || productId <= 0 || (localeParam !== "en" && localeParam !== "et")) {
     return Response.json(
       { ok: false, error: "productId and locale query params are required" },
       { status: 400 },
@@ -81,7 +89,7 @@ export async function GET(request: Request) {
       headers: request.headers,
       body: JSON.stringify({
         productId,
-        locale,
+        locale: localeParam,
         sections: ["description"],
         options: { dryRun: true },
       }),

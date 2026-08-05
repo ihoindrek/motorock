@@ -1,14 +1,12 @@
 <?php
 /**
  * Plugin Name: Motorock AI Writer
- * Description: Loader for the Motorock AI Writer mu-plugin package.
- * Version: 0.4.0
+ * Description: Legacy loader — forwards to Motorock Commerce AI Engine.
+ * Version: 0.4.2
  *
- * Install into wp-content/mu-plugins/:
- *   1. motorock-ai-writer.php          (this file)
- *   2. motorock-ai-writer/             (directory — includes/, assets/, bootstrap)
+ * @deprecated Use motorock-commerce-ai.php as the primary mu-plugin loader.
  */
 
 defined( 'ABSPATH' ) || exit;
 
-require_once __DIR__ . '/motorock-ai-writer/motorock-ai-writer.php';
+require_once __DIR__ . '/motorock-commerce-ai.php';
