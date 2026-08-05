@@ -7,7 +7,7 @@ import {
 import { parseGraphqlPrice } from "@/lib/shop/parse-graphql-price";
 import { collectProductWcCategorySlugs } from "@/lib/shop/wc-categories";
 import type { GraphQLMetaData, GraphQLProduct } from "@/lib/graphql/types";
-import { getGraphqlLanguageCode } from "@/lib/graphql/wpml";
+import { getGraphqlLanguageCode, listGraphqlTranslations } from "@/lib/graphql/wpml";
 import { AI_PRODUCT_META_KEYS } from "@/lib/ai/domain/content-section";
 import type { NormalizedProduct } from "@/lib/ai/domain/normalized-product";
 
@@ -110,7 +110,7 @@ function mapTranslations(product: GraphQLProduct) {
     });
   }
 
-  for (const entry of product.translations ?? []) {
+  for (const entry of listGraphqlTranslations(product.translations)) {
     const localeCode = entry.language?.code?.toLowerCase();
     if (!isLocale(localeCode) || !entry.databaseId) {
       continue;

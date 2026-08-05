@@ -115,6 +115,10 @@ export function collectShowroomMetaSourcesFromSiblingProducts<
   ];
 
   for (const translation of product.translations ?? []) {
+    if (!translation) {
+      continue;
+    }
+
     const databaseId = translation.databaseId;
     if (!databaseId) {
       continue;

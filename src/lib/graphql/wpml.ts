@@ -11,11 +11,19 @@ export type GraphQLTranslation = {
   } | null;
 };
 
+export function listGraphqlTranslations(
+  translations?: Array<GraphQLTranslation | null> | null,
+) {
+  return (translations ?? []).filter(
+    (entry): entry is GraphQLTranslation => entry != null,
+  );
+}
+
 export type GraphQLLanguageAware = {
   slug?: string;
   name?: string;
   languageCode?: string | null;
-  translations?: GraphQLTranslation[] | null;
+  translations?: Array<GraphQLTranslation | null> | null;
 };
 
 export function getGraphqlLanguageCode(node: GraphQLLanguageAware) {
@@ -70,7 +78,7 @@ export function resolveLocalizedProductFields(
     return { slug: node.slug, name: node.name };
   }
 
-  const translation = node.translations?.find(
+  const translation = listGraphqlTranslations(node.translations).find(
     (entry) => entry.language?.code?.toLowerCase() === locale,
   );
 
@@ -96,7 +104,7 @@ export function findTranslationSlug(
   node: GraphQLLanguageAware,
   locale: Locale,
 ): string | null {
-  const match = node.translations?.find(
+  const match = listGraphqlTranslations(node.translations).find(
     (translation) => translation.language?.code?.toLowerCase() === locale,
   );
 
@@ -107,7 +115,7 @@ export function findTranslationDatabaseId(
   node: GraphQLLanguageAware,
   locale: Locale,
 ): number | null {
-  const match = node.translations?.find(
+  const match = listGraphqlTranslations(node.translations).find(
     (translation) => translation.language?.code?.toLowerCase() === locale,
   );
 
@@ -135,7 +143,7 @@ export function resolveLocalizedPostFields(
     return { slug: node.slug, title: node.title };
   }
 
-  const translation = node.translations?.find(
+  const translation = listGraphqlTranslations(node.translations).find(
     (entry) => entry.language?.code?.toLowerCase() === locale,
   );
 
@@ -175,7 +183,7 @@ export function buildProductSlugAlternates(
     alternates[currentLocale] = node.slug;
   }
 
-  for (const translation of node.translations ?? []) {
+  for (const translation of listGraphqlTranslations(node.translations)) {
     const locale = translation.language?.code?.toLowerCase();
 
     if (isLocale(locale) && translation.slug) {

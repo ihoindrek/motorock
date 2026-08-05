@@ -96,7 +96,16 @@ async function graphqlRequestOnce<TData, TVariables>(
   const payload = (await response.json()) as GraphQLResponse<TData>;
 
   if (payload.errors?.length) {
-    throw new Error(payload.errors.map((error) => error.message).join("; "));
+    if (!payload.data) {
+      throw new Error(payload.errors.map((error) => error.message).join("; "));
+    }
+
+    // WooGraphQL + WPML can return partial product data when a translation
+    // resolves to an unsupported variation post type.
+    console.warn(
+      "[graphql] partial errors:",
+      payload.errors.map((error) => error.message).join("; "),
+    );
   }
 
   if (!payload.data) {
