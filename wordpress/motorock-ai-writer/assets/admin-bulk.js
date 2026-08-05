@@ -104,6 +104,8 @@
     var sections = checkedValues("motorock_ai_bulk_section");
     var dryRun = document.getElementById("motorock-ai-bulk-dry-run").checked;
     var overwrite = document.getElementById("motorock-ai-bulk-overwrite").value;
+    var providerEl = document.getElementById("motorock-ai-bulk-provider");
+    var provider = providerEl ? providerEl.value : "";
     var chunkSize = MotorockAiBulk.chunkSize || 2;
 
     if (!productIds.length) {
@@ -178,6 +180,7 @@
             dryRun: dryRun,
             overwrite: overwrite,
             publishStatus: "draft",
+            provider: provider,
           },
         })
         .then(function (data) {

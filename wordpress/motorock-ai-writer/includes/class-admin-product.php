@@ -122,6 +122,16 @@ class Motorock_Ai_Admin_Product {
 			</p>
 
 			<p>
+				<label for="motorock-ai-provider"><?php esc_html_e( 'AI provider', 'motorock-ai-writer' ); ?></label><br />
+				<select id="motorock-ai-provider">
+					<option value=""><?php esc_html_e( 'Default (from env)', 'motorock-ai-writer' ); ?></option>
+					<option value="anthropic">Anthropic (Claude)</option>
+					<option value="openai">OpenAI</option>
+					<option value="gemini">Google Gemini</option>
+				</select>
+			</p>
+
+			<p>
 				<label for="motorock-ai-publish-status"><?php esc_html_e( 'Save as', 'motorock-ai-writer' ); ?></label><br />
 				<select id="motorock-ai-publish-status">
 					<option value="draft"><?php esc_html_e( 'Draft (review first)', 'motorock-ai-writer' ); ?></option>

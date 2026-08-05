@@ -3,15 +3,15 @@ import { AiEngineError } from "@/lib/ai/core/errors";
 import type { AiProvider } from "@/lib/ai/providers/ai-provider.interface";
 import { extractJsonBlock } from "@/lib/ai/providers/extract-json-block";
 
-type AnthropicMessageResponse = {
-  model?: string;
-  content?: Array<{
-    type?: string;
-    text?: string;
+type GeminiGenerateResponse = {
+  candidates?: Array<{
+    content?: {
+      parts?: Array<{ text?: string }>;
+    };
   }>;
-  usage?: {
-    input_tokens?: number;
-    output_tokens?: number;
+  usageMetadata?: {
+    promptTokenCount?: number;
+    candidatesTokenCount?: number;
   };
   error?: {
     message?: string;
@@ -20,8 +20,8 @@ type AnthropicMessageResponse = {
 
 const MAX_ATTEMPTS = 3;
 
-export class AnthropicProvider implements AiProvider {
-  readonly name = "anthropic";
+export class GeminiProvider implements AiProvider {
+  readonly name = "gemini";
 
   constructor(
     private readonly apiKey: string | null,
@@ -37,48 +37,59 @@ export class AnthropicProvider implements AiProvider {
   }) {
     if (!this.apiKey) {
       throw new AiEngineError(
-        "ANTHROPIC_API_KEY is not configured",
+        "GEMINI_API_KEY is not configured",
         "not_configured",
       );
     }
 
+    const model = input.model || this.defaultModel;
     let lastError: unknown;
 
     for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {
       try {
-        const response = await fetch("https://api.anthropic.com/v1/messages", {
+        const url = new URL(
+          `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,
+        );
+        url.searchParams.set("key", this.apiKey);
+
+        const response = await fetch(url, {
           method: "POST",
           headers: {
-            "x-api-key": this.apiKey,
-            "anthropic-version": "2023-06-01",
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            model: input.model || this.defaultModel,
-            max_tokens: 4096,
-            temperature: input.temperature ?? 0.4,
-            system: `${input.system}\n\nRespond with valid JSON only. No markdown fences.`,
-            messages: [{ role: "user", content: input.user }],
+            systemInstruction: {
+              parts: [{ text: `${input.system}\n\nRespond with valid JSON only.` }],
+            },
+            contents: [
+              {
+                role: "user",
+                parts: [{ text: input.user }],
+              },
+            ],
+            generationConfig: {
+              temperature: input.temperature ?? 0.4,
+              responseMimeType: "application/json",
+            },
           }),
         });
 
-        const payload = (await response.json()) as AnthropicMessageResponse;
+        const payload = (await response.json()) as GeminiGenerateResponse;
 
         if (!response.ok) {
           throw new AiEngineError(
-            payload.error?.message ?? `Anthropic HTTP ${response.status}`,
+            payload.error?.message ?? `Gemini HTTP ${response.status}`,
             "provider_error",
           );
         }
 
-        const text = payload.content
-          ?.filter((block) => block.type === "text")
-          .map((block) => block.text ?? "")
+        const text = payload.candidates?.[0]?.content?.parts
+          ?.map((part) => part.text ?? "")
           .join("\n")
           .trim();
 
         if (!text) {
-          throw new AiEngineError("Anthropic returned empty content", "provider_error");
+          throw new AiEngineError("Gemini returned empty content", "provider_error");
         }
 
         const json = JSON.parse(extractJsonBlock(text)) as unknown;
@@ -92,11 +103,11 @@ export class AnthropicProvider implements AiProvider {
 
         return {
           data: parsed.data,
-          model: payload.model ?? input.model,
-          usage: payload.usage
+          model,
+          usage: payload.usageMetadata
             ? {
-                promptTokens: payload.usage.input_tokens ?? 0,
-                completionTokens: payload.usage.output_tokens ?? 0,
+                promptTokens: payload.usageMetadata.promptTokenCount ?? 0,
+                completionTokens: payload.usageMetadata.candidatesTokenCount ?? 0,
               }
             : undefined,
         };
@@ -110,6 +121,6 @@ export class AnthropicProvider implements AiProvider {
 
     throw lastError instanceof Error
       ? lastError
-      : new AiEngineError("Anthropic request failed", "provider_error");
+      : new AiEngineError("Gemini request failed", "provider_error");
   }
 }

@@ -7,6 +7,7 @@ import { DescriptionGenerator } from "@/lib/ai/generators/description-generator"
 import { FaqGenerator } from "@/lib/ai/generators/faq-generator";
 import { SeoGenerator } from "@/lib/ai/generators/seo-generator";
 import type { AiProvider } from "@/lib/ai/providers/ai-provider.interface";
+import { ProviderRegistry } from "@/lib/ai/providers/provider-registry";
 
 vi.mock("@/lib/revalidate/storefront", () => ({
   revalidateStorefront: vi.fn(),
@@ -36,9 +37,9 @@ const sampleProduct: NormalizedProduct = {
   source: "unknown",
 };
 
-function createMockProvider(): AiProvider {
+function createMockProvider(name = "openai"): AiProvider {
   return {
-    name: "openai",
+    name,
     completeJson: vi.fn(async ({ schema }) => ({
       data: schema.parse({
         shortDescription: "<p>Rev'It Test Jacket for daily riding.</p>",
@@ -50,11 +51,8 @@ function createMockProvider(): AiProvider {
   };
 }
 
-function createEngine(overrides?: {
-  product?: NormalizedProduct | null;
-  write?: () => Promise<unknown>;
-}) {
-  const config: AiConfig = {
+function createTestConfig(overrides?: Partial<AiConfig>): AiConfig {
+  return {
     dryRun: true,
     apiSecret: "secret",
     wpWriteUrl: "https://shop.example",
@@ -63,12 +61,29 @@ function createEngine(overrides?: {
     defaultOverwrite: "always",
     openai: { apiKey: "key", model: "gpt-test" },
     anthropic: { apiKey: null, model: "claude-test" },
+    gemini: { apiKey: null, model: "gemini-test" },
+    ...overrides,
   };
+}
 
-  const provider = createMockProvider();
+function createEngine(overrides?: {
+  product?: NormalizedProduct | null;
+  write?: () => Promise<unknown>;
+  config?: AiConfig;
+  providers?: Record<string, AiProvider>;
+}) {
+  const config = overrides?.config ?? createTestConfig();
+  const openAiProvider = overrides?.providers?.openai ?? createMockProvider("openai");
+  const providerRegistry = new ProviderRegistry({
+    openai: openAiProvider,
+    anthropic: createMockProvider("anthropic"),
+    gemini: createMockProvider("gemini"),
+    ...overrides?.providers,
+  });
 
   return new AiEngine({
     config,
+    providerRegistry,
     productRead: {
       getById: vi.fn(async () => {
         if (overrides?.product === null) {
@@ -79,13 +94,16 @@ function createEngine(overrides?: {
       }),
     },
     productWrite: {
-      write: vi.fn(overrides?.write ?? (async () => ({ ok: true, productId: 42, locale: "en", written: {} }))),
+      write: vi.fn(
+        overrides?.write ??
+          (async () => ({ ok: true, productId: 42, locale: "en", written: {} })),
+      ),
     },
     generators: {
-      description: new DescriptionGenerator(provider, "gpt-test"),
-      seo: new SeoGenerator(provider, "gpt-test"),
-      faq: new FaqGenerator(provider, "gpt-test"),
-      alt_text: new AltTextGenerator(provider, "gpt-test"),
+      description: new DescriptionGenerator(),
+      seo: new SeoGenerator(),
+      faq: new FaqGenerator(),
+      alt_text: new AltTextGenerator(),
     },
   });
 }
@@ -142,6 +160,26 @@ describe("AiEngine", () => {
     expect(write).toHaveBeenCalledWith(
       expect.objectContaining({ publishStatus: "draft" }),
     );
+  });
+
+  it("uses request provider override when configured", async () => {
+    const anthropicProvider = createMockProvider("anthropic");
+    const engine = createEngine({
+      config: createTestConfig({
+        defaultProvider: "openai",
+        anthropic: { apiKey: "anthropic-key", model: "claude-test" },
+      }),
+      providers: { anthropic: anthropicProvider },
+    });
+
+    await engine.generate({
+      productId: 42,
+      locale: "en",
+      sections: ["description"],
+      options: { dryRun: true, provider: "anthropic" },
+    });
+
+    expect(anthropicProvider.completeJson).toHaveBeenCalled();
   });
 
   it("continues batch when one product is missing", async () => {

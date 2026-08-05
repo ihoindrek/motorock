@@ -215,6 +215,15 @@ class Motorock_Ai_Admin_Bulk {
 						</select>
 					</p>
 					<p>
+						<label for="motorock-ai-bulk-provider"><?php esc_html_e( 'AI provider', 'motorock-ai-writer' ); ?></label><br />
+						<select id="motorock-ai-bulk-provider">
+							<option value=""><?php esc_html_e( 'Default (from env)', 'motorock-ai-writer' ); ?></option>
+							<option value="anthropic">Anthropic (Claude)</option>
+							<option value="openai">OpenAI</option>
+							<option value="gemini">Google Gemini</option>
+						</select>
+					</p>
+					<p>
 						<button type="button" class="button button-primary" id="motorock-ai-bulk-start">
 							<?php esc_html_e( 'Start bulk generate', 'motorock-ai-writer' ); ?>
 						</button>

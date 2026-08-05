@@ -15,6 +15,30 @@ export function unauthorizedResponse() {
 }
 
 export function verifyAiRouteAuth(request: Request) {
+  const secretCheck = verifyAiRouteSecret(request);
+  if (!secretCheck.ok) {
+    return secretCheck;
+  }
+
+  const config = secretCheck.config;
+
+  if (!isAiConfigured(config)) {
+    return {
+      ok: false as const,
+      response: Response.json(
+        {
+          ok: false,
+          error: "AI Engine is not fully configured (provider API key missing)",
+        },
+        { status: 503 },
+      ),
+    };
+  }
+
+  return { ok: true as const, config };
+}
+
+export function verifyAiRouteSecret(request: Request) {
   const config = getAiConfig();
 
   if (!config.apiSecret) {
@@ -30,19 +54,6 @@ export function verifyAiRouteAuth(request: Request) {
   const token = readBearerToken(request);
   if (!verifyAiApiSecret(token, config.apiSecret)) {
     return { ok: false as const, response: unauthorizedResponse() };
-  }
-
-  if (!isAiConfigured(config)) {
-    return {
-      ok: false as const,
-      response: Response.json(
-        {
-          ok: false,
-          error: "AI Engine is not fully configured (provider API key missing)",
-        },
-        { status: 503 },
-      ),
-    };
   }
 
   return { ok: true as const, config };

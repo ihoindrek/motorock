@@ -1,5 +1,5 @@
-import type { AiConfig } from "@/lib/ai/config";
-import { resolveActiveModel } from "@/lib/ai/config";
+import type { AiConfig, AiProviderName } from "@/lib/ai/config";
+import { isProviderConfigured, resolveActiveModel } from "@/lib/ai/config";
 import { AiEngineError } from "@/lib/ai/core/errors";
 import type {
   AiContentSection,
@@ -25,6 +25,7 @@ import type { AltTextGenerator } from "@/lib/ai/generators/alt-text-generator";
 import type { DescriptionGenerator } from "@/lib/ai/generators/description-generator";
 import type { FaqGenerator } from "@/lib/ai/generators/faq-generator";
 import type { SeoGenerator } from "@/lib/ai/generators/seo-generator";
+import type { ProviderRegistry } from "@/lib/ai/providers/provider-registry";
 import type { ProductReadRepository } from "@/lib/ai/repositories/graphql-product-read.repository";
 import type { ProductWriteRepository } from "@/lib/ai/repositories/wp-ai-write.repository";
 import type { AiWritePayload } from "@/lib/ai/validation/schemas";
@@ -38,6 +39,7 @@ import {
 
 type AiEngineDeps = {
   config: AiConfig;
+  providerRegistry: ProviderRegistry;
   productRead: ProductReadRepository;
   productWrite: ProductWriteRepository;
   generators: {
@@ -47,6 +49,28 @@ type AiEngineDeps = {
     alt_text: AltTextGenerator;
   };
 };
+
+function resolveGenerationProvider(
+  request: AiGenerateRequest,
+  config: AiConfig,
+  providerRegistry: ProviderRegistry,
+) {
+  const providerName = (request.options?.provider ??
+    config.defaultProvider) as AiProviderName;
+
+  if (!isProviderConfigured(providerName, config)) {
+    throw new AiEngineError(
+      `AI provider "${providerName}" is not configured`,
+      "not_configured",
+    );
+  }
+
+  return {
+    provider: providerRegistry.get(providerName),
+    model: resolveActiveModel(providerName, config),
+    providerName,
+  };
+}
 
 function resolveOverwrite(
   request: AiGenerateRequest,
@@ -267,10 +291,16 @@ export class AiEngine {
       );
     }
 
+    const { provider, model } = resolveGenerationProvider(
+      request,
+      this.deps.config,
+      this.deps.providerRegistry,
+    );
+
     const results: SectionWriteResult[] = [];
     const writeSections: AiWritePayload["sections"] = [];
-    let provider: string = this.deps.config.defaultProvider;
-    let model = resolveActiveModel(this.deps.config);
+    let providerName = provider.name;
+    let activeModel = model;
 
     for (const section of request.sections) {
       if (section === "alt_text" && product.images.length === 0) {
@@ -307,12 +337,14 @@ export class AiEngine {
         jobId,
         dryRun,
         promptVersion: promptVersionForSection(section, product),
+        provider,
+        model: activeModel,
       };
 
       try {
         const generation = await this.generateSection(section, product, context);
-        provider = generation.provider;
-        model = generation.model;
+        providerName = generation.provider;
+        activeModel = generation.model;
 
         if (!generation.validation.ok) {
           results.push({
@@ -373,11 +405,11 @@ export class AiEngine {
         sections: writeSections,
         publishStatus,
         meta: {
-          provider,
+          provider: providerName,
           promptVersion: writeSections
             .map((entry) => resolvePromptTemplateId(entry.section, product.productType))
             .join(","),
-          model,
+          model: activeModel,
           generatedAt: new Date().toISOString(),
           jobId,
         },

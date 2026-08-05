@@ -49,6 +49,7 @@ class Motorock_Ai_Rest_Generate_Proxy {
 		$sections = self::normalize_sections( $payload['sections'] ?? array( 'description', 'seo' ) );
 		$dry_run = ! empty( $payload['dryRun'] );
 		$overwrite = isset( $payload['overwrite'] ) ? (string) $payload['overwrite'] : 'if_empty';
+		$provider = self::normalize_provider( $payload['provider'] ?? '' );
 		$publish_status = isset( $payload['publishStatus'] ) ? sanitize_key( (string) $payload['publishStatus'] ) : 'draft';
 		if ( ! in_array( $publish_status, array( 'draft', 'published' ), true ) ) {
 			$publish_status = 'draft';
@@ -78,20 +79,22 @@ class Motorock_Ai_Rest_Generate_Proxy {
 				'productIds' => array( $product_id ),
 				'locales'    => $locales,
 				'sections'   => $sections,
-				'options'    => array(
-					'dryRun'        => $dry_run,
-					'overwrite'     => $overwrite,
-					'publishStatus' => $publish_status,
+				'options'    => self::build_options(
+					$dry_run,
+					$overwrite,
+					$publish_status,
+					$provider
 				),
 			)
 			: array(
 				'productId' => $product_id,
 				'locale'    => $locales[0],
 				'sections'  => $sections,
-				'options'   => array(
-					'dryRun'        => $dry_run,
-					'overwrite'     => $overwrite,
-					'publishStatus' => $publish_status,
+				'options'   => self::build_options(
+					$dry_run,
+					$overwrite,
+					$publish_status,
+					$provider
 				),
 			);
 
@@ -123,6 +126,7 @@ class Motorock_Ai_Rest_Generate_Proxy {
 		$sections = self::normalize_sections( $payload['sections'] ?? array( 'description', 'seo' ) );
 		$dry_run = ! empty( $payload['dryRun'] );
 		$overwrite = isset( $payload['overwrite'] ) ? (string) $payload['overwrite'] : 'always';
+		$provider = self::normalize_provider( $payload['provider'] ?? '' );
 		$publish_status = isset( $payload['publishStatus'] ) ? sanitize_key( (string) $payload['publishStatus'] ) : 'draft';
 		if ( ! in_array( $publish_status, array( 'draft', 'published' ), true ) ) {
 			$publish_status = 'draft';
@@ -155,11 +159,12 @@ class Motorock_Ai_Rest_Generate_Proxy {
 			'productIds' => $product_ids,
 			'locales'    => $locales,
 			'sections'   => $sections,
-			'options'    => array(
-				'dryRun'        => $dry_run,
-				'overwrite'     => $overwrite,
-				'publishStatus' => $publish_status,
-				'revalidate'    => false,
+			'options'    => self::build_options(
+				$dry_run,
+				$overwrite,
+				$publish_status,
+				$provider,
+				false
 			),
 		);
 
@@ -173,6 +178,31 @@ class Motorock_Ai_Rest_Generate_Proxy {
 		);
 
 		return self::proxy_storefront_request( $api_url . '/api/ai/batch', $api_secret, $body );
+	}
+
+	private static function build_options( $dry_run, $overwrite, $publish_status, $provider, $revalidate = null ) {
+		$options = array(
+			'dryRun'        => $dry_run,
+			'overwrite'     => $overwrite,
+			'publishStatus' => $publish_status,
+		);
+
+		if ( $provider ) {
+			$options['provider'] = $provider;
+		}
+
+		if ( $revalidate !== null ) {
+			$options['revalidate'] = $revalidate;
+		}
+
+		return $options;
+	}
+
+	private static function normalize_provider( $provider ) {
+		$allowed = array( 'openai', 'anthropic', 'gemini' );
+		$provider = sanitize_key( (string) $provider );
+
+		return in_array( $provider, $allowed, true ) ? $provider : null;
 	}
 
 	private static function normalize_product_ids( $product_ids ) {

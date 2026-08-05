@@ -1,6 +1,6 @@
 import type { AiOverwriteStrategy } from "@/lib/ai/core/types";
 
-export type AiProviderName = "openai" | "anthropic";
+export type AiProviderName = "openai" | "anthropic" | "gemini";
 
 export type AiConfig = {
   dryRun: boolean;
@@ -17,18 +17,32 @@ export type AiConfig = {
     apiKey: string | null;
     model: string;
   };
+  gemini: {
+    apiKey: string | null;
+    model: string;
+  };
 };
+
+export function isProviderConfigured(
+  provider: AiProviderName,
+  config: AiConfig = getAiConfig(),
+) {
+  switch (provider) {
+    case "anthropic":
+      return Boolean(config.anthropic.apiKey);
+    case "openai":
+      return Boolean(config.openai.apiKey);
+    case "gemini":
+      return Boolean(config.gemini.apiKey);
+  }
+}
 
 export function isAiConfigured(config: AiConfig = getAiConfig()) {
   if (!config.apiSecret) {
     return false;
   }
 
-  if (config.defaultProvider === "anthropic") {
-    return Boolean(config.anthropic.apiKey);
-  }
-
-  return Boolean(config.openai.apiKey);
+  return isProviderConfigured(config.defaultProvider, config);
 }
 
 export function getAiConfig(): AiConfig {
@@ -47,11 +61,22 @@ export function getAiConfig(): AiConfig {
       apiKey: process.env.ANTHROPIC_API_KEY?.trim() || null,
       model: process.env.AI_ANTHROPIC_MODEL?.trim() || "claude-sonnet-4-6",
     },
+    gemini: {
+      apiKey:
+        process.env.GEMINI_API_KEY?.trim() ||
+        process.env.GOOGLE_GENERATIVE_AI_API_KEY?.trim() ||
+        null,
+      model: process.env.AI_GEMINI_MODEL?.trim() || "gemini-2.0-flash",
+    },
   };
 }
 
 function parseProvider(value: string | undefined): AiProviderName {
-  if (value === "openai" || value === "anthropic") {
+  if (
+    value === "openai" ||
+    value === "anthropic" ||
+    value === "gemini"
+  ) {
     return value;
   }
 
@@ -66,8 +91,22 @@ function parseOverwrite(value: string | undefined): AiOverwriteStrategy {
   return "if_empty";
 }
 
-export function resolveActiveModel(config: AiConfig) {
-  return config.defaultProvider === "anthropic"
-    ? config.anthropic.model
-    : config.openai.model;
+export function resolveActiveModel(
+  provider: AiProviderName,
+  config: AiConfig = getAiConfig(),
+) {
+  switch (provider) {
+    case "openai":
+      return config.openai.model;
+    case "gemini":
+      return config.gemini.model;
+    case "anthropic":
+    default:
+      return config.anthropic.model;
+  }
+}
+
+export function listConfiguredProviders(config: AiConfig = getAiConfig()) {
+  const providers: AiProviderName[] = ["openai", "anthropic", "gemini"];
+  return providers.filter((provider) => isProviderConfigured(provider, config));
 }

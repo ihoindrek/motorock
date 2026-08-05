@@ -1,5 +1,6 @@
 import type { Locale } from "@/i18n/config";
 import type { AiPublishStatus } from "@/lib/ai/domain/content-section";
+import type { AiProvider } from "@/lib/ai/providers/ai-provider.interface";
 
 export type AiContentSection = "description" | "seo" | "faq" | "alt_text";
 
@@ -9,7 +10,7 @@ export type AiGenerateOptions = {
   dryRun?: boolean;
   revalidate?: boolean;
   overwrite?: AiOverwriteStrategy;
-  provider?: "openai" | "anthropic";
+  provider?: "openai" | "anthropic" | "gemini";
   /** When draft, content is stored for review before going live on the storefront. */
   publishStatus?: AiPublishStatus;
 };
@@ -108,6 +109,8 @@ export type GenerationContext = {
   jobId: string;
   promptVersion: string;
   dryRun: boolean;
+  provider: AiProvider;
+  model: string;
 };
 
 export type ValidationReport = {

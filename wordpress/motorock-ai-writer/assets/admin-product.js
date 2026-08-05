@@ -106,6 +106,8 @@
     var sections = checkedValues("motorock_ai_section");
     var dryRun = document.getElementById("motorock-ai-dry-run").checked;
     var overwrite = document.getElementById("motorock-ai-overwrite").value;
+    var providerEl = document.getElementById("motorock-ai-provider");
+    var provider = providerEl ? providerEl.value : "";
     var publishStatus = document.getElementById("motorock-ai-publish-status").value;
 
     if (!locales.length || !sections.length) {
@@ -129,6 +131,7 @@
         dryRun: dryRun,
         overwrite: overwrite,
         publishStatus: publishStatus,
+        provider: provider,
       },
     })
       .then(function (data) {

@@ -87,6 +87,15 @@ describe("faq forbidden topics", () => {
   });
 });
 
+const mockGenerationContext = {
+  locale: "en" as const,
+  jobId: "test",
+  dryRun: true,
+  promptVersion: "faq.v1",
+  provider: { name: "openai", completeJson: async () => ({ data: {}, model: "test" }) },
+  model: "gpt-test",
+};
+
 describe("ContentQualityValidator FAQ", () => {
   const validator = new ContentQualityValidator();
 
@@ -109,7 +118,7 @@ describe("ContentQualityValidator FAQ", () => {
         ],
       },
       baseProduct,
-      { locale: "en", jobId: "test", dryRun: true, promptVersion: "faq.v1" },
+      mockGenerationContext,
     );
 
     expect(report.ok).toBe(false);

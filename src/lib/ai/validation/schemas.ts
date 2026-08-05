@@ -163,7 +163,7 @@ export const AiGenerateRequestBodySchema = z.object({
       dryRun: z.boolean().optional(),
       revalidate: z.boolean().optional(),
       overwrite: OverwriteStrategySchema.optional(),
-      provider: z.enum(["openai", "anthropic"]).optional(),
+      provider: z.enum(["openai", "anthropic", "gemini"]).optional(),
       publishStatus: z.enum(["draft", "published"]).optional(),
     })
     .optional(),
