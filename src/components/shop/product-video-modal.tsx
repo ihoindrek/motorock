@@ -3,10 +3,14 @@
 import { useEffect, useId, useState } from "react";
 import { createPortal } from "react-dom";
 import { useDictionary } from "@/context/locale-context";
+import {
+  buildProductVideoEmbedUrl,
+  type ProductVideo,
+} from "@/lib/shop/parse-product-video";
 import { cn } from "@/lib/utils";
 
 type ProductVideoModalProps = {
-  vimeoId: string;
+  video: ProductVideo;
   title: string;
   open: boolean;
   onClose: () => void;
@@ -132,7 +136,7 @@ export function GalleryVideoPlayButton({
 }
 
 export function ProductVideoModal({
-  vimeoId,
+  video,
   title,
   open,
   onClose,
@@ -202,9 +206,9 @@ export function ProductVideoModal({
           </div>
           <div className="relative aspect-video w-full bg-ink">
             <iframe
-              src={`https://player.vimeo.com/video/${vimeoId}?autoplay=1&title=0&byline=0&portrait=0`}
+              src={buildProductVideoEmbedUrl(video)}
               title={title}
-              allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media"
+              allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share"
               allowFullScreen
               className="absolute inset-0 h-full w-full"
             />

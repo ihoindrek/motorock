@@ -35,7 +35,7 @@ import { buildEquipmentHubHref } from "@/lib/shop/category-url";
 import { normalizeMotorcycleContent } from "@/lib/shop/normalize-motorcycle-content";
 import { resolveMotorcycleSpecOverrides } from "@/lib/shop/motorcycle-spec-snapshot";
 import { resolveMotorcycleLifestyleGalleryUrls } from "@/lib/shop/motorcycle-lifestyle-gallery";
-import { resolveProductVimeoIdFromMeta } from "@/lib/shop/parse-product-video";
+import { resolveProductVideoFromMeta } from "@/lib/shop/parse-product-video";
 import {
   normalizeWordPressMediaUrl,
   normalizeWordPressMediaUrlOptional,
@@ -399,7 +399,7 @@ export function mapGraphqlToMotorcycleProduct(
     longHtml,
     productImages,
     lifestyleGallery,
-    vimeoId: resolveProductVimeoIdFromMeta(product.metaData),
+    productVideo: resolveProductVideoFromMeta(product.metaData),
     productName: displayName(product.name, brand),
     brand,
     locale: contentLocale,
@@ -456,7 +456,8 @@ export function mapGraphqlToMotorcycleProduct(
         content.dimensionSpecs.length > 0 ? content.dimensionSpecs : undefined,
       lifestyleImages:
         lifestyleGallery.length > 0 ? lifestyleGallery : undefined,
-      vimeoId: content.vimeoId,
+      vimeoId: content.productVideo?.provider === "vimeo" ? content.productVideo.id : undefined,
+      productVideo: content.productVideo,
       isNew: resolveMappedIsNew(product.metaData, product.date, options),
     },
     parsedSpecs: catalogCopy.parsedSpecs,
@@ -562,6 +563,7 @@ export function mapGraphqlToCatalogProduct(
         : resolveCatalogBackLabel(locale, "equipment"),
     aiSeo: parseAiProductSeoFromMeta(product.metaData),
     faq: parseAiProductFaqFromMeta(product.metaData),
+    productVideo: resolveProductVideoFromMeta(product.metaData),
   };
 }
 

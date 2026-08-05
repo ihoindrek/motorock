@@ -22,6 +22,7 @@ import {
 import { InStoreNowBadge } from "@/components/shop/in-store-now-badge";
 import { CarouselArrow } from "@/components/ui/carousel-arrow";
 import { useDictionary } from "@/context/locale-context";
+import type { ProductVideo } from "@/lib/shop/parse-product-video";
 import { cn } from "@/lib/utils";
 
 const mobileFullBleedClass =
@@ -36,6 +37,7 @@ type ProductImageGalleryProps = {
   layout?: "hero" | "compact" | "craft";
   imageBackground?: "surface" | "moto" | "detail";
   vimeoId?: string;
+  productVideo?: ProductVideo;
   videoTitle?: string;
   inStoreNow?: boolean;
   fullBleedMobile?: boolean;
@@ -195,6 +197,7 @@ export function ProductImageGallery({
   layout = "compact",
   imageBackground = "surface",
   vimeoId,
+  productVideo: productVideoProp,
   videoTitle,
   inStoreNow = false,
   fullBleedMobile = false,
@@ -210,8 +213,13 @@ export function ProductImageGallery({
     preferredIndex >= 0 ? preferredIndex : 0,
   );
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const productVideo =
+    productVideoProp ??
+    (vimeoId ? ({ provider: "vimeo", id: vimeoId } satisfies ProductVideo) : undefined);
   const [videoOpen, setVideoOpen] = useState(false);
-  const showGalleryVideo = Boolean(vimeoId && isHero);
+  const showGalleryVideo = Boolean(
+    productVideo && (isHero || layout === "craft"),
+  );
 
   const resolvedIndex =
     preferredImage && preferredIndex >= 0 ? preferredIndex : activeIndex;
@@ -613,9 +621,9 @@ export function ProductImageGallery({
         variant={variant}
       />
 
-      {showGalleryVideo && vimeoId ? (
+      {showGalleryVideo && productVideo ? (
         <ProductVideoModal
-          vimeoId={vimeoId}
+          video={productVideo}
           title={videoTitle ?? `Watch ${alt}`}
           open={videoOpen}
           onClose={() => setVideoOpen(false)}

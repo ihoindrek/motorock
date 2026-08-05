@@ -1,3 +1,5 @@
+import type { ProductVideo } from "@/lib/shop/parse-product-video";
+
 export type ProductGender = "men" | "women" | "unisex";
 export type ProductType = "equipment" | "motorcycle";
 
@@ -86,6 +88,8 @@ export type CatalogProduct = {
   generalSpecs?: readonly ProductSpec[];
   features: readonly string[];
   relatedSlugs?: readonly string[];
+  productVideo?: ProductVideo;
+  /** @deprecated Prefer productVideo */
   vimeoId?: string;
   backHref: string;
   backLabel: string;

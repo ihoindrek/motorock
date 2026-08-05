@@ -1,5 +1,15 @@
+export type ProductVideoProvider = "vimeo" | "youtube";
+
+export type ProductVideo = {
+  provider: ProductVideoProvider;
+  id: string;
+};
+
 const VIMEO_ID_PATTERN =
   /(?:vimeo\.com\/(?:video\/)?|player\.vimeo\.com\/video\/)(\d+)/i;
+
+const YOUTUBE_ID_PATTERN =
+  /(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([\w-]{11})/i;
 
 export function parseVimeoIdFromUrl(url: string | null | undefined) {
   if (!url?.trim()) {
@@ -10,6 +20,41 @@ export function parseVimeoIdFromUrl(url: string | null | undefined) {
   return match?.[1];
 }
 
+export function parseYoutubeIdFromUrl(url: string | null | undefined) {
+  if (!url?.trim()) {
+    return undefined;
+  }
+
+  const match = url.trim().match(YOUTUBE_ID_PATTERN);
+  return match?.[1];
+}
+
+export function parseProductVideoFromUrl(
+  url: string | null | undefined,
+): ProductVideo | undefined {
+  if (!url?.trim()) {
+    return undefined;
+  }
+
+  const trimmed = url.trim();
+
+  if (/^\d+$/.test(trimmed)) {
+    return { provider: "vimeo", id: trimmed };
+  }
+
+  const vimeoId = parseVimeoIdFromUrl(trimmed);
+  if (vimeoId) {
+    return { provider: "vimeo", id: vimeoId };
+  }
+
+  const youtubeId = parseYoutubeIdFromUrl(trimmed);
+  if (youtubeId) {
+    return { provider: "youtube", id: youtubeId };
+  }
+
+  return undefined;
+}
+
 const PRODUCT_VIDEO_META_KEYS = [
   "product_video_url",
   "_motorock_vimeo_id",
@@ -17,12 +62,12 @@ const PRODUCT_VIDEO_META_KEYS = [
   "vimeo_id",
 ] as const;
 
-export function resolveProductVimeoIdFromMeta(
+export function resolveProductVideoFromMeta(
   meta:
     | ReadonlyArray<{ key: string; value: string | null | undefined }>
     | null
     | undefined,
-) {
+): ProductVideo | undefined {
   if (!meta?.length) {
     return undefined;
   }
@@ -35,15 +80,30 @@ export function resolveProductVimeoIdFromMeta(
       continue;
     }
 
-    if (/^\d+$/.test(raw)) {
-      return raw;
-    }
-
-    const fromUrl = parseVimeoIdFromUrl(raw);
-    if (fromUrl) {
-      return fromUrl;
+    const parsed = parseProductVideoFromUrl(raw);
+    if (parsed) {
+      return parsed;
     }
   }
 
   return undefined;
+}
+
+/** @deprecated Use resolveProductVideoFromMeta */
+export function resolveProductVimeoIdFromMeta(
+  meta:
+    | ReadonlyArray<{ key: string; value: string | null | undefined }>
+    | null
+    | undefined,
+) {
+  const video = resolveProductVideoFromMeta(meta);
+  return video?.provider === "vimeo" ? video.id : undefined;
+}
+
+export function buildProductVideoEmbedUrl(video: ProductVideo) {
+  if (video.provider === "youtube") {
+    return `https://www.youtube-nocookie.com/embed/${video.id}?autoplay=1&rel=0&modestbranding=1`;
+  }
+
+  return `https://player.vimeo.com/video/${video.id}?autoplay=1&title=0&byline=0&portrait=0`;
 }

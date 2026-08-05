@@ -70,6 +70,24 @@
       "preview_size": "medium"
     },
     {
+      "key": "field_motorock_product_video_url",
+      "label": "Product video URL",
+      "name": "product_video_url",
+      "aria-label": "",
+      "type": "url",
+      "instructions": "YouTube või Vimeo link. Storefront kuvab galeriis \"Vaata videot\" nupu. Kehtib kõigile toodetele (mootorrattad ja varustus).",
+      "required": 0,
+      "conditional_logic": 0,
+      "wrapper": {
+        "width": "",
+        "class": "",
+        "id": ""
+      },
+      "default_value": "",
+      "allow_in_bindings": 0,
+      "placeholder": "https://www.youtube.com/watch?v=... või https://vimeo.com/..."
+    },
+    {
       "key": "field_motorock_showroom_available",
       "label": "Praegu salongis",
       "name": "showroom_available",
@@ -109,5 +127,5 @@
   "active": true,
   "description": "Storefront'i tooteväljad (Motorock.eu). Kuvatakse toote põhiosa all (mitte parempoolses sidebaris).",
   "show_in_rest": 1,
-  "modified": 1754303600
+  "modified": 1754307200
 }

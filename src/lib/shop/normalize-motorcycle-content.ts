@@ -7,6 +7,7 @@ import {
   resolveMotorcycleCatalogCopy,
 } from "@/lib/shop/parse-brixton-html";
 import { specLabelCategoryBucket } from "@/lib/shop/motorcycle-spec-labels";
+import type { ProductVideo } from "@/lib/shop/parse-product-video";
 
 export type MotorcycleEditorialSection = {
   title: string;
@@ -22,7 +23,7 @@ export type MotorcyclePageContent = {
   extendedSpecs: ProductSpec[];
   dimensionSpecs: ProductSpec[];
   parallaxImages: readonly { src: string; alt: string }[];
-  vimeoId?: string;
+  productVideo?: ProductVideo;
 };
 
 export type MotorcycleContentOverrides = {
@@ -32,7 +33,7 @@ export type MotorcycleContentOverrides = {
   engineSpecs?: readonly ProductSpec[];
   moreEngineSpecs?: readonly ProductSpec[];
   generalSpecs?: readonly ProductSpec[];
-  vimeoId?: string;
+  productVideo?: ProductVideo;
 };
 
 const KEY_SPEC_LABELS = new Set([
@@ -111,7 +112,7 @@ export type NormalizeMotorcycleContentInput = {
   productImages: readonly string[];
   /** Dedicated ACF lifestyle gallery — not Woo product gallery. */
   lifestyleGallery?: readonly string[];
-  vimeoId?: string;
+  productVideo?: ProductVideo;
   productName: string;
   brand: string;
   locale?: Locale;
@@ -197,7 +198,7 @@ export function normalizeMotorcycleContent(
     extendedSpecs,
     dimensionSpecs,
     parallaxImages,
-    vimeoId: manual?.vimeoId ?? input.vimeoId,
+    productVideo: manual?.productVideo ?? input.productVideo,
   };
 }
 

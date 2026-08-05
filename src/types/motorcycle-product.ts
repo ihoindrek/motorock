@@ -1,8 +1,7 @@
 import type { Locale } from "@/i18n/config";
 import type { ProductSpec } from "@/types/catalog-product";
-import type {
-  MotorcyclePageContent,
-} from "@/lib/shop/normalize-motorcycle-content";
+import type { ProductVideo } from "@/lib/shop/parse-product-video";
+import type { MotorcyclePageContent } from "@/lib/shop/normalize-motorcycle-content";
 
 export type MotorcycleVariation = {
   databaseId?: number;
@@ -49,6 +48,8 @@ export type MotorockEnrichment = {
   engineSpecs?: readonly ProductSpec[];
   moreEngineSpecs?: readonly ProductSpec[];
   generalSpecs?: readonly ProductSpec[];
+  productVideo?: ProductVideo;
+  /** @deprecated Prefer productVideo */
   vimeoId?: string;
   relatedSlugs?: readonly string[];
   isNew?: boolean;

@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: Motorock Product Fields
- * Description: Exposes ACF product fields (showroom_available, motorcycle_specs_html, lifestyle gallery, is_new) to REST and WPGraphQL metaData.
- * Version: 1.1.0
+ * Description: Exposes ACF product fields (showroom_available, motorcycle_specs_html, lifestyle gallery, product video, is_new) to REST and WPGraphQL metaData.
+ * Version: 1.2.0
  *
  * Install: copy to wp-content/mu-plugins/motorock-product-fields.php
  */
@@ -17,6 +17,7 @@ const MOTOROCK_PRODUCT_GRAPHQL_META_KEYS = array(
 	'is_new',
 	'motorcycle_specs_html',
 	'motorcycle_specs_source_url',
+	'product_video_url',
 	MOTOROCK_LIFESTYLE_GALLERY_META,
 	'_motorock_ai_seo_title',
 	'_motorock_ai_seo_meta_description',

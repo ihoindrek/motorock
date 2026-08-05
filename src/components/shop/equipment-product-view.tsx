@@ -453,6 +453,8 @@ export function EquipmentProductView({
               theme="light"
               layout="craft"
               imageBackground="detail"
+              productVideo={product.productVideo}
+              videoTitle={product.name}
               fullBleedMobile
             />
           </div>

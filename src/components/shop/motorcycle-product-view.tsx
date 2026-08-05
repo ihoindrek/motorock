@@ -353,7 +353,7 @@ function RichMotorcycleProductView({
                 alt={sync.name}
                 preferredImage={activeColorImage}
                 layout="hero"
-                vimeoId={content.vimeoId}
+                productVideo={content.productVideo}
                 videoTitle={`${sync.brand} ${sync.name}`}
                 inStoreNow={showroomAvailable && sync.inStock}
               />

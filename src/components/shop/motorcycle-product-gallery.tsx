@@ -1,5 +1,6 @@
 "use client";
 
+import type { ProductVideo } from "@/lib/shop/parse-product-video";
 import { ProductImageGallery } from "@/components/shop/product-image-gallery";
 
 type MotorcycleProductGalleryProps = {
@@ -7,7 +8,7 @@ type MotorcycleProductGalleryProps = {
   alt: string;
   preferredImage?: string;
   layout?: "default" | "hero";
-  vimeoId?: string;
+  productVideo?: ProductVideo;
   videoTitle?: string;
   inStoreNow?: boolean;
 };
@@ -17,7 +18,7 @@ export function MotorcycleProductGallery({
   alt,
   preferredImage,
   layout = "default",
-  vimeoId,
+  productVideo,
   videoTitle,
   inStoreNow,
 }: MotorcycleProductGalleryProps) {
@@ -29,7 +30,7 @@ export function MotorcycleProductGallery({
       variant="product"
       theme="light"
       layout={layout === "hero" ? "hero" : "compact"}
-      vimeoId={vimeoId}
+      productVideo={productVideo}
       videoTitle={videoTitle}
       inStoreNow={inStoreNow}
       fullBleedMobile
