@@ -6,6 +6,7 @@ import type {
   CommerceAiSkillDefinition,
   CommerceAiSkillId,
 } from "@/lib/commerce-ai/core/types";
+import type { SeoAuditScope, SeoAuditTarget } from "@/lib/commerce-ai/seo/audit-types";
 import type { Locale } from "@/i18n/config";
 
 export type CommerceAiSkillContext = {
@@ -60,10 +61,12 @@ export function parseBlogTarget(target: CommerceAiRunRequest["target"]) {
   };
 }
 
-export function parseSeoAuditTarget(target: CommerceAiRunRequest["target"]) {
+export function parseSeoAuditTarget(target: CommerceAiRunRequest["target"]): SeoAuditTarget {
   const scope = target.scope;
-  const parsedScope =
-    scope === "products" || scope === "posts" || scope === "all" ? scope : undefined;
+  let parsedScope: SeoAuditScope | undefined;
+  if (scope === "products" || scope === "posts" || scope === "all") {
+    parsedScope = scope;
+  }
 
   const category =
     typeof target.category === "string" && target.category.trim()

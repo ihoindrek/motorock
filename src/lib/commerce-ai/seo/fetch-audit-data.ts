@@ -66,7 +66,7 @@ export async function fetchAuditProducts(input: {
 
   while (collected.length < limit) {
     const pageSize = Math.min(100, limit - collected.length);
-    const data = await graphqlRequest<
+    const data: AuditProductsResponse = await graphqlRequest<
       AuditProductsResponse,
       { first: number; after: string | null }
     >(SEO_AUDIT_PRODUCTS_PAGE, { first: pageSize, after }, { next: { revalidate: 0 } });
@@ -94,7 +94,7 @@ export async function fetchAuditPosts(input: { locale: Locale; limit: number }) 
 
   while (collected.length < limit) {
     const pageSize = Math.min(50, limit - collected.length);
-    const data = await graphqlRequest<
+    const data: AuditPostsResponse = await graphqlRequest<
       AuditPostsResponse,
       { first: number; after: string | null }
     >(SEO_AUDIT_POSTS_PAGE, { first: pageSize, after }, { next: { revalidate: 0 } });

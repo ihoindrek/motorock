@@ -125,6 +125,16 @@
       },
     })
       .then(function (data) {
+        if (data && data.error) {
+          summaryEl.innerHTML =
+            "<p>" +
+            escapeHtml(MotorockCommerceAiSeoAudit.i18n.failed) +
+            " " +
+            escapeHtml(data.error) +
+            "</p>";
+          return;
+        }
+
         var report = data && data.result ? data.result : null;
         if (!report) {
           summaryEl.innerHTML = "<p>" + escapeHtml(MotorockCommerceAiSeoAudit.i18n.failed) + "</p>";
