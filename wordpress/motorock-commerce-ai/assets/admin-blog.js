@@ -65,7 +65,28 @@
     }
 
     if (result.postId) {
-      html += "<p>Post ID: " + escapeHtml(String(result.postId)) + " · slug: " + escapeHtml(result.slug || "") + "</p>";
+      html +=
+        "<p>Post ID: " +
+        escapeHtml(String(result.postId)) +
+        " · slug: " +
+        escapeHtml(result.slug || "") +
+        "</p>";
+
+      var editUrl =
+        result.editUrl ||
+        (MotorockCommerceAiBlog.postEditUrl || "").replace(
+          "POST_ID",
+          String(result.postId),
+        );
+
+      if (editUrl) {
+        html +=
+          '<p><a class="button button-primary" href="' +
+          escapeHtml(editUrl) +
+          '">' +
+          escapeHtml(MotorockCommerceAiBlog.i18n.openDraft) +
+          "</a></p>";
+      }
     }
 
     return html;

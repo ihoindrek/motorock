@@ -154,6 +154,7 @@ export class BlogGenerateService {
       preview: data,
       postId: writeResult.postId,
       slug: writeResult.slug,
+      editUrl: writeResult.editUrl,
       provider: providerName,
       model: resolvedModel,
       durationMs: Date.now() - started,

@@ -45,6 +45,7 @@ export type BlogGenerateJobResult = {
   preview?: BlogArticleOutput;
   postId?: number;
   slug?: string;
+  editUrl?: string;
   locale: "en" | "et";
   validationErrors?: string[];
   provider?: string;
