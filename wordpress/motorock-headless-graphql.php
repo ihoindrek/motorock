@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Motorock Headless GraphQL
  * Description: Fixes WPGraphQL product variations (WPML) and exposes Montonio payment gateways to headless checkout.
- * Version: 1.0.0
+ * Version: 1.1.0
  *
  * Install: copy to wp-content/mu-plugins/motorock-headless-graphql.php
  */
@@ -204,6 +204,16 @@ add_action(
 				},
 			)
 		);
+
+		register_rest_route(
+			'motorock/v1',
+			'/product-slug-alternates/(?P<product_id>\d+)',
+			array(
+				'methods'             => 'GET',
+				'callback'            => 'motorock_rest_product_slug_alternates',
+				'permission_callback' => 'motorock_verify_internal_secret',
+			)
+		);
 	}
 );
 
@@ -229,5 +239,59 @@ function motorock_rest_graphql_variation_audit( WP_REST_Request $request ) {
 		'recommendation'   => count( $children ) > 0
 			? 'Variations exist in WooCommerce. Re-save the product if GraphQL still returns an empty list.'
 			: 'Regenerate variations in Woo admin (Attributes → Used for variations → Save → Generate variations).',
+	);
+}
+
+function motorock_headless_internal_secret() {
+	if ( defined( 'MOTOROCK_INTERNAL_SECRET' ) && MOTOROCK_INTERNAL_SECRET ) {
+		return (string) MOTOROCK_INTERNAL_SECRET;
+	}
+
+	$env = getenv( 'MOTOROCK_INTERNAL_SECRET' );
+	return $env ? (string) $env : '';
+}
+
+function motorock_verify_internal_secret( WP_REST_Request $request ) {
+	$expected = motorock_headless_internal_secret();
+	$provided = (string) $request->get_header( 'x-motorock-internal-secret' );
+
+	if ( $expected === '' || ! hash_equals( $expected, $provided ) ) {
+		return new WP_Error( 'unauthorized', 'Unauthorized', array( 'status' => 401 ) );
+	}
+
+	return true;
+}
+
+function motorock_rest_product_slug_alternates( WP_REST_Request $request ) {
+	$product_id = (int) $request->get_param( 'product_id' );
+
+	if ( ! $product_id ) {
+		return new WP_Error( 'invalid_product', 'Invalid product ID', array( 'status' => 400 ) );
+	}
+
+	$alternates = array();
+
+	foreach ( array( 'en', 'et' ) as $locale ) {
+		$translated_id = $product_id;
+
+		if ( function_exists( 'apply_filters' ) ) {
+			$mapped = apply_filters( 'wpml_object_id', $product_id, 'product', false, $locale );
+			if ( $mapped ) {
+				$translated_id = (int) $mapped;
+			}
+		}
+
+		$post = get_post( $translated_id );
+		if ( ! $post || $post->post_type !== 'product' || $post->post_status !== 'publish' ) {
+			continue;
+		}
+
+		$alternates[ $locale ] = $post->post_name;
+	}
+
+	return array(
+		'ok'        => true,
+		'productId' => $product_id,
+		'alternates' => $alternates,
 	);
 }

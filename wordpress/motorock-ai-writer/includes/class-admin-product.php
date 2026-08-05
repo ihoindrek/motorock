@@ -34,11 +34,12 @@ class Motorock_Ai_Admin_Product {
 			'motorock-ai-admin-product',
 			content_url( 'mu-plugins/motorock-ai-writer/assets/admin-product.js' ),
 			array( 'wp-api-fetch' ),
-			'0.3.1',
+			'0.3.2',
 			true
 		);
 
 		$product_id = (int) get_the_ID();
+		$draft_locales = self::list_draft_locales( $product_id );
 
 		wp_localize_script(
 			'motorock-ai-admin-product',
@@ -48,6 +49,7 @@ class Motorock_Ai_Admin_Product {
 				'publishUrl'    => rest_url( 'motorock/v1/ai/publish-admin' ),
 				'nonce'         => wp_create_nonce( 'wp_rest' ),
 				'productId'     => $product_id,
+				'draftLocales'  => $draft_locales,
 				'status'        => self::read_status( $product_id ),
 				'i18n'          => array(
 					'running'        => __( 'Generating… this can take 30–60 seconds.', 'motorock-ai-writer' ),
@@ -59,6 +61,7 @@ class Motorock_Ai_Admin_Product {
 					'notConfigured'  => __( 'AI API not configured on server (MOTOROCK_AI_API_SECRET).', 'motorock-ai-writer' ),
 					'pickSections'   => __( 'Pick at least one locale and section.', 'motorock-ai-writer' ),
 					'publishing'     => __( 'Publishing draft content…', 'motorock-ai-writer' ),
+					'publishingAll'  => __( 'Publishing draft content for all locales…', 'motorock-ai-writer' ),
 				),
 			)
 		);
@@ -67,6 +70,7 @@ class Motorock_Ai_Admin_Product {
 	public static function render_meta_box( $post ) {
 		$status = self::read_status( (int) $post->ID );
 		$content_status = get_post_meta( (int) $post->ID, '_motorock_ai_content_status', true );
+		$draft_locales = self::list_draft_locales( (int) $post->ID );
 		?>
 		<div id="motorock-ai-panel">
 			<p class="description">
@@ -131,7 +135,7 @@ class Motorock_Ai_Admin_Product {
 				</button>
 			</p>
 
-			<?php if ( $content_status === 'draft' ) : ?>
+			<?php if ( ! empty( $draft_locales ) ) : ?>
 				<p>
 					<button type="button" class="button" id="motorock-ai-publish">
 						<?php esc_html_e( 'Approve & publish draft', 'motorock-ai-writer' ); ?>
@@ -160,5 +164,22 @@ class Motorock_Ai_Admin_Product {
 			'provider'    => get_post_meta( $product_id, '_motorock_ai_provider', true ),
 			'sections'    => $sections,
 		);
+	}
+
+	private static function list_draft_locales( $product_id ) {
+		$locales = array();
+
+		foreach ( array( 'en', 'et' ) as $locale ) {
+			$resolved_id = Motorock_Ai_Wpml_Helper::resolve_product_for_locale( $product_id, $locale );
+			if ( ! $resolved_id ) {
+				continue;
+			}
+
+			if ( get_post_meta( $resolved_id, '_motorock_ai_content_status', true ) === 'draft' ) {
+				$locales[] = $locale;
+			}
+		}
+
+		return $locales;
 	}
 }

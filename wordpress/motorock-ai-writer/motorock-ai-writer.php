@@ -1,7 +1,7 @@
 <?php
 /**
  * Motorock AI Writer — bootstrap (loaded by ../motorock-ai-writer.php in mu-plugins).
- * Version: 0.3.1
+ * Version: 0.3.2
  *
  * Requires: WooCommerce. WPML optional but recommended.
  */

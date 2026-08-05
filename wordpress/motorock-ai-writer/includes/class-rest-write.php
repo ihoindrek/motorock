@@ -98,12 +98,63 @@ class Motorock_Ai_Rest_Write {
 			return new WP_Error( 'motorock_ai_invalid_body', 'Invalid JSON body', array( 'status' => 400 ) );
 		}
 
-		$result = Motorock_Ai_Content_Writer::publish( $payload );
-		if ( is_wp_error( $result ) ) {
-			return $result;
+		$product_id = isset( $payload['productId'] ) ? (int) $payload['productId'] : 0;
+		if ( ! $product_id ) {
+			return new WP_Error( 'motorock_ai_invalid_product', 'productId is required', array( 'status' => 400 ) );
 		}
 
-		return rest_ensure_response( $result );
+		$locales = self::normalize_publish_locales( $payload );
+		$published = array();
+
+		foreach ( $locales as $locale ) {
+			$result = Motorock_Ai_Content_Writer::publish(
+				array(
+					'productId' => $product_id,
+					'locale'    => $locale,
+				)
+			);
+
+			if ( is_wp_error( $result ) ) {
+				return $result;
+			}
+
+			$published[ $locale ] = $result;
+		}
+
+		return rest_ensure_response(
+			array(
+				'ok'        => true,
+				'productId' => $product_id,
+				'locales'   => $locales,
+				'published' => $published,
+			)
+		);
+	}
+
+	private static function normalize_publish_locales( $payload ) {
+		$locales = array();
+
+		if ( ! empty( $payload['locales'] ) && is_array( $payload['locales'] ) ) {
+			foreach ( $payload['locales'] as $locale ) {
+				$locale = sanitize_key( (string) $locale );
+				if ( in_array( $locale, array( 'en', 'et' ), true ) && ! in_array( $locale, $locales, true ) ) {
+					$locales[] = $locale;
+				}
+			}
+		}
+
+		if ( empty( $locales ) && ! empty( $payload['locale'] ) ) {
+			$locale = sanitize_key( (string) $payload['locale'] );
+			if ( in_array( $locale, array( 'en', 'et' ), true ) ) {
+				$locales[] = $locale;
+			}
+		}
+
+		if ( empty( $locales ) ) {
+			return array( 'en', 'et' );
+		}
+
+		return $locales;
 	}
 
 	private static function get_secret() {

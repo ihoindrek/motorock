@@ -167,8 +167,23 @@
 
   if (publishButton) {
     publishButton.addEventListener("click", function () {
+      var draftLocales =
+        MotorockAiAdmin.draftLocales && MotorockAiAdmin.draftLocales.length
+          ? MotorockAiAdmin.draftLocales
+          : checkedValues("motorock_ai_locale");
+      if (!draftLocales.length) {
+        draftLocales = ["en", "et"];
+      }
+
       publishButton.disabled = true;
-      resultEl.innerHTML = "<p>" + escapeHtml(MotorockAiAdmin.i18n.publishing) + "</p>";
+      resultEl.innerHTML =
+        "<p>" +
+        escapeHtml(
+          draftLocales.length > 1
+            ? MotorockAiAdmin.i18n.publishingAll
+            : MotorockAiAdmin.i18n.publishing,
+        ) +
+        "</p>";
 
       window.wp.apiFetch({
         url: MotorockAiAdmin.publishUrl,
@@ -178,7 +193,7 @@
         },
         data: {
           productId: MotorockAiAdmin.productId,
-          locale: "en",
+          locales: draftLocales,
         },
       })
         .then(function (data) {

@@ -6,6 +6,7 @@ import { mapAiEngineErrorResponse } from "@/lib/ai/api/error-response";
 import { parseAiBatchRequestBody } from "@/lib/ai/validation/schemas";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 300;
 
 export async function POST(request: Request) {
   const auth = verifyAiRouteAuth(request);

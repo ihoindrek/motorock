@@ -29,6 +29,7 @@ import {
   selectCatalogNodesForLocale,
   findTranslationDatabaseId,
 } from "@/lib/graphql/wpml";
+import { fetchWpmlProductSlugAlternates } from "@/lib/graphql/wpml-slug-alternates";
 import { isSameProductContent } from "@/lib/graphql/product-content-parity";
 import {
   collectShowroomMetaSourcesFromSiblingProducts,
@@ -505,7 +506,18 @@ export async function getProductSlugAlternates(
     return {};
   }
 
-  return buildProductSlugAlternates(remote);
+  const alternates = buildProductSlugAlternates(remote);
+
+  if (alternates.en && alternates.et) {
+    return alternates;
+  }
+
+  const wpmlAlternates = await fetchWpmlProductSlugAlternates(remote.databaseId);
+
+  return {
+    ...alternates,
+    ...wpmlAlternates,
+  };
 }
 
 export type HomepageFavoriteCatalogs = {
