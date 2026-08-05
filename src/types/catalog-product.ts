@@ -89,6 +89,8 @@ export type CatalogProduct = {
   features: readonly string[];
   relatedSlugs?: readonly string[];
   productVideo?: ProductVideo;
+  /** Optional slug from WP Size Guides CPT — overrides brand/category lookup. */
+  sizeGuideSlug?: string;
   /** @deprecated Prefer productVideo */
   vimeoId?: string;
   backHref: string;

@@ -88,6 +88,24 @@
       "placeholder": "https://www.youtube.com/watch?v=... või https://vimeo.com/..."
     },
     {
+      "key": "field_motorock_size_guide_slug",
+      "label": "Size guide override",
+      "name": "size_guide_slug",
+      "aria-label": "",
+      "type": "text",
+      "instructions": "Valikuline. Size guide'i slug (Product → Size guides). Üle kirjutab brändi/kategooria automaatse tabeli.",
+      "required": 0,
+      "conditional_logic": 0,
+      "wrapper": {
+        "width": "",
+        "class": "",
+        "id": ""
+      },
+      "default_value": "",
+      "allow_in_bindings": 0,
+      "placeholder": "pando-moto-jackets-men"
+    },
+    {
       "key": "field_motorock_showroom_available",
       "label": "Praegu salongis",
       "name": "showroom_available",

@@ -18,6 +18,7 @@ const MOTOROCK_PRODUCT_GRAPHQL_META_KEYS = array(
 	'motorcycle_specs_html',
 	'motorcycle_specs_source_url',
 	'product_video_url',
+	'size_guide_slug',
 	MOTOROCK_LIFESTYLE_GALLERY_META,
 	'_motorock_ai_seo_title',
 	'_motorock_ai_seo_meta_description',

@@ -24,9 +24,9 @@ import { EquipmentColorPicker } from "@/components/shop/equipment-color-picker";
 import { EquipmentStickyAtc } from "@/components/shop/equipment-sticky-atc";
 import { WishlistButton } from "@/components/shop/wishlist-button";
 import { ShareButton } from "@/components/shop/share-button";
+import type { SizeGuide } from "@/types/size-guide";
 import { ProductShippingReturnsPanel } from "@/components/shop/product-shipping-returns-panel";
 import { ProductFaqSection } from "@/components/shop/product-faq-section";
-import { resolveSizeGuide } from "@/lib/shop/resolve-size-guide";
 import {
   buildProductColorOptions,
   hasMultipleColorChoices,
@@ -37,6 +37,7 @@ type EquipmentProductViewProps = {
   product: CatalogProduct;
   relatedProducts?: readonly CatalogProduct[];
   defaultShippingCountry?: string;
+  sizeGuide?: SizeGuide | null;
 };
 
 function firstVariationId(product: CatalogProduct) {
@@ -121,6 +122,7 @@ export function EquipmentProductView({
   product,
   relatedProducts = [],
   defaultShippingCountry = "EE",
+  sizeGuide = null,
 }: EquipmentProductViewProps) {
   const router = useRouter();
   const locale = useLocale();
@@ -157,8 +159,6 @@ export function EquipmentProductView({
   const atcSentinelRef = useRef<HTMLDivElement | null>(null);
   const descriptionBodyRef = useRef<HTMLDivElement | null>(null);
   const [descriptionMaxHeight, setDescriptionMaxHeight] = useState<number>(112);
-
-  const sizeGuide = useMemo(() => resolveSizeGuide(product), [product]);
 
   useEffect(() => {
     setSize(formatSizeLabel(sizes[0] ?? dict.pdp.oneSize));

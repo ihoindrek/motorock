@@ -1,0 +1,205 @@
+{
+  "key": "group_motorock_size_guide",
+  "title": "Size guide data",
+  "fields": [
+    {
+      "key": "field_motorock_sg_brand_slug",
+      "label": "Brand slug",
+      "name": "size_guide_brand_slug",
+      "type": "text",
+      "instructions": "Lowercase slug matching storefront brand, e.g. pando-moto, johnny-reb, holyfreedom.",
+      "required": 1,
+      "wrapper": { "width": "33" },
+      "placeholder": "pando-moto"
+    },
+    {
+      "key": "field_motorock_sg_category",
+      "label": "Product category",
+      "name": "size_guide_category",
+      "type": "select",
+      "required": 1,
+      "wrapper": { "width": "33" },
+      "choices": {
+        "jackets": "Jackets",
+        "vests": "Vests",
+        "pants": "Pants",
+        "gloves": "Gloves",
+        "footwear": "Footwear",
+        "hoodies": "Hoodies",
+        "t-shirts": "T-shirts",
+        "base-layers": "Base layers",
+        "helmets": "Helmets",
+        "helmet-accessories": "Helmet accessories",
+        "goggles": "Goggles",
+        "headwear": "Headwear",
+        "bags": "Bags",
+        "belts": "Belts",
+        "jewelry": "Jewelry",
+        "scarves": "Scarves",
+        "socks": "Socks",
+        "safety": "Safety",
+        "accessories": "Accessories"
+      },
+      "default_value": "jackets",
+      "return_format": "value"
+    },
+    {
+      "key": "field_motorock_sg_gender",
+      "label": "Gender",
+      "name": "size_guide_gender",
+      "type": "select",
+      "required": 1,
+      "wrapper": { "width": "34" },
+      "choices": {
+        "men": "Men",
+        "women": "Women",
+        "unisex": "Unisex"
+      },
+      "default_value": "unisex",
+      "return_format": "value"
+    },
+    {
+      "key": "field_motorock_sg_note",
+      "label": "Note",
+      "name": "size_guide_note",
+      "type": "textarea",
+      "instructions": "Shown above the table (fit advice, cm vs inches, etc.).",
+      "rows": 3,
+      "new_lines": "br"
+    },
+    {
+      "key": "field_motorock_sg_fit",
+      "label": "Fit",
+      "name": "size_guide_fit",
+      "type": "select",
+      "choices": {
+        "": "—",
+        "slim": "Slim fit",
+        "regular": "Regular fit",
+        "relaxed": "Relaxed fit"
+      },
+      "allow_null": 1,
+      "return_format": "value"
+    },
+    {
+      "key": "field_motorock_sg_columns",
+      "label": "Columns",
+      "name": "size_guide_columns",
+      "type": "repeater",
+      "instructions": "Measurement columns for this chart.",
+      "required": 1,
+      "min": 1,
+      "max": 6,
+      "layout": "table",
+      "button_label": "Add column",
+      "sub_fields": [
+        {
+          "key": "field_motorock_sg_column_key",
+          "label": "Key",
+          "name": "key",
+          "type": "select",
+          "required": 1,
+          "choices": {
+            "chest": "Chest",
+            "waist": "Waist",
+            "hips": "Hips",
+            "length": "Length",
+            "inseam": "Inseam",
+            "sleeve": "Sleeve"
+          },
+          "return_format": "value",
+          "parent_repeater": "field_motorock_sg_columns"
+        },
+        {
+          "key": "field_motorock_sg_column_label",
+          "label": "Label",
+          "name": "label",
+          "type": "text",
+          "required": 1,
+          "parent_repeater": "field_motorock_sg_columns"
+        }
+      ]
+    },
+    {
+      "key": "field_motorock_sg_rows",
+      "label": "Rows",
+      "name": "size_guide_rows",
+      "type": "repeater",
+      "instructions": "One row per size. Measurements in cm.",
+      "required": 1,
+      "min": 1,
+      "layout": "block",
+      "button_label": "Add size row",
+      "sub_fields": [
+        {
+          "key": "field_motorock_sg_row_size",
+          "label": "Size label",
+          "name": "size",
+          "type": "text",
+          "required": 1,
+          "placeholder": "M",
+          "parent_repeater": "field_motorock_sg_rows"
+        },
+        {
+          "key": "field_motorock_sg_row_chest",
+          "label": "Chest (cm)",
+          "name": "chest",
+          "type": "number",
+          "parent_repeater": "field_motorock_sg_rows"
+        },
+        {
+          "key": "field_motorock_sg_row_waist",
+          "label": "Waist (cm)",
+          "name": "waist",
+          "type": "number",
+          "parent_repeater": "field_motorock_sg_rows"
+        },
+        {
+          "key": "field_motorock_sg_row_hips",
+          "label": "Hips (cm)",
+          "name": "hips",
+          "type": "number",
+          "parent_repeater": "field_motorock_sg_rows"
+        },
+        {
+          "key": "field_motorock_sg_row_length",
+          "label": "Length (cm)",
+          "name": "length",
+          "type": "number",
+          "parent_repeater": "field_motorock_sg_rows"
+        },
+        {
+          "key": "field_motorock_sg_row_inseam",
+          "label": "Inseam (cm)",
+          "name": "inseam",
+          "type": "number",
+          "parent_repeater": "field_motorock_sg_rows"
+        },
+        {
+          "key": "field_motorock_sg_row_sleeve",
+          "label": "Sleeve (cm)",
+          "name": "sleeve",
+          "type": "number",
+          "parent_repeater": "field_motorock_sg_rows"
+        }
+      ]
+    }
+  ],
+  "location": [
+    [
+      {
+        "param": "post_type",
+        "operator": "==",
+        "value": "motorock_size_guide"
+      }
+    ]
+  ],
+  "menu_order": 0,
+  "position": "normal",
+  "style": "default",
+  "label_placement": "top",
+  "instruction_placement": "label",
+  "active": true,
+  "show_in_rest": 1,
+  "modified": 1754311200
+}

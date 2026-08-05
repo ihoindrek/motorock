@@ -20,6 +20,8 @@ import { getDictionary } from "@/i18n/get-dictionary";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 import type { ProductSchemaShipping } from "@/lib/seo/product-schema";
 import { buildBreadcrumbJsonLd } from "@/lib/seo/site-schema";
+import { getSizeGuideRegistry } from "@/lib/shop/fetch-size-guides";
+import { resolveSizeGuide } from "@/lib/shop/resolve-size-guide";
 import { estimateProductShipping } from "@/lib/shop/estimate-product-shipping";
 import { getStorefrontUrl } from "@/lib/storefront/url";
 import type { CatalogProduct } from "@/types/catalog-product";
@@ -243,16 +245,19 @@ export async function renderProductPage({
     notFound();
   }
 
-  const [schemaShipping, relatedCandidates] = await Promise.all([
+  const [schemaShipping, relatedCandidates, sizeGuideRegistry] = await Promise.all([
     resolveSchemaShipping(product),
     product.relatedSlugs?.length
       ? getCatalogProductsBySlugs(product.relatedSlugs, locale)
       : getSimilarProducts(product, RELATED_PRODUCTS_LIMIT, locale),
+    getSizeGuideRegistry(),
   ]);
 
   const relatedProducts = relatedCandidates
     .filter((candidate) => productsShareWcSubcategory(product, candidate))
     .slice(0, RELATED_PRODUCTS_LIMIT);
+
+  const sizeGuide = resolveSizeGuide(product, sizeGuideRegistry);
 
   return (
     <>
@@ -266,6 +271,7 @@ export async function renderProductPage({
       <EquipmentProductView
         product={product}
         relatedProducts={relatedProducts}
+        sizeGuide={sizeGuide}
       />
     </>
   );

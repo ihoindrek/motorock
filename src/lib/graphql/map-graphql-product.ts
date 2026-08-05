@@ -575,6 +575,7 @@ export function mapGraphqlToCatalogProduct(
     aiSeo: parseAiProductSeoFromMeta(product.metaData),
     faq: parseAiProductFaqFromMeta(product.metaData),
     productVideo: resolveMappedProductVideo(product.metaData, options),
+    sizeGuideSlug: getMetaValue(product.metaData, "size_guide_slug")?.trim() || undefined,
   };
 }
 

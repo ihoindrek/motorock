@@ -1,8 +1,9 @@
-import {
-  sizeGuidesByBrandCategory,
-} from "@/data/size-guides/demo";
-import type { CatalogProduct } from "@/types/catalog-product";
+import type { CatalogProduct, ProductGender } from "@/types/catalog-product";
 import type { SizeGuide } from "@/types/size-guide";
+import {
+  sizeGuideLookupKey,
+  type SizeGuideRegistry,
+} from "@/lib/shop/size-guide-registry";
 
 function brandSlug(brand: string) {
   return brand
@@ -35,11 +36,18 @@ function filterRowsForProduct(
   return { ...guide, rows };
 }
 
-/**
- * Brand-specific charts only. Category demo fallbacks are disabled until
- * real manufacturer size tables are loaded into `sizeGuidesByBrandCategory`.
- */
-export function resolveSizeGuide(product: CatalogProduct): SizeGuide | null {
+function gendersToTry(gender: ProductGender): readonly ProductGender[] {
+  if (gender === "unisex") {
+    return ["unisex"];
+  }
+
+  return [gender, "unisex"];
+}
+
+export function resolveSizeGuide(
+  product: CatalogProduct,
+  registry: SizeGuideRegistry,
+): SizeGuide | null {
   if (product.type !== "equipment") {
     return null;
   }
@@ -48,12 +56,24 @@ export function resolveSizeGuide(product: CatalogProduct): SizeGuide | null {
     return null;
   }
 
-  const slug = brandSlug(product.brand);
-  const brandGuide = sizeGuidesByBrandCategory[slug]?.[product.category];
-
-  if (!brandGuide) {
-    return null;
+  if (product.sizeGuideSlug) {
+    const override = registry.bySlug.get(product.sizeGuideSlug.trim());
+    if (override) {
+      return filterRowsForProduct(override, product.sizes);
+    }
   }
 
-  return filterRowsForProduct(brandGuide, product.sizes);
+  const slug = brandSlug(product.brand);
+
+  for (const gender of gendersToTry(product.gender)) {
+    const guide = registry.byBrandCategoryGender.get(
+      sizeGuideLookupKey(slug, product.category, gender),
+    );
+
+    if (guide) {
+      return filterRowsForProduct(guide, product.sizes);
+    }
+  }
+
+  return null;
 }

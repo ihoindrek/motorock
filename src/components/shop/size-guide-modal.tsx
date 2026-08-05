@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import type { SizeGuide } from "@/types/size-guide";
+import { useDictionary, useLocale } from "@/context/locale-context";
+import type { SizeGuide, SizeGuideFit } from "@/types/size-guide";
 import { cn } from "@/lib/utils";
 
 type SizeGuideModalProps = {
@@ -29,12 +30,23 @@ function CloseIcon() {
   );
 }
 
+const FIT_LABELS: Record<
+  SizeGuideFit,
+  { en: string; et: string }
+> = {
+  slim: { en: "Slim fit", et: "Slim fit" },
+  regular: { en: "Regular fit", et: "Regular fit" },
+  relaxed: { en: "Relaxed fit", et: "Relaxed fit" },
+};
+
 export function SizeGuideModal({
   open,
   onClose,
   guide,
   selectedSize,
 }: SizeGuideModalProps) {
+  const dict = useDictionary();
+  const locale = useLocale();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -67,6 +79,9 @@ export function SizeGuideModal({
   }
 
   const normalizedSelected = selectedSize?.trim().toUpperCase();
+  const fitLabel = guide.fit
+    ? FIT_LABELS[guide.fit][locale === "et" ? "et" : "en"]
+    : null;
 
   return createPortal(
     <>
@@ -99,7 +114,7 @@ export function SizeGuideModal({
         <div className="flex items-start justify-between gap-4 border-b border-ink/10 px-5 py-5 sm:px-6">
           <div>
             <p className="font-body text-[10px] font-bold uppercase tracking-aggressive text-accent">
-              Size guide
+              {dict.pdp.sizeGuide}
             </p>
             <h2
               id="size-guide-title"
@@ -107,6 +122,11 @@ export function SizeGuideModal({
             >
               {guide.title}
             </h2>
+            {fitLabel ? (
+              <p className="mt-2 font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/45">
+                {fitLabel}
+              </p>
+            ) : null}
             {guide.note ? (
               <p className="mt-2 text-sm leading-relaxed text-ink/60">
                 {guide.note}
