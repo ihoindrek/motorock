@@ -3,6 +3,7 @@ import type { NormalizedProduct } from "@/lib/ai/domain/normalized-product";
 import type { ContentGenerator } from "@/lib/ai/generators/content-generator";
 import { runStructuredGeneration } from "@/lib/ai/generators/run-generation";
 import type { AiProvider } from "@/lib/ai/providers/ai-provider.interface";
+import { resolvePromptTemplateId } from "@/lib/ai/prompts/resolve-prompt-template";
 import {
   DescriptionSectionSchema,
   type DescriptionSectionOutput,
@@ -11,13 +12,16 @@ import { ContentQualityValidator } from "@/lib/ai/validation/content-quality-val
 
 export class DescriptionGenerator implements ContentGenerator<DescriptionSectionOutput> {
   readonly id = "description" as const;
-  readonly promptTemplateId = "description.v1";
 
   constructor(
     private readonly provider: AiProvider,
     private readonly model: string,
     private readonly validator = new ContentQualityValidator(),
   ) {}
+
+  resolvePromptTemplateId(product: NormalizedProduct) {
+    return resolvePromptTemplateId(this.id, product.productType);
+  }
 
   async generate(
     product: NormalizedProduct,
@@ -26,7 +30,7 @@ export class DescriptionGenerator implements ContentGenerator<DescriptionSection
     return runStructuredGeneration({
       provider: this.provider,
       model: this.model,
-      promptTemplateId: this.promptTemplateId,
+      promptTemplateId: this.resolvePromptTemplateId(product),
       schema: DescriptionSectionSchema,
       product,
       context,

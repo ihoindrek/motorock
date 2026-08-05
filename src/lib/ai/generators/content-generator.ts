@@ -8,7 +8,7 @@ import type { NormalizedProduct } from "@/lib/ai/domain/normalized-product";
 
 export interface ContentGenerator<TOutput> {
   readonly id: AiContentSection;
-  readonly promptTemplateId: string;
+  resolvePromptTemplateId(product: NormalizedProduct): string;
   generate(
     product: NormalizedProduct,
     context: GenerationContext,

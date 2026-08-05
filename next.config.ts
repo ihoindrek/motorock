@@ -3,6 +3,10 @@ import type { NextConfig } from "next";
 const siteIndexable = process.env.SITE_INDEXING === "true";
 
 const nextConfig: NextConfig = {
+  outputFileTracingIncludes: {
+    "/api/ai/generate": ["./src/lib/ai/prompts/templates/*.yaml"],
+    "/api/ai/batch": ["./src/lib/ai/prompts/templates/*.yaml"],
+  },
   experimental: {
     optimizePackageImports: ["lucide-react", "framer-motion", "swiper"],
   },

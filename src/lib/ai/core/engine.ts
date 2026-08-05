@@ -29,6 +29,7 @@ import type { ProductReadRepository } from "@/lib/ai/repositories/graphql-produc
 import type { ProductWriteRepository } from "@/lib/ai/repositories/wp-ai-write.repository";
 import type { AiWritePayload } from "@/lib/ai/validation/schemas";
 import { revalidateStorefront } from "@/lib/revalidate/storefront";
+import { resolvePromptTemplateId } from "@/lib/ai/prompts/resolve-prompt-template";
 import { logStorefrontEvent } from "@/lib/monitoring/observability";
 import {
   buildMotorcycleSpecSnapshot,
@@ -122,18 +123,9 @@ function buildMotorcycleWritePreserve(
 
 function promptVersionForSection(
   section: AiContentSection,
-  generators: AiEngineDeps["generators"],
+  product: NormalizedProduct,
 ) {
-  switch (section) {
-    case "description":
-      return generators.description.promptTemplateId;
-    case "seo":
-      return generators.seo.promptTemplateId;
-    case "faq":
-      return generators.faq.promptTemplateId;
-    case "alt_text":
-      return generators.alt_text.promptTemplateId;
-  }
+  return resolvePromptTemplateId(section, product.productType);
 }
 
 export class AiEngine {
@@ -314,7 +306,7 @@ export class AiEngine {
         locale: request.locale,
         jobId,
         dryRun,
-        promptVersion: promptVersionForSection(section, this.deps.generators),
+        promptVersion: promptVersionForSection(section, product),
       };
 
       try {
@@ -382,7 +374,9 @@ export class AiEngine {
         publishStatus,
         meta: {
           provider,
-          promptVersion: writeSections.map((entry) => entry.section).join(","),
+          promptVersion: writeSections
+            .map((entry) => resolvePromptTemplateId(entry.section, product.productType))
+            .join(","),
           model,
           generatedAt: new Date().toISOString(),
           jobId,

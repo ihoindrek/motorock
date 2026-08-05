@@ -3,6 +3,7 @@ import type { NormalizedProduct } from "@/lib/ai/domain/normalized-product";
 import type { ContentGenerator } from "@/lib/ai/generators/content-generator";
 import { runStructuredGeneration } from "@/lib/ai/generators/run-generation";
 import type { AiProvider } from "@/lib/ai/providers/ai-provider.interface";
+import { resolvePromptTemplateId } from "@/lib/ai/prompts/resolve-prompt-template";
 import {
   AltTextSectionSchema,
   type AltTextSectionOutput,
@@ -11,13 +12,16 @@ import { ContentQualityValidator } from "@/lib/ai/validation/content-quality-val
 
 export class AltTextGenerator implements ContentGenerator<AltTextSectionOutput> {
   readonly id = "alt_text" as const;
-  readonly promptTemplateId = "alt_text.v1";
 
   constructor(
     private readonly provider: AiProvider,
     private readonly model: string,
     private readonly validator = new ContentQualityValidator(),
   ) {}
+
+  resolvePromptTemplateId(product: NormalizedProduct) {
+    return resolvePromptTemplateId(this.id, product.productType);
+  }
 
   async generate(
     product: NormalizedProduct,
@@ -26,7 +30,7 @@ export class AltTextGenerator implements ContentGenerator<AltTextSectionOutput> 
     return runStructuredGeneration({
       provider: this.provider,
       model: this.model,
-      promptTemplateId: this.promptTemplateId,
+      promptTemplateId: this.resolvePromptTemplateId(product),
       schema: AltTextSectionSchema,
       product,
       context,

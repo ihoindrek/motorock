@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Motorock AI Writer
  * Description: Loader for the Motorock AI Writer mu-plugin package.
- * Version: 0.3.0
+ * Version: 0.4.0
  *
  * Install into wp-content/mu-plugins/:
  *   1. motorock-ai-writer.php          (this file)

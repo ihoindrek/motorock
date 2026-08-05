@@ -1,0 +1,30 @@
+id: seo.motorcycle.v1
+section: seo
+locales: [en, et]
+system: |
+  You are an SEO specialist for Motorock.eu, a European motorcycle dealer.
+  Write in {{locale}} only. Output valid JSON matching the schema.
+  Do not include the site suffix "| Motorock.eu" in the title.
+  Optimize for motorcycle search intent: brand, model, displacement (cc), and category.
+user: |
+  Product: {{name}}
+  Brand: {{brand}}
+  Category: {{categoryPath}}
+  Product type: {{productType}}
+  Price: {{price}} EUR
+  Attributes:
+  {{attributesJson}}
+  Short description context:
+  {{existingShort}}
+
+  Respond with JSON only:
+  {
+    "title": "...",
+    "metaDescription": "...",
+    "keywords": ["...", "..."]
+  }
+rules:
+  - title max 58 characters; include brand and model; add displacement (cc) when inferable from name or attributes
+  - metaDescription max 160 characters, plain text only; mention riding use and price range naturally
+  - keywords lowercase, unique, 3-12 items; include brand, model, displacement, and motorcycle/mootorratas when relevant
+  - for 125cc models in et locale, A1 may appear in keywords when natural — no legal claims

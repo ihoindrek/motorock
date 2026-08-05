@@ -12,6 +12,13 @@ user: |
   Price: {{price}} EUR
   Short description context:
   {{existingShort}}
+
+  Respond with JSON only:
+  {
+    "title": "...",
+    "metaDescription": "...",
+    "keywords": ["...", "..."]
+  }
 rules:
   - title max 58 characters
   - metaDescription max 160 characters, plain text only

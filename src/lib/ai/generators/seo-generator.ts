@@ -4,6 +4,7 @@ import type { ContentGenerator } from "@/lib/ai/generators/content-generator";
 import { runStructuredGeneration } from "@/lib/ai/generators/run-generation";
 import { normalizeSeoSectionOutput } from "@/lib/ai/generators/normalize-seo-output";
 import type { AiProvider } from "@/lib/ai/providers/ai-provider.interface";
+import { resolvePromptTemplateId } from "@/lib/ai/prompts/resolve-prompt-template";
 import {
   SeoSectionLooseSchema,
   type SeoSectionOutput,
@@ -12,13 +13,16 @@ import { ContentQualityValidator } from "@/lib/ai/validation/content-quality-val
 
 export class SeoGenerator implements ContentGenerator<SeoSectionOutput> {
   readonly id = "seo" as const;
-  readonly promptTemplateId = "seo.v1";
 
   constructor(
     private readonly provider: AiProvider,
     private readonly model: string,
     private readonly validator = new ContentQualityValidator(),
   ) {}
+
+  resolvePromptTemplateId(product: NormalizedProduct) {
+    return resolvePromptTemplateId(this.id, product.productType);
+  }
 
   async generate(
     product: NormalizedProduct,
@@ -27,7 +31,7 @@ export class SeoGenerator implements ContentGenerator<SeoSectionOutput> {
     const result = await runStructuredGeneration({
       provider: this.provider,
       model: this.model,
-      promptTemplateId: this.promptTemplateId,
+      promptTemplateId: this.resolvePromptTemplateId(product),
       schema: SeoSectionLooseSchema,
       product,
       context,
