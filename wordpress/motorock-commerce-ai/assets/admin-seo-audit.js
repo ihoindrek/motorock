@@ -176,15 +176,23 @@
     return html;
   }
 
-  function showProgress(percent, label) {
+  function showProgress(percent, label, busy) {
     var safePercent = Math.max(0, Math.min(100, percent));
+    var trackClass = "motorock-seo-audit-progress-track" + (busy ? " is-busy" : "");
+    var barStyle = busy ? "" : ' style="width:' + safePercent + '%"';
+    var ariaValueNow = busy ? "0" : String(safePercent);
+
     summaryEl.innerHTML =
-      '<div class="motorock-seo-audit-progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' +
-      safePercent +
-      '">' +
-      '<div class="motorock-seo-audit-progress-bar" style="width:' +
-      safePercent +
-      '%"></div></div>' +
+      '<div class="' +
+      trackClass +
+      '" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' +
+      ariaValueNow +
+      '"' +
+      (busy ? ' aria-busy="true"' : "") +
+      ">" +
+      '<div class="motorock-seo-audit-progress-bar"' +
+      barStyle +
+      "></div></div>" +
       '<p class="motorock-seo-audit-progress-label">' +
       escapeHtml(label) +
       "</p>";
@@ -275,11 +283,21 @@
     };
   }
 
-  function progressLabel(phase, scanned, totalExpected) {
+  function progressLabel(phase, scanned, totalExpected, fetching) {
     var phaseLabel =
       phase === "posts"
         ? MotorockCommerceAiSeoAudit.i18n.progressPosts
         : MotorockCommerceAiSeoAudit.i18n.progressProducts;
+
+    if (fetching) {
+      return (
+        phaseLabel +
+        " — " +
+        MotorockCommerceAiSeoAudit.i18n.progressFetching
+          .replace("%1$d", String(scanned))
+          .replace("%2$d", String(totalExpected))
+      );
+    }
 
     return (
       phaseLabel +
@@ -328,29 +346,29 @@
     var allItems = [];
     var scanned = 0;
 
-    showProgress(0, MotorockCommerceAiSeoAudit.i18n.running);
+    showProgress(0, MotorockCommerceAiSeoAudit.i18n.running, true);
 
     var chain = Promise.resolve();
 
     phases.forEach(function (phase) {
       chain = chain.then(function () {
-        var offset = 0;
+        var phaseScanned = 0;
 
         function nextChunk() {
-          if (offset >= perPhaseLimit) {
+          if (phaseScanned >= perPhaseLimit) {
             return Promise.resolve();
           }
 
-          var chunkLimit = Math.min(chunkSize, perPhaseLimit - offset);
-          showProgress(
-            Math.min(99, (scanned / totalExpected) * 100),
-            progressLabel(phase, scanned, totalExpected),
-          );
+          var chunkLimit = Math.min(chunkSize, perPhaseLimit - phaseScanned);
+          var percent =
+            totalExpected > 0 ? Math.min(99, (scanned / totalExpected) * 100) : 0;
+
+          showProgress(percent, progressLabel(phase, scanned, totalExpected, true), true);
 
           var target = {
             scope: phase,
             limit: perPhaseLimit,
-            offset: offset,
+            offset: phaseScanned,
             chunkSize: chunkLimit,
           };
 
@@ -359,6 +377,10 @@
           }
 
           return fetchAuditChunk(target).then(function (data) {
+            if (data && data.ok === false) {
+              throw new Error(data.error || MotorockCommerceAiSeoAudit.i18n.failed);
+            }
+
             if (data && data.error) {
               throw new Error(data.error);
             }
@@ -371,13 +393,19 @@
             var chunkItems = report.items || [];
             allItems = allItems.concat(chunkItems);
             scanned += chunkItems.length;
-            offset += chunkItems.length;
+            phaseScanned += chunkItems.length;
+
+            showProgress(
+              totalExpected > 0 ? Math.min(99, (scanned / totalExpected) * 100) : 0,
+              progressLabel(phase, scanned, totalExpected, false),
+              false,
+            );
 
             if (report.pagination && report.pagination.hasMore && chunkItems.length > 0) {
               return nextChunk();
             }
 
-            if (!report.pagination && chunkItems.length === chunkLimit && offset < perPhaseLimit) {
+            if (!report.pagination && chunkItems.length === chunkLimit && phaseScanned < perPhaseLimit) {
               return nextChunk();
             }
           });
@@ -388,7 +416,7 @@
     });
 
     return chain.then(function () {
-      showProgress(100, MotorockCommerceAiSeoAudit.i18n.finalizing);
+      showProgress(100, MotorockCommerceAiSeoAudit.i18n.finalizing, false);
       return mergeAuditReport(allItems, scope, selectedLocale());
     });
   }

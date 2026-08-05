@@ -77,12 +77,15 @@ export function parseSeoAuditTarget(target: CommerceAiRunRequest["target"]): Seo
   const limit = Number(target.limit);
   const parsedLimit = Number.isInteger(limit) && limit > 0 ? limit : undefined;
 
-  const offset = Number(target.offset);
-  const parsedOffset = Number.isInteger(offset) && offset >= 0 ? offset : undefined;
-
   const chunkSize = Number(target.chunkSize);
   const parsedChunkSize =
     Number.isInteger(chunkSize) && chunkSize > 0 ? Math.min(chunkSize, SEO_AUDIT_CHUNK_SIZE) : undefined;
+
+  const offset = Number(target.offset);
+  let parsedOffset = Number.isInteger(offset) && offset >= 0 ? offset : undefined;
+  if (parsedOffset === undefined && parsedChunkSize !== undefined) {
+    parsedOffset = 0;
+  }
 
   return {
     scope: parsedScope,

@@ -100,7 +100,9 @@ export class SeoAuditService {
     const started = Date.now();
     const scope = resolveScope(input.target);
     const totalLimit = resolveLimit(input.target);
-    const chunkOffset = input.target.offset;
+    const chunkOffset =
+      input.target.offset ??
+      (input.target.chunkSize !== undefined ? 0 : undefined);
 
     if (chunkOffset !== undefined) {
       const phase = scope === "products" || scope === "posts" ? scope : "products";

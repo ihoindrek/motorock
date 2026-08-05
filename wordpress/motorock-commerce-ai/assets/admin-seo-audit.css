@@ -18,6 +18,21 @@
   transition: width 0.25s ease;
 }
 
+.motorock-seo-audit-progress-track.is-busy .motorock-seo-audit-progress-bar {
+  animation: motorock-seo-audit-progress-indeterminate 1.4s ease-in-out infinite;
+  width: 35%;
+}
+
+@keyframes motorock-seo-audit-progress-indeterminate {
+  0% {
+    transform: translateX(-120%);
+  }
+
+  100% {
+    transform: translateX(320%);
+  }
+}
+
 .motorock-seo-audit-progress-label,
 .motorock-seo-audit-done {
   color: #50575e;
