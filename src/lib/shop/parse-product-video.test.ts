@@ -5,6 +5,7 @@ import {
   parseYoutubeIdFromUrl,
   parseVimeoIdFromUrl,
   resolveProductVideoFromMeta,
+  resolveProductVideoFromSources,
 } from "@/lib/shop/parse-product-video";
 
 describe("parseProductVideoFromUrl", () => {
@@ -16,6 +17,16 @@ describe("parseProductVideoFromUrl", () => {
     expect(parseProductVideoFromUrl("123456789")).toEqual({
       provider: "vimeo",
       id: "123456789",
+    });
+  });
+
+  it("parses unlisted Vimeo URLs with privacy hash", () => {
+    expect(
+      parseProductVideoFromUrl("https://vimeo.com/601661275/d9c6026f1f?fl=pl&fe=sh"),
+    ).toEqual({
+      provider: "vimeo",
+      id: "601661275",
+      privacyHash: "d9c6026f1f",
     });
   });
 
@@ -71,11 +82,37 @@ describe("resolveProductVideoFromMeta", () => {
   });
 });
 
+describe("resolveProductVideoFromSources", () => {
+  it("falls back to sibling translation meta", () => {
+    expect(
+      resolveProductVideoFromSources(
+        { meta: [] },
+        {
+          meta: [
+            {
+              key: "product_video_url",
+              value: "https://vimeo.com/601661275/d9c6026f1f",
+            },
+          ],
+        },
+      ),
+    ).toEqual({
+      provider: "vimeo",
+      id: "601661275",
+      privacyHash: "d9c6026f1f",
+    });
+  });
+});
+
 describe("buildProductVideoEmbedUrl", () => {
   it("builds provider-specific embed URLs", () => {
     expect(
-      buildProductVideoEmbedUrl({ provider: "vimeo", id: "123" }),
-    ).toContain("player.vimeo.com/video/123");
+      buildProductVideoEmbedUrl({
+        provider: "vimeo",
+        id: "601661275",
+        privacyHash: "d9c6026f1f",
+      }),
+    ).toContain("h=d9c6026f1f");
     expect(
       buildProductVideoEmbedUrl({ provider: "youtube", id: "abc12345678" }),
     ).toContain("youtube-nocookie.com/embed/abc12345678");
