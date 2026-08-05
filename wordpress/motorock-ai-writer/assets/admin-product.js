@@ -70,6 +70,13 @@
         escapeHtml(result.status) +
         (result.message ? " — " + escapeHtml(result.message) : "");
 
+      if (result.validationErrors && result.validationErrors.length) {
+        html +=
+          "<br /><small>" +
+          escapeHtml(result.validationErrors.join("; ")) +
+          "</small>";
+      }
+
       if (result.preview) {
         if (result.preview.section === "description") {
           html +=

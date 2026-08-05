@@ -137,12 +137,15 @@ export class ContentQualityValidator {
         warnings.push(`Brand not mentioned in ALT text for image ${item.imageIndex}`);
       }
 
+      // Alt text often mixes brand/product Latin names — locale is prompt-enforced, not heuristic-enforced.
       if (!matchesLocaleHeuristic(item.altText, context.locale)) {
-        if (context.locale === "et") {
-          errors.push(`ALT text language mismatch for image ${item.imageIndex}`);
-        } else {
-          warnings.push(`ALT text language may not match ${context.locale}`);
-        }
+        warnings.push(`ALT text language may not match ${context.locale}`);
+      }
+    }
+
+    for (let index = 0; index < product.images.length; index += 1) {
+      if (!indexes.includes(index)) {
+        errors.push(`Missing ALT text for imageIndex ${index}`);
       }
     }
 

@@ -5,6 +5,9 @@
  * Version: 1.0.0
  *
  * Install: copy to wp-content/mu-plugins/motorock-size-guides.php
+ *
+ * Data entry: WP Admin → Products → Size guides (add charts manually).
+ * Do not use eval-file seed scripts — ACF repeaters must be saved via admin UI.
  */
 
 defined( 'ABSPATH' ) || exit;

@@ -352,7 +352,10 @@ export class AiEngine {
             locale: request.locale,
             status: "validation_failed",
             validationErrors: generation.validation.errors,
-            message: generation.validation.warnings.join("; ") || undefined,
+            message:
+              generation.validation.errors.join("; ") ||
+              generation.validation.warnings.join("; ") ||
+              undefined,
           });
           continue;
         }

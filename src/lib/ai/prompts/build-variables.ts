@@ -18,6 +18,7 @@ export function buildProductPromptVariables(product: NormalizedProduct) {
       2,
     ),
     variationCount: String(product.variations.length),
+    imageCountMinusOne: String(Math.max(product.images.length - 1, 0)),
     existingShort: product.existing.shortDescription ?? "",
     imagesJson: JSON.stringify(
       product.images.map((image, index) => ({

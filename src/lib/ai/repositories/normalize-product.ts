@@ -170,7 +170,10 @@ export function toNormalizedProduct(
       url: image.sourceUrl,
       altText: image.altText ?? undefined,
     })),
-  ];
+  ].filter(
+    (image, index, all) =>
+      all.findIndex((candidate) => candidate.url === image.url) === index,
+  );
 
   return {
     productId: product.databaseId,

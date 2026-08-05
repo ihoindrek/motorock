@@ -10,8 +10,13 @@ user: |
   Product: {{name}}
   Brand: {{brand}}
   Category: {{categoryPath}}
-  Images (index starts at 0):
+  Images (index starts at 0 — generate exactly one altText per index):
   {{imagesJson}}
+
+  Rules:
+  - Include every image index from 0 to {{imageCountMinusOne}}.
+  - Each altText must be 20–125 characters in {{locale}}.
+  - Do not start with "Image of" or "Photo of".
 
   Respond with JSON only:
   {
