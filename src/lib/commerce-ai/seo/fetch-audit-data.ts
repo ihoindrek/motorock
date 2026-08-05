@@ -26,6 +26,12 @@ type AuditPostsResponse = {
   };
 };
 
+export type AuditFetchPage<T> = {
+  items: T[];
+  nextCursor: string | null;
+  hasMorePages: boolean;
+};
+
 function matchesProductCategory(product: GraphQLProduct, categorySlug?: string) {
   if (!categorySlug) {
     return true;
@@ -59,16 +65,16 @@ export async function fetchAuditProducts(input: {
   locale: Locale;
   category?: string;
   limit: number;
-  offset?: number;
-}) {
+  after?: string | null;
+}): Promise<AuditFetchPage<GraphQLProduct>> {
   const limit = Math.min(Math.max(input.limit, 1), MAX_SEO_AUDIT_LIMIT);
-  const offset = Math.max(0, input.offset ?? 0);
-  const targetCount = offset + limit;
   const collected: GraphQLProduct[] = [];
-  let after: string | null = null;
+  let after: string | null = input.after ?? null;
+  let hasMorePages = false;
 
-  while (collected.length < targetCount) {
-    const pageSize = Math.min(100, targetCount - collected.length);
+  while (collected.length < limit) {
+    const remaining = limit - collected.length;
+    const pageSize = Math.min(100, Math.max(remaining, 20));
     const data: AuditProductsResponse = await graphqlRequest<
       AuditProductsResponse,
       { first: number; after: string | null }
@@ -79,30 +85,34 @@ export async function fetchAuditProducts(input: {
     );
 
     collected.push(...localized);
+    hasMorePages = data.products.pageInfo.hasNextPage;
+    after = data.products.pageInfo.endCursor;
 
-    if (!data.products.pageInfo.hasNextPage || collected.length >= targetCount) {
+    if (!hasMorePages || data.products.nodes.length === 0) {
       break;
     }
-
-    after = data.products.pageInfo.endCursor;
   }
 
-  return collected.slice(offset, offset + limit);
+  return {
+    items: collected.slice(0, limit),
+    nextCursor: after,
+    hasMorePages,
+  };
 }
 
 export async function fetchAuditPosts(input: {
   locale: Locale;
   limit: number;
-  offset?: number;
-}) {
+  after?: string | null;
+}): Promise<AuditFetchPage<GraphQLBlogPostCard>> {
   const limit = Math.min(Math.max(input.limit, 1), MAX_SEO_AUDIT_LIMIT);
-  const offset = Math.max(0, input.offset ?? 0);
-  const targetCount = offset + limit;
   const collected: GraphQLBlogPostCard[] = [];
-  let after: string | null = null;
+  let after: string | null = input.after ?? null;
+  let hasMorePages = false;
 
-  while (collected.length < targetCount) {
-    const pageSize = Math.min(50, targetCount - collected.length);
+  while (collected.length < limit) {
+    const remaining = limit - collected.length;
+    const pageSize = Math.min(50, Math.max(remaining, 10));
     const data: AuditPostsResponse = await graphqlRequest<
       AuditPostsResponse,
       { first: number; after: string | null }
@@ -113,13 +123,17 @@ export async function fetchAuditPosts(input: {
     );
 
     collected.push(...localized);
+    hasMorePages = data.contentNodes.pageInfo.hasNextPage;
+    after = data.contentNodes.pageInfo.endCursor;
 
-    if (!data.contentNodes.pageInfo.hasNextPage || collected.length >= targetCount) {
+    if (!hasMorePages || data.contentNodes.nodes.length === 0) {
       break;
     }
-
-    after = data.contentNodes.pageInfo.endCursor;
   }
 
-  return collected.slice(offset, offset + limit);
+  return {
+    items: collected.slice(0, limit),
+    nextCursor: after,
+    hasMorePages,
+  };
 }

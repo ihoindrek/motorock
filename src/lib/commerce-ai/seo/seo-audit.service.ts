@@ -126,31 +126,38 @@ export class SeoAuditService {
             hasMore: false,
             phase,
             totalTarget: perTypeLimit,
+            nextCursor: input.target.cursor ?? null,
           },
         });
       }
 
       const items: SeoAuditItemResult[] = [];
+      let nextCursor: string | null = input.target.cursor ?? null;
+      let hasMorePages = false;
 
       if (phase === "products") {
-        const products = await fetchAuditProducts({
+        const page = await fetchAuditProducts({
           locale: input.locale,
           category: input.target.category,
           limit: chunkSize,
-          offset: chunkOffset,
+          after: input.target.cursor ?? null,
         });
-        items.push(...products.map((product) => auditProduct(product, input.locale)));
+        items.push(...page.items.map((product) => auditProduct(product, input.locale)));
+        nextCursor = page.nextCursor;
+        hasMorePages = page.hasMorePages;
       } else {
-        const posts = await fetchAuditPosts({
+        const page = await fetchAuditPosts({
           locale: input.locale,
           limit: chunkSize,
-          offset: chunkOffset,
+          after: input.target.cursor ?? null,
         });
-        items.push(...posts.map((post) => auditPost(post, input.locale)));
+        items.push(...page.items.map((post) => auditPost(post, input.locale)));
+        nextCursor = page.nextCursor;
+        hasMorePages = page.hasMorePages;
       }
 
-      const nextOffset = chunkOffset + items.length;
-      const hasMore = items.length === chunkSize && nextOffset < perTypeLimit;
+      const nextPhaseOffset = chunkOffset + items.length;
+      const hasMore = nextPhaseOffset < perTypeLimit && hasMorePages;
 
       const report = buildReport({
         locale: input.locale,
@@ -158,11 +165,12 @@ export class SeoAuditService {
         items,
         started,
         pagination: {
-          offset: chunkOffset,
+          offset: nextPhaseOffset,
           returned: items.length,
           hasMore,
           phase,
           totalTarget: perTypeLimit,
+          nextCursor,
         },
       });
 
@@ -183,22 +191,22 @@ export class SeoAuditService {
     const items: SeoAuditItemResult[] = [];
 
     if (scope === "products" || scope === "all") {
-      const products = await fetchAuditProducts({
+      const page = await fetchAuditProducts({
         locale: input.locale,
         category: input.target.category,
         limit: perTypeLimit,
       });
 
-      items.push(...products.map((product) => auditProduct(product, input.locale)));
+      items.push(...page.items.map((product) => auditProduct(product, input.locale)));
     }
 
     if (scope === "posts" || scope === "all") {
-      const posts = await fetchAuditPosts({
+      const page = await fetchAuditPosts({
         locale: input.locale,
         limit: perTypeLimit,
       });
 
-      items.push(...posts.map((post) => auditPost(post, input.locale)));
+      items.push(...page.items.map((post) => auditPost(post, input.locale)));
     }
 
     const report = buildReport({

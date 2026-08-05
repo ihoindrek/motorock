@@ -353,6 +353,7 @@
     phases.forEach(function (phase) {
       chain = chain.then(function () {
         var phaseScanned = 0;
+        var cursor = null;
 
         function nextChunk() {
           if (phaseScanned >= perPhaseLimit) {
@@ -376,6 +377,10 @@
             target.category = category;
           }
 
+          if (cursor) {
+            target.cursor = cursor;
+          }
+
           return fetchAuditChunk(target).then(function (data) {
             if (data && data.ok === false) {
               throw new Error(data.error || MotorockCommerceAiSeoAudit.i18n.failed);
@@ -393,7 +398,14 @@
             var chunkItems = report.items || [];
             allItems = allItems.concat(chunkItems);
             scanned += chunkItems.length;
-            phaseScanned += chunkItems.length;
+
+            if (report.pagination) {
+              phaseScanned = report.pagination.offset;
+              cursor = report.pagination.nextCursor || null;
+            } else {
+              phaseScanned += chunkItems.length;
+              cursor = null;
+            }
 
             showProgress(
               totalExpected > 0 ? Math.min(99, (scanned / totalExpected) * 100) : 0,
@@ -401,11 +413,7 @@
               false,
             );
 
-            if (report.pagination && report.pagination.hasMore && chunkItems.length > 0) {
-              return nextChunk();
-            }
-
-            if (!report.pagination && chunkItems.length === chunkLimit && phaseScanned < perPhaseLimit) {
+            if (report.pagination && report.pagination.hasMore) {
               return nextChunk();
             }
           });

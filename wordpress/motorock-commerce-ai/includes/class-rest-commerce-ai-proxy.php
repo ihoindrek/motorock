@@ -285,9 +285,17 @@ class Motorock_Commerce_Ai_Rest_Proxy {
 		$data   = json_decode( wp_remote_retrieve_body( $response ), true );
 
 		if ( ! is_array( $data ) ) {
+			$body    = wp_remote_retrieve_body( $response );
+			$status  = (int) wp_remote_retrieve_response_code( $response );
+			$snippet = is_string( $body ) ? substr( preg_replace( '/\s+/', ' ', trim( $body ) ), 0, 180 ) : '';
+
 			return new WP_Error(
 				'motorock_commerce_ai_api_invalid_response',
-				'Storefront Commerce AI API returned an invalid response',
+				sprintf(
+					'Storefront Commerce AI API returned an invalid response (HTTP %1$d). Use MOTOROCK_STOREFRONT_URL=https://motorock.eu (not shop/www).%2$s',
+					$status,
+					$snippet ? ' Response: ' . $snippet : ''
+				),
 				array( 'status' => 502 )
 			);
 		}
@@ -395,15 +403,29 @@ class Motorock_Commerce_Ai_Rest_Proxy {
 
 	private static function get_api_url() {
 		if ( defined( 'MOTOROCK_AI_API_URL' ) && MOTOROCK_AI_API_URL ) {
-			return rtrim( (string) MOTOROCK_AI_API_URL, '/' );
+			return self::normalize_api_url( (string) MOTOROCK_AI_API_URL );
 		}
 
 		if ( defined( 'MOTOROCK_STOREFRONT_URL' ) && MOTOROCK_STOREFRONT_URL ) {
-			return rtrim( (string) MOTOROCK_STOREFRONT_URL, '/' );
+			return self::normalize_api_url( (string) MOTOROCK_STOREFRONT_URL );
 		}
 
 		$env = getenv( 'MOTOROCK_STOREFRONT_URL' );
-		return $env ? rtrim( (string) $env, '/' ) : 'https://motorock.eu';
+		return $env ? self::normalize_api_url( (string) $env ) : 'https://motorock.eu';
+	}
+
+	private static function normalize_api_url( $url ) {
+		$url = rtrim( trim( $url ), '/' );
+
+		if ( preg_match( '#^https://www\.#i', $url ) ) {
+			$url = preg_replace( '#^https://www\.#i', 'https://', $url );
+		}
+
+		if ( preg_match( '#^https://shop\.motorock\.eu#i', $url ) ) {
+			return 'https://motorock.eu';
+		}
+
+		return $url;
 	}
 
 	private static function get_api_secret() {

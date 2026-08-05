@@ -6,10 +6,12 @@ export type SeoAuditTarget = {
   scope?: SeoAuditScope;
   category?: string;
   limit?: number;
-  /** Chunked scan: skip this many items (products or posts depending on scope). */
+  /** Chunked scan: items already returned in this phase (products or posts). */
   offset?: number;
   /** Chunked scan: items to fetch in this request (defaults to SEO_AUDIT_CHUNK_SIZE). */
   chunkSize?: number;
+  /** Chunked scan: GraphQL cursor to continue from the previous chunk. */
+  cursor?: string | null;
 };
 
 export type SeoAuditPagination = {
@@ -18,6 +20,7 @@ export type SeoAuditPagination = {
   hasMore: boolean;
   phase: "products" | "posts";
   totalTarget: number;
+  nextCursor: string | null;
 };
 
 export type SeoAuditSeverity = "error" | "warning" | "info";

@@ -87,11 +87,19 @@ export function parseSeoAuditTarget(target: CommerceAiRunRequest["target"]): Seo
     parsedOffset = 0;
   }
 
+  const cursor =
+    typeof target.cursor === "string" && target.cursor.trim()
+      ? target.cursor.trim()
+      : target.cursor === null
+        ? null
+        : undefined;
+
   return {
     scope: parsedScope,
     category,
     limit: parsedLimit,
     offset: parsedOffset,
     chunkSize: parsedChunkSize,
+    cursor,
   };
 }
