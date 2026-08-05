@@ -57,7 +57,7 @@ export function resolveSizeGuide(
   }
 
   if (product.sizeGuideSlug) {
-    const override = registry.bySlug.get(product.sizeGuideSlug.trim());
+    const override = registry.bySlug[product.sizeGuideSlug.trim()];
     if (override) {
       return filterRowsForProduct(override, product.sizes);
     }
@@ -66,9 +66,10 @@ export function resolveSizeGuide(
   const slug = brandSlug(product.brand);
 
   for (const gender of gendersToTry(product.gender)) {
-    const guide = registry.byBrandCategoryGender.get(
-      sizeGuideLookupKey(slug, product.category, gender),
-    );
+    const guide =
+      registry.byBrandCategoryGender[
+        sizeGuideLookupKey(slug, product.category, gender)
+      ];
 
     if (guide) {
       return filterRowsForProduct(guide, product.sizes);
