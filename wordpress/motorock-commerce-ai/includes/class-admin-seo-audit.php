@@ -46,12 +46,24 @@ class Motorock_Commerce_Ai_Admin_Seo_Audit {
 			'motorock-commerce-ai-admin-seo-audit',
 			'MotorockCommerceAiSeoAudit',
 			array(
-				'restUrl' => rest_url( 'motorock/v1/commerce-ai/run' ),
-				'nonce'   => wp_create_nonce( 'wp_rest' ),
-				'i18n'    => array(
-					'running' => __( 'Running SEO audit…', 'motorock-commerce-ai' ),
-					'done'    => __( 'Audit complete.', 'motorock-commerce-ai' ),
-					'failed'  => __( 'Audit failed.', 'motorock-commerce-ai' ),
+				'restUrl'        => rest_url( 'motorock/v1/commerce-ai/run' ),
+				'nonce'          => wp_create_nonce( 'wp_rest' ),
+				'productEditUrl' => admin_url( 'post.php?post=PRODUCT_ID&action=edit' ),
+				'i18n'           => array(
+					'running'      => __( 'Running SEO audit…', 'motorock-commerce-ai' ),
+					'done'         => __( 'Audit complete.', 'motorock-commerce-ai' ),
+					'failed'       => __( 'Audit failed.', 'motorock-commerce-ai' ),
+					'scanned'      => __( 'Scanned', 'motorock-commerce-ai' ),
+					'errors'       => __( 'Errors', 'motorock-commerce-ai' ),
+					'warnings'     => __( 'Warnings', 'motorock-commerce-ai' ),
+					'avgScore'     => __( 'Avg score', 'motorock-commerce-ai' ),
+					'noIssues'     => __( 'No issues found in scanned items.', 'motorock-commerce-ai' ),
+					'showingTop100'=> __( 'Showing top 100 of %d items.', 'motorock-commerce-ai' ),
+					'fixWithAi'    => __( 'Fix with AI', 'motorock-commerce-ai' ),
+					'openProduct'  => __( 'Open product', 'motorock-commerce-ai' ),
+					'fixRunning'   => __( 'Generating draft… 30–60s', 'motorock-commerce-ai' ),
+					'fixDone'      => __( 'Draft saved — review in product editor', 'motorock-commerce-ai' ),
+					'fixFailed'    => __( 'AI fix failed.', 'motorock-commerce-ai' ),
 				),
 			)
 		);
@@ -65,7 +77,7 @@ class Motorock_Commerce_Ai_Admin_Seo_Audit {
 		<div class="wrap motorock-seo-audit-wrap">
 			<h1><?php esc_html_e( 'Commerce AI — SEO audit', 'motorock-commerce-ai' ); ?></h1>
 			<p class="description">
-				<?php esc_html_e( 'Read-only scan for missing meta, thin content, ALT gaps, and duplicate titles. Nothing is changed automatically.', 'motorock-commerce-ai' ); ?>
+				<?php esc_html_e( 'Read-only scan for missing meta, thin content, ALT gaps, and duplicate titles. Use Fix with AI on product rows to generate draft content for the gaps found.', 'motorock-commerce-ai' ); ?>
 			</p>
 
 			<table class="form-table" role="presentation">

@@ -25,6 +25,29 @@
   font-weight: 600;
 }
 
+.motorock-seo-audit-table .motorock-seo-audit-actions {
+  min-width: 180px;
+  vertical-align: top;
+}
+
+.motorock-seo-audit-fix-status {
+  color: #646970;
+  font-size: 12px;
+  margin-top: 0.35rem;
+}
+
+.motorock-seo-audit-fix-status.is-running {
+  color: #8a6d1f;
+}
+
+.motorock-seo-audit-fix-status.is-success {
+  color: #1e7e34;
+}
+
+.motorock-seo-audit-fix-status.is-error {
+  color: #b32d2e;
+}
+
 .motorock-seo-audit-table .severity-error {
   color: #b32d2e;
 }
