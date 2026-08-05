@@ -224,6 +224,20 @@ export const et: Dictionary = {
     contactAvailability: "Võta saadavuse kohta ühendust",
     size: "Suurus",
     sizeGuide: "Suuruste tabel",
+    sizeGuideUnit: "Keha mõõdud (cm)",
+    sizeGuideHowToMeasure: "Kuidas mõõta",
+    sizeGuideMeasureChest:
+      "Rind: mõõda kaenla alt üle rinna ja selja, lint paralleelselt põrandaga.",
+    sizeGuideMeasureWaist:
+      "Vöö: mõõda torsol kõige kitsamas kohas, tavaliselt puusade kohal.",
+    sizeGuideMeasureHips:
+      "Puusad: mõõda puusade laiimas kohas, vaagnaluude ümber.",
+    sizeGuideMeasureInseam:
+      "Siseõmblus: mõõda sääre siseküljel kubemest hüppeliigese luuni.",
+    sizeGuideMeasureGarment:
+      "Toote mõõt: mõõda sarnast riideeset laiali ja võrdle tabeliga.",
+    sizeGuideAllSizes: "Kõik suurused",
+    sizeGuideClose: "Sulge suuruste tabel",
     color: "Värv",
     addToCart: "Lisa ostukorvi",
     addedToCart: "Lisatud ostukorvi",

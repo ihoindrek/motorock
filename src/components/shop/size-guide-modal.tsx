@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { useDictionary, useLocale } from "@/context/locale-context";
 import type { SizeGuide, SizeGuideFit } from "@/types/size-guide";
@@ -30,14 +30,33 @@ function CloseIcon() {
   );
 }
 
-const FIT_LABELS: Record<
-  SizeGuideFit,
-  { en: string; et: string }
-> = {
+const FIT_LABELS: Record<SizeGuideFit, { en: string; et: string }> = {
   slim: { en: "Slim fit", et: "Slim fit" },
   regular: { en: "Regular fit", et: "Regular fit" },
-  relaxed: { en: "Relaxed fit", et: "Relaxed fit" },
+  relaxed: { en: "Relaxed fit", et: "Lõdvem fit" },
 };
+
+function normalizeSizeLabel(size: string) {
+  return size.trim().toUpperCase();
+}
+
+function resolveInitialSize(
+  guide: SizeGuide,
+  selectedSize?: string,
+): string {
+  const sizes = guide.rows.map((row) => row.size);
+  if (selectedSize) {
+    const normalized = normalizeSizeLabel(selectedSize);
+    const match = sizes.find(
+      (size) => normalizeSizeLabel(size) === normalized,
+    );
+    if (match) {
+      return match;
+    }
+  }
+
+  return sizes[0] ?? "";
+}
 
 export function SizeGuideModal({
   open,
@@ -48,10 +67,19 @@ export function SizeGuideModal({
   const dict = useDictionary();
   const locale = useLocale();
   const [mounted, setMounted] = useState(false);
+  const [activeSize, setActiveSize] = useState(() =>
+    resolveInitialSize(guide, selectedSize),
+  );
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (open) {
+      setActiveSize(resolveInitialSize(guide, selectedSize));
+    }
+  }, [open, guide, selectedSize]);
 
   useEffect(() => {
     if (!open) {
@@ -74,11 +102,18 @@ export function SizeGuideModal({
     };
   }, [onClose, open]);
 
-  if (!mounted) {
+  const activeRow = useMemo(
+    () =>
+      guide.rows.find(
+        (row) => normalizeSizeLabel(row.size) === normalizeSizeLabel(activeSize),
+      ) ?? guide.rows[0],
+    [activeSize, guide.rows],
+  );
+
+  if (!mounted || !activeRow) {
     return null;
   }
 
-  const normalizedSelected = selectedSize?.trim().toUpperCase();
   const fitLabel = guide.fit
     ? FIT_LABELS[guide.fit][locale === "et" ? "et" : "en"]
     : null;
@@ -87,7 +122,7 @@ export function SizeGuideModal({
     <>
       <button
         type="button"
-        aria-label="Close size guide"
+        aria-label={dict.pdp.sizeGuideClose}
         aria-hidden={!open}
         tabIndex={open ? 0 : -1}
         className={cn(
@@ -105,7 +140,7 @@ export function SizeGuideModal({
         aria-labelledby="size-guide-title"
         aria-hidden={!open}
         className={cn(
-          "fixed inset-x-4 top-[8vh] z-[121] mx-auto flex max-h-[84vh] max-w-lg flex-col overflow-hidden border border-ink/10 bg-paper shadow-[0_24px_80px_rgb(11_11_11_/_0.18)] transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none sm:inset-x-auto sm:left-1/2 sm:w-full sm:-translate-x-1/2",
+          "fixed inset-x-4 top-[6vh] z-[121] mx-auto flex max-h-[88vh] max-w-xl flex-col overflow-hidden border border-ink/10 bg-paper shadow-[0_24px_80px_rgb(11_11_11_/_0.18)] transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none sm:inset-x-auto sm:left-1/2 sm:w-full sm:-translate-x-1/2",
           open
             ? "translate-y-0 opacity-100"
             : "pointer-events-none translate-y-4 opacity-0",
@@ -127,81 +162,168 @@ export function SizeGuideModal({
                 {fitLabel}
               </p>
             ) : null}
-            {guide.note ? (
-              <p className="mt-2 text-sm leading-relaxed text-ink/60">
-                {guide.note}
-              </p>
-            ) : null}
           </div>
           <button
             type="button"
             onClick={onClose}
             className="inline-flex size-10 shrink-0 items-center justify-center text-ink/50 transition-colors hover:text-accent"
           >
-            <span className="sr-only">Close</span>
+            <span className="sr-only">{dict.pdp.sizeGuideClose}</span>
             <CloseIcon />
           </button>
         </div>
 
         <div className="overflow-auto px-5 py-5 sm:px-6">
-          <table className="w-full min-w-[18rem] border-collapse text-left text-sm">
-            <thead>
-              <tr className="border-b border-ink/10">
-                <th
-                  scope="col"
-                  className="pb-3 pr-4 font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/45"
-                >
-                  Size
-                </th>
-                {guide.columns.map((column) => (
-                  <th
-                    key={column.key}
-                    scope="col"
-                    className="pb-3 pr-4 font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/45 last:pr-0"
-                  >
-                    {column.label}
-                    <span className="ml-1 font-normal normal-case text-ink/35">
-                      (cm)
-                    </span>
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {guide.rows.map((row) => {
-                const isSelected =
-                  normalizedSelected === row.size.trim().toUpperCase();
+          <p className="font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/45">
+            {dict.pdp.sizeGuideUnit}
+          </p>
 
-                return (
-                  <tr
-                    key={row.size}
-                    className={cn(
-                      "border-b border-ink/8 last:border-b-0",
-                      isSelected && "bg-accent/[0.06]",
-                    )}
+          <div
+            className="mt-3 flex flex-wrap gap-2"
+            role="tablist"
+            aria-label={dict.pdp.size}
+          >
+            {guide.rows.map((row) => {
+              const isActive =
+                normalizeSizeLabel(row.size) === normalizeSizeLabel(activeSize);
+
+              return (
+                <button
+                  key={row.size}
+                  type="button"
+                  role="tab"
+                  aria-selected={isActive}
+                  onClick={() => setActiveSize(row.size)}
+                  className={cn(
+                    "min-h-11 min-w-[2.75rem] border px-3 py-2 font-body text-xs font-bold uppercase tracking-aggressive transition-colors",
+                    isActive
+                      ? "border-ink bg-ink text-paper"
+                      : "border-ink/20 text-ink hover:border-ink",
+                  )}
+                >
+                  {row.size}
+                </button>
+              );
+            })}
+          </div>
+
+          <dl className="mt-6 space-y-3 border-t border-ink/10 pt-5">
+            {guide.columns.map((column) => (
+              <div
+                key={column.key}
+                className="flex items-baseline justify-between gap-4"
+              >
+                <dt className="font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/45">
+                  {column.label}
+                </dt>
+                <dd className="tabular-nums text-sm font-medium text-ink">
+                  {activeRow.measurements[column.key] ?? "—"}{" "}
+                  <span className="text-xs font-normal text-ink/40">cm</span>
+                </dd>
+              </div>
+            ))}
+          </dl>
+
+          {guide.note ? (
+            <p className="mt-5 text-sm leading-relaxed text-ink/60">
+              {guide.note}
+            </p>
+          ) : null}
+
+          <div className="mt-6 border-t border-ink/10 pt-5">
+            <p className="font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/45">
+              {dict.pdp.sizeGuideHowToMeasure}
+            </p>
+            <ul className="mt-3 space-y-2 text-sm leading-relaxed text-ink/60">
+              {guide.columns.some((column) => column.key === "chest") ? (
+                <li>{dict.pdp.sizeGuideMeasureChest}</li>
+              ) : null}
+              {guide.columns.some((column) => column.key === "waist") ? (
+                <li>{dict.pdp.sizeGuideMeasureWaist}</li>
+              ) : null}
+              {guide.columns.some((column) => column.key === "hips") ? (
+                <li>{dict.pdp.sizeGuideMeasureHips}</li>
+              ) : null}
+              {guide.columns.some((column) => column.key === "inseam") ? (
+                <li>{dict.pdp.sizeGuideMeasureInseam}</li>
+              ) : null}
+              {guide.columns.some(
+                (column) => column.key === "length" || column.key === "sleeve",
+              ) ? (
+                <li>{dict.pdp.sizeGuideMeasureGarment}</li>
+              ) : null}
+            </ul>
+          </div>
+
+          <details className="group mt-6 border-t border-ink/10 pt-5">
+            <summary className="cursor-pointer list-none font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/45 transition-colors hover:text-accent [&::-webkit-details-marker]:hidden">
+              <span className="inline-flex items-center gap-2">
+                {dict.pdp.sizeGuideAllSizes}
+                <span
+                  className="text-base font-normal leading-none transition-transform group-open:rotate-45"
+                  aria-hidden="true"
+                >
+                  +
+                </span>
+              </span>
+            </summary>
+            <table className="mt-4 w-full min-w-[16rem] border-collapse text-left text-sm">
+              <thead>
+                <tr className="border-b border-ink/10">
+                  <th
+                    scope="col"
+                    className="pb-3 pr-4 font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/45"
                   >
+                    {dict.pdp.size}
+                  </th>
+                  {guide.columns.map((column) => (
                     <th
-                      scope="row"
+                      key={column.key}
+                      scope="col"
+                      className="pb-3 pr-4 font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/45 last:pr-0"
+                    >
+                      {column.label}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {guide.rows.map((row) => {
+                  const isActive =
+                    normalizeSizeLabel(row.size) ===
+                    normalizeSizeLabel(activeSize);
+
+                  return (
+                    <tr
+                      key={row.size}
                       className={cn(
-                        "py-3 pr-4 font-body text-xs font-bold uppercase tracking-aggressive",
-                        isSelected ? "text-accent" : "text-ink",
+                        "border-b border-ink/8 last:border-b-0",
+                        isActive && "bg-accent/[0.06]",
                       )}
                     >
-                      {row.size}
-                    </th>
-                    {guide.columns.map((column) => (
-                      <td
-                        key={column.key}
-                        className="py-3 pr-4 tabular-nums text-ink/75 last:pr-0"
+                      <th
+                        scope="row"
+                        className={cn(
+                          "py-3 pr-4 font-body text-xs font-bold uppercase tracking-aggressive",
+                          isActive ? "text-accent" : "text-ink",
+                        )}
                       >
-                        {row.measurements[column.key] ?? "—"}
-                      </td>
-                    ))}
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                        {row.size}
+                      </th>
+                      {guide.columns.map((column) => (
+                        <td
+                          key={column.key}
+                          className="py-3 pr-4 tabular-nums text-ink/75 last:pr-0"
+                        >
+                          {row.measurements[column.key] ?? "—"}
+                        </td>
+                      ))}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </details>
         </div>
       </div>
     </>,

@@ -206,6 +206,15 @@ export type Dictionary = {
     contactAvailability: string;
     size: string;
     sizeGuide: string;
+    sizeGuideUnit: string;
+    sizeGuideHowToMeasure: string;
+    sizeGuideMeasureChest: string;
+    sizeGuideMeasureWaist: string;
+    sizeGuideMeasureHips: string;
+    sizeGuideMeasureInseam: string;
+    sizeGuideMeasureGarment: string;
+    sizeGuideAllSizes: string;
+    sizeGuideClose: string;
     color: string;
     addToCart: string;
     addedToCart: string;
@@ -800,6 +809,20 @@ export const en: Dictionary = {
     contactAvailability: "Contact us for availability",
     size: "Size",
     sizeGuide: "Size guide",
+    sizeGuideUnit: "Body measurements (cm)",
+    sizeGuideHowToMeasure: "How to measure",
+    sizeGuideMeasureChest:
+      "Chest: measure under the armpits, across the back, keeping the tape parallel to the floor.",
+    sizeGuideMeasureWaist:
+      "Waist: measure at the narrowest point of your torso, usually just above the hips.",
+    sizeGuideMeasureHips:
+      "Hips: measure at the widest point below the waist, around the pelvic bones.",
+    sizeGuideMeasureInseam:
+      "Inseam: measure from the crotch to the ankle bone along the inside of the leg.",
+    sizeGuideMeasureGarment:
+      "Garment: measure a similar item you own, laid flat, and compare to the chart.",
+    sizeGuideAllSizes: "All sizes",
+    sizeGuideClose: "Close size guide",
     color: "Color",
     addToCart: "Add to cart",
     addedToCart: "Added to cart",
