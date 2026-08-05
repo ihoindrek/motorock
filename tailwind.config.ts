@@ -39,6 +39,7 @@ const config = {
         "search-scan": "search-scan 1.1s ease-in-out infinite",
         "gallery-play-ping": "gallery-play-ping 2.2s cubic-bezier(0, 0, 0.2, 1) infinite",
         "gallery-video-in": "gallery-video-in 0.35s cubic-bezier(0.22, 1, 0.36, 1) both",
+        "star-btn": "star-btn calc(var(--duration, 3) * 1s) linear infinite",
       },
       keyframes: {
         "fade-up": {
@@ -76,6 +77,10 @@ const config = {
         "gallery-video-in": {
           from: { opacity: "0", transform: "translateY(-50%) scale(0.96)" },
           to: { opacity: "1", transform: "translateY(-50%) scale(1)" },
+        },
+        "star-btn": {
+          "0%": { offsetDistance: "0%" },
+          "100%": { offsetDistance: "100%" },
         },
       },
     },

@@ -34,6 +34,7 @@
 
   --animate-accordion-down: accordion-down 0.2s ease-out;
   --animate-accordion-up: accordion-up 0.2s ease-out;
+  --animate-star-btn: star-btn calc(var(--duration, 3) * 1s) linear infinite;
 
   --font-display: var(--font-racing-sans-one);
   --font-body: var(--font-plus-jakarta);
@@ -417,6 +418,15 @@
   }
   to {
     height: 0;
+  }
+}
+
+@keyframes star-btn {
+  0% {
+    offset-distance: 0%;
+  }
+  100% {
+    offset-distance: 100%;
   }
 }
 

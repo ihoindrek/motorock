@@ -7,6 +7,7 @@ import {
   buildProductVideoEmbedUrl,
   type ProductVideo,
 } from "@/lib/shop/parse-product-video";
+import { StarButton } from "@/components/ui/star-button";
 import { cn } from "@/lib/utils";
 
 type ProductVideoModalProps = {
@@ -67,20 +68,26 @@ export function GalleryVideoPlayButton({
 
   if (variant === "overlay") {
     return (
-      <button
+      <StarButton
         type="button"
         onClick={onClick}
         aria-label={label}
+        lightColor="#FF6813"
+        backgroundColor="#FAF8F6"
+        borderWidth={1.5}
+        duration={2.75}
+        lightWidth={72}
         className={cn(
-          "inline-flex items-center gap-2 rounded-full border border-ink/10 bg-paper/92 px-2.5 py-1.5 font-body text-[9px] font-bold uppercase tracking-aggressive text-ink shadow-[0_8px_24px_-16px_rgba(11,11,11,0.28)] backdrop-blur-sm transition-[border-color,color,transform] duration-200 hover:border-accent hover:text-accent motion-safe:active:scale-[0.98] sm:gap-2.5 sm:px-3 sm:py-2 sm:text-[10px]",
+          "h-auto rounded-full bg-paper/92 px-2.5 py-1.5 font-body text-[9px] font-bold uppercase tracking-aggressive text-ink shadow-[0_8px_24px_-16px_rgba(11,11,11,0.28)] backdrop-blur-sm transition-transform motion-safe:active:scale-[0.98] sm:gap-2.5 sm:px-3 sm:py-2 sm:text-[10px]",
           className,
         )}
+        contentClassName="gap-2 text-ink sm:gap-2.5"
       >
         <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-ink text-paper sm:size-8">
           <PlayIcon className="size-3 translate-x-px sm:size-3.5" />
         </span>
         <span className="pr-0.5">{label}</span>
-      </button>
+      </StarButton>
     );
   }
 

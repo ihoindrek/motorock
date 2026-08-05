@@ -63,8 +63,8 @@ export function MotorcycleImageStage({
           isProduct
             ? `object-contain object-center transition-transform duration-500 group-hover/openable:scale-[1.02] ${
                 seamless
-                  ? "p-[4%] sm:p-[5%]"
-                  : "p-[7%] mix-blend-multiply sm:p-[9%] lg:p-[10%]"
+                  ? "p-[2%] sm:p-[2.5%]"
+                  : "p-[3%] mix-blend-multiply sm:p-[4%] lg:p-[5%]"
               }`
             : "object-cover object-center transition-transform duration-500 group-hover/openable:scale-[1.02]"
         }
