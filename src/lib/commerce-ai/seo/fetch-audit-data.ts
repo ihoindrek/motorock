@@ -59,13 +59,16 @@ export async function fetchAuditProducts(input: {
   locale: Locale;
   category?: string;
   limit: number;
+  offset?: number;
 }) {
   const limit = Math.min(Math.max(input.limit, 1), MAX_SEO_AUDIT_LIMIT);
+  const offset = Math.max(0, input.offset ?? 0);
+  const targetCount = offset + limit;
   const collected: GraphQLProduct[] = [];
   let after: string | null = null;
 
-  while (collected.length < limit) {
-    const pageSize = Math.min(100, limit - collected.length);
+  while (collected.length < targetCount) {
+    const pageSize = Math.min(100, targetCount - collected.length);
     const data: AuditProductsResponse = await graphqlRequest<
       AuditProductsResponse,
       { first: number; after: string | null }
@@ -77,23 +80,29 @@ export async function fetchAuditProducts(input: {
 
     collected.push(...localized);
 
-    if (!data.products.pageInfo.hasNextPage || collected.length >= limit) {
+    if (!data.products.pageInfo.hasNextPage || collected.length >= targetCount) {
       break;
     }
 
     after = data.products.pageInfo.endCursor;
   }
 
-  return collected.slice(0, limit);
+  return collected.slice(offset, offset + limit);
 }
 
-export async function fetchAuditPosts(input: { locale: Locale; limit: number }) {
+export async function fetchAuditPosts(input: {
+  locale: Locale;
+  limit: number;
+  offset?: number;
+}) {
   const limit = Math.min(Math.max(input.limit, 1), MAX_SEO_AUDIT_LIMIT);
+  const offset = Math.max(0, input.offset ?? 0);
+  const targetCount = offset + limit;
   const collected: GraphQLBlogPostCard[] = [];
   let after: string | null = null;
 
-  while (collected.length < limit) {
-    const pageSize = Math.min(50, limit - collected.length);
+  while (collected.length < targetCount) {
+    const pageSize = Math.min(50, targetCount - collected.length);
     const data: AuditPostsResponse = await graphqlRequest<
       AuditPostsResponse,
       { first: number; after: string | null }
@@ -105,12 +114,12 @@ export async function fetchAuditPosts(input: { locale: Locale; limit: number }) 
 
     collected.push(...localized);
 
-    if (!data.contentNodes.pageInfo.hasNextPage || collected.length >= limit) {
+    if (!data.contentNodes.pageInfo.hasNextPage || collected.length >= targetCount) {
       break;
     }
 
     after = data.contentNodes.pageInfo.endCursor;
   }
 
-  return collected.slice(0, limit);
+  return collected.slice(offset, offset + limit);
 }

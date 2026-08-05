@@ -176,21 +176,121 @@
     return html;
   }
 
-  function runAudit() {
-    runButton.disabled = true;
-    summaryEl.innerHTML = "<p>" + escapeHtml(MotorockCommerceAiSeoAudit.i18n.running) + "</p>";
-    resultsEl.innerHTML = "";
+  function showProgress(percent, label) {
+    var safePercent = Math.max(0, Math.min(100, percent));
+    summaryEl.innerHTML =
+      '<div class="motorock-seo-audit-progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' +
+      safePercent +
+      '">' +
+      '<div class="motorock-seo-audit-progress-bar" style="width:' +
+      safePercent +
+      '%"></div></div>' +
+      '<p class="motorock-seo-audit-progress-label">' +
+      escapeHtml(label) +
+      "</p>";
+  }
 
-    var category = document.getElementById("motorock-seo-audit-category").value.trim();
-    var target = {
-      scope: document.getElementById("motorock-seo-audit-scope").value,
-      limit: Number(document.getElementById("motorock-seo-audit-limit").value) || 200,
+  function findDuplicateGroups(items, pickValue) {
+    var groups = {};
+
+    items.forEach(function (item) {
+      var value = (pickValue(item) || "").trim().toLowerCase();
+      if (!value) {
+        return;
+      }
+      if (!groups[value]) {
+        groups[value] = [];
+      }
+      groups[value].push(item.databaseId);
+    });
+
+    return Object.keys(groups)
+      .filter(function (key) {
+        return groups[key].length > 1;
+      })
+      .map(function (key) {
+        return { value: key, databaseIds: groups[key] };
+      });
+  }
+
+  function mergeAuditReport(allItems, scope, locale) {
+    var items = allItems.slice().sort(function (a, b) {
+      return b.score - a.score || a.title.localeCompare(b.title);
+    });
+
+    var byCode = {};
+    var errors = 0;
+    var warnings = 0;
+
+    items.forEach(function (item) {
+      (item.findings || []).forEach(function (finding) {
+        byCode[finding.code] = (byCode[finding.code] || 0) + 1;
+        if (finding.severity === "error") {
+          errors += 1;
+        } else if (finding.severity === "warning") {
+          warnings += 1;
+        }
+      });
+    });
+
+    var productItems = items.filter(function (item) {
+      return item.entityType === "product";
+    });
+    var postItems = items.filter(function (item) {
+      return item.entityType === "post";
+    });
+
+    return {
+      ok: true,
+      locale: locale,
+      scope: scope,
+      dryRun: true,
+      summary: {
+        scanned: items.length,
+        products: productItems.length,
+        posts: postItems.length,
+        errors: errors,
+        warnings: warnings,
+        avgScore:
+          items.length > 0
+            ? Math.round(
+                (items.reduce(function (sum, item) {
+                  return sum + item.score;
+                }, 0) /
+                  items.length) *
+                  10,
+              ) / 10
+            : 0,
+        byCode: byCode,
+      },
+      duplicates: {
+        titles: findDuplicateGroups(items, function (item) {
+          return item.title;
+        }),
+        seoTitles: findDuplicateGroups(productItems, function (item) {
+          return item.seoTitle;
+        }),
+      },
+      items: items,
     };
+  }
 
-    if (category) {
-      target.category = category;
-    }
+  function progressLabel(phase, scanned, totalExpected) {
+    var phaseLabel =
+      phase === "posts"
+        ? MotorockCommerceAiSeoAudit.i18n.progressPosts
+        : MotorockCommerceAiSeoAudit.i18n.progressProducts;
 
+    return (
+      phaseLabel +
+      " — " +
+      MotorockCommerceAiSeoAudit.i18n.progressCount
+        .replace("%1$d", String(scanned))
+        .replace("%2$d", String(totalExpected))
+    );
+  }
+
+  function fetchAuditChunk(target) {
     return window.wp.apiFetch({
       url: MotorockCommerceAiSeoAudit.restUrl,
       method: "POST",
@@ -203,6 +303,93 @@
         target: target,
         options: { dryRun: true },
       },
+    });
+  }
+
+  function runAudit() {
+    runButton.disabled = true;
+    resultsEl.innerHTML = "";
+
+    var category = document.getElementById("motorock-seo-audit-category").value.trim();
+    var scope = document.getElementById("motorock-seo-audit-scope").value;
+    var limit = Number(document.getElementById("motorock-seo-audit-limit").value) || 200;
+    var chunkSize = Number(MotorockCommerceAiSeoAudit.chunkSize) || 20;
+    var phases = [];
+
+    if (scope === "all" || scope === "products") {
+      phases.push("products");
+    }
+    if (scope === "all" || scope === "posts") {
+      phases.push("posts");
+    }
+
+    var perPhaseLimit = scope === "all" ? Math.ceil(limit / 2) : limit;
+    var totalExpected = perPhaseLimit * phases.length;
+    var allItems = [];
+    var scanned = 0;
+
+    showProgress(0, MotorockCommerceAiSeoAudit.i18n.running);
+
+    var chain = Promise.resolve();
+
+    phases.forEach(function (phase) {
+      chain = chain.then(function () {
+        var offset = 0;
+
+        function nextChunk() {
+          if (offset >= perPhaseLimit) {
+            return Promise.resolve();
+          }
+
+          var chunkLimit = Math.min(chunkSize, perPhaseLimit - offset);
+          showProgress(
+            Math.min(99, (scanned / totalExpected) * 100),
+            progressLabel(phase, scanned, totalExpected),
+          );
+
+          var target = {
+            scope: phase,
+            limit: perPhaseLimit,
+            offset: offset,
+            chunkSize: chunkLimit,
+          };
+
+          if (category) {
+            target.category = category;
+          }
+
+          return fetchAuditChunk(target).then(function (data) {
+            if (data && data.error) {
+              throw new Error(data.error);
+            }
+
+            var report = data && data.result ? data.result : null;
+            if (!report) {
+              throw new Error(MotorockCommerceAiSeoAudit.i18n.failed);
+            }
+
+            var chunkItems = report.items || [];
+            allItems = allItems.concat(chunkItems);
+            scanned += chunkItems.length;
+            offset += chunkItems.length;
+
+            if (report.pagination && report.pagination.hasMore && chunkItems.length > 0) {
+              return nextChunk();
+            }
+
+            if (!report.pagination && chunkItems.length === chunkLimit && offset < perPhaseLimit) {
+              return nextChunk();
+            }
+          });
+        }
+
+        return nextChunk();
+      });
+    });
+
+    return chain.then(function () {
+      showProgress(100, MotorockCommerceAiSeoAudit.i18n.finalizing);
+      return mergeAuditReport(allItems, scope, selectedLocale());
     });
   }
 
@@ -283,25 +470,12 @@
 
   runButton.addEventListener("click", function () {
     runAudit()
-      .then(function (data) {
-        if (data && data.error) {
-          summaryEl.innerHTML =
-            "<p>" +
-            escapeHtml(MotorockCommerceAiSeoAudit.i18n.failed) +
-            " " +
-            escapeHtml(data.error) +
-            "</p>";
-          return;
-        }
-
-        var report = data && data.result ? data.result : null;
-        if (!report) {
-          summaryEl.innerHTML = "<p>" + escapeHtml(MotorockCommerceAiSeoAudit.i18n.failed) + "</p>";
-          return;
-        }
-
+      .then(function (report) {
         summaryEl.innerHTML =
-          "<p>" + escapeHtml(MotorockCommerceAiSeoAudit.i18n.done) + "</p>" + renderSummary(report);
+          '<p class="motorock-seo-audit-done">' +
+          escapeHtml(MotorockCommerceAiSeoAudit.i18n.done) +
+          "</p>" +
+          renderSummary(report);
         resultsEl.innerHTML = renderItems(report.items || []);
       })
       .catch(function (error) {

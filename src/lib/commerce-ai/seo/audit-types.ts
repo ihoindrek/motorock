@@ -6,6 +6,18 @@ export type SeoAuditTarget = {
   scope?: SeoAuditScope;
   category?: string;
   limit?: number;
+  /** Chunked scan: skip this many items (products or posts depending on scope). */
+  offset?: number;
+  /** Chunked scan: items to fetch in this request (defaults to SEO_AUDIT_CHUNK_SIZE). */
+  chunkSize?: number;
+};
+
+export type SeoAuditPagination = {
+  offset: number;
+  returned: number;
+  hasMore: boolean;
+  phase: "products" | "posts";
+  totalTarget: number;
 };
 
 export type SeoAuditSeverity = "error" | "warning" | "info";
@@ -52,7 +64,9 @@ export type SeoAuditReport = {
   };
   items: SeoAuditItemResult[];
   durationMs: number;
+  pagination?: SeoAuditPagination;
 };
 
 export const DEFAULT_SEO_AUDIT_LIMIT = 200;
 export const MAX_SEO_AUDIT_LIMIT = 500;
+export const SEO_AUDIT_CHUNK_SIZE = 20;

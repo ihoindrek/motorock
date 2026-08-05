@@ -2,6 +2,28 @@
   margin: 1rem 0;
 }
 
+.motorock-seo-audit-progress-track {
+  background: #f0f0f1;
+  border-radius: 999px;
+  height: 10px;
+  margin: 0.75rem 0 0.5rem;
+  overflow: hidden;
+  width: 100%;
+  max-width: 520px;
+}
+
+.motorock-seo-audit-progress-bar {
+  background: linear-gradient(90deg, #2271b1, #135e96);
+  height: 100%;
+  transition: width 0.25s ease;
+}
+
+.motorock-seo-audit-progress-label,
+.motorock-seo-audit-done {
+  color: #50575e;
+  margin: 0.25rem 0 0.75rem;
+}
+
 .motorock-seo-audit-summary-grid {
   display: grid;
   gap: 0.75rem;

@@ -7,6 +7,7 @@ import type {
   CommerceAiSkillId,
 } from "@/lib/commerce-ai/core/types";
 import type { SeoAuditScope, SeoAuditTarget } from "@/lib/commerce-ai/seo/audit-types";
+import { SEO_AUDIT_CHUNK_SIZE } from "@/lib/commerce-ai/seo/audit-types";
 import type { Locale } from "@/i18n/config";
 
 export type CommerceAiSkillContext = {
@@ -76,9 +77,18 @@ export function parseSeoAuditTarget(target: CommerceAiRunRequest["target"]): Seo
   const limit = Number(target.limit);
   const parsedLimit = Number.isInteger(limit) && limit > 0 ? limit : undefined;
 
+  const offset = Number(target.offset);
+  const parsedOffset = Number.isInteger(offset) && offset >= 0 ? offset : undefined;
+
+  const chunkSize = Number(target.chunkSize);
+  const parsedChunkSize =
+    Number.isInteger(chunkSize) && chunkSize > 0 ? Math.min(chunkSize, SEO_AUDIT_CHUNK_SIZE) : undefined;
+
   return {
     scope: parsedScope,
     category,
     limit: parsedLimit,
+    offset: parsedOffset,
+    chunkSize: parsedChunkSize,
   };
 }
