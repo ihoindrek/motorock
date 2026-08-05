@@ -409,6 +409,12 @@ async function fetchLocalizedGraphqlProduct(
     if (!localized && locale === "et" && getGraphqlLanguageCode(remote) === "en") {
       localized = remote;
     }
+
+    // WPML sometimes omits languageCode/translations on variable-product translations.
+    // Slug lookup already resolved the correct post — trust it.
+    if (!localized && !getGraphqlLanguageCode(remote)) {
+      localized = remote;
+    }
   }
 
   if (!localized) {
