@@ -1,7 +1,7 @@
 <?php
 /**
  * Motorock Commerce AI Engine — unified bootstrap.
- * Version: 0.4.9
+ * Version: 0.5.0
  *
  * Loads product content writer (legacy AI Writer module), write REST,
  * admin UI, and the Commerce AI skills dashboard.
@@ -14,7 +14,7 @@ if ( defined( 'MOTOROCK_COMMERCE_AI_LOADED' ) ) {
 }
 
 define( 'MOTOROCK_COMMERCE_AI_LOADED', true );
-define( 'MOTOROCK_COMMERCE_AI_VERSION', '0.4.9' );
+define( 'MOTOROCK_COMMERCE_AI_VERSION', '0.5.0' );
 
 $commerce_ai_root = dirname( __DIR__ );
 $ai_writer_root   = $commerce_ai_root . '/motorock-ai-writer';
@@ -27,8 +27,8 @@ require_once $ai_writer_root . '/includes/class-blog-writer.php';
 require_once $ai_writer_root . '/includes/class-related-writer.php';
 require_once $ai_writer_root . '/includes/class-rest-write.php';
 require_once $ai_writer_root . '/includes/class-admin-product.php';
-require_once $ai_writer_root . '/includes/class-admin-bulk.php';
 require_once __DIR__ . '/includes/class-admin-menu.php';
+require_once $ai_writer_root . '/includes/class-admin-bulk.php';
 require_once __DIR__ . '/includes/class-admin-dashboard.php';
 require_once __DIR__ . '/includes/class-admin-blog.php';
 require_once __DIR__ . '/includes/class-admin-seo-audit.php';

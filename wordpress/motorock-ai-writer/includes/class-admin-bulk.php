@@ -9,23 +9,11 @@ class Motorock_Ai_Admin_Bulk {
 	const DEFAULT_CHUNK_SIZE = 2;
 
 	public static function register() {
-		add_action( 'admin_menu', array( __CLASS__, 'register_menu' ) );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_assets' ) );
 		add_filter( 'bulk_actions-edit-product', array( __CLASS__, 'register_bulk_action' ) );
 		add_filter( 'handle_bulk_actions-edit-product', array( __CLASS__, 'handle_bulk_action' ), 10, 3 );
 		add_filter( 'manage_product_posts_columns', array( __CLASS__, 'register_status_column' ) );
 		add_action( 'manage_product_posts_custom_column', array( __CLASS__, 'render_status_column' ), 10, 2 );
-	}
-
-	public static function register_menu() {
-		add_submenu_page(
-			Motorock_Commerce_Ai_Admin_Menu::menu_slug(),
-			__( 'Product content', 'motorock-commerce-ai' ),
-			__( 'Product content', 'motorock-commerce-ai' ),
-			'edit_products',
-			self::PAGE_SLUG,
-			array( __CLASS__, 'render_page' )
-		);
 	}
 
 	public static function register_bulk_action( $actions ) {

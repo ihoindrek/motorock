@@ -9,6 +9,7 @@ class Motorock_Commerce_Ai_Admin_Menu {
 
 	public static function register() {
 		add_action( 'admin_menu', array( __CLASS__, 'register_menu' ), 9 );
+		add_action( 'admin_menu', array( __CLASS__, 'remove_legacy_submenus' ), 999 );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_assets' ) );
 	}
 
@@ -43,6 +44,25 @@ class Motorock_Commerce_Ai_Admin_Menu {
 			self::MENU_SLUG,
 			array( 'Motorock_Commerce_Ai_Admin_Dashboard', 'render_page' )
 		);
+
+		if ( class_exists( 'Motorock_Ai_Admin_Bulk' ) ) {
+			add_submenu_page(
+				self::MENU_SLUG,
+				__( 'Product content', 'motorock-commerce-ai' ),
+				__( 'Product content', 'motorock-commerce-ai' ),
+				'edit_products',
+				'motorock-ai-bulk',
+				array( 'Motorock_Ai_Admin_Bulk', 'render_page' )
+			);
+		}
+	}
+
+	public static function remove_legacy_submenus() {
+		remove_submenu_page( 'edit.php?post_type=product', 'motorock-commerce-ai' );
+		remove_submenu_page( 'edit.php?post_type=product', 'motorock-commerce-ai-blog' );
+		remove_submenu_page( 'edit.php?post_type=product', 'motorock-commerce-ai-seo-audit' );
+		remove_submenu_page( 'edit.php?post_type=product', 'motorock-commerce-ai-related' );
+		remove_submenu_page( 'edit.php?post_type=product', 'motorock-ai-bulk' );
 	}
 
 	public static function enqueue_assets( $hook_suffix ) {
