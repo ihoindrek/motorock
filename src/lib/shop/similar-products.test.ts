@@ -94,17 +94,18 @@ describe("pickSimilarProducts", () => {
     expect(related.map((item) => item.slug)).toEqual(["en-glove"]);
   });
 
-  it("matches motorcycles by Woo brand subcategory, not the whole catalog", () => {
+  it("includes cross-brand motorcycles and prefers same brand in ranking", () => {
     const revolver = product({
       slug: "motron-revolver-125",
       name: "Revolver 125",
       brand: "Motron",
       type: "motorcycle",
       category: "motorcycles",
+      price: 3500,
       wcCategorySlugs: ["motorcycles", "motron"],
     });
 
-    const catalog = [
+    const motorcycleCatalog = [
       revolver,
       product({
         slug: "motron-volt",
@@ -112,6 +113,7 @@ describe("pickSimilarProducts", () => {
         brand: "Motron",
         type: "motorcycle",
         category: "motorcycles",
+        price: 3400,
         wcCategorySlugs: ["motorcycles", "motron"],
       }),
       product({
@@ -120,12 +122,13 @@ describe("pickSimilarProducts", () => {
         brand: "Malaguti",
         type: "motorcycle",
         category: "motorcycles",
+        price: 3200,
         wcCategorySlugs: ["motorcycles", "malaguti"],
       }),
     ];
 
-    const related = pickSimilarProducts(revolver, catalog);
+    const related = pickSimilarProducts(revolver, motorcycleCatalog);
 
-    expect(related.map((item) => item.slug)).toEqual(["motron-volt"]);
+    expect(related.map((item) => item.slug)).toEqual(["motron-volt", "malaguti-scooter"]);
   });
 });

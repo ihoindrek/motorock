@@ -2,7 +2,7 @@ import type { Locale } from "@/i18n/config";
 import type { CatalogProduct } from "@/types/catalog-product";
 import type { NormalizedProduct } from "@/lib/ai/domain/normalized-product";
 import { getEquipmentCatalog, getMotorcycleCatalog } from "@/lib/graphql/products";
-import { productsShareWcSubcategory } from "@/lib/shop/wc-categories";
+import { isSimilarCatalogCandidate } from "@/lib/shop/similar-products";
 import type { RelatedProductCandidate } from "@/lib/commerce-ai/catalog/schemas";
 
 const MAX_CANDIDATES = 50;
@@ -48,11 +48,7 @@ export async function fetchRelatedCandidates(input: {
       : await getEquipmentCatalog(input.locale);
 
   return catalog
-    .filter(
-      (candidate) =>
-        candidate.slug !== input.current.slug &&
-        productsShareWcSubcategory(input.current, candidate),
-    )
+    .filter((candidate) => isSimilarCatalogCandidate(input.current, candidate))
     .map((candidate) => ({
       candidate,
       score: candidateScore(input.current, candidate),

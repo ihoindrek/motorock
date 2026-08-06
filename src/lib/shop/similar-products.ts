@@ -21,6 +21,12 @@ function similarityScore(
     score += 8;
   }
 
+  if (current.type === "motorcycle" && current.price > 0 && candidate.price > 0) {
+    const ratio =
+      Math.min(current.price, candidate.price) / Math.max(current.price, candidate.price);
+    score += Math.round(ratio * 5);
+  }
+
   if (gendersCompatible(current.gender, candidate.gender)) {
     score += 3;
   }
@@ -36,17 +42,28 @@ function similarityScore(
   return score;
 }
 
+export function isSimilarCatalogCandidate(
+  current: CatalogProduct,
+  candidate: CatalogProduct,
+): boolean {
+  if (candidate.slug === current.slug || candidate.type !== current.type) {
+    return false;
+  }
+
+  if (current.type === "motorcycle") {
+    return true;
+  }
+
+  return productsShareWcSubcategory(current, candidate);
+}
+
 export function pickSimilarProducts(
   current: CatalogProduct,
   catalog: readonly CatalogProduct[],
   limit = RELATED_PRODUCTS_LIMIT,
 ): CatalogProduct[] {
   const ranked = catalog
-    .filter(
-      (candidate) =>
-        candidate.slug !== current.slug &&
-        productsShareWcSubcategory(current, candidate),
-    )
+    .filter((candidate) => isSimilarCatalogCandidate(current, candidate))
     .map((candidate) => ({
       candidate,
       score: similarityScore(current, candidate),
