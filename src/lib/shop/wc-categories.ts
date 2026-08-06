@@ -278,11 +278,13 @@ export function productsShareWcSubcategory(
   a: {
     type: "equipment" | "motorcycle";
     category: ProductCategory;
+    brand?: string;
     wcCategorySlugs?: readonly string[];
   },
   b: {
     type: "equipment" | "motorcycle";
     category: ProductCategory;
+    brand?: string;
     wcCategorySlugs?: readonly string[];
   },
 ): boolean {
