@@ -1,0 +1,61 @@
+.shopify-importer .shopify-progress-bar {
+    width: 100%;
+    height: 28px;
+    background: #f0f0f1;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.shopify-importer .shopify-progress-fill {
+    height: 100%;
+    background: #2271b1;
+    color: #fff;
+    text-align: center;
+    line-height: 28px;
+    font-weight: bold;
+    transition: width 0.3s ease;
+}
+
+.shopify-importer .shopify-stats {
+    display: flex;
+    gap: 20px;
+}
+
+.shopify-importer .shopify-stat {
+    flex: 1;
+    text-align: center;
+    padding: 15px;
+    background: #f0f6fc;
+    border-radius: 4px;
+}
+
+.shopify-importer .shopify-stat span {
+    display: block;
+    font-size: 28px;
+    font-weight: bold;
+    color: #2271b1;
+}
+
+.shopify-importer .shopify-stat label {
+    color: #666;
+    font-size: 12px;
+}
+
+.shopify-importer .shopify-category-mapping-select {
+    width: 100%;
+    max-width: 420px;
+}
+
+.shopify-importer .shopify-import-log {
+    margin-top: 10px;
+    max-height: 280px;
+    overflow: auto;
+    background: #1d2327;
+    color: #ececec;
+    padding: 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
