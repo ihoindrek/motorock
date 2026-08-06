@@ -452,20 +452,54 @@ export async function getProductBySlugForLocale(
   return enrichCatalogProductVariations(mapped);
 }
 
+async function withMotorcycleCategoryFallback(
+  product: GraphQLProduct,
+  locale: Locale,
+): Promise<GraphQLProduct> {
+  if (isGraphqlMotorcycle(product)) {
+    return product;
+  }
+
+  if (locale !== "et") {
+    return product;
+  }
+
+  const englishId = findTranslationDatabaseId(product, "en");
+  if (!englishId || englishId === product.databaseId) {
+    return product;
+  }
+
+  const english = await fetchGraphqlProductByDatabaseId(englishId);
+  if (!english || !isGraphqlMotorcycle(english)) {
+    return product;
+  }
+
+  return {
+    ...product,
+    productCategories: english.productCategories,
+  };
+}
+
 export async function getMotorcycleProductBySlug(
   slug: string,
   locale: Locale = "en",
 ): Promise<MotorcycleProduct | null> {
   const remote = await fetchLocalizedGraphqlProduct(slug, locale);
 
-  if (!remote || !isGraphqlMotorcycle(remote)) {
+  if (!remote) {
+    return null;
+  }
+
+  const productForMapping = await withMotorcycleCategoryFallback(remote, locale);
+
+  if (!isGraphqlMotorcycle(productForMapping)) {
     return null;
   }
 
   let contentUntranslated = false;
 
   if (locale === "et") {
-    const englishId = findTranslationDatabaseId(remote, "en");
+    const englishId = findTranslationDatabaseId(productForMapping, "en");
     const english = englishId
       ? await fetchGraphqlProductByDatabaseId(englishId)
       : null;
@@ -480,11 +514,11 @@ export async function getMotorcycleProductBySlug(
   }
 
   const showroomMetaSources = await buildShowroomMetaSourcesForProduct(
-    remote,
+    productForMapping,
     locale,
   );
 
-  return mapGraphqlToMotorcycleProduct(remote, locale, {
+  return mapGraphqlToMotorcycleProduct(productForMapping, locale, {
     contentUntranslated,
     showroomMetaSources,
   });

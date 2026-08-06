@@ -85,13 +85,9 @@ function isSizeAttributeName(name: string) {
 const MOTORCYCLE_BRAND_SLUGS = new Set(["brixton", "mutt", "motron", "malaguti"]);
 
 function isMotorcycleProduct(categories: GraphQLProduct["productCategories"]) {
-  const nodes = categories?.nodes ?? [];
+  const slugs = collectProductWcCategorySlugs(categories?.nodes ?? []);
 
-  return nodes.some(
-    (category) =>
-      category.slug === "motorcycles" ||
-      category.parent?.node?.slug === "motorcycles",
-  );
+  return slugs.includes("motorcycles");
 }
 
 function resolveMotorcycleBrand(categories: GraphQLProduct["productCategories"]) {
