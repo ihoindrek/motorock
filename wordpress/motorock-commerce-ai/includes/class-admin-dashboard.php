@@ -65,9 +65,11 @@ class Motorock_Commerce_Ai_Admin_Dashboard {
 			array(
 				'id'          => 'catalog.related_products',
 				'domain'      => 'catalog',
-				'status'      => 'planned',
+				'status'      => 'active',
 				'title'       => __( 'Related products', 'motorock-commerce-ai' ),
 				'description' => __( 'Recommend and apply related product links in bulk.', 'motorock-commerce-ai' ),
+				'action_url'  => admin_url( 'admin.php?page=motorock-commerce-ai-related' ),
+				'action_label'=> __( 'Open related products', 'motorock-commerce-ai' ),
 			),
 			array(
 				'id'          => 'catalog.detect_duplicates',

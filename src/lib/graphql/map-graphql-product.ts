@@ -45,6 +45,7 @@ import { getGraphqlLanguageCode, resolveLocalizedProductFields } from "@/lib/gra
 import { getDictionary } from "@/i18n/get-dictionary";
 import { parseAiProductSeoFromMeta } from "@/lib/seo/ai-product-seo";
 import { parseAiProductFaqFromMeta } from "@/lib/seo/ai-product-faq";
+import { parseRelatedSlugsFromMeta } from "@/lib/shop/parse-related-slugs";
 import { isLocale } from "@/i18n/config";
 
 const COLOR_ATTR_NAMES = new Set(["color", "colour", "värv", "finish"]);
@@ -470,6 +471,7 @@ export function mapGraphqlToMotorcycleProduct(
       vimeoId: content.productVideo?.provider === "vimeo" ? content.productVideo.id : undefined,
       productVideo: content.productVideo,
       isNew: resolveMappedIsNew(product.metaData, product.date, options),
+      relatedSlugs: parseRelatedSlugsFromMeta(product.metaData),
     },
     parsedSpecs: catalogCopy.parsedSpecs,
     aiSeo: parseAiProductSeoFromMeta(product.metaData),
@@ -576,6 +578,7 @@ export function mapGraphqlToCatalogProduct(
     faq: parseAiProductFaqFromMeta(product.metaData),
     productVideo: resolveMappedProductVideo(product.metaData, options),
     sizeGuideSlug: getMetaValue(product.metaData, "size_guide_slug")?.trim() || undefined,
+    relatedSlugs: parseRelatedSlugsFromMeta(product.metaData),
   };
 }
 

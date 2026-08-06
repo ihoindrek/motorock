@@ -7,7 +7,7 @@ import type { PromptTemplate } from "@/lib/ai/prompts/prompt-renderer";
 
 const PromptTemplateFileSchema = z.object({
   id: z.string().min(1),
-  section: z.enum(["description", "seo", "faq", "alt_text", "blog"]),
+  section: z.enum(["description", "seo", "faq", "alt_text", "blog", "catalog"]),
   locales: z.array(z.string()).min(1),
   system: z.string().min(1),
   user: z.string().min(1),
@@ -23,6 +23,7 @@ export const PROMPT_TEMPLATE_IDS = [
   "faq.motorcycle.v1",
   "alt_text.v1",
   "blog.v1",
+  "related_products.v1",
 ] as const;
 
 export type PromptTemplateId = (typeof PROMPT_TEMPLATE_IDS)[number];

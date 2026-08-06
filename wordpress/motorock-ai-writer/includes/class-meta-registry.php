@@ -25,6 +25,7 @@ class Motorock_Ai_Meta_Registry {
 		'_motorock_ai_draft_alt_texts',
 		'_motorock_supplier_description',
 		'_motorock_motorcycle_specs',
+		'_motorock_related_slugs',
 	);
 
 	public static function register() {

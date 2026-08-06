@@ -26,7 +26,7 @@ export const COMMERCE_AI_SKILL_CATALOG: readonly CommerceAiSkillDefinition[] = [
   {
     id: "catalog.related_products",
     domain: "catalog",
-    status: "planned",
+    status: "active",
     title: "Related products",
     description: "Recommend and apply related product links in bulk.",
   },
