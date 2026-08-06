@@ -64,7 +64,7 @@
         $.each(collections, function (i, collection) {
             var rowStyle = collection.is_catch_all ? ' style="background:#fff8e5;"' : '';
             var catchAllNote = collection.is_catch_all
-                ? '<br><span style="color:#996800;font-size:12px;">Broad collection — ignored for category mapping</span>'
+                ? '<br><span style="color:#996800;font-size:12px;">Lai kollektsioon — kategooria seostamisel ignoreeritakse</span>'
                 : '';
             html += '<tr' + rowStyle + '>';
             html += '<td><strong>' + collection.title + '</strong><br><code>' + collection.handle + '</code>' + catchAllNote + '</td>';
@@ -135,7 +135,8 @@
             var shopifyName = cells[0];
             var categoryName = cells[1];
 
-            if (/^shopify\s+collection$/i.test(shopifyName) && /^woo?commerce\s+category$/i.test(categoryName)) {
+            if ((/^shopify\s+(collection|kollektsioon)$/i.test(shopifyName) || /^shopify\s+kollektsioon$/i.test(shopifyName))
+                && (/^woo?commerce\s+(category|kategooria)$/i.test(categoryName) || /^woo?commerce\s+kategooria$/i.test(categoryName))) {
                 return;
             }
 
@@ -213,21 +214,21 @@
         var hasMatches = result.matched.length > 0;
         var isClean = hasMatches && !result.missingCollections.length && !result.missingCategories.length && !result.skippedEmpty;
 
-        html += '<strong>' + result.matched.length + ' mapping(s) applied to the table.</strong>';
-        html += ' Click <strong>Save Mappings</strong> to store them.';
+        html += '<strong>' + result.matched.length + ' seost rakendati tabelile.</strong>';
+        html += ' Klõpsa <strong>Salvesta seosed</strong>, et need salvestada.';
 
         if (result.skippedEmpty) {
-            html += '<br><span style="color:#666;">Skipped ' + result.skippedEmpty + ' row(s) with no WooCommerce category (left as default).</span>';
+            html += '<br><span style="color:#666;">Jäeti vahele ' + result.skippedEmpty + ' rida ilma WooCommerce kategooriata (jääb vaikimisi).</span>';
         }
 
         if (result.missingCollections.length) {
-            html += '<br><span style="color:#996800;">Collections not found (' + result.missingCollections.length + '): ' +
+            html += '<br><span style="color:#996800;">Kollektsioone ei leitud (' + result.missingCollections.length + '): ' +
                 escapeHtml(result.missingCollections.slice(0, 20).join(', ')) +
                 (result.missingCollections.length > 20 ? '…' : '') + '</span>';
         }
 
         if (result.missingCategories.length) {
-            html += '<br><span style="color:#996800;">Categories not found (' + result.missingCategories.length + '): ' +
+            html += '<br><span style="color:#996800;">Kategooriaid ei leitud (' + result.missingCategories.length + '): ' +
                 escapeHtml(result.missingCategories.slice(0, 10).join(', ')) +
                 (result.missingCategories.length > 10 ? '…' : '') + '</span>';
         }
@@ -279,7 +280,7 @@
             }
 
             if (!categoryId) {
-                missingCategories.push(row.category + ' (for "' + row.shopify + '")');
+                missingCategories.push(row.category + ' (kollektsioon "' + row.shopify + '")');
                 return;
             }
 
@@ -301,33 +302,33 @@
         var $status = $('#shopify-csv-import-status');
 
         if (!fileInput || !fileInput.files || !fileInput.files.length) {
-            showStatus($status, 'Choose a CSV file first.', false);
+            showStatus($status, 'Vali esmalt CSV fail.', false);
             return;
         }
 
         if (!$('#shopify-mapping-table tbody tr').length) {
-            showStatus($status, 'Scan collections first to load the mapping table.', false);
+            showStatus($status, 'Skaneeri esmalt kollektsioonid, et laadida seoste tabel.', false);
             return;
         }
 
-        $btn.prop('disabled', true).text('Reading CSV...');
+        $btn.prop('disabled', true).text('Loen CSV-d...');
         $status.hide().empty();
 
         var reader = new FileReader();
         reader.onload = function (event) {
             var rows = parseCsvMappings(event.target.result);
             if (!rows.length) {
-                showStatus($status, 'No valid rows found. Use two columns: Shopify collection, WooCommerce category.', false);
-                $btn.prop('disabled', false).text('Apply CSV to Table');
+                showStatus($status, 'Kehtivaid ridu ei leitud. Kasuta kahte veergu: Shopify kollektsioon, WooCommerce kategooria.', false);
+                $btn.prop('disabled', false).text('Rakenda CSV tabelile');
                 return;
             }
 
             showCsvImportStatus(applyCsvMappings(rows));
-            $btn.prop('disabled', false).text('Apply CSV to Table');
+            $btn.prop('disabled', false).text('Rakenda CSV tabelile');
         };
         reader.onerror = function () {
-            showStatus($status, 'Could not read the CSV file.', false);
-            $btn.prop('disabled', false).text('Apply CSV to Table');
+            showStatus($status, 'CSV faili lugemine ebaõnnestus.', false);
+            $btn.prop('disabled', false).text('Rakenda CSV tabelile');
         };
         reader.readAsText(fileInput.files[0]);
     });
@@ -336,7 +337,7 @@
         var $btn = $(this);
         var $status = $('#shopify-new-site-status');
 
-        $btn.prop('disabled', true).text('Saving...');
+        $btn.prop('disabled', true).text('Salvestan...');
 
         $.post(shopifyImporter.ajaxurl, {
             action: 'shopify_importer_save_site',
@@ -351,11 +352,11 @@
                 window.location.href = response.data.redirect;
                 return;
             }
-            showStatus($status, response.data ? response.data.message : 'Save failed', response.success);
+            showStatus($status, response.data ? response.data.message : 'Salvestamine ebaõnnestus', response.success);
         }).fail(function () {
-            showStatus($status, 'Request failed', false);
+            showStatus($status, 'Päring ebaõnnestus', false);
         }).always(function () {
-            $btn.prop('disabled', false).text('Save & Configure');
+            $btn.prop('disabled', false).text('Salvesta ja seadista');
         });
     });
 
@@ -363,7 +364,7 @@
         var siteId = $(this).data('site-id');
         var siteName = $(this).data('site-name');
 
-        if (!confirm('Delete import site "' + siteName + '"? Saved mappings will be removed.')) {
+        if (!confirm('Kustuta impordipood "' + siteName + '"? Salvestatud seosed eemaldatakse.')) {
             return;
         }
 
@@ -384,13 +385,13 @@
         var $status = $('#shopify-delete-products-status');
 
         if (!confirm(
-            'Delete ALL ' + productCount + ' products imported from "' + siteName + '"?\n\n' +
-            'This cannot be undone. Products from other imports are not affected.'
+            'Kustuta KÕIK ' + productCount + ' toodet, mis on imporditud poest "' + siteName + '"?\n\n' +
+            'Seda ei saa tagasi võtta. Teiste importide tooted jäävad puutumata.'
         )) {
             return;
         }
 
-        $btn.prop('disabled', true).text('Deleting...');
+        $btn.prop('disabled', true).text('Kustutan...');
 
         $.post(shopifyImporter.ajaxurl, {
             action: 'shopify_importer_delete_products',
@@ -399,14 +400,14 @@
         }).done(function (response) {
             if (response.success) {
                 showStatus($status, response.data.message, true);
-                $btn.data('product-count', 0).prop('disabled', true).text('Delete All Products From This Import');
+                $btn.data('product-count', 0).prop('disabled', true).text('Kustuta kõik selle impordi tooted');
             } else {
                 showStatus($status, response.data.message, false);
-                $btn.prop('disabled', false).text('Delete All Products From This Import');
+                $btn.prop('disabled', false).text('Kustuta kõik selle impordi tooted');
             }
         }).fail(function () {
-            showStatus($status, 'Delete request failed', false);
-            $btn.prop('disabled', false).text('Delete All Products From This Import');
+            showStatus($status, 'Kustutamise päring ebaõnnestus', false);
+            $btn.prop('disabled', false).text('Kustuta kõik selle impordi tooted');
         });
     });
 
@@ -421,6 +422,8 @@
             url: $('#edit-site-url').val(),
             brand: $('#edit-site-brand').val(),
             price_multiplier: $('#edit-site-price-multiplier').val(),
+            price_sync_mode: $('#edit-site-price-sync-mode').val(),
+            auto_draft_stale: $('#edit-site-auto-draft-stale').is(':checked') ? 1 : 0,
             cron_enabled: $('#edit-site-cron').is(':checked') ? 1 : 0,
             cron_interval: $('#edit-site-cron-interval').val()
         }).done(function (response) {
@@ -432,7 +435,7 @@
         var $btn = $(this);
         var $status = $('#shopify-status');
 
-        $btn.prop('disabled', true).text('Scanning...');
+        $btn.prop('disabled', true).text('Skaneerin...');
 
         $.post(shopifyImporter.ajaxurl, {
             action: 'shopify_importer_scan_collections',
@@ -446,9 +449,9 @@
                 showStatus($status, response.data.message, false);
             }
         }).fail(function () {
-            showStatus($status, 'Scan failed', false);
+            showStatus($status, 'Skaneerimine ebaõnnestus', false);
         }).always(function () {
-            $btn.prop('disabled', false).text('Scan Collections');
+            $btn.prop('disabled', false).text('Skaneeri kollektsioonid');
         });
     });
 
@@ -457,7 +460,7 @@
         var $status = $('#shopify-status');
         var mappings = collectMappings();
 
-        $btn.prop('disabled', true).text('Saving...');
+        $btn.prop('disabled', true).text('Salvestan...');
 
         $.post(shopifyImporter.ajaxurl, {
             action: 'shopify_importer_save_mappings',
@@ -467,7 +470,7 @@
         }).done(function (response) {
             showStatus($status, response.data.message, response.success);
         }).always(function () {
-            $btn.prop('disabled', false).text('Save Mappings');
+            $btn.prop('disabled', false).text('Salvesta seosed');
         });
     });
 
@@ -478,14 +481,17 @@
         var sessionKey = '';
 
         if (resume && resume.session_key) {
-            if (!confirm('Resume the previous import from product ' + ((resume.batch || 0) + 1) + ' on page ' + (resume.page || 1) + '? Cancel to start fresh.')) {
-                clearImportProgress();
-            } else {
+            if (confirm('Jätkan eelmist importi tootelt ' + ((resume.batch || 0) + 1) + ' lehel ' + (resume.page || 1) + '?')) {
                 startPage = resume.page || 1;
                 startBatch = resume.batch || 0;
                 sessionKey = resume.session_key;
+            } else {
+                clearImportProgress();
+                if (!confirm('Alustan Shopify toodete importi otsast?')) {
+                    return;
+                }
             }
-        } else if (!confirm('Start importing new products from Shopify?')) {
+        } else if (!confirm('Alustan Shopify toodete importi?')) {
             return;
         }
 
@@ -493,10 +499,15 @@
         $('#shopify-import-progress').show();
         $('#shopify-status').hide();
         $('#shopify-import-log').text('');
-        $('#stat-imported, #stat-skipped, #stat-failed').text('0');
+        $('#stat-imported, #stat-updated, #stat-skipped, #stat-failed').text('0');
         $('#shopify-import-progress-bar').css('width', '0%').text('0%');
-        $('#shopify-import-progress-text').text(resume && sessionKey ? 'Resuming import...' : 'Starting import...');
-        $('#shopify-start-import').prop('disabled', true);
+        $('#shopify-import-progress-text').text(sessionKey ? 'Jätkan importi...' : 'Ühendun Shopify\'ga — esimene toode võtab hetke...');
+        $('#shopify-start-import').prop('disabled', true).text('Import käib...');
+
+        var $progress = $('#shopify-import-progress');
+        if ($progress.length) {
+            $progress[0].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
 
         runImportBatch(startPage, startBatch, sessionKey);
     });
@@ -517,7 +528,7 @@
         }).done(function (response) {
             if (!response.success) {
                 importRunning = false;
-                $('#shopify-start-import').prop('disabled', false);
+                $('#shopify-start-import').prop('disabled', false).text('Alusta importi');
                 showStatus($('#shopify-status'), response.data.message, false);
                 return;
             }
@@ -537,10 +548,11 @@
             $('#shopify-import-progress-bar').css('width', progress + '%').text(progress + '%');
             $('#shopify-import-progress-text').text(
                 data.has_more
-                    ? 'Processed ' + data.processed + ' products (page ' + data.page + ', batch ' + (data.batch + 1) + ')...'
-                    : 'Import complete'
+                    ? 'Töödeldud ' + data.processed + ' toodet (leht ' + data.page + ', partii ' + (data.batch + 1) + ')...'
+                    : 'Import lõpetatud'
             );
             $('#stat-imported').text(data.imported);
+            $('#stat-updated').text(data.updated || 0);
             $('#stat-skipped').text(data.skipped);
             $('#stat-failed').text(data.failed);
 
@@ -549,28 +561,37 @@
             } else {
                 importRunning = false;
                 clearImportProgress();
-                $('#shopify-start-import').prop('disabled', false);
-                var msg = 'Import complete. Imported: ' + data.imported + ', Skipped: ' + data.skipped + ', Failed: ' + data.failed;
+                $('#shopify-import-progress-bar').css('width', '100%').text('100%');
+                $('#shopify-import-progress-text').html(
+                    '<span style="color:#00a32a;font-size:18px;">✓ Import on lõpetatud</span>'
+                );
+                $('#shopify-start-import').prop('disabled', false).text('Alusta importi');
+                var msg = '<strong style="font-size:16px;">Import on lõpetatud.</strong><br>' +
+                    'Imporditud: <strong>' + data.imported + '</strong>, ' +
+                    'uuendatud: <strong>' + (data.updated || 0) + '</strong>, ' +
+                    'vahele jäetud: <strong>' + data.skipped + '</strong>, ' +
+                    'ebaõnnestunud: <strong>' + data.failed + '</strong>.';
                 if (data.log_url) {
-                    msg += '<br><a href="' + data.log_url + '" target="_blank">Download full log</a>';
+                    msg += '<br><a href="' + data.log_url + '" target="_blank">Laadi täielik logi alla</a>';
                 }
                 showStatus($('#shopify-status'), msg, true);
+                $('#shopify-status')[0].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             }
         }).fail(function (xhr, textStatus) {
             importRunning = false;
             $('#shopify-start-import').prop('disabled', false);
 
-            var message = 'Import request failed';
+            var message = 'Impordi päring ebaõnnestus';
             if (textStatus === 'timeout') {
-                message = 'Request timed out. Click Start Import again to resume from where it stopped.';
+                message = 'Päring aegus. Klõpsa uuesti Alusta importi, et sealt jätkata.';
             } else if (xhr.responseJSON && xhr.responseJSON.data && xhr.responseJSON.data.message) {
                 message = xhr.responseJSON.data.message;
             } else if (xhr.status === 500) {
-                message = 'Server error (often image processing or duplicate SKU). Check debug.log and the import log. Click Start Import again to resume.';
+                message = 'Serveri viga (sageli pildi töötlus või duplikaat SKU). Vaata debug.log ja impordi logi. Klõpsa Alusta importi, et jätkata.';
             }
 
             if (loadImportProgress()) {
-                message += ' Your progress was saved — Start Import will offer to resume.';
+                message += ' Edenemine on salvestatud — Alusta importi pakub jätkamist.';
             }
 
             showStatus($('#shopify-status'), message, false);
@@ -590,16 +611,23 @@
     }
 
     $('#shopify-update-prices').on('click', function () {
-        if (!confirm('Update prices for all imported products from this Shopify site?')) {
+        if (!confirm(
+            'Uuendan Shopify tavahinnad?\n\n' +
+            'Kampaania soodushindu ei kasutata — allahinnatud variandid kasutavad tavahinda (compare-at).'
+        )) {
             return;
         }
 
-        $('#shopify-price-update-progress').show();
         $('#shopify-price-update-log').text('');
         $('#price-stat-updated, #price-stat-unchanged, #price-stat-skipped').text('0');
         $('#shopify-price-update-progress-bar').css('width', '0%').text('0%');
-        $('#shopify-price-update-progress-text').text('Starting price update...');
-        $('#shopify-update-prices').prop('disabled', true);
+        $('#shopify-price-update-progress-text').text('Käivitan hinnauuendust...');
+        $('#shopify-update-prices').prop('disabled', true).text('Uuendan...');
+        var $priceProgress = $('#shopify-price-update-progress');
+        $priceProgress.show();
+        if ($priceProgress.length) {
+            $priceProgress[0].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
 
         runPriceUpdateBatch(1, 0, '');
     });
@@ -619,7 +647,7 @@
             }
         }).done(function (response) {
             if (!response.success) {
-                $('#shopify-update-prices').prop('disabled', false);
+                $('#shopify-update-prices').prop('disabled', false).text('Uuenda hindu');
                 showStatus($('#shopify-status'), response.data.message, false);
                 return;
             }
@@ -635,8 +663,8 @@
             $('#shopify-price-update-progress-bar').css('width', progress + '%').text(progress + '%');
             $('#shopify-price-update-progress-text').text(
                 data.has_more
-                    ? 'Processed ' + data.processed + ' products (page ' + data.page + ', batch ' + (data.batch + 1) + ')...'
-                    : 'Price update complete'
+                    ? 'Töödeldud ' + data.processed + ' toodet (leht ' + data.page + ', partii ' + (data.batch + 1) + ')...'
+                    : 'Hinnauuendus lõpetatud'
             );
             $('#price-stat-updated').text(data.updated);
             $('#price-stat-unchanged').text(data.unchanged);
@@ -645,19 +673,19 @@
             if (data.has_more) {
                 runPriceUpdateBatch(data.next_page, data.next_batch, data.session_key);
             } else {
-                $('#shopify-update-prices').prop('disabled', false);
-                var msg = 'Price update complete. Updated: ' + data.updated + ', Unchanged: ' + data.unchanged + ', Skipped: ' + data.skipped;
+                $('#shopify-update-prices').prop('disabled', false).text('Uuenda hindu');
+                var msg = 'Hinnauuendus lõpetatud. Uuendatud: ' + data.updated + ', muutumata: ' + data.unchanged + ', vahele jäetud: ' + data.skipped;
                 if (data.log_url) {
-                    msg += '<br><a href="' + data.log_url + '" target="_blank">Download full log</a>';
+                    msg += '<br><a href="' + data.log_url + '" target="_blank">Laadi täielik logi alla</a>';
                 }
                 showStatus($('#shopify-status'), msg, true);
             }
         }).fail(function (xhr, textStatus) {
             $('#shopify-update-prices').prop('disabled', false);
 
-            var message = 'Price update request failed';
+            var message = 'Hinnauuenduse päring ebaõnnestus';
             if (textStatus === 'timeout') {
-                message = 'Request timed out. Click Update Prices again to continue.';
+                message = 'Päring aegus. Klõpsa Uuenda hindu uuesti, et jätkata.';
             } else if (xhr.responseJSON && xhr.responseJSON.data && xhr.responseJSON.data.message) {
                 message = xhr.responseJSON.data.message;
             }
@@ -679,7 +707,7 @@
     }
 
     $('#shopify-update-categories').on('click', function () {
-        if (!confirm('Re-apply category mappings to all products matched by SKU from this Shopify site?')) {
+        if (!confirm('Rakendan kategooria seosed uuesti kõigile toodetele SKU järgi sellest Shopify poest?')) {
             return;
         }
 
@@ -687,7 +715,7 @@
         $('#shopify-category-update-log').text('');
         $('#category-stat-updated, #category-stat-unchanged, #category-stat-skipped').text('0');
         $('#shopify-category-update-progress-bar').css('width', '0%').text('0%');
-        $('#shopify-category-update-progress-text').text('Starting category update...');
+        $('#shopify-category-update-progress-text').text('Käivitan kategooriauuendust...');
         $('#shopify-update-categories').prop('disabled', true);
 
         runCategoryUpdateBatch(1, 0, '');
@@ -724,8 +752,8 @@
             $('#shopify-category-update-progress-bar').css('width', progress + '%').text(progress + '%');
             $('#shopify-category-update-progress-text').text(
                 data.has_more
-                    ? 'Processed ' + data.processed + ' products (page ' + data.page + ', batch ' + (data.batch + 1) + ')...'
-                    : 'Category update complete'
+                    ? 'Töödeldud ' + data.processed + ' toodet (leht ' + data.page + ', partii ' + (data.batch + 1) + ')...'
+                    : 'Kategooriauuendus lõpetatud'
             );
             $('#category-stat-updated').text(data.updated);
             $('#category-stat-unchanged').text(data.unchanged);
@@ -735,18 +763,18 @@
                 runCategoryUpdateBatch(data.next_page, data.next_batch, data.session_key);
             } else {
                 $('#shopify-update-categories').prop('disabled', false);
-                var msg = 'Category update complete. Updated: ' + data.updated + ', Unchanged: ' + data.unchanged + ', Skipped: ' + data.skipped;
+                var msg = 'Kategooriauuendus lõpetatud. Uuendatud: ' + data.updated + ', muutumata: ' + data.unchanged + ', vahele jäetud: ' + data.skipped;
                 if (data.log_url) {
-                    msg += '<br><a href="' + data.log_url + '" target="_blank">Download full log</a>';
+                    msg += '<br><a href="' + data.log_url + '" target="_blank">Laadi täielik logi alla</a>';
                 }
                 showStatus($('#shopify-status'), msg, true);
             }
         }).fail(function (xhr, textStatus) {
             $('#shopify-update-categories').prop('disabled', false);
 
-            var message = 'Category update request failed';
+            var message = 'Kategooriauuenduse päring ebaõnnestus';
             if (textStatus === 'timeout') {
-                message = 'Request timed out. Click Update Categories again to continue.';
+                message = 'Päring aegus. Klõpsa Uuenda kategooriaid uuesti, et jätkata.';
             } else if (xhr.responseJSON && xhr.responseJSON.data && xhr.responseJSON.data.message) {
                 message = xhr.responseJSON.data.message;
             }

@@ -313,4 +313,29 @@ class Shopify_Importer_WPML_Helper {
 
         return $changed;
     }
+
+    public static function sync_product_brand($product_id, $brand_name, $logger = null, $force = false) {
+        if (!self::is_active() || empty($brand_name)) {
+            return false;
+        }
+
+        if (!class_exists('Shopify_Importer_Brand_Handler')) {
+            return false;
+        }
+
+        $handler = new Shopify_Importer_Brand_Handler();
+        $changed = false;
+
+        foreach (self::get_translation_product_ids($product_id) as $translation_id) {
+            if ((int) $translation_id === (int) $product_id) {
+                continue;
+            }
+
+            if ($handler->ensure_product_brand($translation_id, $brand_name, $logger, $force)) {
+                $changed = true;
+            }
+        }
+
+        return $changed;
+    }
 }

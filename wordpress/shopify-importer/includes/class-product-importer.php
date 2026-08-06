@@ -65,6 +65,7 @@ class Shopify_Importer_Product_Importer {
                 'pages' => array(),
                 'stats' => array(
                     'imported' => 0,
+                    'updated' => 0,
                     'skipped' => 0,
                     'failed' => 0,
                     'processed' => 0,
@@ -80,6 +81,7 @@ class Shopify_Importer_Product_Importer {
 
         $stats = isset($session['stats']) ? $session['stats'] : array(
             'imported' => 0,
+            'updated' => 0,
             'skipped' => 0,
             'failed' => 0,
             'processed' => 0,
@@ -114,6 +116,7 @@ class Shopify_Importer_Product_Importer {
             'page' => $page,
             'batch' => $batch,
             'imported' => $stats['imported'],
+            'updated' => isset($stats['updated']) ? $stats['updated'] : 0,
             'skipped' => $stats['skipped'],
             'failed' => $stats['failed'],
             'processed' => $stats['processed'],
@@ -125,8 +128,8 @@ class Shopify_Importer_Product_Importer {
         );
 
         if (!$has_more) {
-            $drafted = Shopify_Importer_Product_Sync::draft_stale_products($this->site_id);
-            $this->log_line('Import complete. Imported: ' . $stats['imported'] . ', Skipped: ' . $stats['skipped'] . ', Failed: ' . $stats['failed'] . ', Drafted stale: ' . $drafted);
+            $drafted = Shopify_Importer_Product_Sync::draft_stale_products($this->site_id, $this->site, $stats);
+            $this->log_line('Import complete. Imported: ' . $stats['imported'] . ', Updated: ' . (isset($stats['updated']) ? $stats['updated'] : 0) . ', Skipped: ' . $stats['skipped'] . ', Failed: ' . $stats['failed'] . ', Drafted stale: ' . $drafted);
 
             Shopify_Importer_Site_Manager::update_site($this->site_id, array(
                 'last_import_at' => current_time('mysql'),
@@ -223,7 +226,11 @@ class Shopify_Importer_Product_Importer {
     private function process_product($shopify_product, &$stats) {
         $collection_ids = $this->get_product_collection_ids($shopify_product['id']);
         $product_data = Shopify_Importer_JSON_Mapper::map_product($shopify_product, $collection_ids);
-        $product_data = Shopify_Importer_Price_Helper::apply_to_product_data($product_data, $this->price_multiplier);
+        $product_data = Shopify_Importer_Price_Helper::apply_to_product_data(
+            $product_data,
+            $this->price_multiplier,
+            $this->site
+        );
         $sku_label = $this->get_product_sku_label($shopify_product, $product_data);
 
         if (!$product_data) {
@@ -237,8 +244,10 @@ class Shopify_Importer_Product_Importer {
         if ($this->any_sku_exists($product_data)) {
             $existing_id = $this->find_existing_product_id($product_data);
             if ($existing_id) {
-                $this->tag_existing_product($existing_id, $product_data);
-                $this->log_line('Tagged existing ' . $sku_label . ' - ' . $product_data['name'], 'INFO');
+                $this->upsert_existing_product($existing_id, $product_data);
+                $stats['updated']++;
+                $this->log_line('Updated existing ' . $sku_label . ' - ' . $product_data['name'], 'OK');
+                return;
             }
 
             $stats['skipped']++;
@@ -249,8 +258,10 @@ class Shopify_Importer_Product_Importer {
         if (!$product_data['is_simple'] && !empty($product_data['sku']) && $this->parent_sku_exists($product_data['sku'])) {
             $existing_id = $this->get_product_id_by_sku($product_data['sku']);
             if ($existing_id) {
-                $this->tag_existing_product($existing_id, $product_data);
-                $this->log_line('Tagged existing ' . $sku_label . ' - ' . $product_data['name'], 'INFO');
+                $this->upsert_existing_product($existing_id, $product_data);
+                $stats['updated']++;
+                $this->log_line('Updated existing ' . $sku_label . ' - ' . $product_data['name'], 'OK');
+                return;
             }
 
             $stats['skipped']++;
@@ -474,10 +485,20 @@ class Shopify_Importer_Product_Importer {
     }
 
     private function set_categories($product_id, $product_data) {
+        $this->sync_categories($product_id, $product_data);
+    }
+
+    private function sync_categories($product_id, $product_data) {
         $result = $this->resolve_category_ids($product_data['collection_ids']);
         $category_ids = $result['category_ids'];
 
-        if (!empty($category_ids)) {
+        if (empty($category_ids)) {
+            return;
+        }
+
+        if (class_exists('Shopify_Importer_WPML_Helper')) {
+            Shopify_Importer_WPML_Helper::sync_product_categories($product_id, $category_ids);
+        } else {
             wp_set_object_terms($product_id, $category_ids, 'product_cat');
         }
 
@@ -523,7 +544,23 @@ class Shopify_Importer_Product_Importer {
             return false;
         }
 
-        return $this->brand_handler->ensure_product_brand(
+        $this->brand_handler->ensure_product_brand(
+            $product_id,
+            $brand_name,
+            $this->logger,
+            $force
+        );
+        $this->sync_brand_translations($product_id, $brand_name, $force);
+
+        return true;
+    }
+
+    private function sync_brand_translations($product_id, $brand_name, $force = false) {
+        if (!class_exists('Shopify_Importer_WPML_Helper') || !Shopify_Importer_WPML_Helper::is_active()) {
+            return false;
+        }
+
+        return Shopify_Importer_WPML_Helper::sync_product_brand(
             $product_id,
             $brand_name,
             $this->logger,
@@ -531,13 +568,14 @@ class Shopify_Importer_Product_Importer {
         );
     }
 
-    private function tag_existing_product($product_id, $product_data) {
+    private function upsert_existing_product($product_id, $product_data) {
         $product_id = $this->normalize_product_id_for_meta($product_id);
         if (!$product_id) {
             return;
         }
 
-        $this->apply_product_brand($product_id, $product_data);
+        $this->apply_product_brand($product_id, $product_data, true);
+        $this->sync_categories($product_id, $product_data);
 
         update_post_meta($product_id, '_import_source', 'shopify');
         update_post_meta($product_id, '_shopify_product_id', $product_data['id']);
@@ -548,6 +586,10 @@ class Shopify_Importer_Product_Importer {
         }
 
         Shopify_Importer_Product_Sync::mark_product_seen($product_id);
+    }
+
+    private function tag_existing_product($product_id, $product_data) {
+        $this->upsert_existing_product($product_id, $product_data);
     }
 
     private function normalize_product_id_for_meta($product_id) {
@@ -589,8 +631,11 @@ class Shopify_Importer_Product_Importer {
         $product->set_description($product_data['description']);
         $product->set_status('publish');
         $product->set_sku($product_data['sku']);
-        $product->set_regular_price($product_data['price']);
-        $product->set_price($product_data['price']);
+        if (Shopify_Importer_Price_Helper::should_sync_prices($this->site) && $product_data['price'] !== '') {
+            $product->set_regular_price($product_data['price']);
+            $product->set_price($product_data['price']);
+            $product->set_sale_price('');
+        }
         $product->set_stock_status('instock');
         $product->set_manage_stock(false);
 
@@ -602,7 +647,9 @@ class Shopify_Importer_Product_Importer {
         $this->set_categories($product_id, $product_data);
         $this->apply_product_brand($product_id, $product_data, true);
         $this->image_downloader->set_product_images($product_id, $product_data['images']);
-        update_post_meta($product_id, '_recommended_price', $product_data['price']);
+        if (Shopify_Importer_Price_Helper::should_sync_prices($this->site) && $product_data['price'] !== '') {
+            update_post_meta($product_id, '_recommended_price', $product_data['price']);
+        }
         $this->set_import_meta($product_id, $product_data);
 
         return $product_id;

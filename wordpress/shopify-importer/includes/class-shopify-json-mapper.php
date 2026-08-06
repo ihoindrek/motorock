@@ -42,7 +42,7 @@ class Shopify_Importer_JSON_Mapper {
 
             $mapped_variations[] = array(
                 'sku' => $variant['sku'],
-                'regular_price' => isset($variant['price']) ? $variant['price'] : '',
+                'regular_price' => Shopify_Importer_Price_Helper::resolve_variant_base_price($variant),
                 'stock_status' => !empty($variant['available']) ? 'instock' : 'outofstock',
                 'attributes' => $attributes,
             );

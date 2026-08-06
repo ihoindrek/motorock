@@ -13,8 +13,8 @@ class Shopify_Importer_Admin_Menu {
 
     public function add_admin_menu() {
         add_menu_page(
-            'Shopify Importer',
-            'Shopify Importer',
+            'Shopify import',
+            'Shopify import',
             'manage_woocommerce',
             'shopify-importer',
             array($this, 'render_sites_page'),
@@ -24,8 +24,8 @@ class Shopify_Importer_Admin_Menu {
 
         add_submenu_page(
             'shopify-importer',
-            'Import Sites',
-            'Import Sites',
+            'Impordipood',
+            'Impordipood',
             'manage_woocommerce',
             'shopify-importer',
             array($this, 'render_sites_page')
@@ -33,8 +33,8 @@ class Shopify_Importer_Admin_Menu {
 
         add_submenu_page(
             'shopify-importer',
-            'Edit Site',
-            'Edit Site',
+            'Poe seaded',
+            'Poe seaded',
             'manage_woocommerce',
             'shopify-importer-edit',
             array($this, 'render_edit_page')

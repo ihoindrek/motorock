@@ -26,6 +26,8 @@ class Shopify_Importer_Site_Manager {
             'url' => '',
             'brand' => '',
             'price_multiplier' => 1,
+            'price_sync_mode' => 'exclude_sales',
+            'auto_draft_stale' => false,
             'category_mappings' => array(),
             'collections' => array(),
             'product_collection_map' => array(),
@@ -87,7 +89,7 @@ class Shopify_Importer_Site_Manager {
     public static function get_default_category_label() {
         $term_id = self::get_default_category_id();
         if (!$term_id) {
-            return 'none configured';
+            return 'pole seadistatud';
         }
 
         $term = get_term($term_id, 'product_cat');
@@ -183,7 +185,7 @@ class Shopify_Importer_Site_Manager {
     public static function render_category_dropdown($collection_id, $selected_value, $categories) {
         $tree = self::build_category_tree($categories);
         $html = '<select class="shopify-category-mapping-select" name="category_mappings[' . esc_attr($collection_id) . ']">';
-        $html .= '<option value="">— Default (' . esc_html(self::get_default_category_label()) . ') —</option>';
+        $html .= '<option value="">— Vaikimisi (' . esc_html(self::get_default_category_label()) . ') —</option>';
         $html .= self::generate_options($tree, 0, $selected_value);
         $html .= '</select>';
         return $html;

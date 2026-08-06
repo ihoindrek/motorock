@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Shopify Importer
  * Description: Import products from Shopify storefronts (products.json / collections.json)
- * Version: 1.0.8
+ * Version: 1.1.3
  * Author: Bearz
  * Requires at least: 5.8
  * Requires PHP: 7.4
@@ -13,7 +13,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('SHOPIFY_IMPORTER_VERSION', '1.0.8');
+define('SHOPIFY_IMPORTER_VERSION', '1.1.3');
 define('SHOPIFY_IMPORTER_PLUGIN_FILE', __FILE__);
 define('SHOPIFY_IMPORTER_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('SHOPIFY_IMPORTER_PLUGIN_URL', plugin_dir_url(__FILE__));
@@ -41,7 +41,7 @@ class Shopify_Importer {
     }
 
     public function woocommerce_missing_notice() {
-        echo '<div class="notice notice-error"><p><strong>Shopify Importer</strong> requires WooCommerce.</p></div>';
+        echo '<div class="notice notice-error"><p><strong>Shopify import</strong> vajab WooCommerce\'i.</p></div>';
     }
 
     private function load_dependencies() {
@@ -106,14 +106,14 @@ class Shopify_Importer {
 
         wp_enqueue_style(
             'shopify-importer-admin',
-            SHOPIFY_IMPORTER_PLUGIN_URL . 'assets/css/admin.css',
+            SHOPIFY_IMPORTER_PLUGIN_URL . 'assets/css/importer-admin.css',
             array(),
             SHOPIFY_IMPORTER_VERSION
         );
 
         wp_enqueue_script(
             'shopify-importer-admin',
-            SHOPIFY_IMPORTER_PLUGIN_URL . 'assets/js/admin.js',
+            SHOPIFY_IMPORTER_PLUGIN_URL . 'assets/js/importer-admin.js',
             array('jquery'),
             SHOPIFY_IMPORTER_VERSION,
             true
@@ -129,7 +129,7 @@ class Shopify_Importer {
         check_ajax_referer('shopify_importer_nonce', 'nonce');
 
         if (!current_user_can('manage_woocommerce')) {
-            wp_send_json_error(array('message' => 'Insufficient permissions'));
+            wp_send_json_error(array('message' => 'Puuduvad õigused.'));
         }
     }
 
@@ -141,21 +141,23 @@ class Shopify_Importer {
         $url = isset($_POST['url']) ? esc_url_raw(wp_unslash($_POST['url'])) : '';
         $brand = isset($_POST['brand']) ? sanitize_text_field(wp_unslash($_POST['brand'])) : '';
         $price_multiplier = isset($_POST['price_multiplier']) ? floatval(wp_unslash($_POST['price_multiplier'])) : 1;
+        $price_sync_mode = isset($_POST['price_sync_mode']) ? sanitize_key(wp_unslash($_POST['price_sync_mode'])) : Shopify_Importer_Price_Helper::SYNC_EXCLUDE_SALES;
+        $auto_draft_stale = !empty($_POST['auto_draft_stale']);
         $cron_enabled = !empty($_POST['cron_enabled']);
         $cron_interval = isset($_POST['cron_interval']) ? sanitize_text_field($_POST['cron_interval']) : 'daily';
 
         if (empty($name) || empty($url) || empty($brand)) {
-            wp_send_json_error(array('message' => 'Name, URL and brand are required.'));
+            wp_send_json_error(array('message' => 'Nimi, URL ja bränd on kohustuslikud.'));
         }
 
         $normalized = Shopify_Importer_API::normalize_url($url);
         if (!$normalized) {
-            wp_send_json_error(array('message' => 'Invalid Shopify store URL.'));
+            wp_send_json_error(array('message' => 'Vigane Shopify poe URL.'));
         }
 
         $api = new Shopify_Importer_API($normalized);
         if (!$api->test_connection()) {
-            wp_send_json_error(array('message' => 'Could not connect to Shopify store. Check the URL.'));
+            wp_send_json_error(array('message' => 'Shopify poega ei saanud ühendust. Kontrolli URL-i.'));
         }
 
         if (empty($site_id)) {
@@ -167,6 +169,8 @@ class Shopify_Importer {
             'url' => $normalized,
             'brand' => $brand,
             'price_multiplier' => $price_multiplier > 0 ? $price_multiplier : 1,
+            'price_sync_mode' => $price_sync_mode,
+            'auto_draft_stale' => $auto_draft_stale,
             'cron_enabled' => $cron_enabled,
             'cron_interval' => $cron_interval,
         ));
@@ -174,7 +178,7 @@ class Shopify_Importer {
         Shopify_Importer_Cron::reschedule();
 
         wp_send_json_success(array(
-            'message' => 'Site saved.',
+            'message' => 'Pood salvestatud.',
             'site' => $site,
             'redirect' => admin_url('admin.php?page=shopify-importer-edit&site_id=' . $site_id),
         ));
@@ -185,13 +189,13 @@ class Shopify_Importer {
 
         $site_id = isset($_POST['site_id']) ? sanitize_key($_POST['site_id']) : '';
         if (empty($site_id)) {
-            wp_send_json_error(array('message' => 'Site ID required.'));
+            wp_send_json_error(array('message' => 'Poe ID on kohustuslik.'));
         }
 
         Shopify_Importer_Site_Manager::delete_site($site_id);
         Shopify_Importer_Cron::reschedule();
 
-        wp_send_json_success(array('message' => 'Site deleted.'));
+        wp_send_json_success(array('message' => 'Pood kustutatud.'));
     }
 
     public function ajax_delete_products() {
@@ -199,12 +203,12 @@ class Shopify_Importer {
 
         $site_id = isset($_POST['site_id']) ? sanitize_key($_POST['site_id']) : '';
         if (empty($site_id)) {
-            wp_send_json_error(array('message' => 'Site ID required.'));
+            wp_send_json_error(array('message' => 'Poe ID on kohustuslik.'));
         }
 
         $site = Shopify_Importer_Site_Manager::get_site($site_id);
         if (!$site) {
-            wp_send_json_error(array('message' => 'Site not found.'));
+            wp_send_json_error(array('message' => 'Poodi ei leitud.'));
         }
 
         $result = Shopify_Importer_Product_Cleaner::delete_site_products($site_id);
@@ -223,14 +227,14 @@ class Shopify_Importer {
         $site = Shopify_Importer_Site_Manager::get_site($site_id);
 
         if (!$site) {
-            wp_send_json_error(array('message' => 'Site not found.'));
+            wp_send_json_error(array('message' => 'Poodi ei leitud.'));
         }
 
         $api = new Shopify_Importer_API($site['url']);
         $collections = $api->fetch_all_collections();
 
         if ($collections === false) {
-            wp_send_json_error(array('message' => 'Failed to fetch collections.'));
+            wp_send_json_error(array('message' => 'Kollektsioonide laadimine ebaõnnestus.'));
         }
 
         $product_map = $api->build_product_collection_map($collections);
@@ -259,7 +263,7 @@ class Shopify_Importer {
         }
 
         wp_send_json_success(array(
-            'message' => 'Found ' . count($collections) . ' collections.',
+            'message' => 'Leitud ' . count($collections) . ' kollektsiooni.',
             'collections' => $rows,
         ));
     }
@@ -271,14 +275,14 @@ class Shopify_Importer {
         $mappings = isset($_POST['mappings']) ? json_decode(stripslashes($_POST['mappings']), true) : array();
 
         if (empty($site_id)) {
-            wp_send_json_error(array('message' => 'Site ID required.'));
+            wp_send_json_error(array('message' => 'Poe ID on kohustuslik.'));
         }
 
         Shopify_Importer_Site_Manager::update_site($site_id, array(
             'category_mappings' => is_array($mappings) ? $mappings : array(),
         ));
 
-        wp_send_json_success(array('message' => 'Category mappings saved.'));
+        wp_send_json_success(array('message' => 'Kategooria seosed salvestatud.'));
     }
 
     public function ajax_run_import() {
@@ -291,7 +295,7 @@ class Shopify_Importer {
 
         $site = Shopify_Importer_Site_Manager::get_site($site_id);
         if (!$site) {
-            wp_send_json_error(array('message' => 'Site not found.'));
+            wp_send_json_error(array('message' => 'Poodi ei leitud.'));
         }
 
         try {
@@ -313,11 +317,14 @@ class Shopify_Importer {
 
         $site = Shopify_Importer_Site_Manager::get_site($site_id);
         if (!$site) {
-            wp_send_json_error(array('message' => 'Site not found.'));
+            wp_send_json_error(array('message' => 'Poodi ei leitud.'));
         }
 
         try {
             $updater = new Shopify_Importer_Price_Updater($site);
+            if (!Shopify_Importer_Price_Helper::should_sync_prices($site)) {
+                wp_send_json_error(array('message' => 'Hindade sync on selle poe jaoks välja lülitatud.'));
+            }
             $result = $updater->update_batch($page, $batch, $session_key);
             wp_send_json_success($result);
         } catch (Throwable $e) {
@@ -335,7 +342,7 @@ class Shopify_Importer {
 
         $site = Shopify_Importer_Site_Manager::get_site($site_id);
         if (!$site) {
-            wp_send_json_error(array('message' => 'Site not found.'));
+            wp_send_json_error(array('message' => 'Poodi ei leitud.'));
         }
 
         try {

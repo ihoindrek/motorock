@@ -16,7 +16,7 @@ class Shopify_Importer_Product_Cleaner {
         if (empty($product_ids)) {
             return array(
                 'success' => false,
-                'message' => 'No products found for this import site.',
+                'message' => 'Selle impordipoe tooteid ei leitud.',
                 'deleted' => 0,
                 'images' => 0,
             );
@@ -64,7 +64,7 @@ class Shopify_Importer_Product_Cleaner {
 
         return array(
             'success' => true,
-            'message' => "Deleted {$deleted_count} products and {$image_count} images.",
+            'message' => "Kustutatud {$deleted_count} toodet ja {$image_count} pilti.",
             'deleted' => $deleted_count,
             'images' => $image_count,
         );

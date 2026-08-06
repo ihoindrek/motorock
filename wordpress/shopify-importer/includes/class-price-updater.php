@@ -51,7 +51,10 @@ class Shopify_Importer_Price_Updater {
             $this->logger = $logger;
             $this->log_line(
                 'Starting price update for site: ' . $this->site['name'] .
-                ' (multiplier: ' . $this->price_multiplier . ')'
+                ' (multiplier: ' . $this->price_multiplier .
+                ', mode: ' . Shopify_Importer_Price_Helper::get_price_sync_mode_label(
+                    Shopify_Importer_Price_Helper::get_price_sync_mode($this->site)
+                ) . ')'
             );
         } else {
             $log_file = isset($session['log_file']) ? $session['log_file'] : '';
@@ -167,21 +170,34 @@ class Shopify_Importer_Price_Updater {
             return $sku_prices;
         }
 
+        if (!Shopify_Importer_Price_Helper::should_sync_prices($this->site)) {
+            return $sku_prices;
+        }
+
         foreach ($shopify_product['variants'] as $variant) {
-            if (empty($variant['sku']) || !isset($variant['price'])) {
+            if (empty($variant['sku'])) {
                 continue;
             }
 
-            $sku_prices[$variant['sku']] = Shopify_Importer_Price_Helper::convert(
-                $variant['price'],
-                $this->price_multiplier
+            $details = Shopify_Importer_Price_Helper::resolve_variant_price_details($variant, $this->site);
+            if ($details['price'] === '') {
+                continue;
+            }
+
+            $sku_prices[$variant['sku']] = array(
+                'price' => $details['price'],
+                'on_sale' => $details['on_sale'],
+                'used_compare_at' => $details['used_compare_at'],
             );
         }
 
         return $sku_prices;
     }
 
-    private function update_price_for_sku($sku, $price, &$parent_ids) {
+    private function update_price_for_sku($sku, $price_data, &$parent_ids) {
+        $price = is_array($price_data) ? $price_data['price'] : $price_data;
+        $used_compare_at = is_array($price_data) && !empty($price_data['used_compare_at']);
+
         $product_id = $this->get_product_id_by_sku($sku);
         if (!$product_id) {
             return 'skipped';
@@ -198,14 +214,19 @@ class Shopify_Importer_Price_Updater {
         if ($old_price !== $new_price) {
             $product->set_regular_price($new_price);
             $product->set_price($new_price);
+            $product->set_sale_price('');
             $product->save();
             update_post_meta($product_id, '_recommended_price', $new_price);
-            $this->log_line('Updated ' . $sku . ': ' . $old_price . ' → ' . $new_price, 'OK');
+            $message = 'Uuendatud ' . $sku . ': ' . $old_price . ' → ' . $new_price;
+            if ($used_compare_at) {
+                $message .= ' (kasutati tavahinda; soodushind ignoreeriti)';
+            }
+            $this->log_line($message, 'OK');
         }
 
         $synced = Shopify_Importer_WPML_Helper::sync_product_price($product_id, $new_price);
         if ($old_price === $new_price && !empty($synced)) {
-            $this->log_line('Synced translations for ' . $sku . ' → ' . $new_price, 'OK');
+            $this->log_line('Tõlgete hinnad sünkroniseeritud: ' . $sku . ' → ' . $new_price, 'OK');
         }
 
         if ($old_price === $new_price && empty($synced)) {
