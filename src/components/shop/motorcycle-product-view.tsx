@@ -229,7 +229,7 @@ function RichMotorcycleProductView({
 
               {heroLine ? (
                 <p
-                  className={`mt-5 max-w-md text-lg font-semibold leading-snug sm:text-xl lg:text-2xl ${
+                  className={`mt-5 max-w-md text-base font-semibold leading-snug sm:text-lg lg:text-xl ${
                     content.tagline?.trim()
                       ? "text-accent"
                       : "text-ink/70"

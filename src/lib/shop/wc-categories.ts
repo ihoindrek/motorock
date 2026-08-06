@@ -291,7 +291,20 @@ export function productsShareWcSubcategory(
   }
 
   if (a.type === "motorcycle") {
-    return a.category === b.category;
+    const aKeys = subcategoryMatchKeys(a);
+    const bKeys = subcategoryMatchKeys(b);
+
+    if (aKeys.size > 0 && bKeys.size > 0) {
+      for (const key of aKeys) {
+        if (bKeys.has(key)) {
+          return true;
+        }
+      }
+
+      return false;
+    }
+
+    return a.brand === b.brand;
   }
 
   const aKeys = subcategoryMatchKeys(a);

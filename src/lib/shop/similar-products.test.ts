@@ -93,4 +93,39 @@ describe("pickSimilarProducts", () => {
 
     expect(related.map((item) => item.slug)).toEqual(["en-glove"]);
   });
+
+  it("matches motorcycles by Woo brand subcategory, not the whole catalog", () => {
+    const revolver = product({
+      slug: "motron-revolver-125",
+      name: "Revolver 125",
+      brand: "Motron",
+      type: "motorcycle",
+      category: "motorcycles",
+      wcCategorySlugs: ["motorcycles", "motron"],
+    });
+
+    const catalog = [
+      revolver,
+      product({
+        slug: "motron-volt",
+        name: "Volt 125",
+        brand: "Motron",
+        type: "motorcycle",
+        category: "motorcycles",
+        wcCategorySlugs: ["motorcycles", "motron"],
+      }),
+      product({
+        slug: "malaguti-scooter",
+        name: "XTM 125",
+        brand: "Malaguti",
+        type: "motorcycle",
+        category: "motorcycles",
+        wcCategorySlugs: ["motorcycles", "malaguti"],
+      }),
+    ];
+
+    const related = pickSimilarProducts(revolver, catalog);
+
+    expect(related.map((item) => item.slug)).toEqual(["motron-volt"]);
+  });
 });
