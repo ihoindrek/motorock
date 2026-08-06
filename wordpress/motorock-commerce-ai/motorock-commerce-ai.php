@@ -1,7 +1,7 @@
 <?php
 /**
  * Motorock Commerce AI Engine — unified bootstrap.
- * Version: 0.5.0
+ * Version: 0.5.1
  *
  * Loads product content writer (legacy AI Writer module), write REST,
  * admin UI, and the Commerce AI skills dashboard.
@@ -14,7 +14,7 @@ if ( defined( 'MOTOROCK_COMMERCE_AI_LOADED' ) ) {
 }
 
 define( 'MOTOROCK_COMMERCE_AI_LOADED', true );
-define( 'MOTOROCK_COMMERCE_AI_VERSION', '0.5.0' );
+define( 'MOTOROCK_COMMERCE_AI_VERSION', '0.5.1' );
 
 $commerce_ai_root = dirname( __DIR__ );
 $ai_writer_root   = $commerce_ai_root . '/motorock-ai-writer';
