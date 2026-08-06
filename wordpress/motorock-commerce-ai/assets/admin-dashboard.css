@@ -2,14 +2,40 @@
   max-width: 1180px;
 }
 
-.motorock-commerce-ai-wrap > .description {
-  color: #646970;
-  font-size: 14px;
+.motorock-commerce-ai-intro {
+  margin-bottom: 0.5rem;
   max-width: 52rem;
 }
 
+.motorock-commerce-ai-intro h1 {
+  line-height: 1.25;
+  margin-bottom: 1rem;
+}
+
+.motorock-commerce-ai-intro-text {
+  background: linear-gradient(135deg, #faf5ff 0%, #fff 100%);
+  border: 1px solid #e9d5ff;
+  border-radius: 12px;
+  padding: 1.15rem 1.25rem;
+}
+
+.motorock-commerce-ai-intro-text p {
+  color: #3c434a;
+  font-size: 14px;
+  line-height: 1.65;
+  margin: 0;
+}
+
+.motorock-commerce-ai-intro-text p + p {
+  margin-top: 0.75rem;
+}
+
 .motorock-commerce-ai-domain {
-  margin-top: 2.25rem;
+  margin-top: 3.5rem;
+}
+
+.motorock-commerce-ai-domain:first-of-type {
+  margin-top: 2.75rem;
 }
 
 .motorock-commerce-ai-domain h2 {
@@ -164,6 +190,7 @@
   vertical-align: middle;
 }
 
-.motorock-commerce-ai-wrap > h1 .motorock-commerce-ai-module-badge {
+.motorock-commerce-ai-wrap > h1 .motorock-commerce-ai-module-badge,
+.motorock-commerce-ai-intro h1 .motorock-commerce-ai-module-badge {
   font-size: 10px;
 }

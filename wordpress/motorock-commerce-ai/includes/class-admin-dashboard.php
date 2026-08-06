@@ -141,13 +141,22 @@ class Motorock_Commerce_Ai_Admin_Dashboard {
 		}
 		?>
 		<div class="wrap motorock-commerce-ai-wrap">
-			<h1>
-				<?php esc_html_e( 'Commerce AI', 'motorock-commerce-ai' ); ?>
-				<span class="motorock-commerce-ai-module-badge"><?php esc_html_e( 'Module', 'motorock-commerce-ai' ); ?></span>
-			</h1>
-			<p class="description">
-				<?php esc_html_e( 'One engine, many skills — catalog, content, SEO, pricing, and support tools. Active skills run on the Next.js storefront.', 'motorock-commerce-ai' ); ?>
-			</p>
+			<header class="motorock-commerce-ai-intro">
+				<h1>
+					<?php esc_html_e( 'Commerce AI engine by Webolution', 'motorock-commerce-ai' ); ?>
+					<span class="motorock-commerce-ai-module-badge"><?php esc_html_e( 'Module', 'motorock-commerce-ai' ); ?></span>
+				</h1>
+				<div class="motorock-commerce-ai-intro-text">
+					<p>
+						Commerce AI Engine on Webolutioni arendatud tehisintelligentsi moodul Motorocki headless e-poe jaoks.
+						Üks turvaline mootor, mitu oskust (skill): toote tekstid ja SEO, blogi, kataloog, seotud tooted, auditid ja tulevased tööriistad.
+					</p>
+					<p>
+						Aktiivsed skillid töötavad läbi Next.js storefronti (Vercel) ja salvestavad muudatused WooCommerce’i — tavaliselt mustandina või meta väljadele, et saaksid enne avaldamist üle vaadata.
+						Iga tööriist avaneb vasakult alammenüüst või allolevast kaardist.
+					</p>
+				</div>
+			</header>
 
 			<?php foreach ( $grouped as $domain => $domain_skills ) : ?>
 				<section class="motorock-commerce-ai-domain">
