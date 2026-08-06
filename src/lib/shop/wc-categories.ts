@@ -1,4 +1,4 @@
-import type { ProductCategory } from "@/types/catalog-product";
+import type { ProductCategory, ProductGender } from "@/types/catalog-product";
 
 /** WooCommerce `productCategories` slug → storefront category */
 export const WC_SLUG_TO_CATEGORY: Record<string, ProductCategory> = {
@@ -189,6 +189,75 @@ export const ACCESSORIES_BRANCH_WC_SLUGS = new Set([
 ]);
 
 export const TOOLS_WC_SLUG = "tools-maintenance";
+
+/** Leaf Woo slugs under `for-men` — paired with {@link WOMEN_GEAR_LEAF_WC_SLUGS}. */
+export const MEN_GEAR_LEAF_WC_SLUGS = new Set([
+  "jackets-and-tags",
+  "mens-pants",
+  "vests-2",
+  "gloves",
+  "footwear",
+  "sweaters",
+  "t-shirts",
+  "base-layer-warm-underwear",
+]);
+
+/** Leaf Woo slugs under `for-women` — paired with {@link MEN_GEAR_LEAF_WC_SLUGS}. */
+export const WOMEN_GEAR_LEAF_WC_SLUGS = new Set([
+  "jackets-and-tags-2",
+  "pants-jeans",
+  "vests-3",
+  "gloves-2",
+  "footwear-2",
+  "hoodies-sweatshirts",
+  "t-shirts-jerseys",
+  "base-layer-warm-underwear-2",
+]);
+
+export function productHasOppositeGenderGearSlug(
+  wcCategorySlugs: readonly string[] | undefined,
+  gender: Exclude<ProductGender, "unisex">,
+): boolean {
+  const slugs = canonicalizeWcCategorySlugs(wcCategorySlugs);
+
+  if (gender === "men") {
+    return slugs.some((slug) => WOMEN_GEAR_LEAF_WC_SLUGS.has(slug));
+  }
+
+  return slugs.some((slug) => MEN_GEAR_LEAF_WC_SLUGS.has(slug));
+}
+
+export function productNameIndicatesGender(name: string): ProductGender | undefined {
+  if (/\bunisex\b/i.test(name)) {
+    return "unisex";
+  }
+
+  if (/\bwomen'?s\b|\bfor women\b|\bladies'?s?\b|\bnaiste\b/i.test(name)) {
+    return "women";
+  }
+
+  if (/\bmen'?s\b|\bfor men\b|\bmeeste\b/i.test(name)) {
+    return "men";
+  }
+
+  return undefined;
+}
+
+export function isGenderGearLeafRoute(
+  routeWcCategorySlug: string | undefined,
+  gender: ProductGender | undefined,
+  wcCategoryPath: readonly string[] | undefined,
+): boolean {
+  if (!routeWcCategorySlug || !gender || gender === "unisex") {
+    return false;
+  }
+
+  if (routeWcCategorySlug === "for-men" || routeWcCategorySlug === "for-women") {
+    return false;
+  }
+
+  return (wcCategoryPath?.length ?? 0) > 1;
+}
 
 export function productMatchesWcCategoryRoute(
   wcCategorySlugs: readonly string[] | undefined,

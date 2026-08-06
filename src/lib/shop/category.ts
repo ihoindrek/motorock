@@ -5,10 +5,14 @@ import type {
 } from "@/types/catalog-product";
 import type { Dictionary } from "@/i18n/dictionaries/en";
 import {
+  isGenderGearLeafRoute,
+  mapWcSlugToCategory,
+  productHasOppositeGenderGearSlug,
   productInAccessoriesBranch,
   productInProtectionBranch,
   productInToolsCategory,
   productMatchesWcCategoryRoute,
+  productNameIndicatesGender,
 } from "@/lib/shop/wc-categories";
 
 export type EquipmentCatalogWhere = {
@@ -144,6 +148,33 @@ export function filterProductsByRoute(
           product.shopAudiences?.includes("men"));
 
       if (!audienceFallback) {
+        return false;
+      }
+    }
+
+    if (
+      isGenderGearLeafRoute(
+        route.wcCategorySlug,
+        route.gender,
+        route.wcCategoryPath,
+      )
+    ) {
+      const gender = route.gender;
+      if (gender !== "men" && gender !== "women") {
+        return true;
+      }
+
+      if (productHasOppositeGenderGearSlug(product.wcCategorySlugs, gender)) {
+        return false;
+      }
+
+      const nameGender = productNameIndicatesGender(product.name);
+      if (nameGender && nameGender !== "unisex" && nameGender !== gender) {
+        return false;
+      }
+
+      const routeCategory = mapWcSlugToCategory(route.wcCategorySlug!);
+      if (routeCategory && product.category !== routeCategory) {
         return false;
       }
     }
