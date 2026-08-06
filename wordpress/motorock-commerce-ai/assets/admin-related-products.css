@@ -1,0 +1,46 @@
+.motorock-related-bulk-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  margin: 1.5rem 0;
+}
+
+.motorock-related-bulk-panel {
+  background: #fff;
+  border: 1px solid #c3c4c7;
+  border-radius: 4px;
+  padding: 1rem 1.25rem;
+}
+
+.motorock-related-bulk-panel h2 {
+  font-size: 14px;
+  margin-top: 0;
+}
+
+.motorock-related-bulk-progress {
+  margin: 1rem 0 0.5rem;
+}
+
+.motorock-related-bulk-log-list {
+  background: #fff;
+  border: 1px solid #c3c4c7;
+  border-radius: 4px;
+  list-style: none;
+  margin: 0.5rem 0 0;
+  max-height: 280px;
+  overflow: auto;
+  padding: 0.5rem 0.75rem;
+}
+
+.motorock-related-bulk-log-item {
+  font-size: 12px;
+  margin: 0.25rem 0;
+}
+
+.motorock-related-bulk-log-item--error {
+  color: #b32d2e;
+}
+
+.motorock-related-single-result {
+  margin-top: 1rem;
+}

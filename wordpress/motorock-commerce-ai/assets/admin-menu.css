@@ -1,0 +1,61 @@
+/* Top-level Commerce AI module — distinct from WooCommerce Products submenu */
+
+#adminmenu #toplevel_page_motorock-commerce-ai {
+  margin-top: 0.35rem;
+}
+
+#adminmenu #toplevel_page_motorock-commerce-ai > a {
+  background: linear-gradient(90deg, rgba(91, 33, 182, 0.14), rgba(91, 33, 182, 0.03));
+  border-left: 3px solid #7c3aed;
+  box-sizing: border-box;
+}
+
+#adminmenu #toplevel_page_motorock-commerce-ai .wp-menu-name {
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+#adminmenu #toplevel_page_motorock-commerce-ai .wp-menu-image::before {
+  color: #7c3aed;
+}
+
+#adminmenu #toplevel_page_motorock-commerce-ai:hover > a,
+#adminmenu #toplevel_page_motorock-commerce-ai.wp-has-current-submenu > a,
+#adminmenu #toplevel_page_motorock-commerce-ai.current > a {
+  background: linear-gradient(90deg, #5b21b6, #6d28d9);
+  border-left-color: #c4b5fd;
+  color: #fff;
+}
+
+#adminmenu #toplevel_page_motorock-commerce-ai:hover .wp-menu-image::before,
+#adminmenu #toplevel_page_motorock-commerce-ai.wp-has-current-submenu .wp-menu-image::before,
+#adminmenu #toplevel_page_motorock-commerce-ai.current .wp-menu-image::before {
+  color: #ede9fe;
+}
+
+#adminmenu #toplevel_page_motorock-commerce-ai .wp-submenu {
+  border-left: 3px solid rgba(124, 58, 237, 0.35);
+}
+
+#adminmenu #toplevel_page_motorock-commerce-ai .wp-submenu a:hover,
+#adminmenu #toplevel_page_motorock-commerce-ai .wp-submenu a:focus {
+  color: #5b21b6;
+}
+
+.motorock-commerce-ai-module-badge {
+  background: linear-gradient(135deg, #6d28d9, #7c3aed);
+  border-radius: 999px;
+  color: #fff;
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  margin-left: 0.5rem;
+  padding: 0.15rem 0.55rem;
+  text-transform: uppercase;
+  vertical-align: middle;
+}
+
+.motorock-commerce-ai-wrap > h1 .motorock-commerce-ai-module-badge {
+  font-size: 10px;
+}

@@ -7,31 +7,19 @@ class Motorock_Commerce_Ai_Admin_Dashboard {
 	const PAGE_SLUG = 'motorock-commerce-ai';
 
 	public static function register() {
-		add_action( 'admin_menu', array( __CLASS__, 'register_menu' ) );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_assets' ) );
 	}
 
-	public static function register_menu() {
-		add_submenu_page(
-			'edit.php?post_type=product',
-			__( 'Commerce AI', 'motorock-commerce-ai' ),
-			__( 'Commerce AI', 'motorock-commerce-ai' ),
-			'edit_products',
-			self::PAGE_SLUG,
-			array( __CLASS__, 'render_page' )
-		);
-	}
-
 	public static function enqueue_assets( $hook_suffix ) {
-		if ( $hook_suffix !== 'product_page_' . self::PAGE_SLUG ) {
+		if ( $hook_suffix !== Motorock_Commerce_Ai_Admin_Menu::page_hook( self::PAGE_SLUG ) ) {
 			return;
 		}
 
 		wp_enqueue_style(
 			'motorock-commerce-ai-dashboard',
 			plugins_url( 'assets/admin-dashboard.css', dirname( __FILE__ ) ),
-			array(),
-			'0.1.0'
+			array( 'motorock-commerce-ai-admin-menu' ),
+			MOTOROCK_COMMERCE_AI_VERSION
 		);
 	}
 
@@ -153,7 +141,10 @@ class Motorock_Commerce_Ai_Admin_Dashboard {
 		}
 		?>
 		<div class="wrap motorock-commerce-ai-wrap">
-			<h1><?php esc_html_e( 'Commerce AI', 'motorock-commerce-ai' ); ?></h1>
+			<h1>
+				<?php esc_html_e( 'Commerce AI', 'motorock-commerce-ai' ); ?>
+				<span class="motorock-commerce-ai-module-badge"><?php esc_html_e( 'Module', 'motorock-commerce-ai' ); ?></span>
+			</h1>
 			<p class="description">
 				<?php esc_html_e( 'One engine, many skills — catalog, content, SEO, pricing, and support tools. Active skills run on the Next.js storefront.', 'motorock-commerce-ai' ); ?>
 			</p>
