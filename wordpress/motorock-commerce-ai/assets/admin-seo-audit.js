@@ -46,6 +46,34 @@
     return sections.length ? sections : ["description", "seo"];
   }
 
+  function fixableItems(items) {
+    return (items || []).filter(function (item) {
+      return item.entityType === "product" && item.databaseId && item.score > 0;
+    });
+  }
+
+  function renderBulkToolbar(fixableCount) {
+    if (fixableCount === 0) {
+      return "";
+    }
+
+    var maxBulk = Number(MotorockCommerceAiSeoAudit.maxBulkFix) || 25;
+
+    return (
+      '<div class="motorock-seo-audit-bulk-bar">' +
+      '<button type="button" class="button button-primary" id="motorock-seo-audit-bulk-fix">' +
+      escapeHtml(MotorockCommerceAiSeoAudit.i18n.bulkFixSelected) +
+      "</button> " +
+      '<span class="motorock-seo-audit-bulk-meta">' +
+      escapeHtml(
+        MotorockCommerceAiSeoAudit.i18n.bulkFixHint.replace("%d", String(maxBulk)),
+      ) +
+      "</span></div>" +
+      '<div id="motorock-seo-audit-bulk-progress" class="motorock-seo-audit-bulk-progress" aria-live="polite"></div>' +
+      '<div id="motorock-seo-audit-bulk-log" class="motorock-seo-audit-bulk-log"></div>'
+    );
+  }
+
   function productEditUrl(productId) {
     return (MotorockCommerceAiSeoAudit.productEditUrl || "").replace(
       "PRODUCT_ID",
@@ -121,8 +149,16 @@
       return "<p>" + escapeHtml(MotorockCommerceAiSeoAudit.i18n.noIssues) + "</p>";
     }
 
-    var html =
+    var fixable = fixableItems(items);
+    var hasFixable = fixable.length > 0;
+
+    var html = renderBulkToolbar(fixable.length);
+
+    html +=
       '<table class="widefat striped motorock-seo-audit-table"><thead><tr>' +
+      (hasFixable
+        ? '<th class="check-column"><input type="checkbox" id="motorock-seo-audit-select-all-fix" checked /></th>'
+        : "") +
       "<th>Score</th><th>Type</th><th>Title</th><th>Slug</th><th>Findings</th><th>Actions</th>" +
       "</tr></thead><tbody>";
 
@@ -141,8 +177,28 @@
         })
         .join(", ");
 
+      var isFixable =
+        item.entityType === "product" && item.databaseId && item.score > 0;
+      var sections = isFixable ? sectionsFromFindings(item.findings) : [];
+
+      html += "<tr>";
+      if (hasFixable) {
+        html += '<td class="check-column">';
+        if (isFixable) {
+          html +=
+            '<input type="checkbox" class="motorock-seo-audit-fix-select" checked ' +
+            'data-product-id="' +
+            escapeHtml(String(item.databaseId)) +
+            '" data-sections="' +
+            escapeHtml(sections.join(",")) +
+            '" data-title="' +
+            escapeHtml(item.title) +
+            '" />';
+        }
+        html += "</td>";
+      }
+
       html +=
-        "<tr>" +
         '<td class="motorock-seo-audit-score">' +
         escapeHtml(String(item.score)) +
         "</td>" +
@@ -429,6 +485,47 @@
     });
   }
 
+  function runFixRequest(input) {
+    return window.wp
+      .apiFetch({
+        url: MotorockCommerceAiSeoAudit.restUrl,
+        method: "POST",
+        headers: {
+          "X-WP-Nonce": MotorockCommerceAiSeoAudit.nonce,
+        },
+        data: {
+          skill: "product.content_writer",
+          locale: input.locale || selectedLocale(),
+          target: { productId: input.productId },
+          options: {
+            dryRun: false,
+            publishStatus: "draft",
+            sections: input.sections,
+          },
+        },
+      })
+      .then(function (data) {
+        var inner = data && data.result ? data.result : data;
+        var ok = Boolean(
+          (data && data.ok) ||
+            (inner && inner.ok) ||
+            (inner &&
+              inner.results &&
+              inner.results.some(function (result) {
+                return result.status === "written" || result.status === "skipped";
+              })),
+        );
+
+        return {
+          ok: ok,
+          error:
+            (data && data.error) ||
+            (inner && inner.error) ||
+            (ok ? "" : MotorockCommerceAiSeoAudit.i18n.fixFailed),
+        };
+      });
+  }
+
   function fixProductWithAi(button) {
     var productId = Number(button.getAttribute("data-product-id"));
     var sections = (button.getAttribute("data-sections") || "description,seo")
@@ -446,41 +543,11 @@
       statusEl.className = "motorock-seo-audit-fix-status is-running";
     }
 
-    window.wp
-      .apiFetch({
-        url: MotorockCommerceAiSeoAudit.restUrl,
-        method: "POST",
-        headers: {
-          "X-WP-Nonce": MotorockCommerceAiSeoAudit.nonce,
-        },
-        data: {
-          skill: "product.content_writer",
-          locale: selectedLocale(),
-          target: { productId: productId },
-          options: {
-            dryRun: false,
-            publishStatus: "draft",
-            sections: sections,
-          },
-        },
-      })
-      .then(function (data) {
-        var inner = data && data.result ? data.result : data;
-        var ok = Boolean(
-          (data && data.ok) ||
-            (inner && inner.ok) ||
-            (inner && inner.results && inner.results.some(function (result) {
-              return result.status === "written" || result.status === "skipped";
-            })),
-        );
-
-        if (!ok) {
-          var errorMessage =
-            (data && data.error) ||
-            (inner && inner.error) ||
-            MotorockCommerceAiSeoAudit.i18n.fixFailed;
+    runFixRequest({ productId: productId, sections: sections })
+      .then(function (result) {
+        if (!result.ok) {
           if (statusEl) {
-            statusEl.textContent = errorMessage;
+            statusEl.textContent = result.error || MotorockCommerceAiSeoAudit.i18n.fixFailed;
             statusEl.className = "motorock-seo-audit-fix-status is-error";
           }
           button.disabled = false;
@@ -501,6 +568,167 @@
           statusEl.className = "motorock-seo-audit-fix-status is-error";
         }
         button.disabled = false;
+      });
+  }
+
+  function selectedFixTargets() {
+    return Array.prototype.slice
+      .call(document.querySelectorAll(".motorock-seo-audit-fix-select:checked"))
+      .map(function (input) {
+        return {
+          productId: Number(input.getAttribute("data-product-id")),
+          sections: (input.getAttribute("data-sections") || "")
+            .split(",")
+            .filter(Boolean),
+          title: input.getAttribute("data-title") || "",
+        };
+      })
+      .filter(function (target) {
+        return target.productId > 0 && target.sections.length > 0;
+      });
+  }
+
+  function appendBulkLog(message, isError) {
+    var logEl = document.getElementById("motorock-seo-audit-bulk-log");
+    if (!logEl) {
+      return;
+    }
+
+    var list = logEl.querySelector(".motorock-seo-audit-bulk-log-list");
+    if (!list) {
+      logEl.innerHTML = "<ul class='motorock-seo-audit-bulk-log-list'></ul>";
+      list = logEl.querySelector(".motorock-seo-audit-bulk-log-list");
+    }
+
+    list.insertAdjacentHTML(
+      "beforeend",
+      "<li class='motorock-seo-audit-bulk-log-item" +
+        (isError ? " motorock-seo-audit-bulk-log-item--error" : "") +
+        "'>" +
+        message +
+        "</li>",
+    );
+  }
+
+  function runBulkFix() {
+    var targets = selectedFixTargets();
+    var maxBulk = Number(MotorockCommerceAiSeoAudit.maxBulkFix) || 25;
+    var progressEl = document.getElementById("motorock-seo-audit-bulk-progress");
+    var bulkBtn = document.getElementById("motorock-seo-audit-bulk-fix");
+
+    if (!targets.length) {
+      if (progressEl) {
+        progressEl.innerHTML =
+          "<p class='notice notice-warning inline'>" +
+          escapeHtml(MotorockCommerceAiSeoAudit.i18n.bulkFixPick) +
+          "</p>";
+      }
+      return;
+    }
+
+    if (targets.length > maxBulk) {
+      targets = targets.slice(0, maxBulk);
+      appendBulkLog(
+        escapeHtml(
+          MotorockCommerceAiSeoAudit.i18n.bulkFixTruncated.replace("%d", String(maxBulk)),
+        ),
+        false,
+      );
+    }
+
+    var succeeded = 0;
+    var failed = 0;
+    var startedAt = Date.now();
+
+    if (bulkBtn) {
+      bulkBtn.disabled = true;
+    }
+    runButton.disabled = true;
+
+    if (progressEl) {
+      progressEl.innerHTML =
+        "<p><strong>" + escapeHtml(MotorockCommerceAiSeoAudit.i18n.bulkFixStarting) + "</strong></p>";
+    }
+
+    var chain = Promise.resolve();
+
+    targets.forEach(function (target, index) {
+      chain = chain.then(function () {
+        if (progressEl) {
+          progressEl.innerHTML =
+            "<p><strong>" +
+            escapeHtml(
+              MotorockCommerceAiSeoAudit.i18n.bulkFixProgress
+                .replace("%1$d", String(index + 1))
+                .replace("%2$d", String(targets.length)),
+            ) +
+            "</strong> — " +
+            escapeHtml(target.title) +
+            " (#" +
+            escapeHtml(String(target.productId)) +
+            ")</p>";
+        }
+
+        return runFixRequest({
+          productId: target.productId,
+          sections: target.sections,
+        }).then(function (result) {
+          if (result.ok) {
+            succeeded += 1;
+            appendBulkLog(
+              "#" +
+                escapeHtml(String(target.productId)) +
+                " " +
+                escapeHtml(target.title) +
+                " — " +
+                escapeHtml(MotorockCommerceAiSeoAudit.i18n.fixDone),
+              false,
+            );
+          } else {
+            failed += 1;
+            appendBulkLog(
+              "#" +
+                escapeHtml(String(target.productId)) +
+                " " +
+                escapeHtml(target.title) +
+                ": " +
+                escapeHtml(result.error || MotorockCommerceAiSeoAudit.i18n.fixFailed),
+              true,
+            );
+          }
+        });
+      });
+    });
+
+    return chain
+      .then(function () {
+        var seconds = ((Date.now() - startedAt) / 1000).toFixed(1);
+        if (progressEl) {
+          progressEl.innerHTML =
+            "<p><strong>" +
+            escapeHtml(MotorockCommerceAiSeoAudit.i18n.bulkFixDone) +
+            "</strong> " +
+            escapeHtml(MotorockCommerceAiSeoAudit.i18n.bulkFixSummary)
+              .replace("%1$d", String(succeeded))
+              .replace("%2$d", String(failed)) +
+            " (" +
+            escapeHtml(seconds) +
+            "s)</p>";
+        }
+      })
+      .catch(function (error) {
+        if (progressEl) {
+          progressEl.innerHTML =
+            "<p class='notice notice-error inline'>" +
+            escapeHtml(error.message || MotorockCommerceAiSeoAudit.i18n.failed) +
+            "</p>";
+        }
+      })
+      .finally(function () {
+        if (bulkBtn) {
+          bulkBtn.disabled = false;
+        }
+        runButton.disabled = false;
       });
   }
 
@@ -533,9 +761,30 @@
       return;
     }
 
+    if (target.id === "motorock-seo-audit-bulk-fix") {
+      runBulkFix();
+      return;
+    }
+
     var button = target.closest(".motorock-seo-audit-fix-btn");
     if (button instanceof HTMLButtonElement) {
       fixProductWithAi(button);
+    }
+  });
+
+  resultsEl.addEventListener("change", function (event) {
+    var target = event.target;
+    if (!(target instanceof HTMLInputElement)) {
+      return;
+    }
+
+    if (target.id === "motorock-seo-audit-select-all-fix") {
+      var checked = target.checked;
+      Array.prototype.slice
+        .call(document.querySelectorAll(".motorock-seo-audit-fix-select"))
+        .forEach(function (input) {
+          input.checked = checked;
+        });
     }
   });
 })();
