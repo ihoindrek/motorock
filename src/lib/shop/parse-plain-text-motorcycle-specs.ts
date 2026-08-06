@@ -37,17 +37,7 @@ function stripHtmlToLines(htmlOrText: string) {
 }
 
 function isSectionHeader(line: string) {
-  const normalized = line.toLowerCase().trim();
-  if (SECTION_HEADERS.has(normalized)) {
-    return true;
-  }
-
-  return (
-    line.length >= 4 &&
-    line === line.toUpperCase() &&
-    /[A-Z]/.test(line) &&
-    !/\d/.test(line)
-  );
+  return SECTION_HEADERS.has(line.toLowerCase().trim());
 }
 
 /** Parse label/value blocks pasted as plain text from manufacturer pages. */
@@ -89,6 +79,11 @@ export function isMostlyPlainTextSpecs(htmlOrText: string) {
   const trimmed = htmlOrText.trim();
   if (!trimmed) {
     return false;
+  }
+
+  const paragraphBlocks = trimmed.match(/<p[^>]*>[\s\S]*?<\/p>/gi) ?? [];
+  if (paragraphBlocks.length >= 4 && paragraphBlocks.length % 2 === 0) {
+    return true;
   }
 
   const withoutTags = trimmed.replace(/<[^>]+>/g, "").trim();

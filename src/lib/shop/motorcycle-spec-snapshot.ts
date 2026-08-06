@@ -45,14 +45,23 @@ export function buildMotorcycleSpecSnapshot(
   let parsedSpecs = [...catalog.parsedSpecs];
   let highlightSpecs = [...catalog.highlightSpecs];
 
-  if (
+  const plainTextSpecs =
+    isMostlyPlainTextSpecs(trimmed) ? parsePlainTextMotorcycleSpecs(trimmed) : [];
+
+  if (plainTextSpecs.length > parsedSpecs.length) {
+    parsedSpecs = plainTextSpecs;
+    highlightSpecs = parsedSpecs.slice(0, 4);
+    engineSpecs = [];
+    extendedSpecs = [];
+    dimensionSpecs = [];
+  } else if (
     parsedSpecs.length === 0 &&
     engineSpecs.length === 0 &&
     extendedSpecs.length === 0 &&
     dimensionSpecs.length === 0 &&
-    isMostlyPlainTextSpecs(trimmed)
+    plainTextSpecs.length > 0
   ) {
-    parsedSpecs = parsePlainTextMotorcycleSpecs(trimmed);
+    parsedSpecs = plainTextSpecs;
     highlightSpecs = parsedSpecs.slice(0, 4);
   }
 

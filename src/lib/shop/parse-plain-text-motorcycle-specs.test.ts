@@ -33,4 +33,37 @@ describe("parsePlainTextMotorcycleSpecs", () => {
     expect(snapshot!.engineSpecs.length).toBeGreaterThan(0);
     expect(snapshot!.dimensionSpecs.length).toBeGreaterThan(0);
   });
+
+  it("parses all-caps manufacturer label/value blocks", () => {
+    const allCaps = `ENGINE TYPE
+1 cylinder, 4-stroke, air-cooled
+ENGINE DISPLACEMENT
+124.8 cc
+MAX POWER
+7.0 kW @ 8500 min
+BRAKES FRONT
+Hydraulic disc brake, brake disc: Ø 267 mm
+LENGTH x WIDTH x HEIGHT
+2061 x 835 x 1105 mm
+FUEL TANK CAPACITY
+13 L`;
+
+    const html = allCaps
+      .split("\n")
+      .map((line) => `<p>${line}</p>`)
+      .join("");
+
+    const specs = parsePlainTextMotorcycleSpecs(allCaps);
+    expect(specs.some((spec) => spec.label === "ENGINE TYPE")).toBe(true);
+    expect(specs.some((spec) => spec.value === "124.8 cc")).toBe(true);
+    expect(specs.some((spec) => spec.label === "BRAKES FRONT")).toBe(true);
+
+    const snapshot = buildMotorcycleSpecSnapshot(html, "", "en");
+    expect(snapshot).not.toBeNull();
+    const totalSpecs =
+      snapshot!.engineSpecs.length +
+      snapshot!.extendedSpecs.length +
+      snapshot!.dimensionSpecs.length;
+    expect(totalSpecs).toBeGreaterThanOrEqual(6);
+  });
 });

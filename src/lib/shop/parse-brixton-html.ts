@@ -338,12 +338,33 @@ function parseStrongParagraphSpecs(html: string): ProductSpec[] {
   return specs;
 }
 
+function looksLikeSpecLabel(line: string) {
+  const trimmed = line.trim();
+  if (!trimmed || trimmed.length > 80) {
+    return false;
+  }
+
+  if (/[.!?]$/.test(trimmed)) {
+    return false;
+  }
+
+  if (trimmed === trimmed.toUpperCase() && /[A-Z]/.test(trimmed)) {
+    return true;
+  }
+
+  return trimmed.length <= 50 && !/^\d/.test(trimmed);
+}
+
 function isLikelySpecLabel(label: string, value: string) {
   if (!isValidProductSpec(label, value)) {
     return false;
   }
 
-  if (label.length > 80 || value.length <= label.length) {
+  if (!looksLikeSpecLabel(label)) {
+    return false;
+  }
+
+  if (looksLikeSpecLabel(value) && value === value.toUpperCase()) {
     return false;
   }
 
