@@ -7,19 +7,7 @@ class Motorock_Commerce_Ai_Admin_Blog {
 	const PAGE_SLUG = 'motorock-commerce-ai-blog';
 
 	public static function register() {
-		add_action( 'admin_menu', array( __CLASS__, 'register_menu' ) );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_assets' ) );
-	}
-
-	public static function register_menu() {
-		add_submenu_page(
-			Motorock_Commerce_Ai_Admin_Menu::menu_slug(),
-			__( 'Blog generator', 'motorock-commerce-ai' ),
-			__( 'Blog generator', 'motorock-commerce-ai' ),
-			'edit_products',
-			self::PAGE_SLUG,
-			array( __CLASS__, 'render_page' )
-		);
 	}
 
 	public static function enqueue_assets( $hook_suffix ) {

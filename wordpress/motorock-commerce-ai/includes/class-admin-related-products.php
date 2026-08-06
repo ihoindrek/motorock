@@ -8,21 +8,9 @@ class Motorock_Commerce_Ai_Admin_Related_Products {
 	const MAX_PRODUCTS = 25;
 
 	public static function register() {
-		add_action( 'admin_menu', array( __CLASS__, 'register_menu' ) );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_assets' ) );
 		add_filter( 'bulk_actions-edit-product', array( __CLASS__, 'register_bulk_action' ) );
 		add_filter( 'handle_bulk_actions-edit-product', array( __CLASS__, 'handle_bulk_action' ), 10, 3 );
-	}
-
-	public static function register_menu() {
-		add_submenu_page(
-			Motorock_Commerce_Ai_Admin_Menu::menu_slug(),
-			__( 'Related products', 'motorock-commerce-ai' ),
-			__( 'Related products', 'motorock-commerce-ai' ),
-			'edit_products',
-			self::PAGE_SLUG,
-			array( __CLASS__, 'render_page' )
-		);
 	}
 
 	public static function register_bulk_action( $actions ) {

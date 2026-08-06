@@ -9,6 +9,7 @@ class Motorock_Commerce_Ai_Admin_Menu {
 
 	public static function register() {
 		add_action( 'admin_menu', array( __CLASS__, 'register_menu' ), 9 );
+		add_action( 'admin_menu', array( __CLASS__, 'register_submenus' ), 10 );
 		add_action( 'admin_menu', array( __CLASS__, 'remove_legacy_submenus' ), 999 );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_assets' ) );
 	}
@@ -35,7 +36,9 @@ class Motorock_Commerce_Ai_Admin_Menu {
 			'dashicons-superhero-alt',
 			self::MENU_ORDER
 		);
+	}
 
+	public static function register_submenus() {
 		add_submenu_page(
 			self::MENU_SLUG,
 			__( 'Dashboard', 'motorock-commerce-ai' ),
@@ -53,6 +56,39 @@ class Motorock_Commerce_Ai_Admin_Menu {
 				'edit_products',
 				'motorock-ai-bulk',
 				array( 'Motorock_Ai_Admin_Bulk', 'render_page' )
+			);
+		}
+
+		if ( class_exists( 'Motorock_Commerce_Ai_Admin_Blog' ) ) {
+			add_submenu_page(
+				self::MENU_SLUG,
+				__( 'Blog generator', 'motorock-commerce-ai' ),
+				__( 'Blog generator', 'motorock-commerce-ai' ),
+				'edit_products',
+				Motorock_Commerce_Ai_Admin_Blog::PAGE_SLUG,
+				array( 'Motorock_Commerce_Ai_Admin_Blog', 'render_page' )
+			);
+		}
+
+		if ( class_exists( 'Motorock_Commerce_Ai_Admin_Related_Products' ) ) {
+			add_submenu_page(
+				self::MENU_SLUG,
+				__( 'Related products', 'motorock-commerce-ai' ),
+				__( 'Related products', 'motorock-commerce-ai' ),
+				'edit_products',
+				Motorock_Commerce_Ai_Admin_Related_Products::PAGE_SLUG,
+				array( 'Motorock_Commerce_Ai_Admin_Related_Products', 'render_page' )
+			);
+		}
+
+		if ( class_exists( 'Motorock_Commerce_Ai_Admin_Seo_Audit' ) ) {
+			add_submenu_page(
+				self::MENU_SLUG,
+				__( 'SEO audit', 'motorock-commerce-ai' ),
+				__( 'SEO audit', 'motorock-commerce-ai' ),
+				'edit_products',
+				Motorock_Commerce_Ai_Admin_Seo_Audit::PAGE_SLUG,
+				array( 'Motorock_Commerce_Ai_Admin_Seo_Audit', 'render_page' )
 			);
 		}
 	}

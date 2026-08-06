@@ -32,7 +32,7 @@ class Motorock_Commerce_Ai_Admin_Dashboard {
 				'title'       => __( 'Product content writer', 'motorock-commerce-ai' ),
 				'description' => __( 'Generate descriptions, SEO meta, FAQ, and image ALT text.', 'motorock-commerce-ai' ),
 				'action_url'  => admin_url( 'admin.php?page=motorock-ai-bulk' ),
-				'action_label'=> __( 'Open product content', 'motorock-commerce-ai' ),
+				'action_label'=> __( 'Open tool', 'motorock-commerce-ai' ),
 			),
 			array(
 				'id'          => 'content.blog_generate',
@@ -41,7 +41,7 @@ class Motorock_Commerce_Ai_Admin_Dashboard {
 				'title'       => __( 'Blog article generator', 'motorock-commerce-ai' ),
 				'description' => __( 'Draft journal posts from a topic, product, or campaign brief.', 'motorock-commerce-ai' ),
 				'action_url'  => admin_url( 'admin.php?page=motorock-commerce-ai-blog' ),
-				'action_label'=> __( 'Open blog generator', 'motorock-commerce-ai' ),
+				'action_label'=> __( 'Open tool', 'motorock-commerce-ai' ),
 			),
 			array(
 				'id'          => 'catalog.fill_attributes',
@@ -57,7 +57,7 @@ class Motorock_Commerce_Ai_Admin_Dashboard {
 				'title'       => __( 'Related products', 'motorock-commerce-ai' ),
 				'description' => __( 'Recommend and apply related product links in bulk.', 'motorock-commerce-ai' ),
 				'action_url'  => admin_url( 'admin.php?page=motorock-commerce-ai-related' ),
-				'action_label'=> __( 'Open related products', 'motorock-commerce-ai' ),
+				'action_label'=> __( 'Open tool', 'motorock-commerce-ai' ),
 			),
 			array(
 				'id'          => 'catalog.detect_duplicates',
@@ -80,7 +80,7 @@ class Motorock_Commerce_Ai_Admin_Dashboard {
 				'title'       => __( 'SEO audit', 'motorock-commerce-ai' ),
 				'description' => __( 'Score PDPs and posts for missing meta, thin content, and ALT gaps.', 'motorock-commerce-ai' ),
 				'action_url'  => admin_url( 'admin.php?page=motorock-commerce-ai-seo-audit' ),
-				'action_label'=> __( 'Open SEO audit', 'motorock-commerce-ai' ),
+				'action_label'=> __( 'Open tool', 'motorock-commerce-ai' ),
 			),
 			array(
 				'id'          => 'seo.internal_links',
@@ -161,14 +161,16 @@ class Motorock_Commerce_Ai_Admin_Dashboard {
 								</header>
 								<p><?php echo esc_html( $skill['description'] ); ?></p>
 								<footer>
-									<code><?php echo esc_html( $skill['id'] ); ?></code>
-									<?php if ( ! empty( $skill['action_url'] ) ) : ?>
-										<a class="button button-primary" href="<?php echo esc_url( $skill['action_url'] ); ?>">
-											<?php echo esc_html( $skill['action_label'] ?? __( 'Open', 'motorock-commerce-ai' ) ); ?>
-										</a>
-									<?php else : ?>
-										<span class="motorock-commerce-ai-soon"><?php esc_html_e( 'Coming soon', 'motorock-commerce-ai' ); ?></span>
-									<?php endif; ?>
+									<code class="motorock-commerce-ai-skill-id"><?php echo esc_html( $skill['id'] ); ?></code>
+									<div class="motorock-commerce-ai-card-actions">
+										<?php if ( ! empty( $skill['action_url'] ) ) : ?>
+											<a class="button button-primary motorock-commerce-ai-card-btn" href="<?php echo esc_url( $skill['action_url'] ); ?>">
+												<?php echo esc_html( $skill['action_label'] ?? __( 'Open tool', 'motorock-commerce-ai' ) ); ?>
+											</a>
+										<?php else : ?>
+											<span class="motorock-commerce-ai-soon"><?php esc_html_e( 'Coming soon', 'motorock-commerce-ai' ); ?></span>
+										<?php endif; ?>
+									</div>
 								</footer>
 							</article>
 						<?php endforeach; ?>
