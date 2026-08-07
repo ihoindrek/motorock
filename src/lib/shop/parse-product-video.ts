@@ -1,7 +1,8 @@
-export type ProductVideoProvider = "vimeo" | "youtube";
+export type ProductVideoProvider = "vimeo" | "youtube" | "file";
 
 export type ProductVideo = {
   provider: ProductVideoProvider;
+  /** Vimeo/YouTube ID, or a direct video file URL when provider is `file`. */
   id: string;
   /** Required for some unlisted Vimeo URLs (`vimeo.com/{id}/{hash}`). */
   privacyHash?: string;
@@ -12,6 +13,24 @@ const VIMEO_URL_PATTERN =
 
 const YOUTUBE_ID_PATTERN =
   /(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([\w-]{11})/i;
+
+const DIRECT_VIDEO_FILE_PATTERN = /\.(mp4|webm|mov|m4v|ogv)(?:$|[?#])/i;
+
+export function isDirectVideoFileUrl(url: string | null | undefined) {
+  if (!url?.trim()) {
+    return false;
+  }
+
+  try {
+    const parsed = new URL(url.trim());
+    return (
+      (parsed.protocol === "https:" || parsed.protocol === "http:") &&
+      DIRECT_VIDEO_FILE_PATTERN.test(parsed.pathname + parsed.search + parsed.hash)
+    );
+  } catch {
+    return DIRECT_VIDEO_FILE_PATTERN.test(url.trim());
+  }
+}
 
 export function parseVimeoIdFromUrl(url: string | null | undefined) {
   const video = parseProductVideoFromUrl(url);
@@ -48,6 +67,10 @@ export function parseProductVideoFromUrl(
   const youtubeMatch = trimmed.match(YOUTUBE_ID_PATTERN);
   if (youtubeMatch?.[1]) {
     return { provider: "youtube", id: youtubeMatch[1] };
+  }
+
+  if (isDirectVideoFileUrl(trimmed)) {
+    return { provider: "file", id: trimmed };
   }
 
   return undefined;
@@ -117,6 +140,10 @@ export function resolveProductVimeoIdFromMeta(
 }
 
 export function buildProductVideoEmbedUrl(video: ProductVideo) {
+  if (video.provider === "file") {
+    return video.id;
+  }
+
   if (video.provider === "youtube") {
     return `https://www.youtube-nocookie.com/embed/${video.id}?autoplay=1&rel=0&modestbranding=1`;
   }

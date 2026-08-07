@@ -212,13 +212,24 @@ export function ProductVideoModal({
             </button>
           </div>
           <div className="relative aspect-video w-full bg-ink">
-            <iframe
-              src={buildProductVideoEmbedUrl(video)}
-              title={title}
-              allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share"
-              allowFullScreen
-              className="absolute inset-0 h-full w-full"
-            />
+            {video.provider === "file" ? (
+              <video
+                src={buildProductVideoEmbedUrl(video)}
+                title={title}
+                controls
+                autoPlay
+                playsInline
+                className="absolute inset-0 h-full w-full object-contain"
+              />
+            ) : (
+              <iframe
+                src={buildProductVideoEmbedUrl(video)}
+                title={title}
+                allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share"
+                allowFullScreen
+                className="absolute inset-0 h-full w-full"
+              />
+            )}
           </div>
         </div>
       </div>

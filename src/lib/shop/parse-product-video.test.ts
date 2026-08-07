@@ -48,6 +48,21 @@ describe("parseProductVideoFromUrl", () => {
       id: "dQw4w9WgXcQ",
     });
   });
+
+  it("parses direct video file URLs", () => {
+    const url =
+      "https://cms.brixton-motorcycles.com/wp-content/uploads/2018/11/500x1.mp4";
+    expect(parseProductVideoFromUrl(url)).toEqual({
+      provider: "file",
+      id: url,
+    });
+    expect(
+      parseProductVideoFromUrl("https://example.com/clips/promo.webm?download=1"),
+    ).toEqual({
+      provider: "file",
+      id: "https://example.com/clips/promo.webm?download=1",
+    });
+  });
 });
 
 describe("parseVimeoIdFromUrl", () => {
@@ -116,5 +131,11 @@ describe("buildProductVideoEmbedUrl", () => {
     expect(
       buildProductVideoEmbedUrl({ provider: "youtube", id: "abc12345678" }),
     ).toContain("youtube-nocookie.com/embed/abc12345678");
+    expect(
+      buildProductVideoEmbedUrl({
+        provider: "file",
+        id: "https://example.com/video.mp4",
+      }),
+    ).toBe("https://example.com/video.mp4");
   });
 });

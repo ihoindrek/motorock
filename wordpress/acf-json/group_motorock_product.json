@@ -75,7 +75,7 @@
       "name": "product_video_url",
       "aria-label": "",
       "type": "url",
-      "instructions": "YouTube või Vimeo link. Storefront kuvab galeriis \"Vaata videot\" nupu. Kehtib kõigile toodetele (mootorrattad ja varustus).",
+      "instructions": "YouTube, Vimeo või otse video faili link (.mp4, .webm jne). Storefront kuvab galeriis \"Vaata videot\" nupu. Kehtib kõigile toodetele (mootorrattad ja varustus).",
       "required": 0,
       "conditional_logic": 0,
       "wrapper": {
@@ -85,7 +85,7 @@
       },
       "default_value": "",
       "allow_in_bindings": 0,
-      "placeholder": "https://www.youtube.com/watch?v=... või https://vimeo.com/..."
+      "placeholder": "https://www.youtube.com/watch?v=... või https://vimeo.com/... või https://.../video.mp4"
     },
     {
       "key": "field_motorock_size_guide_slug",
