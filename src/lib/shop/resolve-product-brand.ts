@@ -90,6 +90,27 @@ export function isMotorcycleBrandSlug(slug: string) {
   return MOTORCYCLE_BRAND_SLUGS.has(slug.toLowerCase());
 }
 
+/** Last-resort brand match from product title (e.g. "Brixton Crossfire 125"). */
+export function resolveMotorcycleBrandFromProductName(
+  productName: string,
+): string | undefined {
+  const lower = productName.trim().toLowerCase();
+
+  for (const brand of brands) {
+    if (!MOTORCYCLE_BRAND_SLUGS.has(brand.slug)) {
+      continue;
+    }
+
+    const needle = brand.name.toLowerCase();
+
+    if (lower.startsWith(needle) || lower.includes(` ${needle}`)) {
+      return brand.name;
+    }
+  }
+
+  return undefined;
+}
+
 /** Fixed logo-filter order for the motorcycles catalog (pa_brand slugs). */
 export function getMotorcycleBrandFilterNames(): string[] {
   return brands

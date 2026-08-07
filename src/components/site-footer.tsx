@@ -51,7 +51,7 @@ const socialLinks = [
     ),
   },
   {
-    href: "https://www.facebook.com/scramblers.caferacers",
+    href: "https://www.facebook.com/motorock.eu",
     label: "Facebook",
     icon: (
       <SocialIcon>

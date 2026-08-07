@@ -3,6 +3,7 @@ import {
   getMotorcycleBrandFilterNames,
   isMotorcycleBrandSlug,
   resolveBrandFromProductAttributes,
+  resolveMotorcycleBrandFromProductName,
 } from "@/lib/shop/resolve-product-brand";
 
 describe("resolveBrandFromProductAttributes", () => {
@@ -76,5 +77,16 @@ describe("getMotorcycleBrandFilterNames", () => {
       "Motron",
       "Malaguti",
     ]);
+  });
+});
+
+describe("resolveMotorcycleBrandFromProductName", () => {
+  it("matches known motorcycle brands from the product title", () => {
+    expect(resolveMotorcycleBrandFromProductName("Brixton Crossfire 125")).toBe(
+      "Brixton",
+    );
+    expect(resolveMotorcycleBrandFromProductName("Mutt GT-SS 125cc")).toBe(
+      "Mutt",
+    );
   });
 });

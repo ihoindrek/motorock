@@ -22,6 +22,7 @@ import { getCanonicalBrandName } from "@/lib/shop/brands";
 import {
   MOTORCYCLE_BRAND_SLUGS,
   resolveBrandFromProductAttributes,
+  resolveMotorcycleBrandFromProductName,
 } from "@/lib/shop/resolve-product-brand";
 import { parseSpecsFromDescriptionHtml } from "@/lib/shop/parse-product-description";
 import {
@@ -97,6 +98,7 @@ function isMotorcycleProduct(categories: GraphQLProduct["productCategories"]) {
 function resolveMotorcycleBrand(
   categories: GraphQLProduct["productCategories"],
   attributes?: GraphQLVariableProduct["attributes"] | null,
+  productName?: string,
 ) {
   const fromBrandAttribute = resolveBrandFromProductAttributes(attributes, {
     motorcycleOnly: true,
@@ -111,7 +113,22 @@ function resolveMotorcycleBrand(
     (category) => category.parent?.node?.slug === "motorcycles",
   );
 
-  const raw = brandCategory?.name ?? nodes[0]?.name ?? "Motorcycle";
+  if (brandCategory?.name) {
+    return getCanonicalBrandName(brandCategory.name);
+  }
+
+  const fromName = productName
+    ? resolveMotorcycleBrandFromProductName(productName)
+    : undefined;
+
+  if (fromName) {
+    return fromName;
+  }
+
+  const fallbackCategory = nodes.find(
+    (category) => category.slug?.toLowerCase() !== "motorcycles",
+  );
+  const raw = fallbackCategory?.name ?? "Motorcycle";
 
   return getCanonicalBrandName(raw);
 }
@@ -389,9 +406,11 @@ export function mapGraphqlToMotorcycleProduct(
   locale: Locale = "en",
   options?: MapGraphqlProductOptions,
 ): MotorcycleProduct {
+  const isVariable = product.__typename === "VariableProduct";
   const brand = resolveMotorcycleBrand(
     product.productCategories,
     isVariable ? product.attributes : null,
+    product.name,
   );
   const shortHtml = product.shortDescription ?? "";
   const longHtml = product.description ?? "";
@@ -418,8 +437,6 @@ export function mapGraphqlToMotorcycleProduct(
     meta: product.metaData,
     metaSources: options?.showroomMetaSources,
   });
-
-  const isVariable = product.__typename === "VariableProduct";
   const colors = isVariable ? colorsFromVariableProduct(product) : [];
 
   const variations = isVariable ? mapVariations(product) : [];
@@ -510,7 +527,11 @@ export function mapGraphqlToCatalogProduct(
   const isVariable = product.__typename === "VariableProduct";
   const variableProduct = isVariable ? product : null;
   const brand = isMotorcycle
-    ? resolveMotorcycleBrand(product.productCategories, product.attributes)
+    ? resolveMotorcycleBrand(
+        product.productCategories,
+        product.attributes,
+        product.name,
+      )
     : resolveEquipmentBrand(product.name, product.attributes);
   const equipmentMeta = isMotorcycle
     ? { gender: "unisex" as const, category: "motorcycles" as const }
@@ -616,7 +637,11 @@ export function mapGraphqlCardToCatalogProduct(
     ? (product as GraphQLVariableProduct)
     : null;
   const brand = isMotorcycle
-    ? resolveMotorcycleBrand(product.productCategories, product.attributes)
+    ? resolveMotorcycleBrand(
+        product.productCategories,
+        product.attributes,
+        localized.name,
+      )
     : resolveEquipmentBrand(localized.name, product.attributes);
   const equipmentMeta = isMotorcycle
     ? { gender: "unisex" as const, category: "motorcycles" as const }

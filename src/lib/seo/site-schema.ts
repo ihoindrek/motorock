@@ -7,7 +7,7 @@ import type { BlogPost } from "@/types/blog-post";
 
 const SOCIAL_PROFILES = [
   "https://www.instagram.com/motorock.eu",
-  "https://www.facebook.com/scramblers.caferacers",
+  "https://www.facebook.com/motorock.eu",
   "https://www.tiktok.com/@motorock909",
 ];
 

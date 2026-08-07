@@ -5,13 +5,17 @@ import {
   generateBrandCatalogMetadata,
   renderBrandCatalogPage,
 } from "@/lib/shop/brand-catalog-page";
+import {
+  EQUIPMENT_BRAND_SLUGS,
+  MOTORCYCLE_BRAND_SLUG_LIST,
+} from "@/lib/shop/brand-catalog-url";
 
 export const revalidate = 300;
 
-// No build-time prerender (empty list), but having generateStaticParams
-// opts the route into ISR so visited paths get cached on demand.
 export function generateStaticParams() {
-  return [];
+  return [...MOTORCYCLE_BRAND_SLUG_LIST, ...EQUIPMENT_BRAND_SLUGS].map(
+    (brand) => ({ brand }),
+  );
 }
 
 
