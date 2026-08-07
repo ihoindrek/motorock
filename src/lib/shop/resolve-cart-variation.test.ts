@@ -48,3 +48,8 @@ describe("resolveLineVariationId", () => {
       ),
     ).toBe(18204);
   });
+
+  it("returns undefined when multiple options exist without a match", () => {
+    expect(resolveLineVariationId(product, undefined, undefined)).toBeUndefined();
+  });
+});
