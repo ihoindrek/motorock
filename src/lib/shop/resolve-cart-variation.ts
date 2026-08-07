@@ -1,5 +1,5 @@
 import type { CatalogProduct } from "@/types/catalog-product";
-import { formatSizeLabel, isOneSizeLabel } from "@/lib/shop/size-label";
+import { formatSizeLabel, isOneSizeLabel, sizesMatch } from "@/lib/shop/size-label";
 
 export function resolveLineVariationId(
   product: Pick<CatalogProduct, "variationIds" | "sizes">,
@@ -16,9 +16,7 @@ export function resolveLineVariationId(
     const bySize =
       variationIds[normalizedSize] ??
       variationIds[size] ??
-      Object.entries(variationIds).find(([key]) =>
-        formatSizeLabel(key).toLowerCase() === normalizedSize.toLowerCase(),
-      )?.[1];
+      Object.entries(variationIds).find(([key]) => sizesMatch(key, size))?.[1];
 
     if (bySize) {
       return bySize;

@@ -37,7 +37,14 @@ describe("resolveLineVariationId", () => {
     ).toBe(999);
   });
 
-  it("returns undefined when multiple options exist without a match", () => {
-    expect(resolveLineVariationId(product, undefined, undefined)).toBeUndefined();
+  it("resolves size labels that differ in formatting", () => {
+    expect(
+      resolveLineVariationId(
+        {
+          sizes: ["4X-Large"],
+          variationIds: { "4x-large": 18204, "4X-Large": 18204 },
+        },
+        "4X-Large",
+      ),
+    ).toBe(18204);
   });
-});

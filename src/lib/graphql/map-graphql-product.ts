@@ -556,6 +556,9 @@ export function mapGraphqlToCatalogProduct(
 
   const colors = isVariable ? colorsFromVariableProduct(product) : [];
   const sizes = isVariable ? sizesFromVariableProduct(product) : ["One size"];
+  const variations = variableProduct
+    ? mapVariations(variableProduct)
+    : undefined;
 
   const price = parseGraphqlPrice(
     isVariable
@@ -598,6 +601,7 @@ export function mapGraphqlToCatalogProduct(
     category: equipmentMeta.category,
     sizes: sizes.length > 0 ? sizes : ["One size"],
     colors: colors.length > 0 ? colors : ["—"],
+    variations,
     inStock: product.stockStatus === "IN_STOCK",
     isNew: resolveMappedIsNew(product.metaData, product.date, options),
     showroomAvailable: isMotorcycle
