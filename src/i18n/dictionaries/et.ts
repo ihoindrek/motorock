@@ -272,8 +272,6 @@ export const et: Dictionary = {
     shippingInfoLink: "Tarneinfo",
     motorcycleShippingNote: "Mootorratta transport kokkuleppel.",
     shippingMethodsHeading: "Tarneviisid",
-    paymentTrustLabel: "Turvalised makseviisid",
-    paymentTrustCard: "Visa · MC",
   },
   catalog: {
     sort: "Sorteeri",
