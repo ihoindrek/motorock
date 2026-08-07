@@ -19,6 +19,10 @@ import {
 import { decodeHtmlEntities } from "@/lib/html/decode-html-entities";
 import { parseGraphqlPrice } from "@/lib/shop/parse-graphql-price";
 import { getCanonicalBrandName } from "@/lib/shop/brands";
+import {
+  MOTORCYCLE_BRAND_SLUGS,
+  resolveBrandFromProductAttributes,
+} from "@/lib/shop/resolve-product-brand";
 import { parseSpecsFromDescriptionHtml } from "@/lib/shop/parse-product-description";
 import {
   canonicalizeWcCategorySlug,
@@ -82,7 +86,7 @@ function isSizeAttributeName(name: string) {
   return SIZE_ATTR_NAMES.has(normalized) || normalized.includes("size");
 }
 
-const MOTORCYCLE_BRAND_SLUGS = new Set(["brixton", "mutt", "motron", "malaguti"]);
+const MOTORCYCLE_BRAND_SLUGS_SET = MOTORCYCLE_BRAND_SLUGS;
 
 function isMotorcycleProduct(categories: GraphQLProduct["productCategories"]) {
   const slugs = collectProductWcCategorySlugs(categories?.nodes ?? []);
@@ -90,7 +94,18 @@ function isMotorcycleProduct(categories: GraphQLProduct["productCategories"]) {
   return slugs.includes("motorcycles");
 }
 
-function resolveMotorcycleBrand(categories: GraphQLProduct["productCategories"]) {
+function resolveMotorcycleBrand(
+  categories: GraphQLProduct["productCategories"],
+  attributes?: GraphQLVariableProduct["attributes"] | null,
+) {
+  const fromBrandAttribute = resolveBrandFromProductAttributes(attributes, {
+    motorcycleOnly: true,
+  });
+
+  if (fromBrandAttribute) {
+    return fromBrandAttribute;
+  }
+
   const nodes = categories?.nodes ?? [];
   const brandCategory = nodes.find(
     (category) => category.parent?.node?.slug === "motorcycles",
@@ -105,6 +120,14 @@ function resolveEquipmentBrand(
   productName: string,
   attributes?: GraphQLVariableProduct["attributes"] | null,
 ) {
+  const fromBrandAttribute = resolveBrandFromProductAttributes(attributes, {
+    equipmentOnly: true,
+  });
+
+  if (fromBrandAttribute) {
+    return fromBrandAttribute;
+  }
+
   const brandAttribute = attributes?.nodes.find(
     (attribute) => normalizeAttributeName(attribute.name) === "brand",
   );
@@ -114,7 +137,7 @@ function resolveEquipmentBrand(
     const normalized = brandSlug.toLowerCase();
     const fromConfig = brands.find(
       (brand) =>
-        !MOTORCYCLE_BRAND_SLUGS.has(brand.slug) &&
+        !MOTORCYCLE_BRAND_SLUGS_SET.has(brand.slug) &&
         (brand.slug === normalized ||
           brand.slug.replace(/-/g, "") === normalized.replace(/-/g, "") ||
           brand.slug.startsWith(`${normalized}-`) ||
@@ -135,7 +158,7 @@ function resolveEquipmentBrand(
   const lower = productName.toLowerCase();
 
   for (const brand of brands) {
-    if (MOTORCYCLE_BRAND_SLUGS.has(brand.slug)) {
+    if (MOTORCYCLE_BRAND_SLUGS_SET.has(brand.slug)) {
       continue;
     }
 
@@ -366,7 +389,10 @@ export function mapGraphqlToMotorcycleProduct(
   locale: Locale = "en",
   options?: MapGraphqlProductOptions,
 ): MotorcycleProduct {
-  const brand = resolveMotorcycleBrand(product.productCategories);
+  const brand = resolveMotorcycleBrand(
+    product.productCategories,
+    isVariable ? product.attributes : null,
+  );
   const shortHtml = product.shortDescription ?? "";
   const longHtml = product.description ?? "";
   const contentLocale = (() => {
@@ -484,7 +510,7 @@ export function mapGraphqlToCatalogProduct(
   const isVariable = product.__typename === "VariableProduct";
   const variableProduct = isVariable ? product : null;
   const brand = isMotorcycle
-    ? resolveMotorcycleBrand(product.productCategories)
+    ? resolveMotorcycleBrand(product.productCategories, product.attributes)
     : resolveEquipmentBrand(product.name, product.attributes);
   const equipmentMeta = isMotorcycle
     ? { gender: "unisex" as const, category: "motorcycles" as const }
@@ -590,7 +616,7 @@ export function mapGraphqlCardToCatalogProduct(
     ? (product as GraphQLVariableProduct)
     : null;
   const brand = isMotorcycle
-    ? resolveMotorcycleBrand(product.productCategories)
+    ? resolveMotorcycleBrand(product.productCategories, product.attributes)
     : resolveEquipmentBrand(localized.name, product.attributes);
   const equipmentMeta = isMotorcycle
     ? { gender: "unisex" as const, category: "motorcycles" as const }

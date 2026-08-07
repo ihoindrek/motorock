@@ -19,7 +19,7 @@ import {
 import { normalizeUrlPath } from "@/lib/seo/normalize-url-path";
 import { PRODUCT_SLUG_PATH_TEMPLATES } from "@/lib/shop/product-url";
 import { getStorefrontUrl } from "@/lib/storefront/url";
-import { EQUIPMENT_BRAND_SLUGS } from "@/lib/shop/brand-catalog-url";
+import { EQUIPMENT_BRAND_SLUGS, MOTORCYCLE_BRAND_SLUG_LIST } from "@/lib/shop/brand-catalog-url";
 import { buildBrandCatalogHref } from "@/lib/shop/brand-url";
 import { buildEquipmentCategoryHrefFromNodes } from "@/lib/shop/equipment-route";
 import { buildEquipmentHubHref } from "@/lib/shop/category-url";
@@ -270,7 +270,7 @@ export async function buildStaticSitemapEntries(): Promise<MetadataRoute.Sitemap
     entries.push(sitemapEntry(path));
   }
 
-  for (const brand of EQUIPMENT_BRAND_SLUGS) {
+  for (const brand of [...MOTORCYCLE_BRAND_SLUG_LIST, ...EQUIPMENT_BRAND_SLUGS]) {
     entries.push(
       sitemapEntry(buildBrandCatalogHref("en", brand), {
         pathAlternates: {

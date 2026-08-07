@@ -1,5 +1,6 @@
 import type { Locale } from "@/i18n/config";
 import { buildEquipmentHubHref } from "@/lib/shop/category-url";
+import { buildBrandCatalogHref } from "@/lib/shop/brand-url";
 import { LEGACY_TOP_LEVEL_CATEGORY_REDIRECTS } from "@/lib/shop/equipment-legacy-redirects";
 import {
   canonicalizeWcCategorySlug,
@@ -139,12 +140,6 @@ function buildSingleWcCategoryRedirects() {
     kiivrid: "/shop/equipment/helmets",
   };
 
-  for (const brandCategory of Object.keys(MOTORCYCLE_BRAND_CATEGORY_SLUGS)) {
-    // Consolidate legacy WC brand archives on the main motorcycles hub.
-    // Brand preselection uses ?brand= in internal links only.
-    redirects[brandCategory] = "/shop/motorcycles";
-  }
-
   for (const target of Object.values(LEGACY_TOP_LEVEL_CATEGORY_REDIRECTS)) {
     if (!target) {
       continue;
@@ -166,7 +161,10 @@ function buildSingleWcCategoryRedirects() {
   return redirects;
 }
 
-function resolveProductCategoryRedirect(pathname: string): string | null {
+function resolveProductCategoryRedirect(
+  pathname: string,
+  locale: Locale,
+): string | null {
   if (!pathname.startsWith("/product-category/")) {
     return null;
   }
@@ -193,7 +191,7 @@ function resolveProductCategoryRedirect(pathname: string): string | null {
 
     const brand = MOTORCYCLE_BRAND_CATEGORY_SLUGS[segment];
     if (brand) {
-      return "/shop/motorcycles";
+      return buildBrandCatalogHref(locale, brand);
     }
   }
 
@@ -312,7 +310,10 @@ export function resolveWordPressLegacyRedirect(
     return buildEquipmentHubHref("et");
   }
 
-  const productCategoryTarget = resolveProductCategoryRedirect(normalized);
+  const productCategoryTarget = resolveProductCategoryRedirect(
+    normalized,
+    locale,
+  );
   if (productCategoryTarget) {
     return redirectUnlessSame(normalized, productCategoryTarget);
   }

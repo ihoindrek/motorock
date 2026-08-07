@@ -163,8 +163,21 @@ function motorock_backfill_resolve_brand_slug( WC_Product $product ): ?string {
 	);
 
 	if ( is_array( $category_slugs ) ) {
-		if ( in_array( 'mutt-2', $category_slugs, true ) || in_array( 'mutt', $category_slugs, true ) ) {
-			return 'mutt';
+		$motorcycle_brand_map = array(
+			'brixton-2'  => 'brixton',
+			'mutt-2'     => 'mutt',
+			'motron-2'   => 'motron',
+			'malaguti-2' => 'malaguti',
+			'brixton'    => 'brixton',
+			'mutt'       => 'mutt',
+			'motron'     => 'motron',
+			'malaguti'   => 'malaguti',
+		);
+
+		foreach ( $motorcycle_brand_map as $category_slug => $brand_slug ) {
+			if ( in_array( $category_slug, $category_slugs, true ) ) {
+				return $brand_slug;
+			}
 		}
 	}
 

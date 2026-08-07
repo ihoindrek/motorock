@@ -5,13 +5,13 @@ import {
   buildBrandCatalogHref,
 } from "@/lib/shop/brand-url";
 import type { CategoryRoute } from "@/lib/shop/category";
+import { getBrandBySlug } from "@/lib/shop/brands";
+import {
+  isMotorcycleBrandSlug,
+  MOTORCYCLE_BRAND_SLUGS,
+} from "@/lib/shop/resolve-product-brand";
 
-const MOTORCYCLE_BRAND_SLUGS = new Set([
-  "brixton",
-  "mutt",
-  "motron",
-  "malaguti",
-]);
+export const MOTORCYCLE_BRAND_SLUG_LIST = [...MOTORCYCLE_BRAND_SLUGS];
 
 export const EQUIPMENT_BRAND_SLUGS = [
   "pando-moto",
@@ -36,8 +36,39 @@ export const EQUIPMENT_BRAND_NAMES: Record<
 
 export { buildBrandCatalogHref } from "@/lib/shop/brand-url";
 
+export function resolveBrandNameFromSlug(slug: string) {
+  return getBrandBySlug(slug)?.name ?? null;
+}
+
 export function resolveEquipmentBrandName(slug: string) {
   return EQUIPMENT_BRAND_NAMES[slug as (typeof EQUIPMENT_BRAND_SLUGS)[number]] ?? null;
+}
+
+export function buildMotorcycleBrandRoute(
+  locale: Locale,
+  slug: string,
+  dict: Dictionary,
+): CategoryRoute | null {
+  const brandName = resolveBrandNameFromSlug(slug);
+
+  if (!brandName || !isMotorcycleBrandSlug(slug)) {
+    return null;
+  }
+
+  return {
+    title: dict.catalog.brandMotorcyclesTitle.replace("{brand}", brandName),
+    description: dict.catalog.brandMotorcyclesDescription.replace(
+      "{brand}",
+      brandName,
+    ),
+    breadcrumbs: [
+      { label: dict.common.home, href: "/" },
+      { label: dict.nav.motorcycles, href: "/shop/motorcycles" },
+      { label: brandName, href: buildBrandCatalogHref(locale, slug) },
+    ],
+    brand: brandName,
+    category: "motorcycles",
+  };
 }
 
 export function buildEquipmentBrandRoute(
@@ -65,11 +96,10 @@ export function buildEquipmentBrandRoute(
 
 /** Where a brand logo or footer link should land in the storefront catalog. */
 export function getBrandCatalogHref(slug: string, locale: Locale = "en"): string {
-  if (MOTORCYCLE_BRAND_SLUGS.has(slug)) {
-    return `/shop/motorcycles?brand=${slug}`;
-  }
-
-  if (EQUIPMENT_BRAND_SLUGS.includes(slug as (typeof EQUIPMENT_BRAND_SLUGS)[number])) {
+  if (
+    isMotorcycleBrandSlug(slug) ||
+    EQUIPMENT_BRAND_SLUGS.includes(slug as (typeof EQUIPMENT_BRAND_SLUGS)[number])
+  ) {
     return buildBrandCatalogHref(locale, slug);
   }
 

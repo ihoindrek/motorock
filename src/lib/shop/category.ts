@@ -4,6 +4,7 @@ import type {
   ProductGender,
 } from "@/types/catalog-product";
 import type { Dictionary } from "@/i18n/dictionaries/en";
+import type { Locale } from "@/i18n/config";
 import {
   isGenderGearLeafRoute,
   mapWcSlugToCategory,
@@ -14,6 +15,8 @@ import {
   productMatchesWcCategoryRoute,
   productNameIndicatesGender,
 } from "@/lib/shop/wc-categories";
+import { buildBrandCatalogHref } from "@/lib/shop/brand-url";
+import { getBrandBySlug } from "@/lib/shop/brands";
 
 export type EquipmentCatalogWhere = {
   category?: string;
@@ -71,6 +74,7 @@ export const motorcyclesCatalogRoute: CategoryRoute = {
 export function buildMotorcyclesCatalogRoute(
   dict: Dictionary,
   brand?: string,
+  locale: Locale = "en",
 ): CategoryRoute {
   const base: CategoryRoute = {
     title: dict.pages.motorcyclesTitle,
@@ -87,6 +91,7 @@ export function buildMotorcyclesCatalogRoute(
   }
 
   const brandSlug = brand.toLowerCase().replace(/\s+/g, "-");
+  const brandConfig = getBrandBySlug(brandSlug);
 
   return {
     ...base,
@@ -100,7 +105,9 @@ export function buildMotorcyclesCatalogRoute(
       ...base.breadcrumbs,
       {
         label: brand,
-        href: `/shop/motorcycles?brand=${brandSlug}`,
+        href: brandConfig
+          ? buildBrandCatalogHref(locale, brandConfig.slug)
+          : `/shop/motorcycles?brand=${brandSlug}`,
       },
     ],
   };
