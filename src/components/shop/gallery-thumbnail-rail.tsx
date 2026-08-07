@@ -428,7 +428,6 @@ export function CraftGalleryThumbButton({
   onSelect,
   onOpenLightbox,
   imageBackground = "surface",
-  variant = "scene",
 }: {
   src: string;
   index: number;
@@ -437,9 +436,7 @@ export function CraftGalleryThumbButton({
   onSelect: () => void;
   onOpenLightbox: () => void;
   imageBackground?: "surface" | "moto" | "detail";
-  variant?: "product" | "scene";
 }) {
-  const isProduct = variant === "product";
   const imageBgClass =
     imageBackground === "moto"
       ? "bg-moto"
@@ -468,11 +465,7 @@ export function CraftGalleryThumbButton({
           alt=""
           fill
           sizes="96px"
-          className={
-            isProduct
-              ? "object-contain object-center p-1.5 mix-blend-multiply"
-              : "object-cover object-center"
-          }
+          className="object-cover object-center"
         />
       </span>
     </button>

@@ -293,7 +293,7 @@ export function ProductImageGallery({
     return null;
   }
 
-  if (layout === "craft") {
+  if (!isProduct && layout === "craft") {
     const craftThumbRail = (orientation: "vertical" | "horizontal") => (
       <GalleryThumbnailRail
         items={images}
@@ -314,7 +314,6 @@ export function ProductImageGallery({
             total={images.length}
             selected={index === resolvedIndex}
             imageBackground={imageBackground}
-            variant={variant}
             onSelect={select}
             onOpenLightbox={() => {
               setActiveIndex(index);
@@ -355,25 +354,14 @@ export function ProductImageGallery({
                         : "bg-surface"
                   }`}
                 >
-                  {isProduct ? (
-                    <Image
-                      src={activeSrc}
-                      alt={alt}
-                      fill
-                      priority
-                      sizes="(max-width: 1024px) 100vw, 42vw"
-                      className="object-contain object-center p-[3%] mix-blend-multiply transition-transform duration-500 group-hover/openable:scale-[1.01] sm:p-[4%]"
-                    />
-                  ) : (
-                    <Image
-                      src={activeSrc}
-                      alt={alt}
-                      fill
-                      priority
-                      sizes="(max-width: 1024px) 100vw, 42vw"
-                      className="object-cover object-center transition-transform duration-500 group-hover/openable:scale-[1.01]"
-                    />
-                  )}
+                  <Image
+                    src={activeSrc}
+                    alt={alt}
+                    fill
+                    priority
+                    sizes="(max-width: 1024px) 100vw, 42vw"
+                    className="object-cover object-center transition-transform duration-500 group-hover/openable:scale-[1.01]"
+                  />
                   {images.length > 1 ? (
                     <span className="pointer-events-none absolute left-3 top-3 z-10 font-body text-[10px] font-bold tabular-nums tracking-aggressive text-ink">
                       {String(resolvedIndex + 1).padStart(2, "0")}
