@@ -13,6 +13,10 @@ import {
 import { resolveEquipmentPathPrefixRedirect } from "@/lib/shop/category-url";
 import { resolveBrandPathPrefixRedirect, resolveLegacyBrandSlugRedirect } from "@/lib/shop/brand-url";
 import { resolveProductPathPrefixRedirect } from "@/lib/shop/product-url";
+import {
+  hasTrailingSlash,
+  normalizeUrlPath,
+} from "@/lib/seo/normalize-url-path";
 
 function applyLocalePathRedirects(
   request: NextRequest,
@@ -102,6 +106,12 @@ export function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
+  if (hasTrailingSlash(pathname)) {
+    const redirectUrl = request.nextUrl.clone();
+    redirectUrl.pathname = normalizeUrlPath(pathname);
+    return NextResponse.redirect(redirectUrl, 308);
+  }
+
   const segment = pathname.split("/").filter(Boolean)[0];
 
   if (isLocale(segment)) {
@@ -136,7 +146,7 @@ export function proxy(request: NextRequest) {
   redirectUrl.pathname =
     pathname === "/" ? `/${effectiveLocale}` : `/${effectiveLocale}${pathname}`;
 
-  const response = NextResponse.redirect(redirectUrl);
+  const response = NextResponse.redirect(redirectUrl, 308);
   response.cookies.set(localeCookieName, effectiveLocale, {
     path: "/",
     maxAge: 60 * 60 * 24 * 365,

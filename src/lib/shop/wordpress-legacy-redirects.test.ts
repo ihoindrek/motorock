@@ -17,7 +17,7 @@ describe("resolveWordPressLegacyRedirect", () => {
     ).toBe("/shop/equipment/for-men/jackets-and-tags");
     expect(
       resolveWordPressLegacyRedirect("/product-category/brixton-2", "en"),
-    ).toBe("/shop/motorcycles?brand=brixton");
+    ).toBe("/shop/motorcycles");
   });
 
   it("maps journal URLs to blog", () => {

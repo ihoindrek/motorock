@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import type { Locale } from "@/i18n/config";
 import { locales } from "@/i18n/config";
 import { localizedHref } from "@/i18n/paths";
+import { normalizeUrlPath } from "@/lib/seo/normalize-url-path";
 import { getStorefrontUrl } from "@/lib/storefront/url";
 import { isSiteIndexable } from "@/lib/site-indexing";
 
@@ -37,7 +38,7 @@ export const DEFAULT_OG_IMAGE = {
 
 function absoluteUrl(path: string) {
   const base = getStorefrontUrl();
-  const normalized = path.startsWith("/") ? path : `/${path}`;
+  const normalized = normalizeUrlPath(path.startsWith("/") ? path : `/${path}`);
   return `${base}${normalized}`;
 }
 

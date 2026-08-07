@@ -16,6 +16,7 @@ import {
   buildLanguageAlternates,
   resolveLocalizedPath,
 } from "@/lib/seo/metadata";
+import { normalizeUrlPath } from "@/lib/seo/normalize-url-path";
 import { PRODUCT_SLUG_PATH_TEMPLATES } from "@/lib/shop/product-url";
 import { getStorefrontUrl } from "@/lib/storefront/url";
 import { EQUIPMENT_BRAND_SLUGS } from "@/lib/shop/brand-catalog-url";
@@ -55,7 +56,7 @@ type CatalogPageResponse = {
 };
 
 function absoluteUrl(path: string) {
-  return `${getStorefrontUrl()}${path}`;
+  return `${getStorefrontUrl()}${normalizeUrlPath(path)}`;
 }
 
 function buildPathAlternates(

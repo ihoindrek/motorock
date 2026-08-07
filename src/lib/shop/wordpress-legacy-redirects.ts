@@ -139,10 +139,10 @@ function buildSingleWcCategoryRedirects() {
     kiivrid: "/shop/equipment/helmets",
   };
 
-  for (const [brandCategory, brandSlug] of Object.entries(
-    MOTORCYCLE_BRAND_CATEGORY_SLUGS,
-  )) {
-    redirects[brandCategory] = `/shop/motorcycles?brand=${brandSlug}`;
+  for (const brandCategory of Object.keys(MOTORCYCLE_BRAND_CATEGORY_SLUGS)) {
+    // Consolidate legacy WC brand archives on the main motorcycles hub.
+    // Brand preselection uses ?brand= in internal links only.
+    redirects[brandCategory] = "/shop/motorcycles";
   }
 
   for (const target of Object.values(LEGACY_TOP_LEVEL_CATEGORY_REDIRECTS)) {
@@ -193,7 +193,7 @@ function resolveProductCategoryRedirect(pathname: string): string | null {
 
     const brand = MOTORCYCLE_BRAND_CATEGORY_SLUGS[segment];
     if (brand) {
-      return `/shop/motorcycles?brand=${brand}`;
+      return "/shop/motorcycles";
     }
   }
 
