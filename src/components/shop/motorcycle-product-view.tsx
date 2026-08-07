@@ -13,6 +13,7 @@ import {
 import { BrandLogo } from "@/components/shop/brand-logo";
 import { ShareButton } from "@/components/shop/share-button";
 import { FinancingPriceTeaser } from "@/components/shop/financing-price-teaser";
+import { PaymentTrustBadges } from "@/components/shop/payment-trust-badges";
 import {
   MotorcycleActionModals,
   type MotorcycleModalAction,
@@ -248,6 +249,8 @@ function RichMotorcycleProductView({
                 variant="hero"
                 className="mt-8"
               />
+
+              <PaymentTrustBadges className="mt-4" />
 
               {sync.inStock ? (
                 showroomAvailable ? (

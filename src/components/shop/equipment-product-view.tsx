@@ -15,6 +15,7 @@ import { formatSizeButtonParts, formatSizeLabel, isCompoundSizeLabel } from "@/l
 import { sortProductSizes } from "@/lib/shop/sort-sizes";
 import { BrandLogo } from "@/components/shop/brand-logo";
 import { FinancingPriceTeaser } from "@/components/shop/financing-price-teaser";
+import { PaymentTrustBadges } from "@/components/shop/payment-trust-badges";
 import { ProductImageGallery } from "@/components/shop/product-image-gallery";
 import { ProductSpecs } from "@/components/shop/product-specs";
 import { RecentlyViewedProducts } from "@/components/shop/recently-viewed-products";
@@ -344,12 +345,13 @@ export function EquipmentProductView({
             )}
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-3">
             <FinancingPriceTeaser
               price={activePrice}
               variant="compact"
               priceVariant="xl"
             />
+            <PaymentTrustBadges />
           </div>
 
           {showColorPicker ? (
