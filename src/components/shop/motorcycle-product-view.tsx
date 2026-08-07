@@ -144,6 +144,10 @@ function RichMotorcycleProductView({
   const activeVariation = sync.variations.find(
     (variation) => variation.color === color,
   );
+  const activePrice =
+    typeof activeVariation?.price === "number" && activeVariation.price > 0
+      ? activeVariation.price
+      : sync.price;
   const activeColorImage =
     activeVariation?.image ??
     colorSwatches.find((swatch) => swatch.label === color)?.image;
@@ -240,7 +244,7 @@ function RichMotorcycleProductView({
               ) : null}
 
               <FinancingPriceTeaser
-                price={sync.price}
+                price={activePrice}
                 variant="hero"
                 className="mt-8"
               />
@@ -496,7 +500,7 @@ function RichMotorcycleProductView({
       <MotorcycleCtaBar
         name={sync.name}
         color={color}
-        price={sync.price}
+        price={activePrice}
         inStock={sync.inStock}
         showroomAvailable={showroomAvailable}
         onPrimaryClick={openPrimaryAction}

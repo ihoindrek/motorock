@@ -10,6 +10,7 @@ import { localizedHref } from "@/i18n/paths";
 import { trackViewItem } from "@/lib/analytics";
 import { recordRecentlyViewed } from "@/lib/shop/recently-viewed";
 import { resolveLineVariationId } from "@/lib/shop/resolve-cart-variation";
+import { resolveActiveProductPrice } from "@/lib/shop/resolve-product-variation";
 import { formatSizeButtonParts, formatSizeLabel, isCompoundSizeLabel } from "@/lib/shop/size-label";
 import { sortProductSizes } from "@/lib/shop/sort-sizes";
 import { BrandLogo } from "@/components/shop/brand-logo";
@@ -190,6 +191,8 @@ export function EquipmentProductView({
     return () => observer.disconnect();
   }, [product.slug]);
 
+  const selectedColor = showColorPicker ? color : undefined;
+
   const activeColorImage = useMemo(() => {
     if (!showColorPicker || !color) {
       return product.image;
@@ -200,6 +203,16 @@ export function EquipmentProductView({
         ?.image ?? product.image
     );
   }, [color, product.image, product.variations, showColorPicker]);
+
+  const activeVariationId = useMemo(
+    () => resolveLineVariationId(product, size, selectedColor),
+    [product, selectedColor, size],
+  );
+
+  const activePrice = useMemo(
+    () => resolveActiveProductPrice(product, size, selectedColor),
+    [product, selectedColor, size],
+  );
 
   const galleryImages = useMemo(() => {
     const sources = [
@@ -252,14 +265,14 @@ export function EquipmentProductView({
   const cartPayload = {
     slug: product.slug,
     name: product.name,
-    price: product.price,
+    price: activePrice,
     image: activeColorImage,
     brand: product.brand,
     type: product.type,
     size,
-    color: showColorPicker ? color : undefined,
+    color: selectedColor,
     productId: product.databaseId,
-    variationId: resolveLineVariationId(product, size, showColorPicker ? color : undefined),
+    variationId: activeVariationId,
   };
 
   const handleAdd = () => {
@@ -332,7 +345,7 @@ export function EquipmentProductView({
 
           <div className="space-y-2">
             <FinancingPriceTeaser
-              price={product.price}
+              price={activePrice}
               variant="compact"
               priceVariant="xl"
             />
@@ -431,7 +444,7 @@ export function EquipmentProductView({
                 item={{
                   slug: product.slug,
                   name: product.name,
-                  price: product.price,
+                  price: activePrice,
                   image: activeColorImage,
                   brand: product.brand,
                   type: product.type,
@@ -574,7 +587,7 @@ export function EquipmentProductView({
             >
               <ProductShippingReturnsPanel
                 productId={product.databaseId}
-                variationId={firstVariationId(product)}
+                variationId={activeVariationId ?? firstVariationId(product)}
                 defaultCountry={defaultShippingCountry}
                 active={activeAccordion === "shipping"}
               />
@@ -603,7 +616,7 @@ export function EquipmentProductView({
 
     <EquipmentStickyAtc
       name={product.name}
-      price={product.price}
+      price={activePrice}
       inStock={product.inStock}
       added={added}
       visible={stickyAtcVisible}
