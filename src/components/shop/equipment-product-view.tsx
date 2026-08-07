@@ -463,7 +463,7 @@ export function EquipmentProductView({
             <ProductImageGallery
               images={galleryImages}
               alt={product.name}
-              variant="scene"
+              variant="product"
               theme="light"
               layout="craft"
               imageBackground="detail"
