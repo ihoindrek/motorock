@@ -32,15 +32,18 @@ type TextRevealFaqsProps = {
   };
 };
 
+const answerTextClassName =
+  "text-sm leading-relaxed text-pretty text-ink/75 sm:text-base";
+
+function splitAnswerTokens(text: string) {
+  return text.match(/\S+|\s+/g) ?? [text];
+}
+
 export function BlurredStagger({ text }: { text: string }) {
   const shouldReduceMotion = useReducedMotion();
 
   if (shouldReduceMotion) {
-    return (
-      <p className="text-sm leading-relaxed break-words whitespace-normal text-ink/75 sm:text-base">
-        {text}
-      </p>
-    );
+    return <p className={answerTextClassName}>{text}</p>;
   }
 
   const container = {
@@ -53,7 +56,7 @@ export function BlurredStagger({ text }: { text: string }) {
     },
   };
 
-  const letterAnimation = {
+  const tokenAnimation = {
     hidden: {
       opacity: 0,
       filter: "blur(10px)",
@@ -65,23 +68,29 @@ export function BlurredStagger({ text }: { text: string }) {
   };
 
   return (
-    <div className="w-full">
+    <div className="w-full min-w-0">
       <motion.p
         variants={container}
         initial="hidden"
         animate="show"
-        className="text-sm leading-relaxed break-words whitespace-normal text-ink/75 sm:text-base"
+        className={answerTextClassName}
       >
-        {text.split("").map((char, index) => (
-          <motion.span
-            key={`${char}-${index}`}
-            variants={letterAnimation}
-            transition={{ duration: 0.3 }}
-            className="inline-block"
-          >
-            {char === " " ? "\u00A0" : char}
-          </motion.span>
-        ))}
+        {splitAnswerTokens(text).map((token, index) => {
+          if (/^\s+$/.test(token)) {
+            return token;
+          }
+
+          return (
+            <motion.span
+              key={`${token}-${index}`}
+              variants={tokenAnimation}
+              transition={{ duration: 0.3 }}
+              className="inline-block whitespace-nowrap"
+            >
+              {token}
+            </motion.span>
+          );
+        })}
       </motion.p>
     </div>
   );
@@ -202,7 +211,7 @@ export function TextRevealFaqs({
         />
       </div>
 
-      <div className="md:col-span-3">
+      <div className="min-w-0 md:col-span-3">
         <FaqAccordion items={items} />
       </div>
 

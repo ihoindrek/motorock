@@ -1,14 +1,12 @@
 import type { ProductSpec } from "@/types/catalog-product";
+import { htmlToPlainText } from "@/lib/shop/product-lead-copy";
 
 function stripHtml(html: string) {
-  return html
-    .replace(/<br\s*\/?>/gi, "\n")
-    .replace(/<\/p>/gi, "\n")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/\s+/g, " ")
-    .trim();
+  return htmlToPlainText(
+    html
+      .replace(/<br\s*\/?>/gi, "\n")
+      .replace(/<\/p>/gi, "\n"),
+  );
 }
 
 function slugifyId(label: string) {
@@ -54,4 +52,18 @@ export function excerptFromDescription(html: string, maxLength = 160) {
 
 export function hasRichHtmlDescription(html: string) {
   return /<(table|ul|ol|h[2-6])\b/i.test(html);
+}
+
+/** Prefer long description; fall back to short when long is empty (common in WC admin). */
+export function resolveProductDescriptionHtml(
+  longHtml: string | null | undefined,
+  shortHtml?: string | null | undefined,
+): string | undefined {
+  const long = longHtml?.trim();
+  if (long) {
+    return long;
+  }
+
+  const short = shortHtml?.trim();
+  return short || undefined;
 }

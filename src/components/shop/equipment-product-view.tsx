@@ -27,7 +27,7 @@ import { WishlistButton } from "@/components/shop/wishlist-button";
 import { ShareButton } from "@/components/shop/share-button";
 import type { SizeGuide } from "@/types/size-guide";
 import { ProductShippingReturnsPanel } from "@/components/shop/product-shipping-returns-panel";
-import { ProductFaqSection } from "@/components/shop/product-faq-section";
+import { ProductDescriptionHtml } from "@/components/shop/product-description-html";
 import {
   buildProductColorOptions,
   hasMultipleColorChoices,
@@ -508,12 +508,7 @@ export function EquipmentProductView({
                 >
                   <div ref={descriptionBodyRef}>
                     {product.descriptionHtml ? (
-                      <div
-                        className="product-description text-base leading-relaxed text-ink/70 [&_p]:mb-3"
-                        dangerouslySetInnerHTML={{
-                          __html: product.descriptionHtml,
-                        }}
-                      />
+                      <ProductDescriptionHtml html={product.descriptionHtml} />
                     ) : (
                       <p className="text-base leading-relaxed text-ink/70">
                         {product.description}

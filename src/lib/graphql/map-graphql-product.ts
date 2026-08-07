@@ -16,6 +16,7 @@ import {
   resolveMotorcycleCatalogCopy,
   splitCatalogImages,
 } from "@/lib/shop/parse-brixton-html";
+import { resolveProductLeadCopy, htmlToPlainText } from "@/lib/shop/product-lead-copy";
 import { decodeHtmlEntities } from "@/lib/html/decode-html-entities";
 import { parseGraphqlPrice } from "@/lib/shop/parse-graphql-price";
 import { getCanonicalBrandName } from "@/lib/shop/brands";
@@ -24,7 +25,7 @@ import {
   resolveBrandFromProductAttributes,
   resolveMotorcycleBrandFromProductName,
 } from "@/lib/shop/resolve-product-brand";
-import { parseSpecsFromDescriptionHtml } from "@/lib/shop/parse-product-description";
+import { parseSpecsFromDescriptionHtml, resolveProductDescriptionHtml } from "@/lib/shop/parse-product-description";
 import {
   canonicalizeWcCategorySlug,
   collectProductWcCategorySlugs,
@@ -244,10 +245,11 @@ function resolveEquipmentMeta(
 }
 
 function displayName(fullName: string, brand: string) {
+  const decoded = decodeHtmlEntities(fullName);
   const prefix = `${brand} `;
-  return fullName.startsWith(prefix)
-    ? fullName.slice(prefix.length)
-    : fullName;
+  return decoded.startsWith(prefix)
+    ? decoded.slice(prefix.length)
+    : decoded;
 }
 
 function colorsFromVariableProduct(product: GraphQLVariableProduct) {
@@ -481,13 +483,11 @@ export function mapGraphqlToMotorcycleProduct(
       brand,
       price,
       shortDescription:
-        parsedShort.tagline ??
-        (decodeHtmlEntities(
-          shortHtml
-            .replace(/<[^>]+>/g, " ")
-            .replace(/\s+/g, " ")
-            .trim(),
-        ).slice(0, 180) || ""),
+        resolveProductLeadCopy(
+          parsedShort.tagline,
+          shortHtml,
+          htmlToPlainText(longHtml),
+        ) ?? "",
       descriptionHtml,
       images: productImages,
       colors,
@@ -567,9 +567,17 @@ export function mapGraphqlToCatalogProduct(
   );
 
   const parsedShort = parseMotorcycleShortDescription(product.shortDescription ?? "");
-  const descriptionHtml = product.description ?? undefined;
-  const plainDescription =
-    descriptionHtml?.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim() ?? "";
+  const shortHtml = product.shortDescription ?? "";
+  const descriptionHtml = resolveProductDescriptionHtml(
+    product.description,
+    shortHtml,
+  );
+  const plainDescription = htmlToPlainText(descriptionHtml ?? "");
+  const leadCopy = resolveProductLeadCopy(
+    parsedShort.tagline,
+    shortHtml,
+    plainDescription,
+  );
   const equipmentSpecs =
     !isMotorcycle && descriptionHtml
       ? parseSpecsFromDescriptionHtml(descriptionHtml)
@@ -581,7 +589,7 @@ export function mapGraphqlToCatalogProduct(
     variationIds: variableProduct
       ? variationIdsFromProduct(variableProduct)
       : undefined,
-    name: isMotorcycle ? displayName(product.name, brand) : product.name,
+    name: isMotorcycle ? displayName(product.name, brand) : decodeHtmlEntities(product.name),
     brand,
     price,
     sku: product.sku ?? product.slug,
@@ -589,9 +597,7 @@ export function mapGraphqlToCatalogProduct(
     lifestyleImage: lifestyleImages[0] ?? productImages[0] ?? featured,
     gallery: productImages.length > 1 ? productImages : undefined,
     lifestyleImages: lifestyleImages.length > 0 ? lifestyleImages : undefined,
-    shortDescription:
-      parsedShort.tagline ??
-      (plainDescription.slice(0, 180) || undefined),
+    shortDescription: leadCopy,
     descriptionHtml,
     description: plainDescription,
     type: isMotorcycle ? "motorcycle" : "equipment",
@@ -608,7 +614,7 @@ export function mapGraphqlToCatalogProduct(
       ? resolveMappedShowroomAvailable(product.slug, product.metaData, options)
       : undefined,
     headline: parsedShort.tagline,
-    tagline: parsedShort.tagline ?? plainDescription.slice(0, 120),
+    tagline: leadCopy,
     specs: equipmentSpecs,
     features: parsedShort.features,
     backHref: isMotorcycle
@@ -676,7 +682,7 @@ export function mapGraphqlCardToCatalogProduct(
     variationIds: variableProduct
       ? variationIdsFromProduct(variableProduct)
       : undefined,
-    name: isMotorcycle ? displayName(localized.name, brand) : localized.name,
+    name: isMotorcycle ? displayName(localized.name, brand) : decodeHtmlEntities(localized.name),
     brand,
     price,
     sku: product.sku ?? localized.slug,

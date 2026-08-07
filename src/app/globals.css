@@ -219,6 +219,53 @@
   @apply mb-4 last:mb-0;
 }
 
+.product-description ul {
+  @apply my-5 list-none space-y-2.5 p-0;
+}
+
+.product-description ol {
+  @apply my-5 list-decimal space-y-2.5 pl-5;
+}
+
+.product-description ul > li {
+  @apply relative pl-5 leading-relaxed text-ink/70;
+}
+
+.product-description ol > li {
+  @apply leading-relaxed text-ink/70;
+}
+
+.product-description ul > li::before {
+  content: "";
+  @apply absolute left-0 top-[0.65em] h-1.5 w-1.5 bg-accent;
+}
+
+.product-description h2,
+.product-description h3,
+.product-description h4 {
+  @apply mb-3 mt-8 font-body font-semibold normal-case tracking-normal text-ink first:mt-0;
+}
+
+.product-description h2 {
+  @apply text-xl sm:text-2xl;
+}
+
+.product-description h3 {
+  @apply text-lg sm:text-xl;
+}
+
+.product-description h4 {
+  @apply text-base sm:text-lg;
+}
+
+.product-description strong {
+  @apply font-semibold text-ink;
+}
+
+.product-description a {
+  @apply text-ink underline underline-offset-2 transition-colors hover:text-accent;
+}
+
 .product-description--marketing p:first-of-type {
   @apply text-lg font-semibold leading-[1.65] text-ink sm:text-xl;
 }

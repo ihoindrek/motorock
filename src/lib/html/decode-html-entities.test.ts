@@ -12,6 +12,18 @@ describe("decodeHtmlEntities", () => {
   it("decodes named entities", () => {
     expect(decodeHtmlEntities("Tom&apos;s &amp; Co")).toBe("Tom's & Co");
   });
+
+  it("decodes WordPress curly quote entities to straight quotes", () => {
+    expect(decodeHtmlEntities('Nahkjope &#8220;Botany&#8221; on osa.')).toBe(
+      'Nahkjope "Botany" on osa.',
+    );
+  });
+
+  it("decodes double-encoded entities", () => {
+    expect(decodeHtmlEntities("Nahkjope &amp;#8220;Botany&amp;#8221;")).toBe(
+      'Nahkjope "Botany"',
+    );
+  });
 });
 
 describe("parseMotorcycleShortDescription", () => {
