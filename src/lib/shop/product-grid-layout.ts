@@ -5,8 +5,29 @@ export const PRODUCT_CAROUSEL_SPACE = {
   lg: 20,
 } as const;
 
-export function catalogProductGridClassName(columns: 3 | 4 = 4) {
+type CatalogProductGridOptions = {
+  /** Desktop column count when a motorcycle catalog shows 1–2 results. */
+  sparseDesktopCount?: number;
+};
+
+export function catalogProductGridClassName(
+  columns: 3 | 4 = 4,
+  options?: CatalogProductGridOptions,
+) {
   const gap = "gap-x-3 gap-y-5 lg:gap-x-4";
+  const sparseCount = options?.sparseDesktopCount;
+
+  if (
+    columns === 3 &&
+    sparseCount !== undefined &&
+    sparseCount > 0 &&
+    sparseCount < 3
+  ) {
+    const desktopColumns =
+      sparseCount === 1 ? "lg:grid-cols-1" : "lg:grid-cols-2";
+
+    return `grid grid-cols-1 ${gap} sm:grid-cols-2 ${desktopColumns}`;
+  }
 
   if (columns === 3) {
     return `grid grid-cols-1 ${gap} sm:grid-cols-2 lg:grid-cols-3`;

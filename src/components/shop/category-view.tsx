@@ -184,12 +184,10 @@ export function CategoryView({
   const dict = useDictionary();
   const locale = useLocale();
   const useBrandLogos = brandFilterVariant === "logos";
-  const gridClassName = catalogProductGridClassName(gridColumns);
-  const gridItemClassName = gridDividers
-    ? gridColumns === 3
+  const motorcycleGridDividerItemClassName =
+    gridColumns === 3
       ? `relative bg-moto p-4 sm:p-5 lg:p-6 before:pointer-events-none before:absolute ${PRODUCT_GRID_DIVIDER_ROW_OFFSET} before:left-1/2 before:z-10 before:hidden before:h-px before:w-[100px] before:-translate-x-1/2 before:bg-white before:content-[''] after:pointer-events-none after:absolute after:top-1/2 after:z-10 after:hidden after:h-[100px] after:w-px after:-translate-y-1/2 after:bg-white after:content-[''] after:-right-2 lg:after:-right-3 max-sm:[&:not(:last-child)]:before:block sm:max-lg:[&:not(:nth-last-child(-n+2))]:before:block lg:[&:not(:nth-last-child(-n+3))]:before:block sm:max-lg:[&:not(:nth-child(2n))]:after:block lg:[&:not(:nth-child(3n))]:after:block`
-      : `relative bg-moto p-4 sm:p-5 lg:p-6 before:pointer-events-none before:absolute ${PRODUCT_GRID_DIVIDER_ROW_OFFSET} before:left-1/2 before:z-10 before:hidden before:h-px before:w-[100px] before:-translate-x-1/2 before:bg-white before:content-[''] after:pointer-events-none after:absolute after:top-1/2 after:z-10 after:hidden after:h-[100px] after:w-px after:-translate-y-1/2 after:bg-white after:content-[''] after:-right-2 xl:after:-right-3 max-sm:[&:not(:last-child)]:before:block sm:max-lg:[&:not(:nth-last-child(-n+2))]:before:block lg:max-xl:[&:not(:nth-last-child(-n+3))]:before:block xl:[&:not(:nth-last-child(-n+4))]:before:block max-sm:[&:not(:last-child)]:after:hidden sm:max-lg:[&:not(:nth-child(2n))]:after:block lg:max-xl:[&:not(:nth-child(3n))]:after:block xl:[&:not(:nth-child(4n))]:after:block`
-    : undefined;
+      : `relative bg-moto p-4 sm:p-5 lg:p-6 before:pointer-events-none before:absolute ${PRODUCT_GRID_DIVIDER_ROW_OFFSET} before:left-1/2 before:z-10 before:hidden before:h-px before:w-[100px] before:-translate-x-1/2 before:bg-white before:content-[''] after:pointer-events-none after:absolute after:top-1/2 after:z-10 after:hidden after:h-[100px] after:w-px after:-translate-y-1/2 after:bg-white after:content-[''] after:-right-2 xl:after:-right-3 max-sm:[&:not(:last-child)]:before:block sm:max-lg:[&:not(:nth-last-child(-n+2))]:before:block lg:max-xl:[&:not(:nth-last-child(-n+3))]:before:block xl:[&:not(:nth-last-child(-n+4))]:before:block max-sm:[&:not(:last-child)]:after:hidden sm:max-lg:[&:not(:nth-child(2n))]:after:block lg:max-xl:[&:not(:nth-child(3n))]:after:block xl:[&:not(:nth-child(4n))]:after:block`;
   const routeProducts = useMemo(
     () => filterProductsByRoute(products, route),
     [products, route],
@@ -367,6 +365,36 @@ export function CategoryView({
     const filtered = applyClientFilters(routeProducts, filters, route);
     return sortProducts(filtered, sort);
   }, [routeProducts, filters, sort]);
+
+  const sparseDesktopCount = useMemo(() => {
+    if (!isMotorcycleCatalog || gridColumns !== 3) {
+      return undefined;
+    }
+
+    const count = filteredProducts.length;
+
+    return count > 0 && count < 3 ? count : undefined;
+  }, [filteredProducts.length, gridColumns, isMotorcycleCatalog]);
+
+  const gridClassName = useMemo(
+    () =>
+      catalogProductGridClassName(gridColumns, {
+        sparseDesktopCount,
+      }),
+    [gridColumns, sparseDesktopCount],
+  );
+
+  const gridItemClassName = useMemo(() => {
+    if (!gridDividers) {
+      return undefined;
+    }
+
+    if (sparseDesktopCount !== undefined) {
+      return "relative bg-moto p-4 sm:p-5 lg:p-6";
+    }
+
+    return motorcycleGridDividerItemClassName;
+  }, [gridDividers, motorcycleGridDividerItemClassName, sparseDesktopCount]);
 
   useEffect(() => {
     setVisibleCount(pageSize);
