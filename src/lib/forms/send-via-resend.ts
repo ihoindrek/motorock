@@ -1,4 +1,5 @@
 import {
+  getFormBccAddresses,
   getFormFromAddress,
   isFormDryRun,
   resolveFormRecipient,
@@ -21,11 +22,13 @@ export async function sendFormViaResend(
     payload.type === "contact" ? { topic: payload.topic } : undefined,
   );
   const from = getFormFromAddress();
+  const bcc = getFormBccAddresses();
 
   if (isFormDryRun()) {
     console.info("[forms] dry-run email", {
       from,
       to,
+      bcc,
       replyTo: payload.email,
       subject,
       text,
@@ -48,6 +51,7 @@ export async function sendFormViaResend(
     body: JSON.stringify({
       from,
       to: [to],
+      ...(bcc.length > 0 ? { bcc } : {}),
       reply_to: payload.email,
       subject,
       text,
