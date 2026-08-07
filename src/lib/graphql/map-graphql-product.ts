@@ -614,7 +614,7 @@ export function mapGraphqlToCatalogProduct(
       ? resolveMappedShowroomAvailable(product.slug, product.metaData, options)
       : undefined,
     headline: parsedShort.tagline,
-    tagline: leadCopy,
+    tagline: leadCopy ?? "",
     specs: equipmentSpecs,
     features: parsedShort.features,
     backHref: isMotorcycle

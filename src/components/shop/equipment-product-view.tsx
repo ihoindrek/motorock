@@ -28,6 +28,7 @@ import { ShareButton } from "@/components/shop/share-button";
 import type { SizeGuide } from "@/types/size-guide";
 import { ProductShippingReturnsPanel } from "@/components/shop/product-shipping-returns-panel";
 import { ProductDescriptionHtml } from "@/components/shop/product-description-html";
+import { ProductFaqSection } from "@/components/shop/product-faq-section";
 import {
   buildProductColorOptions,
   hasMultipleColorChoices,
