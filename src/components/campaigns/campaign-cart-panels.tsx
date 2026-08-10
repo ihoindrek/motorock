@@ -12,6 +12,8 @@ type CampaignCartPanelsProps = {
   variant?: "compact" | "default";
   /** Ilma vari ja gradient-taustata (nt mobiili checkout). */
   flat?: boolean;
+  /** Flat režiimis: link on tagasihoidlikum desktop sidebaris. */
+  ctaVariant?: "button" | "link";
   className?: string;
 };
 
@@ -19,6 +21,7 @@ export function CampaignCartPanels({
   placement,
   variant = "default",
   flat = false,
+  ctaVariant = "button",
   className,
 }: CampaignCartPanelsProps) {
   const { lines, itemCount } = useCart();
@@ -48,6 +51,7 @@ export function CampaignCartPanels({
           status={status}
           variant={variant}
           flat={flat}
+          ctaVariant={ctaVariant}
         />
       ))}
     </div>

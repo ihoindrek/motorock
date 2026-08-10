@@ -1886,11 +1886,14 @@ export function CartCheckoutView() {
         </div>
 
         <CheckoutSummaryShell className="hidden lg:block">
-          <CampaignCartPanels
-            placement="checkout"
-            variant="compact"
-            className="mb-4"
-          />
+          <div className="mb-4 bg-white p-5 shadow-[0_12px_40px_rgb(11_11_11_/_0.07)] sm:p-6">
+            <CampaignCartPanels
+              placement="checkout"
+              variant="compact"
+              flat
+              ctaVariant="link"
+            />
+          </div>
           <CheckoutOrderSummary {...summaryProps} />
         </CheckoutSummaryShell>
       </div>

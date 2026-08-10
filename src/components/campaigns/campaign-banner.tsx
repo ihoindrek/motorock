@@ -110,6 +110,7 @@ type CampaignBannerProps = {
   status: CampaignStatus;
   variant?: "compact" | "default";
   flat?: boolean;
+  ctaVariant?: "button" | "link";
   className?: string;
 };
 
@@ -121,10 +122,12 @@ const GIVEAWAY_IMAGES = {
 function GiveawayCompactBanner({
   status,
   flat = false,
+  ctaVariant = "button",
   className,
 }: {
   status: CampaignStatus;
   flat?: boolean;
+  ctaVariant?: "button" | "link";
   className?: string;
 }) {
   const locale = useLocale();
@@ -133,6 +136,18 @@ function GiveawayCompactBanner({
   const ctaLabel = status.ctaLabel;
   const ctaHref = localizedHref(locale, campaign.content.ctaHref);
   const image = GIVEAWAY_IMAGES[locale];
+  const useLinkCta = flat && ctaVariant === "link";
+
+  const ctaLink = (
+    <Link
+      href={ctaHref}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="shrink-0 font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/45 transition-colors hover:text-accent"
+    >
+      {ctaLabel} →
+    </Link>
+  );
 
   const body = (
     <>
@@ -148,13 +163,14 @@ function GiveawayCompactBanner({
         </div>
       ) : null}
 
-      <div className={cn("flex gap-3 p-3.5", flat && "px-0 pt-0")}>
+      <div className={cn("flex gap-3", flat ? "pt-0" : "p-3.5")}>
         <button
           type="button"
           onClick={openGiveawayPopup}
           aria-label={image.openLabel}
           className={cn(
-            "relative h-[4.75rem] w-[4.25rem] shrink-0 overflow-hidden rounded-md",
+            "relative shrink-0 overflow-hidden rounded-md",
+            useLinkCta ? "h-16 w-14" : "h-[4.75rem] w-[4.25rem]",
             !flat &&
               "border border-accent/25 shadow-[0_8px_20px_-12px_rgba(255,104,19,0.65)] transition-transform motion-safe:active:scale-[0.98]",
           )}
@@ -163,13 +179,26 @@ function GiveawayCompactBanner({
             src={image.image}
             alt=""
             fill
-            sizes="68px"
+            sizes={useLinkCta ? "56px" : "68px"}
             className="object-cover object-center"
           />
         </button>
 
         <div className="min-w-0 flex-1">
-          <p className="font-body text-base font-extrabold uppercase leading-[1.05] tracking-tight text-ink sm:text-lg">
+          {flat ? (
+            <div className="flex items-start justify-between gap-3">
+              <p className="font-body text-[10px] font-bold uppercase tracking-aggressive text-accent">
+                {dict.giveaway.activeCampaign}
+              </p>
+              {useLinkCta ? ctaLink : null}
+            </div>
+          ) : null}
+          <p
+            className={cn(
+              "font-body font-extrabold uppercase leading-[1.05] tracking-tight text-ink",
+              flat ? "mt-1 text-sm" : "text-base sm:text-lg",
+            )}
+          >
             <CampaignDisplayTitle status={status} />
           </p>
           <p className="mt-1.5 text-sm leading-snug">
@@ -179,13 +208,13 @@ function GiveawayCompactBanner({
       </div>
 
       {!isEligible ? (
-        <div className={cn("px-3.5 pb-1", flat && "px-0")}>
+        <div className={cn(flat ? "pt-1" : "px-3.5 pb-1")}>
           <div className="mb-1.5 flex justify-between font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/45">
             <span>{dict.giveaway.progress}</span>
             <span className="tabular-nums text-accent">{Math.round(progress)}%</span>
           </div>
           <div
-            className="h-2 overflow-hidden rounded-full bg-ink/10"
+            className="h-1.5 overflow-hidden rounded-full bg-ink/10"
             role="progressbar"
             aria-valuenow={Math.round(progress)}
             aria-valuemin={0}
@@ -203,16 +232,23 @@ function GiveawayCompactBanner({
         </div>
       ) : null}
 
-      <div className={cn("p-3.5 pt-2", flat && "px-0 pb-0", isEligible && flat && "pt-3", !isEligible && flat && "pt-2")}>
-        <Link
-          href={ctaHref}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="btn-accent flex w-full justify-center py-2.5 text-[11px] tracking-aggressive"
+      {!useLinkCta ? (
+        <div
+          className={cn(
+            flat ? "pt-3" : "p-3.5 pt-2",
+            !isEligible && flat && "pt-2",
+          )}
         >
-          {ctaLabel} →
-        </Link>
-      </div>
+          <Link
+            href={ctaHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn-accent flex w-full justify-center py-2.5 text-[11px] tracking-aggressive"
+          >
+            {ctaLabel} →
+          </Link>
+        </div>
+      ) : null}
     </>
   );
 
@@ -242,6 +278,7 @@ export function CampaignBanner({
   status,
   variant = "default",
   flat = false,
+  ctaVariant = "button",
   className,
 }: CampaignBannerProps) {
   const locale = useLocale();
@@ -252,7 +289,12 @@ export function CampaignBanner({
 
   if (variant === "compact") {
     return (
-      <GiveawayCompactBanner status={status} flat={flat} className={className} />
+      <GiveawayCompactBanner
+        status={status}
+        flat={flat}
+        ctaVariant={ctaVariant}
+        className={className}
+      />
     );
   }
 
