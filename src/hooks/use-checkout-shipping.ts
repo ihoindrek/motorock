@@ -317,6 +317,12 @@ export function useCheckoutShipping(
   }, [loading, needsAddress, pushCustomerShipping]);
 
   const setSelectedRateId = useCallback((rateId: string) => {
+    let previousRateId: string | null = null;
+
+    setSelectedRateIdState((current) => {
+      previousRateId = current;
+      return rateId;
+    });
     setSyncing(true);
     setError(null);
 
@@ -339,6 +345,7 @@ export function useCheckoutShipping(
         setSelectedRateIdState(appliedRateId);
       })
       .catch((cause) => {
+        setSelectedRateIdState(previousRateId);
         setError(
           cause instanceof Error ? cause.message : "Could not update shipping",
         );

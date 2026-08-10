@@ -666,6 +666,7 @@ export function CartCheckoutView() {
 
     return resolvePickupPointSources(shipping.selectedRate, shipping.country);
   }, [needsPickupPoint, shipping.country, shipping.selectedRate]);
+  const requiresPickupSelection = needsPickupPoint && Boolean(pickupPointSources);
 
   const displaySubtotal = shipping.wcSubtotal ?? subtotal;
   const displayShipping = shipping.shippingTotal;
@@ -747,7 +748,7 @@ export function CartCheckoutView() {
           shippingCountry: shipping.country,
           selectedRateId: shipping.selectedRateId,
           needsAddress: shipping.needsAddress,
-          needsPickupPoint,
+          needsPickupPoint: requiresPickupSelection,
           pickupPoint,
         },
         deliveryValidationMessages,
@@ -759,7 +760,7 @@ export function CartCheckoutView() {
       email,
       firstName,
       lastName,
-      needsPickupPoint,
+      requiresPickupSelection,
       phone,
       phoneCountry,
       pickupPoint,
@@ -920,7 +921,7 @@ export function CartCheckoutView() {
   );
 
   const pickupValid =
-    !needsPickupPoint ||
+    !requiresPickupSelection ||
     Boolean(
       pickupPoint &&
         (!isLiveCheckoutEnabled() || pickupPointReadyForCheckout(pickupPoint)),
@@ -938,6 +939,7 @@ export function CartCheckoutView() {
   const submitBlockReason = resolveSubmitBlockReason({
     termsAccepted,
     deliveryReady,
+    deliveryChecklist: deliveryValidation.checklist,
     paymentSelected: Boolean(payment.selectedId),
     paymentLoading,
     paymentError: payment.error,

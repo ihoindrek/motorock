@@ -6,9 +6,15 @@ export type SubmitBlockReasonMessages = {
   pickupInvalid: string;
 };
 
+export type SubmitBlockChecklistItem = {
+  label: string;
+  complete: boolean;
+};
+
 export type SubmitBlockReasonInput = {
   termsAccepted: boolean;
   deliveryReady: boolean;
+  deliveryChecklist?: readonly SubmitBlockChecklistItem[];
   paymentSelected: boolean;
   paymentLoading: boolean;
   paymentError: string | null;
@@ -26,7 +32,8 @@ export function resolveSubmitBlockReason(
   }
 
   if (!input.deliveryReady) {
-    return input.messages.delivery;
+    const incomplete = input.deliveryChecklist?.find((item) => !item.complete);
+    return incomplete?.label ?? input.messages.delivery;
   }
 
   if (input.paymentLoading) {

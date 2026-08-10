@@ -71,14 +71,16 @@ export function CheckoutPickupPointSelector({
   };
 
   useEffect(() => {
-    onSelect(null);
+    // Parent clears selectedPoint when shipping rate/country changes.
+    // Only reset local dropdown state here — calling onSelect(null) on remount
+    // was wiping a valid locker selection after shipping rate list refreshes.
     setQuery("");
     setIsOpen(false);
     setPoints([]);
     setError(null);
     setLoading(false);
     setPrefetching(true);
-  }, [rateKey, onSelect]);
+  }, [rateKey]);
 
   useEffect(() => {
     let cancelled = false;

@@ -43,6 +43,19 @@ describe("resolveSubmitBlockReason", () => {
     ).toBe("Choose bank");
   });
 
+  it("shows the first incomplete delivery checklist item", () => {
+    expect(
+      resolveSubmitBlockReason({
+        ...readyInput,
+        deliveryReady: false,
+        deliveryChecklist: [
+          { label: "Email", complete: true },
+          { label: "Pakiautomaat", complete: false },
+        ],
+      }),
+    ).toBe("Pakiautomaat");
+  });
+
   it("returns null when checkout can submit", () => {
     expect(resolveSubmitBlockReason(readyInput)).toBeNull();
   });
