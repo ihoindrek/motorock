@@ -64,9 +64,11 @@ export function evaluateCampaign(
 
   const copy = getLocalizedCampaignCopy(campaign, dict);
   const title = copy.shortTitle;
+  const prizeName = copy.prizeName ?? title;
   const vars = {
     remaining: formatPrice(remaining, locale),
     title,
+    prizeName,
     min: formatPrice(campaign.minEligibleSubtotal, locale),
   };
 
@@ -79,6 +81,9 @@ export function evaluateCampaign(
     progressMessage: interpolateCampaignMessage(copy.progressMessage, vars),
     eligibleMessage: interpolateCampaignMessage(copy.eligibleMessage, vars),
     displayTitle: copy.shortTitle,
+    displayTitlePrefix: copy.shortTitlePrefix ?? null,
+    prizeName: copy.prizeName ?? null,
+    prizeProductSlug: campaign.prizeProductSlug ?? null,
     ctaLabel: copy.ctaLabel,
   };
 }

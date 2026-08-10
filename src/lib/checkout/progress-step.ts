@@ -2,19 +2,17 @@ import type { CheckoutStep } from "@/context/checkout-step-context";
 
 export function deriveCheckoutProgressStep(input: {
   itemCount: number;
-  mobileStep: CheckoutStep;
   deliveryReady: boolean;
-  isDesktopLayout: boolean;
 }): CheckoutStep {
   if (input.itemCount === 0) {
     return 1;
   }
 
-  if (input.isDesktopLayout) {
-    return input.deliveryReady ? 3 : 2;
+  if (input.deliveryReady) {
+    return 3;
   }
 
-  return input.mobileStep;
+  return 2;
 }
 
 export const CHECKOUT_STEP_SECTION_IDS = {

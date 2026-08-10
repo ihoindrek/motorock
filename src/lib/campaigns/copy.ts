@@ -5,6 +5,8 @@ import type { Campaign } from "@/types/campaign";
 export type LocalizedCampaignCopy = {
   title: string;
   shortTitle: string;
+  shortTitlePrefix?: string;
+  prizeName?: string;
   progressMessage: string;
   eligibleMessage: string;
   ctaLabel: string;
@@ -18,6 +20,8 @@ export function getLocalizedCampaignCopy(
     return {
       title: dict.giveaway.giveaway2026Title,
       shortTitle: dict.giveaway.giveaway2026ShortTitle,
+      shortTitlePrefix: dict.giveaway.giveaway2026ShortTitlePrefix,
+      prizeName: dict.giveaway.giveaway2026PrizeName,
       progressMessage: dict.giveaway.progressMessage,
       eligibleMessage: dict.giveaway.eligibleMessage,
       ctaLabel: dict.giveaway.rules,

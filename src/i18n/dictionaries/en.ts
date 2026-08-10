@@ -148,11 +148,35 @@ export type Dictionary = {
     haveDiscountCode: string;
     apply: string;
     applyingCoupon: string;
+    validateCoupon: string;
+    validatingCoupon: string;
     removeCoupon: string;
     continueToDelivery: string;
     continueToPayment: string;
     back: string;
     completeDeliveryFirst: string;
+    deliveryChecklistTitle: string;
+    deliveryChecklistEmail: string;
+    deliveryChecklistCountry: string;
+    deliveryChecklistShipping: string;
+    deliveryChecklistPickup: string;
+    deliveryChecklistAddress: string;
+    deliveryChecklistName: string;
+    deliveryChecklistPhone: string;
+    fieldRequired: string;
+    emailInvalid: string;
+    submitBlockTerms: string;
+    submitBlockDelivery: string;
+    submitBlockPayment: string;
+    submitBlockMontonioBank: string;
+    submitBlockPickup: string;
+    completeDeliveryForPayment: string;
+    deliverySectionIncomplete: string;
+    trustFreeReturns: string;
+    pricesIncludeVat: string;
+    shippingCostPending: string;
+    securePayment: string;
+    orderOverview: string;
     couponNotFound: string;
     couponAlreadyApplied: string;
     couponNotApplied: string;
@@ -501,8 +525,14 @@ export type Dictionary = {
     campaignProgressAria: string;
     rules: string;
     giveaway2026Title: string;
+    giveaway2026ShortTitlePrefix: string;
+    giveaway2026PrizeName: string;
     giveaway2026ShortTitle: string;
     progressMessage: string;
+    progressMessageBeforePrize: string;
+    progressMessageAfterPrize: string;
+    eligibleMessageLead: string;
+    eligibleMessageTail: string;
     eligibleMessage: string;
   };
   legal: {
@@ -740,12 +770,37 @@ export const en: Dictionary = {
     haveDiscountCode: "Have a discount code?",
     apply: "Apply",
     applyingCoupon: "Applying…",
+    validateCoupon: "Activate",
+    validatingCoupon: "Activating…",
     removeCoupon: "Remove",
     continueToDelivery: "Continue to delivery",
     continueToPayment: "Continue to payment",
     back: "Back",
     completeDeliveryFirst:
       "Fill in contact details, choose delivery, and select a parcel locker if required.",
+    deliveryChecklistTitle: "Still needed",
+    deliveryChecklistEmail: "Valid email address",
+    deliveryChecklistCountry: "Delivery country",
+    deliveryChecklistShipping: "Delivery method",
+    deliveryChecklistPickup: "Parcel locker",
+    deliveryChecklistAddress: "Delivery address",
+    deliveryChecklistName: "First and last name",
+    deliveryChecklistPhone: "Valid phone number",
+    fieldRequired: "This field is required.",
+    emailInvalid: "Enter a valid email address.",
+    submitBlockTerms: "Accept the terms to continue.",
+    submitBlockDelivery: "Complete delivery details first.",
+    submitBlockPayment: "Choose a payment method.",
+    submitBlockMontonioBank: "Choose your bank to continue.",
+    submitBlockPickup: "Choose a valid parcel locker.",
+    completeDeliveryForPayment:
+      "Complete delivery details above to choose a payment method.",
+    deliverySectionIncomplete: "Delivery details incomplete",
+    trustFreeReturns: "14-day free returns",
+    pricesIncludeVat: "Prices include VAT",
+    shippingCostPending: "Select delivery to see shipping cost",
+    securePayment: "Secure payment",
+    orderOverview: "Order overview",
     couponNotFound:
       "This discount code was not found. Check the spelling or try another code.",
     couponAlreadyApplied: "This discount code is already applied.",
@@ -1146,9 +1201,16 @@ export const en: Dictionary = {
     campaignProgressAria: "Campaign entry progress",
     rules: "Rules",
     giveaway2026Title: "MotoRock Giveaway 2026",
+    giveaway2026ShortTitlePrefix: "Win a ",
+    giveaway2026PrizeName: "Brixton Crossfire 500",
     giveaway2026ShortTitle: "Win a Brixton Crossfire 500",
-    progressMessage: "Add {remaining} more in gear to enter the {title} draw",
-    eligibleMessage: "You're in the {title} draw — 1 entry with this order",
+    progressMessage:
+      "Order {remaining} more to enter the {prizeName} motorcycle draw.",
+    progressMessageBeforePrize: "Order {remaining} more to enter the ",
+    progressMessageAfterPrize: " motorcycle draw.",
+    eligibleMessageLead: "Complete your purchase and win ",
+    eligibleMessageTail: "!",
+    eligibleMessage: "Complete your purchase and win {prizeName}!",
   },
   legal: {
     eyebrow: "Legal",

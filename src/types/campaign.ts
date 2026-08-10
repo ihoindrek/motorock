@@ -18,6 +18,8 @@ export type Campaign = {
   productRule: CampaignProductRule;
   placements: CampaignPlacement[];
   blogSlug?: string;
+  /** Loosiauhinna toote slug (nt `/toode/{slug}`). */
+  prizeProductSlug?: string;
   content: {
     progressMessage: string;
     eligibleMessage: string;
@@ -35,5 +37,8 @@ export type CampaignStatus = {
   progressMessage: string;
   eligibleMessage: string;
   displayTitle: string;
+  displayTitlePrefix?: string | null;
+  prizeName?: string | null;
+  prizeProductSlug?: string | null;
   ctaLabel: string;
 };

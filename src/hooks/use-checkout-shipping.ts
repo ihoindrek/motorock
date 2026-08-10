@@ -29,7 +29,6 @@ import {
   shippingMethodNeedsAddress,
   type ShippingRate,
 } from "@/lib/shop/shipping-method";
-import { pickDefaultShippingRateId } from "@/lib/shop/shipping-rate-priority";
 import { filterShippingRatesForCountry } from "@/lib/shop/shipping-showroom-pickup";
 
 type CheckoutShippingState = {
@@ -157,9 +156,7 @@ export function useCheckoutShipping(
       const chosen =
         cart.cart.chosenShippingMethods.find((rateId) =>
           nextRates.some((rate) => rate.id === rateId),
-        ) ??
-        pickDefaultShippingRateId(nextRates) ??
-        null;
+        ) ?? null;
 
       setSelectedRateIdState((current) => {
         if (current && nextRates.some((rate) => rate.id === current)) {
@@ -401,23 +398,6 @@ export function useCheckoutShipping(
     },
     [activeSession, applyCart, dict.checkout],
   );
-
-  useEffect(() => {
-    if (
-      !bootstrapReadyRef.current ||
-      loading ||
-      syncing ||
-      rates.length === 0 ||
-      selectedRateId
-    ) {
-      return;
-    }
-
-    const defaultId = pickDefaultShippingRateId(rates);
-    if (defaultId) {
-      setSelectedRateId(defaultId);
-    }
-  }, [rates, selectedRateId, loading, syncing, setSelectedRateId]);
 
   useEffect(() => {
     if (!cartHydrated) {

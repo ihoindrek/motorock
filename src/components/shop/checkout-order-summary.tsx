@@ -3,6 +3,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { useDictionary, useLocale } from "@/context/locale-context";
+import { CheckoutTrustBadges } from "@/components/shop/checkout-mobile-trust";
 import { countryLabel } from "@/hooks/use-checkout-shipping";
 import { localizedHref } from "@/i18n/paths";
 import type { ShippingRate } from "@/lib/shop/shipping-method";
@@ -28,13 +29,13 @@ type CheckoutOrderSummaryProps = {
   loading: boolean;
   formId: string;
   payLabel?: string;
+  submitBlockReason?: string | null;
   className?: string;
   variant?: "sidebar" | "mobile";
 };
 
 function TrustCopy() {
   const locale = useLocale();
-  const dict = useDictionary();
   const t =
     locale === "et"
       ? { questions: "Küsimusi?" }
@@ -42,7 +43,6 @@ function TrustCopy() {
 
   return (
     <ul className="space-y-1.5 text-xs leading-relaxed text-ink/55">
-      <li className="text-xs text-ink/60">{dict.returns.headline}</li>
       <li>
         {t.questions}{" "}
         <a href={SHOWROOM.emailHref} className="text-ink hover:text-accent">
@@ -69,6 +69,7 @@ export function CheckoutOrderSummary({
   loading,
   formId,
   payLabel,
+  submitBlockReason,
   className,
   variant = "sidebar",
 }: CheckoutOrderSummaryProps) {
@@ -161,7 +162,57 @@ export function CheckoutOrderSummary({
             </span>
           </dd>
         </div>
+        {isMobile ? (
+          <p className="text-[11px] text-ink/45">{dict.checkout.pricesIncludeVat}</p>
+        ) : null}
       </dl>
+
+      {isMobile ? (
+        <>
+          <label className="mt-5 flex items-start gap-3 text-sm text-ink/70">
+            <input
+              type="checkbox"
+              checked={termsAccepted}
+              onChange={(event) => onTermsChange(event.target.checked)}
+              className="mt-0.5 size-4 shrink-0 accent-accent"
+              required
+              form={formId}
+            />
+            <span>
+              {t.agreeTerms}{" "}
+              <Link
+                href={localizedHref(locale, "/terms")}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-ink hover:text-accent"
+              >
+                {t.terms}
+              </Link>
+            </span>
+          </label>
+
+          <button
+            type="submit"
+            form={formId}
+            disabled={submitting || !canSubmit || loading}
+            className="btn-accent mt-4 min-h-14 w-full justify-center py-4 text-sm disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            {submitting
+              ? t.processing
+              : `${payLabel ?? t.pay} · ${formatCheckoutPrice(total, locale)}`}
+          </button>
+
+          {!canSubmit && submitBlockReason ? (
+            <p className="mt-2 text-xs text-ink/55" role="status">
+              {submitBlockReason}
+            </p>
+          ) : null}
+
+          <div className="mt-5 border-t border-ink/10 pt-4">
+            <CheckoutTrustBadges />
+          </div>
+        </>
+      ) : null}
 
       {!isMobile ? (
         <>
@@ -198,106 +249,18 @@ export function CheckoutOrderSummary({
               : `${payLabel ?? t.pay} · ${formatCheckoutPrice(total, locale)}`}
           </button>
 
+          {!canSubmit && submitBlockReason ? (
+            <p className="mt-2 text-xs text-ink/55" role="status">
+              {submitBlockReason}
+            </p>
+          ) : null}
+
           <div className="mt-5 border-t border-ink/10 pt-4">
             <TrustCopy />
+            <CheckoutTrustBadges className="mt-4 hidden lg:block" />
           </div>
         </>
       ) : null}
-    </div>
-  );
-}
-
-export function CheckoutMobileStepBar({
-  continueLabel,
-  onContinue,
-  disabled,
-  showBack,
-  onBack,
-  backLabel,
-  total,
-}: {
-  continueLabel: string;
-  onContinue: () => void;
-  disabled?: boolean;
-  showBack?: boolean;
-  onBack?: () => void;
-  backLabel?: string;
-  total?: number;
-}) {
-  const locale = useLocale();
-
-  return (
-    <div className="fixed inset-x-0 bottom-0 z-[80] border-t border-ink/10 bg-paper/95 px-5 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-sm lg:hidden">
-      <div className="mx-auto flex max-w-site items-center gap-3">
-        {showBack && onBack ? (
-          <button
-            type="button"
-            onClick={onBack}
-            className="shrink-0 px-1 text-xs font-bold uppercase tracking-aggressive text-ink/50 hover:text-ink"
-          >
-            {backLabel}
-          </button>
-        ) : null}
-        <button
-          type="button"
-          onClick={onContinue}
-          disabled={disabled}
-          className="btn-accent min-h-12 flex-1 justify-center disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          {continueLabel}
-          {total != null ? (
-            <span className="ml-2 tabular-nums opacity-90">
-              · {formatCheckoutPrice(total, locale)}
-            </span>
-          ) : null}
-        </button>
-      </div>
-    </div>
-  );
-}
-
-export function CheckoutMobilePayBar({
-  total,
-  canSubmit,
-  submitting,
-  loading,
-  formId,
-  payLabel,
-}: {
-  total: number;
-  canSubmit: boolean;
-  submitting: boolean;
-  loading: boolean;
-  formId: string;
-  payLabel?: string;
-}) {
-  const locale = useLocale();
-  const t =
-    locale === "et"
-      ? { total: "Kokku", pay: "Maksa" }
-      : { total: "Total", pay: "Pay" };
-  const label = payLabel ?? t.pay;
-
-  return (
-    <div className="fixed inset-x-0 bottom-0 z-[80] border-t border-ink/10 bg-paper/95 px-5 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-sm lg:hidden">
-      <div className="mx-auto flex max-w-site items-center gap-3">
-        <div className="min-w-0 flex-1">
-          <p className="text-[10px] font-bold uppercase tracking-aggressive text-ink/45">
-            {t.total}
-          </p>
-          <p className="font-body text-lg font-extrabold tabular-nums tracking-normal text-accent">
-            {formatCheckoutPrice(total, locale)}
-          </p>
-        </div>
-        <button
-          type="submit"
-          form={formId}
-          disabled={submitting || !canSubmit || loading}
-          className="btn-accent shrink-0 justify-center px-6 disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          {submitting ? "…" : label}
-        </button>
-      </div>
     </div>
   );
 }

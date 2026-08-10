@@ -6,11 +6,16 @@ import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, useCallback, type ReactNode } from "react";
 import { useCart, type CartLine } from "@/context/cart-context";
 import { useCheckoutStep } from "@/context/checkout-step-context";
-import { useMinLgViewport } from "@/hooks/use-min-lg-viewport";
 import {
   deriveCheckoutProgressStep,
   scrollToCheckoutStep,
 } from "@/lib/checkout/progress-step";
+import {
+  focusDeliveryField,
+  validateDelivery,
+  type DeliveryField,
+} from "@/lib/checkout/delivery-validation";
+import { resolveSubmitBlockReason } from "@/lib/checkout/submit-block-reason";
 import { useDictionary, useLocale } from "@/context/locale-context";
 import { localizedHref } from "@/i18n/paths";
 import { localizedProductHref } from "@/lib/shop/product-url";
@@ -24,18 +29,17 @@ import { isLiveCheckoutEnabled } from "@/lib/checkout-mode";
 import { buildMontonioCheckoutMetaData, needsMontonioPaymentRemint, pickupPointReadyForCheckout } from "@/lib/checkout/montonio-checkout";
 import {
   buildCheckoutInputAddresses,
-  MONTONIO_PAYMENT_METHOD_ID,
   resetCheckoutSyncState,
   submitCheckout,
   updateCheckoutCustomerShipping,
 } from "@/lib/graphql/checkout";
 import { readWooSessionToken } from "@/lib/graphql/checkout-client";
 import {
-  CheckoutMobilePayBar,
-  CheckoutMobileStepBar,
   CheckoutOrderSummary,
   CheckoutSummaryShell,
 } from "@/components/shop/checkout-order-summary";
+import { CheckoutMobileDeliveryTotals } from "@/components/shop/checkout-mobile-trust";
+import { CheckoutMobileSection } from "@/components/shop/checkout-mobile-section";
 import {
   CheckoutShippingOptions,
   CheckoutShippingOptionsSkeleton,
@@ -46,11 +50,9 @@ import { formatSizeLabel } from "@/lib/shop/size-label";
 import { formatCheckoutPrice } from "@/lib/shop/category";
 import { localizeShippingRateLabel } from "@/lib/shop/localize-shipping-label";
 import { Price } from "@/components/shop/price";
-import { cartHasEquipment } from "@/lib/shop/cart-has-equipment";
 import { defaultLocationForCountry } from "@/lib/shop/countries";
 import {
   formatPhoneWithCountryCode,
-  isValidCheckoutPhone,
   stripCountryDialCode,
 } from "@/lib/shop/phone";
 import {
@@ -61,7 +63,6 @@ import {
 } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 import { buildEquipmentHubHref } from "@/lib/shop/category-url";
-import { EquipmentReturnPromise } from "@/components/shop/equipment-return-promise";
 import { CampaignCartPanels } from "@/components/campaigns/campaign-cart-panels";
 import { CheckoutPickupPointSelector } from "@/components/shop/checkout-pickup-point-selector";
 import { CheckoutPhoneField } from "@/components/shop/checkout-phone-field";
@@ -75,6 +76,10 @@ import {
 } from "@/components/shop/checkout-payment-options";
 import { CheckoutSupportNotice } from "@/components/shop/checkout-support-notice";
 import {
+  DeliveryFieldLabel,
+  isDeliveryChecklistComplete,
+} from "@/components/shop/checkout-delivery-field-label";
+import {
   resolvePickupPointSources,
   shippingMethodNeedsPickupPoint,
 } from "@/lib/shipping/pickup-carrier";
@@ -84,22 +89,12 @@ import { montonioOptionKey, montonioOptionLabel } from "@/types/montonio-payment
 
 const FORM_ID = "checkout-form";
 
-function checkoutPanelClass(mobileStep: 1 | 2 | 3, panelStep: 1 | 2 | 3) {
-  return cn(mobileStep === panelStep ? "block" : "hidden", "lg:block");
-}
-
-function scrollCheckoutToTop() {
-  if (typeof window !== "undefined") {
-    // Close the on-screen keyboard so the viewport is stable before scrolling.
-    if (document.activeElement instanceof HTMLElement) {
-      document.activeElement.blur();
-    }
-    window.scrollTo(0, 0);
-  }
-}
-
 const inputClassName =
   "mt-2 w-full border border-ink/15 bg-paper px-4 py-3 text-base focus:border-accent focus:outline-none";
+
+function inputWithErrorClass(hasError: boolean) {
+  return cn(inputClassName, hasError && "border-accent");
+}
 
 const labelClassName =
   "font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/50";
@@ -143,40 +138,6 @@ function friendlyCheckoutError(
   }
 
   return message;
-}
-
-function CheckoutBlock({
-  title,
-  children,
-  action,
-  hideTitleOnMobile = false,
-}: {
-  title: string;
-  children: ReactNode;
-  action?: ReactNode;
-  hideTitleOnMobile?: boolean;
-}) {
-  return (
-    <section className="border-t border-ink/10 py-4 first:border-t-0 first:pt-0 lg:py-10">
-      <div
-        className={cn(
-          "mb-5 flex items-end justify-between gap-4",
-          hideTitleOnMobile && "max-lg:mb-0 max-lg:justify-end",
-        )}
-      >
-        <h2
-          className={cn(
-            "font-body text-lg font-extrabold uppercase tracking-tight text-ink sm:text-xl",
-            hideTitleOnMobile && "max-lg:sr-only",
-          )}
-        >
-          {title}
-        </h2>
-        {action}
-      </div>
-      {children}
-    </section>
-  );
 }
 
 function CartQuantityControl({
@@ -274,7 +235,7 @@ function CheckoutCartTable({
 }) {
   return (
     <>
-      <div className="space-y-3 md:hidden">
+      <div className="space-y-4 md:hidden">
         {lines.map((line) => {
           if (!line.name || !line.image) {
             return null;
@@ -286,12 +247,12 @@ function CheckoutCartTable({
           return (
             <article
               key={`${line.slug}:${line.size ?? ""}`}
-              className="flex gap-3 border border-ink/10 bg-surface/50 p-3"
+              className="flex gap-3"
             >
               <Link
                 href={localizedProductHref(line.slug, locale)}
                 className={cn(
-                  "relative h-20 w-20 shrink-0 overflow-hidden rounded-lg border border-ink/10",
+                  "relative h-20 w-20 shrink-0 overflow-hidden rounded-lg max-md:border-0 max-md:bg-transparent",
                   thumbnail.frame,
                 )}
               >
@@ -451,7 +412,6 @@ export function CartCheckoutView() {
           item: "toode",
           items: "toodet",
           total: "kokku",
-          continueShopping: "Jätka ostlemist",
           haveDiscountCode: "Kas sul on sooduskood?",
           apply: "Rakenda",
           email: "E-post",
@@ -501,7 +461,6 @@ export function CartCheckoutView() {
           item: "item",
           items: "items",
           total: "total",
-          continueShopping: "Continue shopping",
           haveDiscountCode: "Have a discount code?",
           apply: "Apply",
           email: "Email",
@@ -555,11 +514,15 @@ export function CartCheckoutView() {
   const [city, setCity] = useState("");
   const [postcode, setPostcode] = useState("");
   const [couponCode, setCouponCode] = useState("");
-  const isDesktopLayout = useMinLgViewport();
-  const [mobileStep, setMobileStep] = useState<1 | 2 | 3>(1);
   const [mobileStepError, setMobileStepError] = useState<string | null>(null);
-  const [textFieldFocused, setTextFieldFocused] = useState(false);
-  const prevMobileStepRef = useRef<1 | 2 | 3>(1);
+  const [deliveryValidationAttempted, setDeliveryValidationAttempted] =
+    useState(false);
+  const [sectionsOpen, setSectionsOpen] = useState({
+    1: true,
+    2: false,
+    3: false,
+  });
+  const sectionsInitializedRef = useRef(false);
 
   // Restore an abandoned order's cart from a payment reminder email link
   // (?restore=<orderId>&key=<orderKey>). The params are stripped right away
@@ -595,34 +558,6 @@ export function CartCheckoutView() {
       });
   }, [replaceCart]);
 
-  // Scroll to top after the step panel has actually swapped in the DOM —
-  // scrolling before the re-render gets cancelled when the page height changes.
-  useEffect(() => {
-    if (prevMobileStepRef.current !== mobileStep) {
-      prevMobileStepRef.current = mobileStep;
-      window.scrollTo(0, 0);
-    }
-  }, [mobileStep]);
-
-  // Hide the fixed bottom bar while the on-screen keyboard is open so the
-  // form has usable space on small screens.
-  useEffect(() => {
-    const isTextField = (node: Element | null) =>
-      node instanceof HTMLElement &&
-      node.matches(
-        "input:not([type='checkbox']):not([type='radio']), select, textarea",
-      );
-    const sync = () => setTextFieldFocused(isTextField(document.activeElement));
-    const syncDeferred = () => window.setTimeout(sync, 0);
-
-    document.addEventListener("focusin", sync);
-    document.addEventListener("focusout", syncDeferred);
-
-    return () => {
-      document.removeEventListener("focusin", sync);
-      document.removeEventListener("focusout", syncDeferred);
-    };
-  }, []);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -738,28 +673,26 @@ export function CartCheckoutView() {
   const displayTotal = shipping.wcTotal ?? displaySubtotal + displayShipping - displayDiscount;
 
   useEffect(() => {
-    if (itemCount === 0 || mobileStep !== 1 || checkoutAnalyticsRef.current.viewCart) {
+    if (itemCount === 0) {
       return;
     }
 
-    checkoutAnalyticsRef.current.viewCart = true;
-    trackViewCart(lines);
-  }, [itemCount, lines, mobileStep]);
-
-  useEffect(() => {
-    if (itemCount === 0 || mobileStep !== 2 || checkoutAnalyticsRef.current.beginCheckout) {
-      return;
+    if (!checkoutAnalyticsRef.current.viewCart) {
+      checkoutAnalyticsRef.current.viewCart = true;
+      trackViewCart(lines);
     }
 
-    checkoutAnalyticsRef.current.beginCheckout = true;
-    trackBeginCheckout(lines, displayTotal);
-  }, [displayTotal, itemCount, lines, mobileStep]);
+    if (!checkoutAnalyticsRef.current.beginCheckout) {
+      checkoutAnalyticsRef.current.beginCheckout = true;
+      trackBeginCheckout(lines, displayTotal);
+    }
+  }, [displayTotal, itemCount, lines]);
 
   useEffect(() => {
     if (
-      mobileStep !== 3 ||
       !payment.selectedId ||
-      checkoutAnalyticsRef.current.payment
+      checkoutAnalyticsRef.current.payment ||
+      !paymentGatewayTouchedRef.current
     ) {
       return;
     }
@@ -770,7 +703,7 @@ export function CartCheckoutView() {
       paymentType: payment.selectedId,
       value: displayTotal,
     });
-  }, [displayTotal, lines, mobileStep, payment.selectedId]);
+  }, [displayTotal, lines, payment.selectedId]);
 
   async function handleApplyCoupon() {
     const code = couponCode.trim();
@@ -784,27 +717,191 @@ export function CartCheckoutView() {
     }
   }
 
-  const deliveryReady =
-    Boolean(email) &&
-    Boolean(firstName) &&
-    Boolean(lastName) &&
-    isValidCheckoutPhone(phoneCountry, phone) &&
-    Boolean(shipping.selectedRateId) &&
-    (!shipping.needsAddress || Boolean(address1 && city && postcode)) &&
-    (!needsPickupPoint || Boolean(pickupPoint));
+  const deliveryValidationMessages = useMemo(
+    () => ({
+      required: dict.checkout.fieldRequired,
+      emailInvalid: dict.checkout.emailInvalid,
+      checklistEmail: dict.checkout.deliveryChecklistEmail,
+      checklistCountry: dict.checkout.deliveryChecklistCountry,
+      checklistShipping: dict.checkout.deliveryChecklistShipping,
+      checklistPickup: dict.checkout.deliveryChecklistPickup,
+      checklistAddress: dict.checkout.deliveryChecklistAddress,
+      checklistName: dict.checkout.deliveryChecklistName,
+      checklistPhone: dict.checkout.deliveryChecklistPhone,
+    }),
+    [dict.checkout],
+  );
+
+  const deliveryValidation = useMemo(
+    () =>
+      validateDelivery(
+        {
+          email,
+          firstName,
+          lastName,
+          phone,
+          phoneCountry,
+          address1,
+          city,
+          postcode,
+          shippingCountry: shipping.country,
+          selectedRateId: shipping.selectedRateId,
+          needsAddress: shipping.needsAddress,
+          needsPickupPoint,
+          pickupPoint,
+        },
+        deliveryValidationMessages,
+      ),
+    [
+      address1,
+      city,
+      deliveryValidationMessages,
+      email,
+      firstName,
+      lastName,
+      needsPickupPoint,
+      phone,
+      phoneCountry,
+      pickupPoint,
+      postcode,
+      shipping.country,
+      shipping.needsAddress,
+      shipping.selectedRateId,
+    ],
+  );
+
+  const deliveryReady = deliveryValidation.ready;
+  const deliveryFieldErrors = deliveryValidationAttempted
+    ? deliveryValidation.fieldErrors
+    : {};
+
+  const showDeliveryFieldError = (field: DeliveryField) =>
+    deliveryValidationAttempted ? deliveryFieldErrors[field] : undefined;
+
+  const deliveryChecklist = deliveryValidation.checklist;
+
+  useEffect(() => {
+    if (!deliveryReady || checkoutAnalyticsRef.current.shipping) {
+      return;
+    }
+
+    checkoutAnalyticsRef.current.shipping = true;
+    trackAddShippingInfo({
+      lines,
+      shippingTier: shipping.selectedRate?.label ?? shipping.selectedRateId ?? "delivery",
+      value: displayTotal,
+    });
+  }, [
+    deliveryReady,
+    displayTotal,
+    lines,
+    shipping.selectedRate,
+    shipping.selectedRateId,
+  ]);
 
   const progressStep = deriveCheckoutProgressStep({
     itemCount,
-    mobileStep,
     deliveryReady,
-    isDesktopLayout,
   });
 
-  const goToMobileStep = useCallback((step: 1 | 2 | 3) => {
-    setMobileStep(step);
-    setMobileStepError(null);
-    scrollCheckoutToTop();
+  const openCheckoutSection = useCallback((step: 1 | 2 | 3) => {
+    setSectionsOpen((prev) => ({ ...prev, [step]: true }));
   }, []);
+
+  useEffect(() => {
+    if (itemCount === 0) {
+      sectionsInitializedRef.current = false;
+      setSectionsOpen({ 1: true, 2: false, 3: false });
+      return;
+    }
+
+    if (!sectionsInitializedRef.current) {
+      sectionsInitializedRef.current = true;
+      setSectionsOpen({ 1: true, 2: true, 3: false });
+    }
+  }, [itemCount]);
+
+  useEffect(() => {
+    if (deliveryReady) {
+      setSectionsOpen((prev) => ({ ...prev, 3: true }));
+      return;
+    }
+
+    if (itemCount > 0) {
+      setSectionsOpen((prev) => ({ ...prev, 3: false, 2: prev[2] || true }));
+    }
+  }, [deliveryReady, itemCount]);
+
+  const deliverySummary = useMemo(() => {
+    const parts = [
+      email.trim() || null,
+      shipping.selectedRate
+        ? localizeShippingRateLabel(shipping.selectedRate, locale)
+        : null,
+      needsPickupPoint && pickupPoint?.name ? pickupPoint.name : null,
+      firstName.trim() && lastName.trim()
+        ? `${firstName.trim()} ${lastName.trim()}`
+        : null,
+    ].filter(Boolean);
+
+    if (parts.length > 0) {
+      return parts.join(" · ");
+    }
+
+    return dict.checkout.deliverySectionIncomplete;
+  }, [
+    dict.checkout.deliverySectionIncomplete,
+    email,
+    firstName,
+    lastName,
+    locale,
+    needsPickupPoint,
+    pickupPoint?.name,
+    shipping.selectedRate,
+  ]);
+
+  const paymentSummary = useMemo(() => {
+    if (!deliveryReady) {
+      return null;
+    }
+
+    if (!payment.selectedId) {
+      return dict.checkout.submitBlockPayment;
+    }
+
+    if (selectedMontonioOption) {
+      return `${selectedPaymentGateway?.title ?? "Montonio"} — ${montonioOptionLabel(selectedMontonioOption, locale)}`;
+    }
+
+    return selectedPaymentGateway?.title ?? payment.selectedId;
+  }, [
+    deliveryReady,
+    dict.checkout.submitBlockPayment,
+    locale,
+    payment.selectedId,
+    selectedMontonioOption,
+    selectedPaymentGateway?.title,
+  ]);
+
+  const revealDeliveryIssues = useCallback(() => {
+    setDeliveryValidationAttempted(true);
+    openCheckoutSection(2);
+
+    if (!deliveryValidation.ready) {
+      setMobileStepError(dict.checkout.completeDeliveryFirst);
+      focusDeliveryField(deliveryValidation.firstInvalidField);
+      scrollToCheckoutStep(2);
+      return false;
+    }
+
+    setMobileStepError(null);
+    return true;
+  }, [
+    deliveryValidation.firstInvalidField,
+    deliveryValidation.ready,
+    dict.checkout.completeDeliveryFirst,
+    openCheckoutSection,
+  ]);
 
   const selectPaymentId = useCallback(
     (gatewayId: string) => {
@@ -814,34 +911,20 @@ export function CartCheckoutView() {
     [payment.setSelectedId],
   );
 
-  const handleContinueToDelivery = () => {
-    if (itemCount === 0) {
-      return;
-    }
+  const selectMontonioOption = useCallback(
+    (option: MontonioPaymentOption | null) => {
+      paymentGatewayTouchedRef.current = true;
+      setSelectedMontonioOption(option);
+    },
+    [],
+  );
 
-    goToMobileStep(2);
-  };
-
-  const handleContinueToPayment = () => {
-    if (!deliveryReady) {
-      setMobileStepError(dict.checkout.completeDeliveryFirst);
-      document
-        .querySelector<HTMLElement>("#checkout-form input, #checkout-form select")
-        ?.focus();
-      return;
-    }
-
-    if (!checkoutAnalyticsRef.current.shipping) {
-      checkoutAnalyticsRef.current.shipping = true;
-      trackAddShippingInfo({
-        lines,
-        shippingTier: shipping.selectedRate?.label ?? shipping.selectedRateId ?? "delivery",
-        value: displayTotal,
-      });
-    }
-
-    goToMobileStep(3);
-  };
+  const pickupValid =
+    !needsPickupPoint ||
+    Boolean(
+      pickupPoint &&
+        (!isLiveCheckoutEnabled() || pickupPointReadyForCheckout(pickupPoint)),
+    );
 
   const canSubmit =
     termsAccepted &&
@@ -850,11 +933,25 @@ export function CartCheckoutView() {
     !paymentLoading &&
     !payment.error &&
     (!needsMontonioProvider || Boolean(selectedMontonioOption)) &&
-    (!needsPickupPoint ||
-      Boolean(
-        pickupPoint &&
-          (!isLiveCheckoutEnabled() || pickupPointReadyForCheckout(pickupPoint)),
-      ));
+    pickupValid;
+
+  const submitBlockReason = resolveSubmitBlockReason({
+    termsAccepted,
+    deliveryReady,
+    paymentSelected: Boolean(payment.selectedId),
+    paymentLoading,
+    paymentError: payment.error,
+    needsMontonioProvider,
+    montonioOptionSelected: Boolean(selectedMontonioOption),
+    pickupValid,
+    messages: {
+      terms: dict.checkout.submitBlockTerms,
+      delivery: dict.checkout.submitBlockDelivery,
+      payment: dict.checkout.submitBlockPayment,
+      montonioBank: dict.checkout.submitBlockMontonioBank,
+      pickupInvalid: dict.checkout.submitBlockPickup,
+    },
+  });
   const shippingError = friendlyCheckoutError(
     shipping.error,
     dict.checkout.shippingError,
@@ -882,7 +979,8 @@ export function CartCheckoutView() {
     if (
       montonio.loading ||
       !selectedPaymentGateway ||
-      montonio.options.length === 0
+      montonio.options.length === 0 ||
+      !paymentGatewayTouchedRef.current
     ) {
       return;
     }
@@ -914,26 +1012,10 @@ export function CartCheckoutView() {
     }
 
     if (visiblePaymentGateways.some((gateway) => gateway.id === payment.selectedId)) {
-      if (
-        !paymentGatewayTouchedRef.current &&
-        payment.selectedId === "wc_montonio_card" &&
-        visiblePaymentGateways.some(
-          (gateway) => gateway.id === MONTONIO_PAYMENT_METHOD_ID,
-        )
-      ) {
-        payment.setSelectedId(MONTONIO_PAYMENT_METHOD_ID);
-      }
       return;
     }
 
-    const fallbackId =
-      visiblePaymentGateways.find(
-        (gateway) => gateway.id === MONTONIO_PAYMENT_METHOD_ID,
-      )?.id ??
-      visiblePaymentGateways[0]?.id ??
-      null;
-
-    payment.setSelectedId(fallbackId);
+    payment.setSelectedId(null);
     setSelectedMontonioOption(null);
   }, [
     montonio.loading,
@@ -962,13 +1044,13 @@ export function CartCheckoutView() {
       return;
     }
 
-    setMobileStep(3);
+    openCheckoutSection(3);
+    scrollToCheckoutStep(3);
     setSubmitError(
       paymentError === "Payment cancelled" || paymentError === "Payment failed"
         ? t.paymentReturnError
         : paymentError,
     );
-    scrollCheckoutToTop();
 
     const params = new URLSearchParams(searchParams.toString());
     params.delete("payment_error");
@@ -976,38 +1058,28 @@ export function CartCheckoutView() {
     router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname, {
       scroll: false,
     });
-  }, [pathname, router, searchParams, t.paymentReturnError]);
+  }, [openCheckoutSection, pathname, router, searchParams, t.paymentReturnError]);
 
   useEffect(() => {
     const stepParam = searchParams.get("step");
     if (stepParam === "2") {
-      setMobileStep(2);
-      scrollCheckoutToTop();
+      openCheckoutSection(2);
+      scrollToCheckoutStep(2);
     } else if (stepParam === "3") {
-      setMobileStep(3);
-      scrollCheckoutToTop();
+      openCheckoutSection(3);
+      scrollToCheckoutStep(3);
     }
-  }, [searchParams]);
+  }, [openCheckoutSection, searchParams]);
 
   useEffect(() => {
     registerCheckoutStepNavigator((step) => {
       if (step === 3 && !deliveryReady) {
-        setMobileStepError(dict.checkout.completeDeliveryFirst);
-        if (isDesktopLayout) {
-          scrollToCheckoutStep(2);
-        } else {
-          setMobileStep(2);
-          scrollCheckoutToTop();
-        }
+        revealDeliveryIssues();
         return;
       }
 
-      if (isDesktopLayout) {
-        scrollToCheckoutStep(step);
-        return;
-      }
-
-      goToMobileStep(step);
+      openCheckoutSection(step);
+      scrollToCheckoutStep(step);
     });
 
     return () => {
@@ -1015,10 +1087,9 @@ export function CartCheckoutView() {
     };
   }, [
     deliveryReady,
-    dict.checkout.completeDeliveryFirst,
-    goToMobileStep,
-    isDesktopLayout,
+    openCheckoutSection,
     registerCheckoutStepNavigator,
+    revealDeliveryIssues,
   ]);
 
   useEffect(() => {
@@ -1039,7 +1110,11 @@ export function CartCheckoutView() {
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
-    if (!canSubmit || submitting) {
+    if (submitting) {
+      return;
+    }
+
+    if (!revealDeliveryIssues() || !canSubmit) {
       return;
     }
 
@@ -1311,25 +1386,15 @@ export function CartCheckoutView() {
     loading: shipping.loading || paymentLoading,
     formId: FORM_ID,
     payLabel: isLiveCheckoutEnabled() ? undefined : t.testPayment,
+    submitBlockReason,
   };
 
   return (
-    <div className="site-container max-lg:pb-[calc(5rem+env(safe-area-inset-bottom))] lg:pb-14 lg:pt-10 pt-4">
+    <div className="site-container pb-8 pt-4 lg:pb-14 lg:pt-10">
       <header className="mb-3 max-w-2xl lg:mb-6">
         <h1 className="text-3xl font-extrabold uppercase sm:text-4xl">
-          {t.checkout}
+          {dict.checkout.cart}
         </h1>
-        <p className="mt-2 text-sm text-ink/60 lg:hidden">
-          {mobileStep === 1
-            ? dict.checkout.yourCart
-            : mobileStep === 2
-              ? dict.checkout.deliveryContact
-              : dict.checkout.pay}
-          {" · "}
-          <span className="font-body font-extrabold tabular-nums text-ink">
-            {formatCheckoutPrice(displayTotal, locale)}
-          </span>
-        </p>
         <p className="mt-2 hidden text-sm text-ink/60 lg:block">
           {itemCount} {itemCount === 1 ? t.item : t.items} ·{" "}
           <span className="font-body font-extrabold tabular-nums text-ink">
@@ -1340,19 +1405,15 @@ export function CartCheckoutView() {
       </header>
 
       <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(18rem,22rem)] lg:items-start lg:gap-12 xl:gap-16">
-        <div className="min-w-0">
-          <div id="checkout-step-cart" className={checkoutPanelClass(mobileStep, 1)}>
-          <CheckoutBlock
+        <div className="min-w-0 space-y-3 lg:space-y-0">
+          <CheckoutMobileSection
+            id="checkout-step-cart"
+            step={1}
             title={dict.checkout.yourCart}
-            hideTitleOnMobile
-            action={
-              <Link
-                href={localizedHref(locale, buildEquipmentHubHref(locale))}
-                className="text-xs font-medium text-ink/45 hover:text-accent"
-              >
-                {t.continueShopping}
-              </Link>
-            }
+            complete={itemCount > 0}
+            open
+            mobileHeaderless
+            collapsible={false}
           >
             <CheckoutCartTable
               lines={lines}
@@ -1406,7 +1467,13 @@ export function CartCheckoutView() {
                     ))}
                   </ul>
                 ) : null}
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                <form
+                  className="flex items-stretch gap-2"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    void handleApplyCoupon();
+                  }}
+                >
                   <label className="sr-only" htmlFor="coupon_code">
                     {dict.checkout.discountCode}
                   </label>
@@ -1418,22 +1485,23 @@ export function CartCheckoutView() {
                     placeholder={dict.checkout.discountCode}
                     autoComplete="off"
                     disabled={shipping.couponLoading || shipping.loading || shipping.syncing}
-                    className="w-full border border-ink/15 bg-paper px-4 py-3 text-base uppercase focus:border-accent focus:outline-none disabled:cursor-not-allowed disabled:opacity-60 sm:max-w-xs"
+                    className="min-w-0 flex-1 border border-ink/15 bg-white px-3 py-3 text-base uppercase focus:border-accent focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
                   />
                   <button
-                    type="button"
-                    onClick={() => void handleApplyCoupon()}
+                    type="submit"
                     disabled={
                       shipping.couponLoading ||
                       shipping.loading ||
                       shipping.syncing ||
                       !couponCode.trim()
                     }
-                    className="inline-flex min-h-11 items-center justify-center border border-ink/20 px-5 text-xs font-bold uppercase tracking-aggressive text-ink/70 transition-colors hover:border-ink/40 hover:text-ink disabled:cursor-not-allowed disabled:opacity-50"
+                    className="inline-flex shrink-0 items-center justify-center bg-ink/20 px-5 py-3 text-xs font-bold uppercase tracking-aggressive text-ink transition-colors hover:bg-ink/25 disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    {shipping.couponLoading ? dict.checkout.applyingCoupon : dict.checkout.apply}
+                    {shipping.couponLoading
+                      ? dict.checkout.validatingCoupon
+                      : dict.checkout.validateCoupon}
                   </button>
-                </div>
+                </form>
                 {shipping.couponError ? (
                   <p className="text-sm text-accent" role="alert">
                     {shipping.couponError}
@@ -1441,37 +1509,41 @@ export function CartCheckoutView() {
                 ) : null}
               </div>
             </details>
-            {cartHasEquipment(lines) ? (
-              <div className="mt-6">
-                <EquipmentReturnPromise variant="banner" />
-              </div>
-            ) : null}
+          </CheckoutMobileSection>
+
+          <div className="overflow-hidden rounded-lg bg-white p-4 shadow-[0_4px_20px_rgb(11_11_11_/_0.06)] lg:hidden">
             <CampaignCartPanels
               placement="cart-page"
               variant="compact"
-              className="mt-4 max-lg:mb-0 lg:mt-6 lg:hidden"
+              flat
             />
-          </CheckoutBlock>
           </div>
 
-          <form id={FORM_ID} onSubmit={handleSubmit} noValidate>
-            <div id="checkout-step-delivery" className={checkoutPanelClass(mobileStep, 2)}>
-            <CheckoutBlock
+          <form
+            id={FORM_ID}
+            onSubmit={handleSubmit}
+            noValidate
+            className="space-y-3 lg:space-y-0"
+          >
+            <CheckoutMobileSection
+              id="checkout-step-delivery"
+              step={2}
               title={dict.checkout.deliveryContact}
-              action={
-                <button
-                  type="button"
-                  onClick={() => goToMobileStep(1)}
-                  className="text-xs font-medium text-ink/45 hover:text-accent lg:hidden"
-                >
-                  {dict.checkout.back}
-                </button>
+              complete={deliveryReady}
+              open={sectionsOpen[2]}
+              onOpenChange={(open) =>
+                setSectionsOpen((prev) => ({ ...prev, 2: open }))
               }
+              summary={deliverySummary}
             >
               <div className="space-y-6">
                 <div className="grid gap-4 sm:grid-cols-2">
                   <label className="block">
-                    <span className={labelClassName}>{t.email}</span>
+                    <DeliveryFieldLabel
+                      complete={isDeliveryChecklistComplete(deliveryChecklist, "email")}
+                    >
+                      {t.email}
+                    </DeliveryFieldLabel>
                     <input
                       type="email"
                       name="email"
@@ -1479,12 +1551,22 @@ export function CartCheckoutView() {
                       autoComplete="email"
                       value={email}
                       onChange={(event) => setEmail(event.target.value)}
-                      className={inputClassName}
+                      className={inputWithErrorClass(Boolean(showDeliveryFieldError("email")))}
+                      aria-invalid={Boolean(showDeliveryFieldError("email"))}
                     />
+                    {showDeliveryFieldError("email") ? (
+                      <p className="mt-2 text-sm text-accent" role="alert">
+                        {showDeliveryFieldError("email")}
+                      </p>
+                    ) : null}
                   </label>
 
                   <label className="block">
-                    <span className={labelClassName}>{t.country}</span>
+                    <DeliveryFieldLabel
+                      complete={isDeliveryChecklistComplete(deliveryChecklist, "country")}
+                    >
+                      {t.country}
+                    </DeliveryFieldLabel>
                     <select
                       name="country"
                       required
@@ -1494,7 +1576,8 @@ export function CartCheckoutView() {
                         shipping.countries.length === 0
                       }
                       onChange={(event) => shipping.setCountry(event.target.value)}
-                      className={inputClassName}
+                      className={inputWithErrorClass(Boolean(showDeliveryFieldError("country")))}
+                      aria-invalid={Boolean(showDeliveryFieldError("country"))}
                     >
                       <option value="" disabled>
                         {shipping.countriesLoading &&
@@ -1508,6 +1591,11 @@ export function CartCheckoutView() {
                         </option>
                       ))}
                     </select>
+                    {showDeliveryFieldError("country") ? (
+                      <p className="mt-2 text-sm text-accent" role="alert">
+                        {showDeliveryFieldError("country")}
+                      </p>
+                    ) : null}
                     {shippingError ? (
                       <p className="mt-2 text-sm text-accent">{shippingError}</p>
                     ) : null}
@@ -1522,7 +1610,11 @@ export function CartCheckoutView() {
                 </div>
 
                 <div>
-                  <p className={labelClassName}>{t.deliveryMethod}</p>
+                  <DeliveryFieldLabel
+                    complete={isDeliveryChecklistComplete(deliveryChecklist, "shipping")}
+                  >
+                    {t.deliveryMethod}
+                  </DeliveryFieldLabel>
                   <div className="mt-2">
                     {(shipping.loading || shipping.syncing) &&
                     shipping.rates.length === 0 &&
@@ -1560,6 +1652,11 @@ export function CartCheckoutView() {
                       />
                     )}
                   </div>
+                  {showDeliveryFieldError("shipping") ? (
+                    <p className="mt-2 text-sm text-accent" role="alert">
+                      {showDeliveryFieldError("shipping")}
+                    </p>
+                  ) : null}
                   {!shipping.needsAddress &&
                   shipping.selectedRate &&
                   pickupPointSources ? (
@@ -1568,14 +1665,27 @@ export function CartCheckoutView() {
                       country={shipping.country}
                       selectedPoint={pickupPoint}
                       onSelect={setPickupPoint}
+                      complete={isDeliveryChecklistComplete(
+                        deliveryChecklist,
+                        "pickupPoint",
+                      )}
                     />
+                  ) : null}
+                  {showDeliveryFieldError("pickupPoint") ? (
+                    <p className="mt-2 text-sm text-accent" role="alert">
+                      {showDeliveryFieldError("pickupPoint")}
+                    </p>
                   ) : null}
                 </div>
 
                 {shipping.needsAddress ? (
                   <div className="grid gap-4 border-t border-ink/10 pt-5 sm:grid-cols-2">
                     <label className="block sm:col-span-2">
-                      <span className={labelClassName}>{t.streetAddress}</span>
+                      <DeliveryFieldLabel
+                        complete={isDeliveryChecklistComplete(deliveryChecklist, "address")}
+                      >
+                        {t.streetAddress}
+                      </DeliveryFieldLabel>
                       <input
                         type="text"
                         name="address-line1"
@@ -1584,8 +1694,14 @@ export function CartCheckoutView() {
                         value={address1}
                         onChange={(event) => setAddress1(event.target.value)}
                         onBlur={shipping.commitDeliveryAddress}
-                        className={inputClassName}
+                        className={inputWithErrorClass(Boolean(showDeliveryFieldError("address")))}
+                        aria-invalid={Boolean(showDeliveryFieldError("address"))}
                       />
+                      {showDeliveryFieldError("address") ? (
+                        <p className="mt-2 text-sm text-accent" role="alert">
+                          {showDeliveryFieldError("address")}
+                        </p>
+                      ) : null}
                     </label>
                     <label className="block">
                       <span className={labelClassName}>{t.city}</span>
@@ -1597,8 +1713,14 @@ export function CartCheckoutView() {
                         value={city}
                         onChange={(event) => setCity(event.target.value)}
                         onBlur={shipping.commitDeliveryAddress}
-                        className={inputClassName}
+                        className={inputWithErrorClass(Boolean(showDeliveryFieldError("city")))}
+                        aria-invalid={Boolean(showDeliveryFieldError("city"))}
                       />
+                      {showDeliveryFieldError("city") ? (
+                        <p className="mt-2 text-sm text-accent" role="alert">
+                          {showDeliveryFieldError("city")}
+                        </p>
+                      ) : null}
                     </label>
                     <label className="block">
                       <span className={labelClassName}>{t.postcode}</span>
@@ -1610,15 +1732,25 @@ export function CartCheckoutView() {
                         value={postcode}
                         onChange={(event) => setPostcode(event.target.value)}
                         onBlur={shipping.commitDeliveryAddress}
-                        className={inputClassName}
+                        className={inputWithErrorClass(Boolean(showDeliveryFieldError("postcode")))}
+                        aria-invalid={Boolean(showDeliveryFieldError("postcode"))}
                       />
+                      {showDeliveryFieldError("postcode") ? (
+                        <p className="mt-2 text-sm text-accent" role="alert">
+                          {showDeliveryFieldError("postcode")}
+                        </p>
+                      ) : null}
                     </label>
                   </div>
                 ) : null}
 
-                <div className="grid gap-4 border-t border-ink/10 pt-5 sm:grid-cols-2">
+                <div className="grid grid-cols-2 gap-3 border-t border-ink/10 pt-5 sm:gap-4">
                   <label className="block">
-                    <span className={labelClassName}>{t.firstName}</span>
+                    <DeliveryFieldLabel
+                      complete={isDeliveryChecklistComplete(deliveryChecklist, "name")}
+                    >
+                      {t.firstName}
+                    </DeliveryFieldLabel>
                     <input
                       type="text"
                       name="given-name"
@@ -1626,11 +1758,21 @@ export function CartCheckoutView() {
                       autoComplete="given-name"
                       value={firstName}
                       onChange={(event) => setFirstName(event.target.value)}
-                      className={inputClassName}
+                      className={inputWithErrorClass(Boolean(showDeliveryFieldError("firstName")))}
+                      aria-invalid={Boolean(showDeliveryFieldError("firstName"))}
                     />
+                    {showDeliveryFieldError("firstName") ? (
+                      <p className="mt-2 text-sm text-accent" role="alert">
+                        {showDeliveryFieldError("firstName")}
+                      </p>
+                    ) : null}
                   </label>
                   <label className="block">
-                    <span className={labelClassName}>{t.lastName}</span>
+                    <DeliveryFieldLabel
+                      complete={isDeliveryChecklistComplete(deliveryChecklist, "name")}
+                    >
+                      {t.lastName}
+                    </DeliveryFieldLabel>
                     <input
                       type="text"
                       name="family-name"
@@ -1638,11 +1780,21 @@ export function CartCheckoutView() {
                       autoComplete="family-name"
                       value={lastName}
                       onChange={(event) => setLastName(event.target.value)}
-                      className={inputClassName}
+                      className={inputWithErrorClass(Boolean(showDeliveryFieldError("lastName")))}
+                      aria-invalid={Boolean(showDeliveryFieldError("lastName"))}
                     />
+                    {showDeliveryFieldError("lastName") ? (
+                      <p className="mt-2 text-sm text-accent" role="alert">
+                        {showDeliveryFieldError("lastName")}
+                      </p>
+                    ) : null}
                   </label>
-                  <label className="block sm:col-span-2">
-                    <span className={labelClassName}>{t.phone}</span>
+                  <label className="col-span-2 block">
+                    <DeliveryFieldLabel
+                      complete={isDeliveryChecklistComplete(deliveryChecklist, "phone")}
+                    >
+                      {t.phone}
+                    </DeliveryFieldLabel>
                     <CheckoutPhoneField
                       country={phoneCountry}
                       onCountryChange={(code) => {
@@ -1653,32 +1805,45 @@ export function CartCheckoutView() {
                       value={phone}
                       onChange={setPhone}
                       required
-                      inputClassName={inputClassName}
+                      inputClassName={inputWithErrorClass(Boolean(showDeliveryFieldError("phone")))}
                     />
+                    {showDeliveryFieldError("phone") ? (
+                      <p className="mt-2 text-sm text-accent" role="alert">
+                        {showDeliveryFieldError("phone")}
+                      </p>
+                    ) : null}
                   </label>
                 </div>
 
                 {mobileStepError ? (
-                  <p className="text-sm text-accent lg:hidden" role="alert">
+                  <p className="text-sm text-accent" role="alert">
                     {mobileStepError}
                   </p>
                 ) : null}
-              </div>
-            </CheckoutBlock>
-            </div>
 
-            <div id="checkout-step-payment" className={checkoutPanelClass(mobileStep, 3)}>
-            <CheckoutBlock
+                <CheckoutMobileDeliveryTotals
+                  shippingTotal={displayShipping}
+                  total={displayTotal}
+                  selectedRate={shipping.selectedRate}
+                  shippingLoading={shipping.loading || shipping.syncing}
+                  className="mt-2"
+                />
+              </div>
+            </CheckoutMobileSection>
+
+            <CheckoutMobileSection
+              id="checkout-step-payment"
+              step={3}
               title={dict.checkout.pay}
-              action={
-                <button
-                  type="button"
-                  onClick={() => goToMobileStep(2)}
-                  className="text-xs font-medium text-ink/45 hover:text-accent lg:hidden"
-                >
-                  {dict.checkout.back}
-                </button>
+              complete={canSubmit}
+              open={sectionsOpen[3]}
+              onOpenChange={(open) =>
+                setSectionsOpen((prev) => ({ ...prev, 3: open }))
               }
+              summary={paymentSummary}
+              collapsible={deliveryReady}
+              locked={!deliveryReady}
+              lockedMessage={dict.checkout.completeDeliveryForPayment}
             >
               <div className="space-y-6">
                 <div className="border-t border-ink/10 pt-5 lg:border-0 lg:pt-0">
@@ -1697,7 +1862,7 @@ export function CartCheckoutView() {
                           ? montonioOptionKey(selectedMontonioOption)
                           : null
                       }
-                      onSelectMontonioOption={setSelectedMontonioOption}
+                      onSelectMontonioOption={selectMontonioOption}
                       loading={paymentLoading}
                       waitingForDelivery={paymentWaiting}
                       error={payment.error}
@@ -1711,45 +1876,13 @@ export function CartCheckoutView() {
                     {submitError}
                   </p>
                 ) : null}
-              </div>
-            </CheckoutBlock>
-            </div>
-          </form>
 
-          <div
-            className={cn(
-              "border-t border-ink/10 py-4 lg:hidden",
-              mobileStep !== 3 && "hidden",
-            )}
-          >
-            <CheckoutOrderSummary {...summaryProps} variant="mobile" />
-            <label className="mt-4 flex items-start gap-3 text-sm text-ink/70">
-              <input
-                type="checkbox"
-                checked={termsAccepted}
-                onChange={(event) => setTermsAccepted(event.target.checked)}
-                className="mt-0.5 size-4 shrink-0 accent-accent"
-                required
-                form={FORM_ID}
-              />
-              <span>
-                {t.termsPrefix}{" "}
-                <Link
-                  href={localizedHref(locale, "/terms")}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-ink hover:text-accent"
-                >
-                  {t.termsLink}
-                </Link>
-              </span>
-            </label>
-            <ul className="mt-4 space-y-1 text-xs text-ink/55">
-              <li className="text-xs text-ink/60">
-                {dict.returns.headline}
-              </li>
-            </ul>
-          </div>
+                <div className="border-t border-ink/10 pt-5 lg:hidden">
+                  <CheckoutOrderSummary {...summaryProps} variant="mobile" />
+                </div>
+              </div>
+            </CheckoutMobileSection>
+          </form>
         </div>
 
         <CheckoutSummaryShell className="hidden lg:block">
@@ -1761,38 +1894,6 @@ export function CartCheckoutView() {
           <CheckoutOrderSummary {...summaryProps} />
         </CheckoutSummaryShell>
       </div>
-
-      {mobileStep === 1 && !textFieldFocused ? (
-        <CheckoutMobileStepBar
-          continueLabel={dict.checkout.continueToDelivery}
-          onContinue={handleContinueToDelivery}
-          disabled={itemCount === 0 || shipping.loading}
-          total={displayTotal}
-        />
-      ) : null}
-
-      {mobileStep === 2 && !textFieldFocused ? (
-        <CheckoutMobileStepBar
-          continueLabel={dict.checkout.continueToPayment}
-          onContinue={handleContinueToPayment}
-          disabled={shipping.loading || shipping.syncing}
-          showBack
-          onBack={() => goToMobileStep(1)}
-          backLabel={dict.checkout.back}
-          total={displayTotal}
-        />
-      ) : null}
-
-      {mobileStep === 3 ? (
-        <CheckoutMobilePayBar
-          total={displayTotal}
-          canSubmit={canSubmit}
-          submitting={submitting}
-          loading={shipping.loading || paymentLoading}
-          formId={FORM_ID}
-          payLabel={isLiveCheckoutEnabled() ? undefined : t.testPayment}
-        />
-      ) : null}
     </div>
   );
 }

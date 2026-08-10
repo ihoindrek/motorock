@@ -13,6 +13,7 @@ type CheckoutPickupPointSelectorProps = {
   shippingRate: ShippingRate;
   country: string;
   selectedPoint: PickupPoint | null;
+  complete?: boolean;
   onSelect: (point: PickupPoint | null) => void;
 };
 
@@ -37,6 +38,7 @@ export function CheckoutPickupPointSelector({
   country,
   selectedPoint,
   onSelect,
+  complete = false,
 }: CheckoutPickupPointSelectorProps) {
   const locale = useLocale();
   const t = getDictionary(locale).checkout;
@@ -172,13 +174,25 @@ export function CheckoutPickupPointSelector({
   };
 
   return (
-    <div ref={rootRef} className="relative mt-4 border-t border-ink/10 pt-5">
+    <div
+      id="checkout-pickup-point"
+      ref={rootRef}
+      className="relative mt-4 border-t border-ink/10 pt-5"
+    >
       <div className="flex items-center justify-between gap-3">
         <label
           id={`pickup-point-label-${rateKey}`}
-          className="font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/50"
+          className="inline-flex items-center gap-1.5 font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/50"
         >
           {t.pickupPointLabel}
+          {complete ? (
+            <span
+              aria-hidden="true"
+              className="inline-flex size-4 shrink-0 items-center justify-center rounded-full border border-stock/40 bg-stock/10 text-[10px] font-bold leading-none text-stock"
+            >
+              ✓
+            </span>
+          ) : null}
         </label>
         {isLoading && !isOpen ? (
           <span className="inline-flex items-center gap-2 text-[11px] text-ink/45">

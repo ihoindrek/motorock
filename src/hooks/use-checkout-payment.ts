@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import {
-  MONTONIO_PAYMENT_METHOD_ID,
   type PaymentGateway,
 } from "@/lib/graphql/checkout";
 import { readWooSessionToken } from "@/lib/graphql/checkout-client";
@@ -64,12 +63,7 @@ export function useCheckoutPayment(ready: boolean, refreshKey = "") {
             return current;
           }
 
-          return (
-            nodes.find((gateway) => gateway.id === MONTONIO_PAYMENT_METHOD_ID)
-              ?.id ??
-            nodes[0]?.id ??
-            null
-          );
+          return null;
         });
       } catch (cause) {
         if (!cancelled) {

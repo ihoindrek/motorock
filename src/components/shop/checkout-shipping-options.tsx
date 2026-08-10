@@ -233,7 +233,7 @@ export function CheckoutShippingOptions({
   const showCollapsed = collapsed && selectedRate && !syncing;
 
   return (
-    <div className="relative">
+    <div id="checkout-shipping-options" className="relative">
       {syncing ? (
         <div
           className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center bg-paper/70 backdrop-blur-[2px]"

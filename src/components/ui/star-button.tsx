@@ -14,7 +14,7 @@ interface StarBackgroundProps {
   color?: string;
 }
 
-function StarBackground({ color }: StarBackgroundProps) {
+export function StarBackground({ color }: StarBackgroundProps) {
   return (
     <svg
       width="100%"

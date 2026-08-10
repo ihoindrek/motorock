@@ -298,11 +298,15 @@ export function CartDrawer() {
               })}
               </ul>
 
-              <CampaignCartPanels
-                placement="cart-drawer"
-                variant="compact"
-                className="mb-4 px-5 sm:px-6"
-              />
+              <div className="mt-4 border-t border-ink/10 px-5 pt-5 sm:px-6">
+                <div className="overflow-hidden rounded-lg bg-white p-4 shadow-[0_4px_20px_rgb(11_11_11_/_0.06)]">
+                  <CampaignCartPanels
+                    placement="cart-drawer"
+                    variant="compact"
+                    flat
+                  />
+                </div>
+              </div>
             </div>
 
             <div className="shrink-0 border-t border-ink/10 bg-surface/50 px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-6">

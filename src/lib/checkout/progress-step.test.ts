@@ -6,40 +6,25 @@ describe("deriveCheckoutProgressStep", () => {
     expect(
       deriveCheckoutProgressStep({
         itemCount: 0,
-        mobileStep: 2,
         deliveryReady: true,
-        isDesktopLayout: true,
       }),
     ).toBe(1);
   });
 
-  it("follows mobileStep on narrow viewports", () => {
+  it("returns step 2 when the cart has items but delivery is incomplete", () => {
     expect(
       deriveCheckoutProgressStep({
         itemCount: 2,
-        mobileStep: 2,
         deliveryReady: false,
-        isDesktopLayout: false,
       }),
     ).toBe(2);
   });
 
-  it("uses delivery completion on desktop instead of mobileStep", () => {
+  it("returns step 3 when delivery is complete", () => {
     expect(
       deriveCheckoutProgressStep({
         itemCount: 2,
-        mobileStep: 1,
-        deliveryReady: false,
-        isDesktopLayout: true,
-      }),
-    ).toBe(2);
-
-    expect(
-      deriveCheckoutProgressStep({
-        itemCount: 2,
-        mobileStep: 1,
         deliveryReady: true,
-        isDesktopLayout: true,
       }),
     ).toBe(3);
   });

@@ -10,12 +10,15 @@ import { cn } from "@/lib/utils";
 type CampaignCartPanelsProps = {
   placement: CampaignPlacement;
   variant?: "compact" | "default";
+  /** Ilma vari ja gradient-taustata (nt mobiili checkout). */
+  flat?: boolean;
   className?: string;
 };
 
 export function CampaignCartPanels({
   placement,
   variant = "default",
+  flat = false,
   className,
 }: CampaignCartPanelsProps) {
   const { lines, itemCount } = useCart();
@@ -44,6 +47,7 @@ export function CampaignCartPanels({
           key={status.campaign.id}
           status={status}
           variant={variant}
+          flat={flat}
         />
       ))}
     </div>

@@ -12,11 +12,12 @@ export const GIVEAWAY_2026_CAMPAIGN = {
   productRule: "equipment-only",
   placements: ["cart-drawer", "cart-page", "checkout", "blog"],
   blogSlug: "win-a-brixton-crossfire-500-storr-motorock-giveaway-2026",
+  prizeProductSlug: "brixton-crossfire-500-storr",
   content: {
     progressMessage:
-      "Add {remaining} more in gear to enter the {title} draw",
+      "Order {remaining} more to enter the {prizeName} motorcycle draw.",
     eligibleMessage:
-      "You're in the {title} draw — 1 entry with this order",
+      "Complete your purchase and win {prizeName}!",
     ctaHref:
       "/blog/win-a-brixton-crossfire-500-storr-motorock-giveaway-2026",
     ctaLabel: "Rules",
