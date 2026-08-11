@@ -138,7 +138,7 @@ function friendlyCheckoutError(
   }
 
   if (
-    /product not found|choose a size|could not add items|could not add items to checkout/i.test(
+    /product not found|choose a size|could not add items|could not add items to checkout|size is a required field/i.test(
       message,
     )
   ) {

@@ -1,5 +1,10 @@
 import { getWooStoreUrl } from "@/lib/storefront/url";
-import { isOneSizeLabel, sizesMatch } from "@/lib/shop/size-label";
+import {
+  formatSizeLabel,
+  isOneSizeLabel,
+  sizesMatch,
+  stripSizeLocaleSuffix,
+} from "@/lib/shop/size-label";
 
 type StoreAttributeTerm = {
   name: string;
@@ -200,6 +205,124 @@ export async function resolveStoreVariationId(
   }
 
   return findStoreVariationId(product, input);
+}
+
+export type WooVariationAttributeInput = {
+  attributeName: string;
+  attributeValue: string;
+};
+
+function wooPaAttributeName(attributeName: string) {
+  const normalized = attributeName.trim().toLowerCase();
+  if (normalized.startsWith("pa_")) {
+    return normalized;
+  }
+
+  if (
+    normalized === "värv" ||
+    normalized === "color" ||
+    normalized === "colour"
+  ) {
+    return "pa_color";
+  }
+
+  if (isSizeAttribute(attributeName)) {
+    return "pa_size";
+  }
+
+  return `pa_${normalized}`;
+}
+
+/** Map cart size label to Woo `pa_size` slug for GraphQL addToCart. */
+export function resolveSizeAttributeSlug(size: string, product: StoreProduct) {
+  const terms =
+    product.attributes?.find((attribute) => isSizeAttribute(attribute.name))
+      ?.terms ?? [];
+  const formatted = formatSizeLabel(size);
+  const candidates = new Set(
+    [
+      size.trim(),
+      stripSizeLocaleSuffix(size),
+      formatted,
+      formatted.replace("/", "-"),
+      formatted.replace(/^W/i, "w").replace("/", "-"),
+    ]
+      .map((value) => value.trim().toLowerCase())
+      .filter(Boolean),
+  );
+
+  const match = terms.find((term) => {
+    const slug = term.slug.trim().toLowerCase();
+    const name = term.name.trim().toLowerCase();
+    return candidates.has(slug) || candidates.has(name);
+  });
+
+  if (match) {
+    return match.slug;
+  }
+
+  if (/^w\d+\/l\d+$/i.test(formatted)) {
+    return formatted.replace(/^W/i, "w").replace("/", "-").toLowerCase();
+  }
+
+  return stripSizeLocaleSuffix(size).toLowerCase();
+}
+
+/** Some variable products reject addToCart unless pa_size/pa_color are sent too. */
+export function buildAddToCartVariationAttributes(
+  product: StoreProduct,
+  line: { size?: string; color?: string },
+  variationId?: number,
+): WooVariationAttributeInput[] {
+  const attributes: WooVariationAttributeInput[] = [];
+
+  if (line.size && !isOneSizeLabel(line.size)) {
+    attributes.push({
+      attributeName: "pa_size",
+      attributeValue: resolveSizeAttributeSlug(line.size, product),
+    });
+  }
+
+  if (line.color) {
+    const colorAttr = product.attributes?.find((attribute) =>
+      isColorAttribute(attribute.name),
+    );
+    const terms = colorAttr?.terms ?? [];
+    const normalized = line.color.trim().toLowerCase();
+    const match = terms.find(
+      (term) =>
+        term.slug.toLowerCase() === normalized ||
+        term.name.toLowerCase() === normalized,
+    );
+
+    attributes.push({
+      attributeName: colorAttr
+        ? wooPaAttributeName(colorAttr.name)
+        : "pa_color",
+      attributeValue: match?.slug ?? normalized,
+    });
+  }
+
+  if (
+    attributes.length === 0 &&
+    variationId &&
+    product.variations?.length
+  ) {
+    const variation = product.variations.find((entry) => entry.id === variationId);
+    for (const attribute of variation?.attributes ?? []) {
+      const value = attribute.value?.trim();
+      if (!value) {
+        continue;
+      }
+
+      attributes.push({
+        attributeName: wooPaAttributeName(attribute.name),
+        attributeValue: value,
+      });
+    }
+  }
+
+  return attributes;
 }
 
 export async function enrichCatalogProductVariations<

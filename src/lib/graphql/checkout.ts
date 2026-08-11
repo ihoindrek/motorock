@@ -29,7 +29,11 @@ import {
   type CheckoutResolvableProduct,
 } from "@/lib/graphql/resolve-checkout-product-ids";
 import { isOneSizeLabel, sizesMatch } from "@/lib/shop/size-label";
-import { resolveStoreVariationId } from "@/lib/woocommerce/store-api-product";
+import {
+  buildAddToCartVariationAttributes,
+  fetchStoreProduct,
+  resolveStoreVariationId,
+} from "@/lib/woocommerce/store-api-product";
 import {
   type CheckoutMetaDataInput,
   resolveMontonioCheckoutGatewayId,
@@ -305,6 +309,18 @@ export async function syncLocalCartToWoo(
 
     if (variationId) {
       input.variationId = variationId;
+
+      const storeProduct = await fetchStoreProduct(productId);
+      if (storeProduct) {
+        const variation = buildAddToCartVariationAttributes(
+          storeProduct,
+          line,
+          variationId,
+        );
+        if (variation.length > 0) {
+          input.variation = variation;
+        }
+      }
     }
 
     const { data, sessionToken } = await checkoutGraphqlRequest<

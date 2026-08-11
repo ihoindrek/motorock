@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildVariationIdsFromStoreProduct,
   findStoreVariationId,
+  resolveSizeAttributeSlug,
 } from "@/lib/woocommerce/store-api-product";
 
 const kaelasoojendajad = {
@@ -51,5 +52,27 @@ describe("findStoreVariationId", () => {
         {},
       ),
     ).toBe(55);
+  });
+});
+
+describe("resolveSizeAttributeSlug", () => {
+  const jeans = {
+    id: 37678,
+    type: "variable",
+    attributes: [
+      {
+        name: "size",
+        terms: [
+          { name: "W32/L34", slug: "w32-l34" },
+          { name: "W30/L30", slug: "w30-l30" },
+        ],
+      },
+    ],
+    variations: [],
+  };
+
+  it("maps display size labels to Woo pa_size slugs", () => {
+    expect(resolveSizeAttributeSlug("W32/L34", jeans)).toBe("w32-l34");
+    expect(resolveSizeAttributeSlug("w32-l34", jeans)).toBe("w32-l34");
   });
 });
