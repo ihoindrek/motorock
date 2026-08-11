@@ -325,7 +325,7 @@ function mapVariations(product: GraphQLVariableProduct) {
   });
 }
 
-function variationIdsFromProduct(product: GraphQLVariableProduct) {
+export function variationIdsFromProduct(product: GraphQLVariableProduct) {
   const variationIds: Record<string, number> = {};
   const sizeTerms =
     product.attributes?.nodes.find((attribute) =>

@@ -25,6 +25,9 @@ export type CartLine = {
   color?: string;
   productId?: number;
   variationId?: number;
+  /** EN catalog ids for Meta / GA4 (WPML ET lines keep localized Woo ids above). */
+  metaCatalogProductId?: number;
+  metaCatalogVariationId?: number;
 };
 
 type CartContextValue = {
@@ -135,6 +138,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
             color: line.color,
             productId: line.productId,
             variationId: line.variationId,
+            metaCatalogProductId: line.metaCatalogProductId,
+            metaCatalogVariationId: line.metaCatalogVariationId,
             quantity: line.quantity ?? 1,
           },
         ];
@@ -151,6 +156,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
         color: line.color,
         productId: line.productId,
         variationId: line.variationId,
+        metaCatalogProductId: line.metaCatalogProductId,
+        metaCatalogVariationId: line.metaCatalogVariationId,
         quantity: line.quantity ?? 1,
       });
     },

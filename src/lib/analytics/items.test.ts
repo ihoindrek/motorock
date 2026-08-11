@@ -82,21 +82,39 @@ describe("analytics items", () => {
     ]);
   });
 
-  it("prefers variation id for Meta catalog matching", () => {
+  it("prefers Meta catalog EN variation id on localized cart lines", () => {
+    const line: CartLine = {
+      slug: "3d-t-sark-pastellroosa",
+      name: "3D T-särk (pastellroosa)",
+      price: 29,
+      image: "/tee.webp",
+      quantity: 1,
+      size: "M",
+      productId: 28591,
+      variationId: 27805,
+      metaCatalogProductId: 24203,
+      metaCatalogVariationId: 24213,
+    };
+
+    expect(mapCartLineToGa4Item(line).item_id).toBe("24213");
+  });
+
+  it("uses metaCatalogProductId on catalog product rows", () => {
     expect(
       mapCatalogProductToGa4Item(
         {
-          slug: "3d-tee",
-          name: "3D T-Shirt",
-          brand: "Brand",
+          slug: "3d-t-sark-pastellroosa",
+          name: "3D T-särk (pastellroosa)",
+          brand: "Motogirl",
           price: 29,
           type: "equipment",
           category: "t-shirts",
-          databaseId: 22390,
+          databaseId: 28591,
+          metaCatalogProductId: 24203,
         },
         undefined,
-        22398,
+        24213,
       ).item_id,
-    ).toBe("22398");
+    ).toBe("24213");
   });
 });

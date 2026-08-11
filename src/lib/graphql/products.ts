@@ -15,6 +15,7 @@ import {
   mapGraphqlCardToCatalogProduct,
   mapGraphqlToCatalogProduct,
   mapGraphqlToMotorcycleProduct,
+  variationIdsFromProduct,
 } from "@/lib/graphql/map-graphql-product";
 import { PRODUCT_BY_SLUG, PRODUCT_BY_DATABASE_ID, PRODUCT_CATALOG_PAGE } from "@/lib/graphql/queries";
 import type { GraphQLProduct, GraphQLProductCard } from "@/lib/graphql/types";
@@ -426,6 +427,23 @@ async function fetchLocalizedGraphqlProduct(
   return mergeGraphqlProductPricing(localized, pricingSource);
 }
 
+function attachMetaCatalogIds(
+  product: CatalogProduct,
+  englishProduct: GraphQLProduct,
+): CatalogProduct {
+  const metaCatalogProductId = englishProduct.databaseId;
+  const metaCatalogVariationIds =
+    englishProduct.__typename === "VariableProduct"
+      ? variationIdsFromProduct(englishProduct)
+      : undefined;
+
+  return {
+    ...product,
+    metaCatalogProductId,
+    metaCatalogVariationIds,
+  };
+}
+
 export async function getProductBySlugForLocale(
   slug: string,
   locale: Locale,
@@ -449,7 +467,10 @@ export async function getProductBySlugForLocale(
     "@/lib/woocommerce/store-api-product"
   );
 
-  return enrichCatalogProductVariations(mapped);
+  const englishRemote = await fetchEnglishPricingProduct(remote);
+  const enriched = await enrichCatalogProductVariations(mapped);
+
+  return attachMetaCatalogIds(enriched, englishRemote);
 }
 
 async function withMotorcycleCategoryFallback(

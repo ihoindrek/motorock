@@ -53,6 +53,9 @@ export type ProductVariation = {
 export type CatalogProduct = {
   databaseId?: number;
   variationIds?: Readonly<Record<string, number>>;
+  /** EN Woo IDs for Meta catalog (always use these in analytics content_ids). */
+  metaCatalogProductId?: number;
+  metaCatalogVariationIds?: Readonly<Record<string, number>>;
   slug: string;
   name: string;
   brand: string;

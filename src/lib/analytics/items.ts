@@ -45,15 +45,26 @@ export function metaContentId(
 export function mapCatalogProductToGa4Item(
   product: Pick<
     CatalogProduct,
-    "slug" | "name" | "brand" | "price" | "type" | "category" | "sku" | "databaseId"
+    | "slug"
+    | "name"
+    | "brand"
+    | "price"
+    | "type"
+    | "category"
+    | "sku"
+    | "databaseId"
+    | "metaCatalogProductId"
   >,
   index?: number,
   variationId?: number,
 ): Ga4Item {
   return {
     item_id:
-      metaContentId(product.databaseId, product.sku ?? product.slug, variationId) ||
-      product.slug,
+      metaContentId(
+        product.metaCatalogProductId ?? product.databaseId,
+        product.sku ?? product.slug,
+        variationId,
+      ) || product.slug,
     item_name: product.name,
     item_brand: product.brand,
     item_category: formatItemCategory(product.type, product.category),
@@ -68,7 +79,11 @@ export function mapCartLineToGa4Item(line: CartLine, index?: number): Ga4Item {
 
   return {
     item_id:
-      metaContentId(line.productId, line.slug, line.variationId) || line.slug,
+      metaContentId(
+        line.metaCatalogProductId ?? line.productId,
+        line.slug,
+        line.metaCatalogVariationId ?? line.variationId,
+      ) || line.slug,
     item_name: line.name,
     item_brand: line.brand,
     item_category: formatItemCategory(line.type),

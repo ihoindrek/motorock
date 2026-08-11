@@ -210,6 +210,20 @@ export function EquipmentProductView({
     [product, selectedColor, size],
   );
 
+  const activeMetaVariationId = useMemo(
+    () =>
+      resolveLineVariationId(
+        {
+          variationIds:
+            product.metaCatalogVariationIds ?? product.variationIds,
+          sizes: product.sizes,
+        },
+        size,
+        selectedColor,
+      ),
+    [product.metaCatalogVariationIds, product.sizes, product.variationIds, selectedColor, size],
+  );
+
   const activePrice = useMemo(
     () => resolveActiveProductPrice(product, size, selectedColor),
     [product, selectedColor, size],
@@ -252,8 +266,8 @@ export function EquipmentProductView({
   }, [product.description, product.descriptionHtml, galleryImages.length]);
 
   useEffect(() => {
-    trackViewItem(product, { variationId: activeVariationId });
-  }, [product, activeVariationId]);
+    trackViewItem(product, { variationId: activeMetaVariationId });
+  }, [product, activeMetaVariationId]);
 
   useEffect(() => {
     recordRecentlyViewed({
@@ -277,6 +291,8 @@ export function EquipmentProductView({
     color: selectedColor,
     productId: product.databaseId,
     variationId: activeVariationId,
+    metaCatalogProductId: product.metaCatalogProductId ?? product.databaseId,
+    metaCatalogVariationId: activeMetaVariationId,
   };
 
   const handleAdd = () => {
