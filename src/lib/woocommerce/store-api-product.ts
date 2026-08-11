@@ -122,7 +122,11 @@ export function buildVariationIdsFromStoreProduct(product: StoreProduct) {
     );
 
     if (size) {
-      variationIds[size.value] = variation.id;
+      const raw = size.value;
+      const label = formatSizeLabel(raw);
+      variationIds[raw] = variation.id;
+      variationIds[label] = variation.id;
+      variationIds[raw.toLowerCase()] = variation.id;
     }
 
     if (color) {

@@ -371,6 +371,52 @@ async function fetchEnglishPricingProduct(
   return (await fetchGraphqlProductByDatabaseId(englishId)) ?? product;
 }
 
+/** Canonical EN product for Meta catalog ids (one catalog, EN Woo ids). */
+async function resolveEnglishCatalogProduct(
+  product: GraphQLProduct,
+): Promise<GraphQLProduct> {
+  const fromTranslation = await fetchEnglishPricingProduct(product);
+  if (getGraphqlLanguageCode(fromTranslation) === "en") {
+    return fromTranslation;
+  }
+
+  const englishSlug = resolveProductSlugForLocale(product, "en");
+  if (englishSlug) {
+    const bySlug = await fetchGraphqlProductBySlug(englishSlug);
+    if (bySlug && getGraphqlLanguageCode(bySlug) === "en") {
+      return bySlug;
+    }
+  }
+
+  return fromTranslation;
+}
+
+async function buildMetaCatalogVariationIds(
+  englishProduct: GraphQLProduct,
+): Promise<Readonly<Record<string, number>> | undefined> {
+  if (englishProduct.__typename === "VariableProduct") {
+    const fromGraphql = variationIdsFromProduct(englishProduct);
+    if (fromGraphql) {
+      return fromGraphql;
+    }
+  }
+
+  const englishId = englishProduct.databaseId;
+  if (!englishId) {
+    return undefined;
+  }
+
+  const { fetchStoreProduct, buildVariationIdsFromStoreProduct } = await import(
+    "@/lib/woocommerce/store-api-product"
+  );
+  const storeProduct = await fetchStoreProduct(englishId);
+  if (!storeProduct) {
+    return undefined;
+  }
+
+  return buildVariationIdsFromStoreProduct(storeProduct);
+}
+
 async function fetchLocalizedGraphqlProduct(
   slug: string,
   locale: Locale,
@@ -427,15 +473,13 @@ async function fetchLocalizedGraphqlProduct(
   return mergeGraphqlProductPricing(localized, pricingSource);
 }
 
-function attachMetaCatalogIds(
+async function attachMetaCatalogIds(
   product: CatalogProduct,
   englishProduct: GraphQLProduct,
-): CatalogProduct {
+): Promise<CatalogProduct> {
   const metaCatalogProductId = englishProduct.databaseId;
   const metaCatalogVariationIds =
-    englishProduct.__typename === "VariableProduct"
-      ? variationIdsFromProduct(englishProduct)
-      : undefined;
+    await buildMetaCatalogVariationIds(englishProduct);
 
   return {
     ...product,
@@ -467,7 +511,7 @@ export async function getProductBySlugForLocale(
     "@/lib/woocommerce/store-api-product"
   );
 
-  const englishRemote = await fetchEnglishPricingProduct(remote);
+  const englishRemote = await resolveEnglishCatalogProduct(remote);
   const enriched = await enrichCatalogProductVariations(mapped);
 
   return attachMetaCatalogIds(enriched, englishRemote);

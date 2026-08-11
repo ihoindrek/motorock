@@ -117,4 +117,40 @@ describe("analytics items", () => {
       ).item_id,
     ).toBe("24213");
   });
+
+  it("ignores localized Woo variation id when meta catalog product id is set", () => {
+    const line: CartLine = {
+      slug: "3d-t-sark-pastellroosa",
+      name: "3D T-särk (pastellroosa)",
+      price: 29,
+      image: "/tee.webp",
+      quantity: 1,
+      size: "M",
+      productId: 28591,
+      variationId: 27805,
+      metaCatalogProductId: 24203,
+    };
+
+    expect(mapCartLineToGa4Item(line).item_id).toBe("24203");
+  });
+
+  it("rejects ET variation id on localized PDP view_item mapping", () => {
+    expect(
+      mapCatalogProductToGa4Item(
+        {
+          slug: "3d-t-sark-pastellroosa",
+          name: "3D T-särk (pastellroosa)",
+          brand: "Motogirl",
+          price: 29,
+          type: "equipment",
+          category: "t-shirts",
+          databaseId: 28591,
+          metaCatalogProductId: 24203,
+          metaCatalogVariationIds: { M: 24213, m: 24213 },
+        },
+        undefined,
+        27805,
+      ).item_id,
+    ).toBe("24203");
+  });
 });

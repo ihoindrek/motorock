@@ -54,16 +54,32 @@ export function mapCatalogProductToGa4Item(
     | "sku"
     | "databaseId"
     | "metaCatalogProductId"
+    | "metaCatalogVariationIds"
   >,
   index?: number,
   variationId?: number,
 ): Ga4Item {
+  const usesLocalizedWooIds =
+    product.metaCatalogProductId != null &&
+    product.databaseId != null &&
+    product.metaCatalogProductId !== product.databaseId;
+  const metaVariationIds = product.metaCatalogVariationIds
+    ? Object.values(product.metaCatalogVariationIds)
+    : [];
+  const metaVariationId =
+    variationId != null &&
+    usesLocalizedWooIds &&
+    metaVariationIds.length > 0 &&
+    !metaVariationIds.includes(variationId)
+      ? undefined
+      : variationId;
+
   return {
     item_id:
       metaContentId(
         product.metaCatalogProductId ?? product.databaseId,
         product.sku ?? product.slug,
-        variationId,
+        metaVariationId,
       ) || product.slug,
     item_name: product.name,
     item_brand: product.brand,
@@ -76,13 +92,20 @@ export function mapCatalogProductToGa4Item(
 
 export function mapCartLineToGa4Item(line: CartLine, index?: number): Ga4Item {
   const variant = [line.size, line.color].filter(Boolean).join(" / ");
+  const usesLocalizedWooIds =
+    line.metaCatalogProductId != null &&
+    line.productId != null &&
+    line.metaCatalogProductId !== line.productId;
+  const metaVariationId =
+    line.metaCatalogVariationId ??
+    (usesLocalizedWooIds ? undefined : line.variationId);
 
   return {
     item_id:
       metaContentId(
         line.metaCatalogProductId ?? line.productId,
         line.slug,
-        line.metaCatalogVariationId ?? line.variationId,
+        metaVariationId,
       ) || line.slug,
     item_name: line.name,
     item_brand: line.brand,

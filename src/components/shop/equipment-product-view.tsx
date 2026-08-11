@@ -212,16 +212,17 @@ export function EquipmentProductView({
 
   const activeMetaVariationId = useMemo(
     () =>
-      resolveLineVariationId(
-        {
-          variationIds:
-            product.metaCatalogVariationIds ?? product.variationIds,
-          sizes: product.sizes,
-        },
-        size,
-        selectedColor,
-      ),
-    [product.metaCatalogVariationIds, product.sizes, product.variationIds, selectedColor, size],
+      product.metaCatalogVariationIds
+        ? resolveLineVariationId(
+            {
+              variationIds: product.metaCatalogVariationIds,
+              sizes: product.sizes,
+            },
+            size,
+            selectedColor,
+          )
+        : undefined,
+    [product.metaCatalogVariationIds, product.sizes, selectedColor, size],
   );
 
   const activePrice = useMemo(
