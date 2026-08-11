@@ -2,6 +2,7 @@ import type { CartLine } from "@/context/cart-context";
 import {
   checkoutGraphqlRequest,
   clearCheckoutSession,
+  clearSyncedCartLinesKey,
   readSyncedCartLinesKey,
   readWooSessionToken,
   writeSyncedCartLinesKey,
@@ -11,6 +12,7 @@ import {
   ADD_TO_CART,
   ALLOWED_COUNTRIES,
   APPLY_COUPON,
+  CART_ITEM_COUNT,
   CART_SHIPPING,
   CHECKOUT,
   EMPTY_CART,
@@ -35,6 +37,7 @@ import {
 
 export const MONTONIO_PAYMENT_METHOD_ID = "wc_montonio_payments";
 import { parseGraphqlPrice } from "@/lib/shop/parse-graphql-price";
+import { filterShippingRatesForCountry } from "@/lib/shop/shipping-showroom-pickup";
 import type { ShippingRate } from "@/lib/shop/shipping-method";
 
 type AllowedCountriesResponse = {
@@ -98,7 +101,26 @@ export function clearCheckoutProductIdCache() {
 
 export function resetCheckoutSyncState() {
   clearCheckoutProductIdCache();
+  clearSyncedCartLinesKey();
   writeWooSessionToken(null);
+}
+
+type CartItemCountResponse = {
+  cart: {
+    contents: {
+      itemCount: number;
+    } | null;
+  } | null;
+};
+
+export async function fetchCartItemCount(sessionToken?: string | null) {
+  const { data } = await checkoutGraphqlRequest<CartItemCountResponse>(
+    CART_ITEM_COUNT,
+    undefined,
+    sessionToken,
+  );
+
+  return data.cart?.contents?.itemCount ?? 0;
 }
 
 function lineCacheKey(line: CartLine) {
@@ -245,7 +267,10 @@ export async function syncLocalCartToWoo(
     session &&
     readSyncedCartLinesKey() === linesKey
   ) {
-    return session;
+    const itemCount = await fetchCartItemCount(session);
+    if (itemCount >= lines.length) {
+      return session;
+    }
   }
 
   let activeSession = session;

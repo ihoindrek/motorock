@@ -29,7 +29,9 @@ import {
   shippingMethodNeedsAddress,
   type ShippingRate,
 } from "@/lib/shop/shipping-method";
-import { filterShippingRatesForCountry } from "@/lib/shop/shipping-showroom-pickup";
+import {
+  filterShippingRatesForCountry,
+} from "@/lib/shop/shipping-showroom-pickup";
 
 type CheckoutShippingState = {
   loading: boolean;
@@ -206,7 +208,7 @@ export function useCheckoutShipping(
       rememberSession(sessionToken);
       const cart = await fetchCartShipping(activeSession());
       applyCart(cart, { country: nextCountry });
-      return cart.rates.length;
+      return filterShippingRatesForCountry(cart.rates, nextCountry).length;
     },
     [activeSession, applyCart, rememberSession],
   );
@@ -509,6 +511,12 @@ export function useCheckoutShipping(
         if (rateCount === 0 && !forceResync && !cancelled) {
           await bootstrap(true);
           return;
+        }
+
+        if (rateCount === 0 && !cancelled) {
+          setError(
+            "Could not load delivery options. Try again or re-add items from the product page.",
+          );
         }
 
         syncedLinesKeyRef.current = linesKey;

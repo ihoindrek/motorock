@@ -76,6 +76,14 @@ export function writeSyncedCartLinesKey(linesKey: string) {
   window.sessionStorage.setItem(SYNCED_LINES_KEY, linesKey);
 }
 
+export function clearSyncedCartLinesKey() {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.sessionStorage.removeItem(SYNCED_LINES_KEY);
+}
+
 export async function checkoutGraphqlRequest<
   TData,
   TVariables = Record<string, unknown>,

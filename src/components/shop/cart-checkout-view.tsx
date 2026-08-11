@@ -125,6 +125,12 @@ function friendlyCheckoutError(
       : "The selected pickup point could not be applied to your order. Refresh the page and try again.";
   }
 
+  if (/could not load delivery options/i.test(message)) {
+    return locale === "et"
+      ? "Tarneviise ei saanud laadida. Vajuta „Proovi uuesti“ või lisa tooted ostukorvi uuesti tootelehelt."
+      : "Could not load delivery options. Tap Retry or re-add items from the product page.";
+  }
+
   if (
     /product not found|choose a size|could not add items|could not add items to checkout/i.test(
       message,
@@ -424,7 +430,8 @@ export function CartCheckoutView() {
           loadingCountries: "Laen riike…",
           chooseCountryForDelivery: "Vali riik, et näha tarneviise.",
           deliveryMethod: "Tarneviis",
-          noDeliveryOptions: "Tarneviisid puuduvad — tühjenda ostukorv ja lisa toode uuesti tootelehelt (vali suurus).",
+          noDeliveryOptions:
+            "Tarneviise ei saanud laadida. Vajuta „Proovi uuesti“ või tühjenda ostukorv ja lisa toode uuesti tootelehelt (vali suurus).",
           updatingPrices: "Uuendan hindu…",
           pickupAtPayment: "Pakiautomaadi valik tehakse turvaliselt makses.",
           streetAddress: "Tänava aadress",
@@ -474,7 +481,7 @@ export function CartCheckoutView() {
           chooseCountryForDelivery: "Choose a country to see delivery options.",
           deliveryMethod: "Delivery method",
           noDeliveryOptions:
-            "No delivery options — clear your cart and re-add from the product page (choose a size).",
+            "Could not load delivery options. Tap Retry or clear your cart and re-add from the product page (choose a size).",
           updatingPrices: "Updating prices…",
           pickupAtPayment: "Pickup point is selected securely at payment.",
           streetAddress: "Street address",
@@ -1656,6 +1663,13 @@ export function CartCheckoutView() {
                     ) : shipping.rates.length === 0 ? (
                       <div className="space-y-3">
                         <p className="text-sm text-ink/60">{t.noDeliveryOptions}</p>
+                        <button
+                          type="button"
+                          onClick={shipping.retryBootstrap}
+                          className="border border-ink/20 px-4 py-2 font-body text-[11px] font-bold uppercase tracking-aggressive text-ink transition-colors hover:border-accent hover:text-accent"
+                        >
+                          {dict.error.retry}
+                        </button>
                         <CheckoutSupportNotice locale={locale} />
                       </div>
                     ) : (
