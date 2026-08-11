@@ -20,13 +20,13 @@ const DEFAULT_CURRENCY = "EUR";
 
 export function trackViewItem(
   product: CatalogProduct,
-  options?: { variationId?: number },
+  options?: {
+    variationId?: number;
+    size?: string;
+    color?: string;
+  },
 ) {
-  const item = mapCatalogProductToGa4Item(
-    product,
-    undefined,
-    options?.variationId,
-  );
+  const item = mapCatalogProductToGa4Item(product, undefined, options);
 
   pushEcommerceEvent("view_item", {
     currency: DEFAULT_CURRENCY,

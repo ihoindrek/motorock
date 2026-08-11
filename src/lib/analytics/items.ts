@@ -1,5 +1,8 @@
 import type { CartLine } from "@/context/cart-context";
 import type { OrderSummary } from "@/app/api/order/summary/route";
+import {
+  resolveMetaCatalogVariationId,
+} from "@/lib/analytics/meta-catalog-id";
 import type {
   CatalogProduct,
   ProductCategory,
@@ -55,24 +58,17 @@ export function mapCatalogProductToGa4Item(
     | "databaseId"
     | "metaCatalogProductId"
     | "metaCatalogVariationIds"
+    | "variationIds"
+    | "sizes"
   >,
   index?: number,
-  variationId?: number,
+  options?: {
+    variationId?: number;
+    size?: string;
+    color?: string;
+  },
 ): Ga4Item {
-  const usesLocalizedWooIds =
-    product.metaCatalogProductId != null &&
-    product.databaseId != null &&
-    product.metaCatalogProductId !== product.databaseId;
-  const metaVariationIds = product.metaCatalogVariationIds
-    ? Object.values(product.metaCatalogVariationIds)
-    : [];
-  const metaVariationId =
-    variationId != null &&
-    usesLocalizedWooIds &&
-    metaVariationIds.length > 0 &&
-    !metaVariationIds.includes(variationId)
-      ? undefined
-      : variationId;
+  const metaVariationId = resolveMetaCatalogVariationId(product, options);
 
   return {
     item_id:
@@ -92,13 +88,13 @@ export function mapCatalogProductToGa4Item(
 
 export function mapCartLineToGa4Item(line: CartLine, index?: number): Ga4Item {
   const variant = [line.size, line.color].filter(Boolean).join(" / ");
-  const usesLocalizedWooIds =
+  const localizedLine =
     line.metaCatalogProductId != null &&
     line.productId != null &&
     line.metaCatalogProductId !== line.productId;
-  const metaVariationId =
-    line.metaCatalogVariationId ??
-    (usesLocalizedWooIds ? undefined : line.variationId);
+  const metaVariationId = localizedLine
+    ? line.metaCatalogVariationId
+    : line.metaCatalogVariationId ?? line.variationId;
 
   return {
     item_id:

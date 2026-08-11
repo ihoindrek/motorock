@@ -111,9 +111,12 @@ describe("analytics items", () => {
           category: "t-shirts",
           databaseId: 28591,
           metaCatalogProductId: 24203,
+          metaCatalogVariationIds: { M: 24213, m: 24213 },
+          variationIds: { M: 27805, m: 27805 },
+          sizes: ["XS", "S", "M", "L", "XL", "2XL"],
         },
         undefined,
-        24213,
+        { size: "M", variationId: 27805 },
       ).item_id,
     ).toBe("24213");
   });
@@ -147,10 +150,12 @@ describe("analytics items", () => {
           databaseId: 28591,
           metaCatalogProductId: 24203,
           metaCatalogVariationIds: { M: 24213, m: 24213 },
+          variationIds: { M: 27805, m: 27805 },
+          sizes: ["XS", "S", "M", "L", "XL", "2XL"],
         },
         undefined,
-        27805,
+        { variationId: 27805, size: "M" },
       ).item_id,
-    ).toBe("24203");
+    ).toBe("24213");
   });
 });

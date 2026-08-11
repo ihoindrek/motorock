@@ -270,6 +270,14 @@ export async function renderProductPage({
       <ProductLocaleAlternates alternates={slugAlternates} />
       <EquipmentProductView
         product={product}
+        metaCatalog={
+          product.metaCatalogProductId && product.metaCatalogVariationIds
+            ? {
+                productId: product.metaCatalogProductId,
+                variationIds: product.metaCatalogVariationIds,
+              }
+            : undefined
+        }
         relatedProducts={relatedProducts}
         sizeGuide={sizeGuide}
       />

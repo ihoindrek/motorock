@@ -4,11 +4,16 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useEffect, useRef, type ReactNode } from "react";
 import type { CatalogProduct } from "@/types/catalog-product";
+import {
+  attachMetaCatalogFields,
+  type MetaCatalogIds,
+} from "@/lib/analytics/meta-catalog-id";
 import { useCart } from "@/context/cart-context";
 import { useDictionary, useLocale } from "@/context/locale-context";
 import { localizedHref } from "@/i18n/paths";
 import { trackViewItem } from "@/lib/analytics";
 import { recordRecentlyViewed } from "@/lib/shop/recently-viewed";
+import { resolveMetaCatalogVariationId } from "@/lib/analytics/meta-catalog-id";
 import { resolveLineVariationId } from "@/lib/shop/resolve-cart-variation";
 import { resolveActiveProductPrice } from "@/lib/shop/resolve-product-variation";
 import { formatSizeButtonParts, formatSizeLabel, isCompoundSizeLabel, isOneSizeLabel } from "@/lib/shop/size-label";
@@ -37,6 +42,8 @@ import {
 
 type EquipmentProductViewProps = {
   product: CatalogProduct;
+  /** EN Meta catalog ids — passed explicitly from the server for ET locale pages. */
+  metaCatalog?: MetaCatalogIds;
   relatedProducts?: readonly CatalogProduct[];
   defaultShippingCountry?: string;
   sizeGuide?: SizeGuide | null;
@@ -122,10 +129,15 @@ function CraftAccordion({
 
 export function EquipmentProductView({
   product,
+  metaCatalog,
   relatedProducts = [],
   defaultShippingCountry = "EE",
   sizeGuide = null,
 }: EquipmentProductViewProps) {
+  const analyticsProduct = useMemo(
+    () => attachMetaCatalogFields(product, metaCatalog),
+    [metaCatalog, product],
+  );
   const router = useRouter();
   const locale = useLocale();
   const dict = useDictionary();
@@ -212,17 +224,17 @@ export function EquipmentProductView({
 
   const activeMetaVariationId = useMemo(
     () =>
-      product.metaCatalogVariationIds
-        ? resolveLineVariationId(
-            {
-              variationIds: product.metaCatalogVariationIds,
-              sizes: product.sizes,
-            },
-            size,
-            selectedColor,
-          )
-        : undefined,
-    [product.metaCatalogVariationIds, product.sizes, selectedColor, size],
+      resolveMetaCatalogVariationId(analyticsProduct, {
+        variationId: activeVariationId,
+        size,
+        color: selectedColor,
+      }),
+    [
+      activeVariationId,
+      analyticsProduct,
+      selectedColor,
+      size,
+    ],
   );
 
   const activePrice = useMemo(
@@ -267,8 +279,12 @@ export function EquipmentProductView({
   }, [product.description, product.descriptionHtml, galleryImages.length]);
 
   useEffect(() => {
-    trackViewItem(product, { variationId: activeMetaVariationId });
-  }, [product, activeMetaVariationId]);
+    trackViewItem(analyticsProduct, {
+      variationId: activeVariationId,
+      size,
+      color: selectedColor,
+    });
+  }, [activeVariationId, analyticsProduct, selectedColor, size]);
 
   useEffect(() => {
     recordRecentlyViewed({
@@ -292,7 +308,7 @@ export function EquipmentProductView({
     color: selectedColor,
     productId: product.databaseId,
     variationId: activeVariationId,
-    metaCatalogProductId: product.metaCatalogProductId ?? product.databaseId,
+    metaCatalogProductId: metaCatalog?.productId ?? product.metaCatalogProductId,
     metaCatalogVariationId: activeMetaVariationId,
   };
 
