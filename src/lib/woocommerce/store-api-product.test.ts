@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   buildVariationIdsFromStoreProduct,
+  cartSizeToWooAttributeSlug,
   findStoreVariationId,
   resolveSizeAttributeSlug,
 } from "@/lib/woocommerce/store-api-product";
@@ -74,5 +75,13 @@ describe("resolveSizeAttributeSlug", () => {
   it("maps display size labels to Woo pa_size slugs", () => {
     expect(resolveSizeAttributeSlug("W32/L34", jeans)).toBe("w32-l34");
     expect(resolveSizeAttributeSlug("w32-l34", jeans)).toBe("w32-l34");
+  });
+});
+
+describe("cartSizeToWooAttributeSlug", () => {
+  it("maps letter and compound sizes for browser checkout", () => {
+    expect(cartSizeToWooAttributeSlug("L")).toBe("l");
+    expect(cartSizeToWooAttributeSlug("2XL")).toBe("2xl");
+    expect(cartSizeToWooAttributeSlug("W32/L34")).toBe("w32-l34");
   });
 });

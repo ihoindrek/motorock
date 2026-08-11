@@ -11,6 +11,8 @@ export async function GET(request: Request) {
   const variationId = variationRaw
     ? Number.parseInt(variationRaw, 10)
     : undefined;
+  const size = searchParams.get("size")?.trim() || undefined;
+  const color = searchParams.get("color")?.trim() || undefined;
 
   if (!/^[A-Z]{2}$/.test(country)) {
     return NextResponse.json({ error: "Invalid country" }, { status: 400 });
@@ -32,6 +34,8 @@ export async function GET(request: Request) {
       country,
       productId,
       variationId,
+      size,
+      color,
     });
 
     return NextResponse.json(estimate, {

@@ -1,5 +1,10 @@
 import { unstable_cache } from "next/cache";
 import {
+  buildAddToCartVariationAttributes,
+  buildAddToCartVariationAttributesFromCartLine,
+  fetchStoreProduct,
+} from "@/lib/woocommerce/store-api-product";
+import {
   ADD_TO_CART,
   ALLOWED_COUNTRIES,
   CART_SHIPPING,
@@ -141,6 +146,8 @@ async function computeProductShippingEstimate(input: {
   country: string;
   productId: number;
   variationId?: number;
+  size?: string;
+  color?: string;
 }): Promise<ProductShippingEstimate> {
   const country = input.country.toUpperCase();
   const location = defaultLocationForCountry(country);
@@ -153,6 +160,26 @@ async function computeProductShippingEstimate(input: {
 
   if (input.variationId) {
     addInput.variationId = input.variationId;
+  }
+
+  const variationAttrs = buildAddToCartVariationAttributesFromCartLine({
+    size: input.size,
+    color: input.color,
+  });
+  if (variationAttrs.length > 0) {
+    addInput.variation = variationAttrs;
+  } else if (input.variationId) {
+    const storeProduct = await fetchStoreProduct(input.productId);
+    if (storeProduct) {
+      const fromStore = buildAddToCartVariationAttributes(
+        storeProduct,
+        input,
+        input.variationId,
+      );
+      if (fromStore.length > 0) {
+        addInput.variation = fromStore;
+      }
+    }
   }
 
   const added = await estimateGraphqlRequest<
@@ -250,6 +277,8 @@ export async function estimateProductShipping(input: {
   country: string;
   productId: number;
   variationId?: number;
+  size?: string;
+  color?: string;
 }): Promise<ProductShippingEstimate> {
   const country = input.country.toUpperCase();
   const cached = unstable_cache(
@@ -258,12 +287,16 @@ export async function estimateProductShipping(input: {
         country,
         productId: input.productId,
         variationId: input.variationId,
+        size: input.size,
+        color: input.color,
       }),
     [
-      "shipping-estimate-v2",
+      "shipping-estimate-v3",
       country,
       String(input.productId),
       String(input.variationId ?? 0),
+      input.size ?? "",
+      input.color ?? "",
     ],
     { revalidate: CACHE_SECONDS, tags: ["shipping-estimate"] },
   );

@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 type ProductShippingReturnsPanelProps = {
   productId?: number;
   variationId?: number;
+  size?: string;
   defaultCountry: string;
   /** When false, skip Woo fetch until accordion opens. */
   active: boolean;
@@ -28,6 +29,7 @@ function firstVariationId(variationId: number | undefined) {
 export function ProductShippingReturnsPanel({
   productId,
   variationId,
+  size,
   defaultCountry,
   active,
   className,
@@ -71,6 +73,10 @@ export function ProductShippingReturnsPanel({
       params.set("variationId", String(activeVariationId));
     }
 
+    if (size) {
+      params.set("size", size);
+    }
+
     void fetch(`/api/shipping/estimate?${params}`, {
       signal: controller.signal,
     })
@@ -99,7 +105,7 @@ export function ProductShippingReturnsPanel({
       });
 
     return () => controller.abort();
-  }, [active, activeVariationId, country, productId]);
+  }, [active, activeVariationId, country, productId, size]);
 
   useEffect(() => {
     if (!estimate?.countries.length) {

@@ -86,20 +86,25 @@ export async function fetchStoreProduct(productId: number) {
     return cached;
   }
 
-  const response = await fetch(
-    `${getWooStoreUrl()}/wp-json/wc/store/v1/products/${productId}`,
-    {
-      next: { revalidate: 300 },
-    },
-  );
+  try {
+    const response = await fetch(
+      `${getWooStoreUrl()}/wp-json/wc/store/v1/products/${productId}`,
+      {
+        next: { revalidate: 300 },
+      },
+    );
 
-  if (!response.ok) {
+    if (!response.ok) {
+      return null;
+    }
+
+    const product = (await response.json()) as StoreProduct;
+    storeProductCache.set(productId, product);
+    return product;
+  } catch {
+    // Store API is server-only in practice (no ACAO for motorock.eu in browser).
     return null;
   }
-
-  const product = (await response.json()) as StoreProduct;
-  storeProductCache.set(productId, product);
-  return product;
 }
 
 export function buildVariationIdsFromStoreProduct(product: StoreProduct) {
@@ -233,7 +238,41 @@ function wooPaAttributeName(attributeName: string) {
   return `pa_${normalized}`;
 }
 
-/** Map cart size label to Woo `pa_size` slug for GraphQL addToCart. */
+/** Convert cart/UI size label to Woo `pa_size` slug (no Store API needed). */
+export function cartSizeToWooAttributeSlug(size: string) {
+  const formatted = formatSizeLabel(size.trim());
+  if (/^W\d+\/L\d+$/i.test(formatted)) {
+    return formatted.replace(/^W/i, "w").replace("/", "-").toLowerCase();
+  }
+
+  return stripSizeLocaleSuffix(formatted).toLowerCase();
+}
+
+/** Build GraphQL addToCart variation attrs from cart line (works in browser). */
+export function buildAddToCartVariationAttributesFromCartLine(line: {
+  size?: string;
+  color?: string;
+}) {
+  const attributes: WooVariationAttributeInput[] = [];
+
+  if (line.size && !isOneSizeLabel(line.size)) {
+    attributes.push({
+      attributeName: "pa_size",
+      attributeValue: cartSizeToWooAttributeSlug(line.size),
+    });
+  }
+
+  if (line.color) {
+    attributes.push({
+      attributeName: "pa_color",
+      attributeValue: stripSizeLocaleSuffix(line.color).toLowerCase(),
+    });
+  }
+
+  return attributes;
+}
+
+/** Map cart size label to Woo `pa_size` slug using Store API terms when available. */
 export function resolveSizeAttributeSlug(size: string, product: StoreProduct) {
   const terms =
     product.attributes?.find((attribute) => isSizeAttribute(attribute.name))
@@ -261,11 +300,7 @@ export function resolveSizeAttributeSlug(size: string, product: StoreProduct) {
     return match.slug;
   }
 
-  if (/^w\d+\/l\d+$/i.test(formatted)) {
-    return formatted.replace(/^W/i, "w").replace("/", "-").toLowerCase();
-  }
-
-  return stripSizeLocaleSuffix(size).toLowerCase();
+  return cartSizeToWooAttributeSlug(size);
 }
 
 /** Some variable products reject addToCart unless pa_size/pa_color are sent too. */

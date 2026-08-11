@@ -11,7 +11,7 @@ import { trackViewItem } from "@/lib/analytics";
 import { recordRecentlyViewed } from "@/lib/shop/recently-viewed";
 import { resolveLineVariationId } from "@/lib/shop/resolve-cart-variation";
 import { resolveActiveProductPrice } from "@/lib/shop/resolve-product-variation";
-import { formatSizeButtonParts, formatSizeLabel, isCompoundSizeLabel } from "@/lib/shop/size-label";
+import { formatSizeButtonParts, formatSizeLabel, isCompoundSizeLabel, isOneSizeLabel } from "@/lib/shop/size-label";
 import { sortProductSizes } from "@/lib/shop/sort-sizes";
 import { BrandLogo } from "@/components/shop/brand-logo";
 import { FinancingPriceTeaser } from "@/components/shop/financing-price-teaser";
@@ -584,6 +584,7 @@ export function EquipmentProductView({
               <ProductShippingReturnsPanel
                 productId={product.databaseId}
                 variationId={activeVariationId ?? firstVariationId(product)}
+                size={isOneSizeLabel(size) ? undefined : size}
                 defaultCountry={defaultShippingCountry}
                 active={activeAccordion === "shipping"}
               />
