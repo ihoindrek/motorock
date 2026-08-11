@@ -25,11 +25,16 @@ function formatItemCategory(
   return type === "equipment" ? "Equipment" : "Shop";
 }
 
-/** Meta catalog + WooCommerce use numeric product IDs as content_ids. */
+/** Meta catalog lists each variation as its own content id (not the parent group id). */
 export function metaContentId(
   productId?: number | null,
   fallback?: string | null,
+  variationId?: number | null,
 ): string {
+  if (variationId != null && variationId > 0) {
+    return String(variationId);
+  }
+
   if (productId != null && productId > 0) {
     return String(productId);
   }
@@ -43,10 +48,11 @@ export function mapCatalogProductToGa4Item(
     "slug" | "name" | "brand" | "price" | "type" | "category" | "sku" | "databaseId"
   >,
   index?: number,
+  variationId?: number,
 ): Ga4Item {
   return {
     item_id:
-      metaContentId(product.databaseId, product.sku ?? product.slug) ||
+      metaContentId(product.databaseId, product.sku ?? product.slug, variationId) ||
       product.slug,
     item_name: product.name,
     item_brand: product.brand,
@@ -62,7 +68,7 @@ export function mapCartLineToGa4Item(line: CartLine, index?: number): Ga4Item {
 
   return {
     item_id:
-      metaContentId(line.productId ?? line.variationId, line.slug) || line.slug,
+      metaContentId(line.productId, line.slug, line.variationId) || line.slug,
     item_name: line.name,
     item_brand: line.brand,
     item_category: formatItemCategory(line.type),

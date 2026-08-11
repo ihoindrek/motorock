@@ -252,7 +252,10 @@ export function EquipmentProductView({
   }, [product.description, product.descriptionHtml, galleryImages.length]);
 
   useEffect(() => {
-    trackViewItem(product);
+    trackViewItem(product, { variationId: activeVariationId });
+  }, [product, activeVariationId]);
+
+  useEffect(() => {
     recordRecentlyViewed({
       slug: product.slug,
       name: product.name,

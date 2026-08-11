@@ -16,6 +16,18 @@ function ensureDataLayer() {
   return window.dataLayer;
 }
 
+const META_DATALAYER_KEYS = [
+  "meta_content_ids",
+  "meta_content_type",
+  "meta_currency",
+  "meta_value",
+  "meta_transaction_id",
+] as const;
+
+function resetMetaDataLayerKeys() {
+  return Object.fromEntries(META_DATALAYER_KEYS.map((key) => [key, undefined]));
+}
+
 export function pushDataLayerEvent(
   event: string,
   payload: Record<string, unknown> = {},
@@ -29,7 +41,8 @@ export function pushDataLayerEvent(
     return;
   }
 
-  dataLayer.push({ ecommerce: null });
+  // Clear ecommerce + meta so GTM does not keep stale list ids from view_item_list.
+  dataLayer.push({ ecommerce: null, ...resetMetaDataLayerKeys() });
   dataLayer.push({
     event,
     ...payload,
@@ -61,9 +74,12 @@ export function pushEcommerceEvent(
   ecommerce: Ga4EcommercePayload,
   extra: Record<string, unknown> = {},
 ) {
+  // Meta ViewContent must match a single catalog SKU/variation — never a grid impression.
+  const includeMeta = event !== "view_item_list";
+
   pushDataLayerEvent(event, {
     ecommerce,
-    ...metaPayloadFromEcommerce(ecommerce),
+    ...(includeMeta ? metaPayloadFromEcommerce(ecommerce) : {}),
     ...extra,
   });
 }

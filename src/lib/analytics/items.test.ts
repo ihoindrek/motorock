@@ -43,10 +43,11 @@ describe("analytics items", () => {
       size: "M",
       color: "Black",
       productId: 42,
+      variationId: 99,
     };
 
     expect(mapCartLineToGa4Item(line, 0)).toEqual({
-      item_id: "42",
+      item_id: "99",
       item_name: "Capo Cor",
       item_brand: "Pando Moto",
       item_category: "Equipment",
@@ -79,5 +80,23 @@ describe("analytics items", () => {
         index: 0,
       },
     ]);
+  });
+
+  it("prefers variation id for Meta catalog matching", () => {
+    expect(
+      mapCatalogProductToGa4Item(
+        {
+          slug: "3d-tee",
+          name: "3D T-Shirt",
+          brand: "Brand",
+          price: 29,
+          type: "equipment",
+          category: "t-shirts",
+          databaseId: 22390,
+        },
+        undefined,
+        22398,
+      ).item_id,
+    ).toBe("22398");
   });
 });
