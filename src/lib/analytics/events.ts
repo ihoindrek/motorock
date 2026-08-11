@@ -30,7 +30,10 @@ export function trackViewItem(product: CatalogProduct) {
 
 export function trackViewMotorcycleProduct(product: MotorcycleProduct) {
   const item = {
-    item_id: product.sync.sku || product.slug,
+    item_id:
+      product.databaseId != null
+        ? String(product.databaseId)
+        : product.sync.sku || product.slug,
     item_name: product.sync.name,
     item_brand: product.sync.brand,
     item_category: "Motorcycles",

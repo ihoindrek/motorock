@@ -11,7 +11,13 @@ export type OrderSummary = {
   currency: string;
   paymentMethod: string;
   shippingMethod: string;
-  items: Array<{ name: string; quantity: number; total: number }>;
+  items: Array<{
+    name: string;
+    quantity: number;
+    total: number;
+    productId?: number;
+    sku?: string;
+  }>;
 };
 
 export async function GET(request: Request) {

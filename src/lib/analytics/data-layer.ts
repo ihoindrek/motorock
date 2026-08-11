@@ -36,6 +36,26 @@ export function pushDataLayerEvent(
   });
 }
 
+function metaPayloadFromEcommerce(ecommerce: Ga4EcommercePayload) {
+  const contentIds = ecommerce.items
+    .map((item) => String(item.item_id).trim())
+    .filter(Boolean);
+
+  if (contentIds.length === 0) {
+    return {};
+  }
+
+  return {
+    meta_content_type: "product",
+    meta_content_ids: contentIds,
+    ...(ecommerce.currency ? { meta_currency: ecommerce.currency } : {}),
+    ...(ecommerce.value != null ? { meta_value: ecommerce.value } : {}),
+    ...(ecommerce.transaction_id
+      ? { meta_transaction_id: ecommerce.transaction_id }
+      : {}),
+  };
+}
+
 export function pushEcommerceEvent(
   event: string,
   ecommerce: Ga4EcommercePayload,
@@ -43,6 +63,7 @@ export function pushEcommerceEvent(
 ) {
   pushDataLayerEvent(event, {
     ecommerce,
+    ...metaPayloadFromEcommerce(ecommerce),
     ...extra,
   });
 }

@@ -163,10 +163,18 @@ function motorock_rest_order_summary( WP_REST_Request $request ) {
 
 	$items = array();
 	foreach ( $order->get_items() as $item ) {
+		if ( ! $item instanceof WC_Order_Item_Product ) {
+			continue;
+		}
+
+		$product = $item->get_product();
+
 		$items[] = array(
-			'name'     => $item->get_name(),
-			'quantity' => (int) $item->get_quantity(),
-			'total'    => (float) wc_format_decimal( $item->get_total() + $item->get_total_tax(), 2 ),
+			'name'      => $item->get_name(),
+			'quantity'  => (int) $item->get_quantity(),
+			'total'     => (float) wc_format_decimal( $item->get_total() + $item->get_total_tax(), 2 ),
+			'productId' => $product ? (int) $product->get_id() : (int) $item->get_product_id(),
+			'sku'       => $product ? (string) $product->get_sku() : '',
 		);
 	}
 

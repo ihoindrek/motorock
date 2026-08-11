@@ -8,7 +8,7 @@ import { localizedHref } from "@/i18n/paths";
 import type { OrderSummary } from "@/app/api/order/summary/route";
 import { formatPrice } from "@/lib/shop/category";
 import { buildEquipmentHubHref } from "@/lib/shop/category-url";
-import { trackPurchase } from "@/lib/analytics";
+import { hasTrackedPurchase, trackPurchase } from "@/lib/analytics";
 
 type OrderThankYouViewProps = {
   locale: "en" | "et";
@@ -105,7 +105,16 @@ export function OrderThankYouView({
           setSummary(payload);
           trackPurchase(payload);
 
-          if (payload.status === "pending" && attempt < MAX_PENDING_RETRIES) {
+          const terminalStatus = ["failed", "cancelled", "refunded", "trash"].includes(
+            payload.status.toLowerCase(),
+          );
+          const purchaseTracked = hasTrackedPurchase(payload.orderNumber);
+
+          if (
+            !purchaseTracked &&
+            !terminalStatus &&
+            attempt < MAX_PENDING_RETRIES
+          ) {
             retryTimer = window.setTimeout(
               () => void loadSummary(attempt + 1),
               PENDING_RETRY_MS,

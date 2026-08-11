@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   mapCartLineToGa4Item,
   mapCatalogProductToGa4Item,
+  mapOrderSummaryItemsToGa4Items,
   sumLineValue,
 } from "@/lib/analytics/items";
 import type { CartLine } from "@/context/cart-context";
@@ -20,7 +21,7 @@ describe("analytics items", () => {
         databaseId: 42,
       }),
     ).toEqual({
-      item_id: "CAPO-01",
+      item_id: "42",
       item_name: "Capo Cor",
       item_brand: "Pando Moto",
       item_category: "Jackets",
@@ -56,5 +57,27 @@ describe("analytics items", () => {
     });
 
     expect(sumLineValue([line])).toBe(398);
+  });
+
+  it("maps order summary items with Woo product ids", () => {
+    expect(
+      mapOrderSummaryItemsToGa4Items([
+        {
+          name: "Capo Cor",
+          quantity: 1,
+          total: 199,
+          productId: 286,
+          sku: "CAPO-01",
+        },
+      ]),
+    ).toEqual([
+      {
+        item_id: "286",
+        item_name: "Capo Cor",
+        price: 199,
+        quantity: 1,
+        index: 0,
+      },
+    ]);
   });
 });

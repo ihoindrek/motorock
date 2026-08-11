@@ -25,6 +25,18 @@ function formatItemCategory(
   return type === "equipment" ? "Equipment" : "Shop";
 }
 
+/** Meta catalog + WooCommerce use numeric product IDs as content_ids. */
+export function metaContentId(
+  productId?: number | null,
+  fallback?: string | null,
+): string {
+  if (productId != null && productId > 0) {
+    return String(productId);
+  }
+
+  return fallback?.trim() || "";
+}
+
 export function mapCatalogProductToGa4Item(
   product: Pick<
     CatalogProduct,
@@ -33,7 +45,9 @@ export function mapCatalogProductToGa4Item(
   index?: number,
 ): Ga4Item {
   return {
-    item_id: product.sku ?? String(product.databaseId ?? product.slug),
+    item_id:
+      metaContentId(product.databaseId, product.sku ?? product.slug) ||
+      product.slug,
     item_name: product.name,
     item_brand: product.brand,
     item_category: formatItemCategory(product.type, product.category),
@@ -47,7 +61,8 @@ export function mapCartLineToGa4Item(line: CartLine, index?: number): Ga4Item {
   const variant = [line.size, line.color].filter(Boolean).join(" / ");
 
   return {
-    item_id: String(line.productId ?? line.variationId ?? line.slug),
+    item_id:
+      metaContentId(line.productId ?? line.variationId, line.slug) || line.slug,
     item_name: line.name,
     item_brand: line.brand,
     item_category: formatItemCategory(line.type),
@@ -66,7 +81,8 @@ export function mapOrderSummaryItemsToGa4Items(
   items: OrderSummary["items"],
 ): Ga4Item[] {
   return items.map((item, index) => ({
-    item_id: item.name,
+    item_id:
+      metaContentId(item.productId, item.sku ?? item.name) || item.name,
     item_name: item.name,
     price: item.quantity > 0 ? item.total / item.quantity : item.total,
     quantity: item.quantity,
