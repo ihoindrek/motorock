@@ -114,13 +114,18 @@ type CartItemCountResponse = {
 };
 
 export async function fetchCartItemCount(sessionToken?: string | null) {
-  const { data } = await checkoutGraphqlRequest<CartItemCountResponse>(
-    CART_ITEM_COUNT,
-    undefined,
-    sessionToken,
-  );
+  try {
+    const { data } = await checkoutGraphqlRequest<CartItemCountResponse>(
+      CART_ITEM_COUNT,
+      undefined,
+      sessionToken,
+    );
 
-  return data.cart?.contents?.itemCount ?? 0;
+    return data.cart?.contents?.itemCount ?? 0;
+  } catch {
+    // Stale or malformed Woo session JWT — treat as empty cart and resync.
+    return 0;
+  }
 }
 
 function lineCacheKey(line: CartLine) {
@@ -259,21 +264,24 @@ export async function syncLocalCartToWoo(
   lines: CartLine[],
   options?: { linesKey?: string },
 ) {
-  const session = readWooSessionToken();
   const linesKey = options?.linesKey;
+  let activeSession = readWooSessionToken();
 
-  if (
-    linesKey &&
-    session &&
-    readSyncedCartLinesKey() === linesKey
-  ) {
-    const itemCount = await fetchCartItemCount(session);
-    if (itemCount >= lines.length) {
-      return session;
+  if (activeSession) {
+    const itemCount = await fetchCartItemCount(activeSession);
+    const syncedKeyMatches =
+      Boolean(linesKey) && readSyncedCartLinesKey() === linesKey;
+
+    if (syncedKeyMatches && itemCount >= lines.length) {
+      return activeSession;
+    }
+
+    if (itemCount < lines.length) {
+      clearCheckoutSession();
+      clearSyncedCartLinesKey();
+      activeSession = null;
     }
   }
-
-  let activeSession = session;
 
   try {
     await checkoutGraphqlRequest(EMPTY_CART, undefined, activeSession);

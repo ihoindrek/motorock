@@ -131,6 +131,12 @@ function friendlyCheckoutError(
       : "Could not load delivery options. Tap Retry or re-add items from the product page.";
   }
 
+  if (/wrong number of segments|session.*expired|invalid session/i.test(message)) {
+    return locale === "et"
+      ? "Sessioon aegus. Vajuta „Proovi uuesti“."
+      : "Your checkout session expired. Tap Retry.";
+  }
+
   if (
     /product not found|choose a size|could not add items|could not add items to checkout/i.test(
       message,
