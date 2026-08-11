@@ -18,13 +18,11 @@ import {
   EMPTY_CART,
   PAYMENT_GATEWAYS,
   REMOVE_COUPONS,
-  RESOLVE_PRODUCT_BY_ID,
   RESOLVE_PRODUCT_IDS,
   UPDATE_CUSTOMER,
   UPDATE_SHIPPING_METHOD,
 } from "@/lib/graphql/checkout-queries";
 import {
-  fetchEnglishCheckoutProduct,
   resolveCheckoutProductIds,
   type CheckoutResolvableProduct,
 } from "@/lib/graphql/resolve-checkout-product-ids";
@@ -184,27 +182,11 @@ type AddToCartResponse = {
   } | null;
 };
 
-async function fetchProductByDatabaseId(databaseId: number) {
-  const { data } = await checkoutGraphqlRequest<
-    ResolveProductResponse,
-    { id: string }
-  >(RESOLVE_PRODUCT_BY_ID, { id: String(databaseId) });
-
-  return data.product;
-}
-
-async function fetchProductForLine(line: CartLine) {
-  if (line.productId) {
-    const product = await fetchProductByDatabaseId(line.productId);
-    if (product) {
-      return product;
-    }
-  }
-
+async function fetchEnglishProductBySlug(slug: string) {
   const { data } = await checkoutGraphqlRequest<
     ResolveProductResponse,
     { slug: string }
-  >(RESOLVE_PRODUCT_IDS, { slug: line.slug });
+  >(RESOLVE_PRODUCT_IDS, { slug });
 
   return data.product;
 }
@@ -213,24 +195,21 @@ export async function resolveCartLineIds(line: CartLine): Promise<{
   productId: number;
   variationId?: number;
 }> {
-  const cached = productIdCache.get(lineCacheKey(line));
+  const cacheKey = lineCacheKey(line);
+  const cached = productIdCache.get(cacheKey);
   if (cached?.variationId) {
     return cached;
   }
 
-  if (cached && !cached.variationId && !line.size && !line.color) {
+  if (cached && !line.size && !line.color) {
     return cached;
   }
 
-  const localized = await fetchProductForLine(line);
-  if (!localized) {
+  // Slug lookup returns the EN catalog product Woo checkout expects.
+  const englishProduct = await fetchEnglishProductBySlug(line.slug);
+  if (!englishProduct) {
     throw new Error(`Product not found: ${line.name}`);
   }
-
-  const englishProduct = await fetchEnglishCheckoutProduct(
-    localized,
-    fetchProductByDatabaseId,
-  );
 
   let resolved = resolveCheckoutProductIds(englishProduct, line, {
     isOneSizeLabel,
@@ -259,7 +238,7 @@ export async function resolveCartLineIds(line: CartLine): Promise<{
     };
   }
 
-  productIdCache.set(lineCacheKey(line), resolved);
+  productIdCache.set(cacheKey, resolved);
   return resolved;
 }
 

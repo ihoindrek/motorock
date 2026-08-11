@@ -204,6 +204,34 @@ export async function resolveStoreVariationId(
   productId: number,
   input: { size?: string; color?: string },
 ) {
+  if (typeof window !== "undefined") {
+    try {
+      const params = new URLSearchParams({ productId: String(productId) });
+      if (input.size) {
+        params.set("size", input.size);
+      }
+      if (input.color) {
+        params.set("color", input.color);
+      }
+
+      const response = await fetch(
+        `/api/checkout/resolve-variation?${params.toString()}`,
+        { cache: "no-store" },
+      );
+
+      if (response.ok) {
+        const payload = (await response.json()) as {
+          variationId?: number | null;
+        };
+        return payload.variationId ?? undefined;
+      }
+    } catch {
+      // Fall through to direct Store API (server components / tests).
+    }
+
+    return undefined;
+  }
+
   const product = await fetchStoreProduct(productId);
   if (!product || product.type !== "variable") {
     return undefined;

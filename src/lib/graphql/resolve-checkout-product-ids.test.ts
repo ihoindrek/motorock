@@ -65,6 +65,23 @@ describe("fetchEnglishCheckoutProduct", () => {
     const english = await fetchEnglishCheckoutProduct(enSimple, async () => null);
     expect(english.databaseId).toBe(24710);
   });
+
+  it("falls back to slug lookup when translations are unavailable", async () => {
+    const etWithoutTranslations: CheckoutResolvableProduct = {
+      databaseId: 28299,
+      languageCode: "et",
+      __typename: "SimpleProduct",
+    };
+
+    const english = await fetchEnglishCheckoutProduct(
+      etWithoutTranslations,
+      async () => null,
+      async (slug) => (slug === "maya-sox" ? enSimple : null),
+      "maya-sox",
+    );
+
+    expect(english.databaseId).toBe(24710);
+  });
 });
 
 describe("resolveCheckoutProductIds", () => {
@@ -82,6 +99,42 @@ describe("resolveCheckoutProductIds", () => {
       resolveCheckoutProductIds(enVariable, line, {
         isOneSizeLabel: () => false,
         sizesMatch: (left, right) => left === right,
+      }),
+    ).toEqual({ productId: 100, variationId: 201 });
+  });
+
+  it("matches variation when Woo stores lowercase slug values", () => {
+    const enVariableSlugValues: CheckoutResolvableProduct = {
+      databaseId: 100,
+      languageCode: "en",
+      __typename: "VariableProduct",
+      variations: {
+        nodes: [
+          {
+            databaseId: 32384,
+            attributes: {
+              nodes: [{ name: "pa_size", value: "m" }],
+            },
+          },
+        ],
+      },
+    };
+
+    expect(
+      resolveCheckoutProductIds(enVariableSlugValues, line, {
+        isOneSizeLabel: () => false,
+        sizesMatch: (left, right) =>
+          left.toLowerCase() === right.toLowerCase(),
+      }),
+    ).toEqual({ productId: 100, variationId: 32384 });
+  });
+
+  it("ignores cart variationId that does not exist on the EN product", () => {
+    expect(
+      resolveCheckoutProductIds(enVariable, line, {
+        isOneSizeLabel: () => false,
+        sizesMatch: (left, right) => left === right,
+        variationId: 99999,
       }),
     ).toEqual({ productId: 100, variationId: 201 });
   });

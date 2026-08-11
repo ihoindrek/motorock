@@ -10,6 +10,7 @@ const CHECKOUT_PRICING_LOCALE = "en" as const;
 export type CheckoutResolvableProduct = {
   databaseId: number;
   languageCode?: string | null;
+  /** In-memory catalog nodes only — not queried in checkout GraphQL (WPML bug). */
   translations?: Array<{
     databaseId?: number | null;
     language?: { code?: string | null } | null;
@@ -28,17 +29,38 @@ export type CheckoutResolvableProduct = {
 export async function fetchEnglishCheckoutProduct(
   product: CheckoutResolvableProduct,
   fetchById: (id: number) => Promise<CheckoutResolvableProduct | null>,
+  fetchBySlug?: (slug: string) => Promise<CheckoutResolvableProduct | null>,
+  slug?: string,
 ): Promise<CheckoutResolvableProduct> {
   if (getGraphqlLanguageCode(product) === CHECKOUT_PRICING_LOCALE) {
     return product;
   }
 
   const englishId = findTranslationDatabaseId(product, CHECKOUT_PRICING_LOCALE);
-  if (!englishId || englishId === product.databaseId) {
-    return product;
+  if (englishId && englishId !== product.databaseId) {
+    return (await fetchById(englishId)) ?? product;
   }
 
-  return (await fetchById(englishId)) ?? product;
+  if (slug && fetchBySlug) {
+    return (await fetchBySlug(slug)) ?? product;
+  }
+
+  return product;
+}
+
+function variationIdOnProduct(
+  product: CheckoutResolvableProduct,
+  variationId?: number,
+) {
+  if (!variationId || product.__typename !== "VariableProduct") {
+    return variationId;
+  }
+
+  const exists = product.variations?.nodes.some(
+    (node) => node.databaseId === variationId,
+  );
+
+  return exists ? variationId : undefined;
 }
 
 function normalizeAttributeName(name: string) {
@@ -135,7 +157,7 @@ export function resolveCheckoutProductIds(
   }
 
   const variationId =
-    options.variationId ??
+    variationIdOnProduct(englishProduct, options.variationId) ??
     findVariationForLine(
       englishProduct,
       line,

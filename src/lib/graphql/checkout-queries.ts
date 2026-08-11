@@ -53,15 +53,11 @@ export const CART_ITEM_COUNT = `
   }
 `;
 
+/** Checkout resolves products by slug (EN catalog). Omit WPML `translations` — some
+ *  products expose variation rows there and WooGraphQL rejects the whole query. */
 const RESOLVE_PRODUCT_FIELDS = `
   databaseId
   languageCode
-  translations {
-    databaseId
-    language {
-      code
-    }
-  }
   ... on SimpleProduct {
     __typename
   }
