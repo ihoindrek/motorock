@@ -97,7 +97,7 @@ class Motorock_Catalog_Importer_Prestashop_Scraper {
             return '';
         }
 
-        $pattern = '/[\s,]+(?:Discover|Shop(?:\s+now)?|Learn\s+more|Read\s+more)\.?$/iu';
+        $pattern = '/[\s,]+(?:Discover|Shop(?:\s+now)?|Learn\s+more|Read\s+more|Avasta|Osta(?:\s+kohe)?|Loe\s+edasi|Lugege\s+edasi|Scopri|Acquista(?:\s+ora)?)\.?$/iu';
 
         while (preg_match($pattern, $text)) {
             $text = trim(preg_replace($pattern, '', $text));

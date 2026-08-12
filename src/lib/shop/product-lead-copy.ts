@@ -6,15 +6,15 @@ export function htmlToPlainText(html: string) {
   );
 }
 
+const SEO_META_TRAILING_CTAS =
+  /[\s,]+(?:Discover|Shop(?:\s+now)?|Learn\s+more|Read\s+more|Avasta|Osta(?:\s+kohe)?|Loe\s+edasi|Lugege\s+edasi|Scopri|Acquista(?:\s+ora)?)\.?$/iu;
+
 /** Strip Holy Freedom / PrestaShop SEO meta tails (truncated CTAs). */
 export function sanitizeSeoMetaLeadCopy(text: string): string {
   let cleaned = text.replace(/\s+/g, " ").trim();
 
-  const trailingCta =
-    /[\s,]+(?:Discover|Shop(?:\s+now)?|Learn\s+more|Read\s+more)\.?$/i;
-
-  while (trailingCta.test(cleaned)) {
-    cleaned = cleaned.replace(trailingCta, "").trim();
+  while (SEO_META_TRAILING_CTAS.test(cleaned)) {
+    cleaned = cleaned.replace(SEO_META_TRAILING_CTAS, "").trim();
   }
 
   return cleaned.replace(/,\s*$/, "").trim();

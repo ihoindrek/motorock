@@ -42,6 +42,12 @@ describe("sanitizeSeoMetaLeadCopy", () => {
     ).toBe(
       "Lightweight PrimaLoft® tube scarf for cold rides, with extra warmth around neck and face. Perfect under helmet",
     );
+
+    expect(
+      sanitizeSeoMetaLeadCopy(
+        "Vintage-stiilis CE-bomber Holyfreedomi kaitse ja suhtumisega. Avasta",
+      ),
+    ).toBe("Vintage-stiilis CE-bomber Holyfreedomi kaitse ja suhtumisega.");
   });
 });
 

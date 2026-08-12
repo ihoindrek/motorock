@@ -248,7 +248,7 @@ function extractImages(html) {
 function sanitizeShortDescription(text) {
   let cleaned = text.replace(/\s+/g, " ").trim();
   const trailingCta =
-    /[\s,]+(?:Discover|Shop(?:\s+now)?|Learn\s+more|Read\s+more)\.?$/i;
+    /[\s,]+(?:Discover|Shop(?:\s+now)?|Learn\s+more|Read\s+more|Avasta|Osta(?:\s+kohe)?|Loe\s+edasi|Lugege\s+edasi|Scopri|Acquista(?:\s+ora)?)\.?$/iu;
 
   while (trailingCta.test(cleaned)) {
     cleaned = cleaned.replace(trailingCta, "").trim();
