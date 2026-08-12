@@ -52,7 +52,7 @@ function RecentlyViewedCard({
       <figure
         className={cn(
           "relative overflow-hidden",
-          isMotorcycle ? "aspect-[4/3] bg-moto" : "aspect-[4/5] bg-white",
+          isMotorcycle ? "aspect-[4/3] bg-moto" : "aspect-[3/4] bg-white",
         )}
       >
         <Image
@@ -63,7 +63,7 @@ function RecentlyViewedCard({
           className={cn(
             isMotorcycle
               ? "object-contain object-center p-2 mix-blend-multiply sm:p-3"
-              : "object-cover object-center",
+              : "object-contain object-center p-0.5 sm:p-1",
           )}
         />
       </figure>

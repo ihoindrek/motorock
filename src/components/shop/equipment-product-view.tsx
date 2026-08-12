@@ -495,7 +495,7 @@ export function EquipmentProductView({
         </div>
 
         <div className="order-2 flex flex-col gap-8 max-lg:contents lg:order-2 lg:col-span-6 xl:col-span-7">
-          <div className="order-2 w-full max-lg:order-1 lg:order-none lg:max-w-xl xl:max-w-2xl lg:ml-auto lg:w-full">
+          <div className="order-2 w-full max-lg:order-1 lg:order-none lg:max-w-2xl xl:max-w-3xl lg:ml-auto lg:w-full">
             <ProductImageGallery
               images={galleryImages}
               alt={product.name}

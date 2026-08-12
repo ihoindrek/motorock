@@ -188,7 +188,7 @@ function SceneImageTile({
           fill
           priority={priority}
           sizes="(max-width: 1024px) 50vw, 38vw"
-          className="object-cover object-center transition-transform duration-500 group-hover/openable:scale-[1.03]"
+          className="object-contain object-center p-1 transition-transform duration-500 group-hover/openable:scale-[1.03] sm:p-1.5"
         />
         <div
           className="pointer-events-none absolute inset-0 bg-gradient-to-t from-ink/20 via-transparent to-transparent"
@@ -366,7 +366,7 @@ export function ProductImageGallery({
               <GalleryImageTransition
                 imageKey={activeSrc}
                 direction={slideDirection}
-                className="aspect-[3/4] w-full max-lg:rounded-none sm:aspect-[4/5]"
+                className="aspect-[4/5] w-full max-lg:rounded-none sm:aspect-[3/4] lg:aspect-[4/5]"
               >
                 <figure
                   className={`relative h-full w-full overflow-hidden ${galleryImageBgClass(imageBackground)}`}
@@ -377,7 +377,7 @@ export function ProductImageGallery({
                     fill
                     priority
                     sizes="(max-width: 1024px) 100vw, 42vw"
-                    className="object-cover object-center transition-transform duration-500 group-hover/openable:scale-[1.01]"
+                    className="object-contain object-center p-0.5 transition-transform duration-500 group-hover/openable:scale-[1.01] sm:p-1"
                   />
                   {images.length > 1 ? (
                     <span className="pointer-events-none absolute left-3 top-3 z-10 font-body text-[10px] font-bold tabular-nums tracking-aggressive text-ink">
@@ -531,7 +531,7 @@ export function ProductImageGallery({
                 fill
                 priority
                 sizes="(max-width: 1024px) 100vw, 50vw"
-                className="object-cover object-center transition-transform duration-500 group-hover/openable:scale-[1.02]"
+                className="object-contain object-center p-0.5 transition-transform duration-500 group-hover/openable:scale-[1.02] sm:p-1"
               />
               <div
                 className="pointer-events-none absolute inset-0 bg-gradient-to-t from-ink/25 via-transparent to-transparent opacity-60"
