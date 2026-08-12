@@ -10,7 +10,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "audit:variations": "node scripts/audit-graphql-variations.mjs",
-    "revalidate": "node scripts/revalidate-storefront.mjs"
+    "revalidate": "node scripts/revalidate-storefront.mjs",
+    "import:holyfreedom": "node scripts/holyfreedom-woocommerce-import.mjs"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.20",
