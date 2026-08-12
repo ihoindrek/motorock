@@ -77,14 +77,33 @@ class Motorock_Catalog_Importer_Prestashop_Scraper {
 
     private function extract_short_description($html) {
         if (preg_match('/property="og:description"\s+content="([^"]+)"/i', $html, $match)) {
-            return html_entity_decode($match[1], ENT_QUOTES, 'UTF-8');
+            return $this->sanitize_short_description(
+                html_entity_decode($match[1], ENT_QUOTES, 'UTF-8')
+            );
         }
 
         if (preg_match('/class="rte-content product-description"[^>]*>(.*?)<\/div>/is', $html, $match)) {
-            return wp_trim_words(wp_strip_all_tags($match[1]), 40, '…');
+            return $this->sanitize_short_description(
+                wp_trim_words(wp_strip_all_tags($match[1]), 40, '…')
+            );
         }
 
         return '';
+    }
+
+    private function sanitize_short_description($text) {
+        $text = trim(preg_replace('/\s+/u', ' ', (string) $text));
+        if ($text === '') {
+            return '';
+        }
+
+        $pattern = '/[\s,]+(?:Discover|Shop(?:\s+now)?|Learn\s+more|Read\s+more)\.?$/iu';
+
+        while (preg_match($pattern, $text)) {
+            $text = trim(preg_replace($pattern, '', $text));
+        }
+
+        return rtrim($text, ', ');
     }
 
     private function extract_description_html($html) {

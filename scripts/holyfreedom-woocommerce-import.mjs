@@ -245,16 +245,30 @@ function extractImages(html) {
   return [...new Set(urls)];
 }
 
+function sanitizeShortDescription(text) {
+  let cleaned = text.replace(/\s+/g, " ").trim();
+  const trailingCta =
+    /[\s,]+(?:Discover|Shop(?:\s+now)?|Learn\s+more|Read\s+more)\.?$/i;
+
+  while (trailingCta.test(cleaned)) {
+    cleaned = cleaned.replace(trailingCta, "").trim();
+  }
+
+  return cleaned.replace(/,\s*$/, "").trim();
+}
+
 function extractShortDescription(html) {
   const og = html.match(/property="og:description"\s+content="([^"]+)"/i);
   if (og?.[1]) {
-    return decodeHtml(og[1]).trim();
+    return sanitizeShortDescription(decodeHtml(og[1]));
   }
 
   const block = html.match(
     /class="rte-content product-description"[^>]*>([\s\S]*?)<\/div>/i,
   );
-  return block ? stripHtml(block[1]).slice(0, 280) : "";
+  return block
+    ? sanitizeShortDescription(stripHtml(block[1]).slice(0, 280))
+    : "";
 }
 
 function extractDescription(html) {

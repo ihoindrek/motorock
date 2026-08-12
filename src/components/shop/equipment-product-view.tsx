@@ -35,6 +35,8 @@ import type { SizeGuide } from "@/types/size-guide";
 import { ProductShippingReturnsPanel } from "@/components/shop/product-shipping-returns-panel";
 import { ProductDescriptionHtml } from "@/components/shop/product-description-html";
 import { ProductFaqSection } from "@/components/shop/product-faq-section";
+import { ProductBreadcrumbs } from "@/components/shop/product-breadcrumbs";
+import type { Breadcrumb } from "@/lib/shop/category";
 import {
   buildProductColorOptions,
   hasMultipleColorChoices,
@@ -43,6 +45,7 @@ import {
 
 type EquipmentProductViewProps = {
   product: CatalogProduct;
+  breadcrumbs: readonly Breadcrumb[];
   /** EN Meta catalog ids — passed explicitly from the server for ET locale pages. */
   metaCatalog?: MetaCatalogIds;
   relatedProducts?: readonly CatalogProduct[];
@@ -130,6 +133,7 @@ function CraftAccordion({
 
 export function EquipmentProductView({
   product,
+  breadcrumbs,
   metaCatalog,
   relatedProducts = [],
   defaultShippingCountry = "EE",
@@ -330,44 +334,18 @@ export function EquipmentProductView({
     <div className="bg-white pb-24 lg:pb-0">
       <div className="site-container max-lg:pt-0 py-6 lg:py-10">
       <div className="flex flex-col gap-10 max-lg:gap-6 lg:grid lg:grid-cols-12 lg:items-start lg:gap-x-12 xl:gap-x-16">
-        <nav aria-label="Breadcrumb" className="order-1 max-lg:order-2 lg:hidden">
-          <ol className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-ink/45">
-            <li>
-              <Link href={localizedHref(locale, "/")} className="transition-colors hover:text-ink">
-                {dict.pdp.breadcrumbHome}
-              </Link>
-            </li>
-            <li aria-hidden="true">/</li>
-            <li>
-              <Link
-                href={localizedHref(locale, product.backHref)}
-                className="transition-colors hover:text-ink"
-              >
-                {product.backLabel}
-              </Link>
-            </li>
-          </ol>
-        </nav>
+        <ProductBreadcrumbs
+          className="order-1 mb-6 max-lg:order-2 lg:hidden"
+          crumbs={breadcrumbs}
+          currentLabel={product.name}
+        />
 
         <div className="order-3 space-y-6 lg:order-1 lg:col-span-6 lg:sticky lg:top-24 lg:self-start xl:col-span-5">
-          <nav aria-label="Breadcrumb" className="hidden lg:block">
-            <ol className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-ink/45">
-              <li>
-                <Link href={localizedHref(locale, "/")} className="transition-colors hover:text-ink">
-                  {dict.pdp.breadcrumbHome}
-                </Link>
-              </li>
-              <li aria-hidden="true">/</li>
-              <li>
-                <Link
-                  href={localizedHref(locale, product.backHref)}
-                  className="transition-colors hover:text-ink"
-                >
-                  {product.backLabel}
-                </Link>
-              </li>
-            </ol>
-          </nav>
+          <ProductBreadcrumbs
+            className="mb-6 hidden lg:block"
+            crumbs={breadcrumbs}
+            currentLabel={product.name}
+          />
 
           <div>
             <div className="mb-3 flex flex-wrap items-center gap-3">

@@ -20,6 +20,9 @@ import { getDictionary } from "@/i18n/get-dictionary";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 import type { ProductSchemaShipping } from "@/lib/seo/product-schema";
 import { buildBreadcrumbJsonLd } from "@/lib/seo/site-schema";
+import { fetchEquipmentCategoryIndex } from "@/lib/graphql/categories";
+import type { Breadcrumb } from "@/lib/shop/category";
+import { resolveProductBreadcrumbs } from "@/lib/shop/resolve-product-breadcrumbs";
 import { getSizeGuideRegistry } from "@/lib/shop/fetch-size-guides";
 import { resolveSizeGuide } from "@/lib/shop/resolve-size-guide";
 import { estimateProductShipping } from "@/lib/shop/estimate-product-shipping";
@@ -161,20 +164,15 @@ async function resolveSchemaShipping(
 
 function buildProductBreadcrumbJsonLd(
   locale: Locale,
-  product: { name: string; backHref: string; backLabel: string },
+  product: { name: string; breadcrumbs: readonly Breadcrumb[] },
 ) {
   const base = getStorefrontUrl();
-  const dict = getDictionary(locale);
 
   return buildBreadcrumbJsonLd([
-    {
-      name: dict.pdp.breadcrumbHome,
-      url: `${base}${localizedHref(locale, "/")}`,
-    },
-    {
-      name: product.backLabel,
-      url: `${base}${localizedHref(locale, product.backHref)}`,
-    },
+    ...product.breadcrumbs.map((crumb) => ({
+      name: crumb.label,
+      url: `${base}${localizedHref(locale, crumb.href)}`,
+    })),
     { name: product.name },
   ]);
 }
@@ -207,6 +205,19 @@ export async function renderProductPage({
     }
 
     const currentMotorcycle = motorcycleCatalog.find((item) => item.slug === slug);
+    const dict = getDictionary(locale);
+    const breadcrumbs = resolveProductBreadcrumbs(
+      {
+        type: "motorcycle",
+        category: "motorcycles",
+        brand: motorcycle.sync.brand,
+        backHref: motorcycle.backHref,
+        backLabel: motorcycle.backLabel,
+      },
+      locale,
+      dict,
+      null,
+    );
 
     const relatedProducts = motorcycle.enrichment.relatedSlugs?.length
       ? await getCatalogProductsBySlugs(
@@ -226,13 +237,13 @@ export async function renderProductPage({
         <JsonLd
           schema={buildProductBreadcrumbJsonLd(locale, {
             name: motorcycle.sync.name,
-            backHref: motorcycle.backHref,
-            backLabel: motorcycle.backLabel,
+            breadcrumbs,
           })}
         />
         <ProductLocaleAlternates alternates={slugAlternates} />
         <MotorcycleProductView
           product={motorcycle}
+          breadcrumbs={breadcrumbs}
           relatedProducts={relatedProducts}
         />
       </>
@@ -244,6 +255,15 @@ export async function renderProductPage({
   if (!product) {
     notFound();
   }
+
+  const dict = getDictionary(locale);
+  const categoryIndex = await fetchEquipmentCategoryIndex(locale);
+  const breadcrumbs = resolveProductBreadcrumbs(
+    product,
+    locale,
+    dict,
+    categoryIndex,
+  );
 
   const [schemaShipping, relatedCandidates, sizeGuideRegistry] = await Promise.all([
     resolveSchemaShipping(product),
@@ -266,10 +286,16 @@ export async function renderProductPage({
         shipping={schemaShipping}
         faq={product.faq}
       />
-      <JsonLd schema={buildProductBreadcrumbJsonLd(locale, product)} />
+      <JsonLd
+        schema={buildProductBreadcrumbJsonLd(locale, {
+          name: product.name,
+          breadcrumbs,
+        })}
+      />
       <ProductLocaleAlternates alternates={slugAlternates} />
       <EquipmentProductView
         product={product}
+        breadcrumbs={breadcrumbs}
         metaCatalog={
           product.metaCatalogProductId && product.metaCatalogVariationIds
             ? {

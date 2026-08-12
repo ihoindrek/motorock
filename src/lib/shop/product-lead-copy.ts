@@ -6,6 +6,20 @@ export function htmlToPlainText(html: string) {
   );
 }
 
+/** Strip Holy Freedom / PrestaShop SEO meta tails (truncated CTAs). */
+export function sanitizeSeoMetaLeadCopy(text: string): string {
+  let cleaned = text.replace(/\s+/g, " ").trim();
+
+  const trailingCta =
+    /[\s,]+(?:Discover|Shop(?:\s+now)?|Learn\s+more|Read\s+more)\.?$/i;
+
+  while (trailingCta.test(cleaned)) {
+    cleaned = cleaned.replace(trailingCta, "").trim();
+  }
+
+  return cleaned.replace(/,\s*$/, "").trim();
+}
+
 /** Split prose into sentences without breaking words (EN/ET friendly). */
 export function splitSentences(text: string): string[] {
   const normalized = text.replace(/\s+/g, " ").trim();
@@ -35,7 +49,7 @@ export function extractLeadCopy(
   options?: ExtractLeadCopyOptions,
 ): string | undefined {
   if (shortHtml?.trim()) {
-    const plain = htmlToPlainText(shortHtml);
+    const plain = sanitizeSeoMetaLeadCopy(htmlToPlainText(shortHtml));
     return plain || undefined;
   }
 

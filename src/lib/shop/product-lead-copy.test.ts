@@ -3,6 +3,7 @@ import {
   extractLeadCopy,
   htmlToPlainText,
   resolveProductLeadCopy,
+  sanitizeSeoMetaLeadCopy,
   splitSentences,
 } from "@/lib/shop/product-lead-copy";
 
@@ -21,6 +22,26 @@ describe("splitSentences", () => {
         "Esimene lause. Teine lause! Kas kolmas?",
       ),
     ).toEqual(["Esimene lause.", "Teine lause!", "Kas kolmas?"]);
+  });
+});
+
+describe("sanitizeSeoMetaLeadCopy", () => {
+  it("removes truncated Holy Freedom SEO CTAs", () => {
+    expect(
+      sanitizeSeoMetaLeadCopy(
+        "Vintage bomber CE style with Holyfreedom protection and attitude. Discover",
+      ),
+    ).toBe(
+      "Vintage bomber CE style with Holyfreedom protection and attitude.",
+    );
+
+    expect(
+      sanitizeSeoMetaLeadCopy(
+        "Lightweight PrimaLoft® tube scarf for cold rides, with extra warmth around neck and face. Perfect under helmet, Shop",
+      ),
+    ).toBe(
+      "Lightweight PrimaLoft® tube scarf for cold rides, with extra warmth around neck and face. Perfect under helmet",
+    );
   });
 });
 

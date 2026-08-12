@@ -12,6 +12,8 @@ import {
 } from "@/lib/shop/normalize-motorcycle-content";
 import { BrandLogo } from "@/components/shop/brand-logo";
 import { NewProductBadge } from "@/components/shop/new-product-badge";
+import { ProductBreadcrumbs } from "@/components/shop/product-breadcrumbs";
+import type { Breadcrumb } from "@/lib/shop/category";
 import { ShareButton } from "@/components/shop/share-button";
 import { FinancingPriceTeaser } from "@/components/shop/financing-price-teaser";
 import {
@@ -35,6 +37,7 @@ import { cn } from "@/lib/utils";
 
 type MotorcycleProductViewProps = {
   product: MotorcycleProduct;
+  breadcrumbs: readonly Breadcrumb[];
   relatedProducts?: readonly CatalogProduct[];
 };
 
@@ -85,6 +88,7 @@ function SpecBlock({
 
 function RichMotorcycleProductView({
   product,
+  breadcrumbs,
   relatedProducts = [],
 }: MotorcycleProductViewProps) {
   const locale = useLocale();
@@ -206,18 +210,11 @@ function RichMotorcycleProductView({
                   : ""
               }`}
             >
-              <nav aria-label="Breadcrumb" className="mb-5 lg:mb-6">
-                <ol className="flex flex-wrap items-center gap-2 font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/50">
-                  <li>
-                    <Link
-                      href={product.backHref}
-                      className="transition-colors hover:text-accent"
-                    >
-                      ← {dict.nav.motorcycles}
-                    </Link>
-                  </li>
-                </ol>
-              </nav>
+              <ProductBreadcrumbs
+                className="mb-6"
+                crumbs={breadcrumbs}
+                currentLabel={sync.name}
+              />
 
               <div className="flex flex-wrap items-center gap-3">
                 <BrandLogo brand={sync.brand} size="sm" />
