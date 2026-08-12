@@ -102,6 +102,8 @@ class Motorock_Catalog_Importer_Product_Writer {
         $this->set_brand($product_id, $data);
         $this->set_meta($product_id, isset($data['meta']) ? $data['meta'] : array());
         $this->images->set_product_images($product_id, isset($data['images']) ? $data['images'] : array());
+        $this->apply_shipping_dimensions($product);
+        $product->save();
 
         return (int) $product_id;
     }
@@ -186,6 +188,11 @@ class Motorock_Catalog_Importer_Product_Writer {
         $variation_id = $variation->save();
         if ($variation_id) {
             $this->set_meta($variation_id, isset($variation_data['meta']) ? $variation_data['meta'] : array());
+            $saved_variation = wc_get_product($variation_id);
+            if ($saved_variation) {
+                $this->apply_shipping_dimensions($saved_variation);
+                $saved_variation->save();
+            }
         }
 
         return $variation_id;
@@ -204,6 +211,8 @@ class Motorock_Catalog_Importer_Product_Writer {
         $variation->set_stock_status($variation_data['stock_status']);
         $variation->save();
         $this->set_meta($variation_id, isset($variation_data['meta']) ? $variation_data['meta'] : array());
+        $this->apply_shipping_dimensions($variation);
+        $variation->save();
 
         return $variation_id;
     }
@@ -324,5 +333,13 @@ class Motorock_Catalog_Importer_Product_Writer {
             }
         }
         return $term_ids;
+    }
+
+    private function apply_shipping_dimensions(WC_Product $product) {
+        if (!function_exists('motorock_shipping_dimensions_apply_if_missing')) {
+            return;
+        }
+
+        motorock_shipping_dimensions_apply_if_missing($product);
     }
 }

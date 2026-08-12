@@ -19,6 +19,7 @@ export function CategoryViewSkeleton({
   loadingLabel = "Loading products",
 }: CategoryViewSkeletonProps) {
   return (
+    <div className="bg-white">
     <div
       className="site-container relative z-10 py-8 lg:py-12"
       aria-busy="true"
@@ -69,6 +70,7 @@ export function CategoryViewSkeleton({
         <SkeletonBar className="h-4 w-40" />
         <SkeletonBar className="h-12 w-44" />
       </div>
+    </div>
     </div>
   );
 }

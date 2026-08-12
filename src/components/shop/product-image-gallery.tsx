@@ -28,6 +28,34 @@ import { cn } from "@/lib/utils";
 const mobileFullBleedClass =
   "max-lg:relative max-lg:left-1/2 max-lg:w-screen max-lg:max-w-[100vw] max-lg:-translate-x-1/2";
 
+type GalleryImageBackground = "surface" | "moto" | "detail" | "white";
+
+function galleryImageBgClass(imageBackground: GalleryImageBackground) {
+  switch (imageBackground) {
+    case "moto":
+      return "bg-moto";
+    case "detail":
+      return "bg-detail";
+    case "white":
+      return "bg-white";
+    default:
+      return "bg-surface";
+  }
+}
+
+function galleryViewportFadeClass(imageBackground: GalleryImageBackground) {
+  switch (imageBackground) {
+    case "moto":
+      return "from-moto";
+    case "detail":
+      return "from-detail";
+    case "white":
+      return "from-white";
+    default:
+      return "from-surface";
+  }
+}
+
 type ProductImageGalleryProps = {
   images: readonly string[];
   alt: string;
@@ -35,7 +63,7 @@ type ProductImageGalleryProps = {
   variant?: "product" | "scene";
   theme?: "dark" | "light";
   layout?: "hero" | "compact" | "craft";
-  imageBackground?: "surface" | "moto" | "detail";
+  imageBackground?: GalleryImageBackground;
   vimeoId?: string;
   productVideo?: ProductVideo;
   videoTitle?: string;
@@ -143,14 +171,9 @@ function SceneImageTile({
   theme: "dark" | "light";
   onOpen: () => void;
   priority?: boolean;
-  imageBackground?: "surface" | "moto" | "detail";
+  imageBackground?: GalleryImageBackground;
 }) {
-  const imageBgClass =
-    imageBackground === "moto"
-      ? "bg-moto"
-      : imageBackground === "detail"
-        ? "bg-detail"
-        : "bg-surface";
+  const imageBgClass = galleryImageBgClass(imageBackground);
 
   return (
     <OpenableImageTrigger onOpen={onOpen} label={label} theme={theme}>
@@ -300,7 +323,7 @@ export function ProductImageGallery({
         orientation={orientation}
         activeIndex={resolvedIndex}
         className={orientation === "vertical" ? "w-20 sm:w-24" : "w-[4.25rem]"}
-        viewportFadeClass="from-detail"
+        viewportFadeClass={galleryViewportFadeClass(imageBackground)}
         imageNavigation={{
           onPrevious: showPrevious,
           onNext: showNext,
@@ -346,13 +369,7 @@ export function ProductImageGallery({
                 className="aspect-[3/4] w-full max-lg:rounded-none sm:aspect-[4/5]"
               >
                 <figure
-                  className={`relative h-full w-full overflow-hidden ${
-                    imageBackground === "moto"
-                      ? "bg-moto"
-                      : imageBackground === "detail"
-                        ? "bg-detail"
-                        : "bg-surface"
-                  }`}
+                  className={`relative h-full w-full overflow-hidden ${galleryImageBgClass(imageBackground)}`}
                 >
                   <Image
                     src={activeSrc}

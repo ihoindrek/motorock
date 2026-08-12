@@ -121,6 +121,7 @@ class Motorock_Catalog_Importer_Feed_Manager {
             'taxonomy' => 'product_cat',
             'hide_empty' => false,
             'orderby' => 'name',
+            'order' => 'ASC',
         ));
 
         if (is_wp_error($terms)) {
@@ -133,10 +134,98 @@ class Motorock_Catalog_Importer_Feed_Manager {
                 'id' => (int) $term->term_id,
                 'name' => $term->name,
                 'slug' => $term->slug,
+                'parent' => (int) $term->parent,
+                'language' => self::get_term_language($term),
             );
         }
 
         return $categories;
+    }
+
+    /**
+     * Dropdown options with breadcrumb labels, e.g. "For men › Gloves".
+     * When WPML is active, only default-language terms are listed (avoids EN/ET duplicates).
+     *
+     * @return array<int, array{id: int, label: string, name: string, slug: string}>
+     */
+    public static function get_category_dropdown_options() {
+        $categories = self::get_motorock_categories();
+        if (empty($categories)) {
+            return array();
+        }
+
+        $by_id = array();
+        foreach ($categories as $category) {
+            $by_id[$category['id']] = $category;
+        }
+
+        $default_language = self::get_default_language();
+        $options = array();
+
+        foreach ($categories as $category) {
+            if ($default_language !== '' && $category['language'] !== '' && $category['language'] !== $default_language) {
+                continue;
+            }
+
+            $options[] = array(
+                'id' => $category['id'],
+                'name' => $category['name'],
+                'slug' => $category['slug'],
+                'label' => self::format_category_breadcrumb($category['id'], $by_id),
+            );
+        }
+
+        usort($options, function ($left, $right) {
+            return strcasecmp($left['label'], $right['label']);
+        });
+
+        return $options;
+    }
+
+    private static function get_default_language() {
+        if (!self::is_wpml_active()) {
+            return '';
+        }
+
+        $language = apply_filters('wpml_default_language', null);
+        return is_string($language) ? $language : '';
+    }
+
+    private static function is_wpml_active() {
+        return defined('ICL_SITECODE') || function_exists('wpml_get_element_translations');
+    }
+
+    private static function get_term_language($term) {
+        if (!self::is_wpml_active()) {
+            return '';
+        }
+
+        $language = apply_filters(
+            'wpml_element_language_code',
+            null,
+            array(
+                'element_id' => (int) $term->term_taxonomy_id,
+                'element_type' => 'tax_product_cat',
+            )
+        );
+
+        return is_string($language) ? $language : '';
+    }
+
+    /**
+     * @param array<int, array{id: int, name: string, parent: int}> $by_id
+     */
+    private static function format_category_breadcrumb($term_id, array $by_id) {
+        $parts = array();
+        $current = (int) $term_id;
+        $guard = 0;
+
+        while ($current > 0 && isset($by_id[$current]) && $guard++ < 20) {
+            array_unshift($parts, $by_id[$current]['name']);
+            $current = (int) $by_id[$current]['parent'];
+        }
+
+        return implode(' › ', $parts);
     }
 
     public static function collect_source_categories(array $rows, $column = 'category_name') {

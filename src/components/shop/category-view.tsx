@@ -485,7 +485,7 @@ export function CategoryView({
   return (
     <div
       className={cn(
-        motoBackground && "bg-moto",
+        motoBackground ? "bg-moto" : "bg-white",
         sectionBackgroundHeading && "relative overflow-hidden",
       )}
     >

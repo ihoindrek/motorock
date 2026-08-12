@@ -12,7 +12,7 @@ if (!$feed) {
     return;
 }
 
-$categories = Motorock_Catalog_Importer_Feed_Manager::get_motorock_categories();
+$categories = Motorock_Catalog_Importer_Feed_Manager::get_category_dropdown_options();
 $source_categories = array();
 $csv_headers = array();
 
@@ -144,7 +144,7 @@ $is_generic = $feed['adapter'] === 'generic_csv';
     <?php if (!empty($source_categories)) : ?>
     <div class="mci-card">
         <h2>Category mapping</h2>
-        <p>Map supplier categories from CSV to Motorock WooCommerce categories.</p>
+        <p>Map supplier categories from CSV to Motorock WooCommerce categories. Labels show the full path (e.g. <code>For men › Gloves</code>) — only default-language categories are listed when WPML is active.</p>
         <table class="widefat striped" id="mci-category-mapping-table">
             <thead>
                 <tr>
@@ -161,7 +161,7 @@ $is_generic = $feed['adapter'] === 'generic_csv';
                                 <option value="">— Select —</option>
                                 <?php foreach ($categories as $category) : ?>
                                     <option value="<?php echo esc_attr($category['id']); ?>" <?php selected(isset($mappings[$source]) ? (int) $mappings[$source] : 0, $category['id']); ?>>
-                                        <?php echo esc_html($category['name']); ?>
+                                        <?php echo esc_html($category['label']); ?>
                                     </option>
                                 <?php endforeach; ?>
                             </select>
@@ -170,6 +170,8 @@ $is_generic = $feed['adapter'] === 'generic_csv';
                 <?php endforeach; ?>
             </tbody>
         </table>
+        <p class="description">All WooCommerce product categories are listed — including ones you create under <strong>Products → Categories</strong>. Type to search (e.g. <code>men gloves</code>).</p>
+        <button type="button" class="button button-primary" id="mci-save-category-mappings">Save category mapping</button>
     </div>
     <?php endif; ?>
 

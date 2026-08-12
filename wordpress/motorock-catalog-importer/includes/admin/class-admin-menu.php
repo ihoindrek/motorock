@@ -49,14 +49,17 @@ class Motorock_Catalog_Importer_Admin_Menu {
         wp_enqueue_style(
             'motorock-catalog-importer-admin',
             MOTOROCK_CATALOG_IMPORTER_URL . 'assets/css/admin.css',
-            array(),
+            array('select2'),
             MOTOROCK_CATALOG_IMPORTER_VERSION
         );
+
+        wp_enqueue_script('selectWoo');
+        wp_enqueue_style('select2');
 
         wp_enqueue_script(
             'motorock-catalog-importer-admin',
             MOTOROCK_CATALOG_IMPORTER_URL . 'assets/js/admin.js',
-            array('jquery'),
+            array('jquery', 'selectWoo'),
             MOTOROCK_CATALOG_IMPORTER_VERSION,
             true
         );

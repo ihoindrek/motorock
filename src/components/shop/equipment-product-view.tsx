@@ -326,7 +326,7 @@ export function EquipmentProductView({
 
   return (
     <>
-    <div className="bg-detail pb-24 lg:pb-0">
+    <div className="bg-white pb-24 lg:pb-0">
       <div className="site-container max-lg:pt-0 py-6 lg:py-10">
       <div className="flex flex-col gap-10 max-lg:gap-6 lg:grid lg:grid-cols-12 lg:items-start lg:gap-x-12 xl:gap-x-16">
         <nav aria-label="Breadcrumb" className="order-1 max-lg:order-2 lg:hidden">
@@ -502,7 +502,7 @@ export function EquipmentProductView({
               variant="scene"
               theme="light"
               layout="craft"
-              imageBackground="detail"
+              imageBackground="white"
               productVideo={product.productVideo}
               videoTitle={product.name}
               fullBleedMobile
@@ -511,7 +511,7 @@ export function EquipmentProductView({
 
           <div className="order-4 w-full max-w-md space-y-8 sm:max-w-lg lg:order-none lg:ml-auto lg:w-full lg:max-w-xl xl:max-w-2xl">
           {isVideoSrc(product.lifestyleImage) ? (
-            <figure className="relative aspect-[16/9] overflow-hidden bg-detail">
+            <figure className="relative aspect-[16/9] overflow-hidden bg-white">
               <video
                 autoPlay
                 muted
@@ -555,7 +555,7 @@ export function EquipmentProductView({
                 </div>
                 {hasLongDescription && !descriptionExpanded ? (
                   <div
-                    className="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-detail to-transparent"
+                    className="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-white to-transparent"
                     aria-hidden="true"
                   />
                 ) : null}

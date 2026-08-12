@@ -43,10 +43,57 @@
         $('.mci-import-desc-update').toggle(isUpdate);
     }
 
+    function initCategoryMappingSelects() {
+        if (typeof $.fn.selectWoo !== 'function') {
+            return;
+        }
+
+        $('.mci-category-mapping-select').each(function () {
+            var $select = $(this);
+            if ($select.hasClass('select2-hidden-accessible')) {
+                return;
+            }
+
+            $select.selectWoo({
+                width: '100%',
+                allowClear: true,
+                placeholder: 'Search Motorock category…',
+                minimumResultsForSearch: 0
+            });
+        });
+    }
+
+    function saveFeedSettings($status, silent) {
+        var request = $.post(motorockCatalogImporter.ajaxurl, {
+            action: 'motorock_catalog_save_feed',
+            nonce: motorockCatalogImporter.nonce,
+            feed_id: $('#mci-feed-id').val(),
+            name: $('#mci-feed-name').val(),
+            adapter: $('#mci-feed-adapter').val(),
+            brand: $('#mci-feed-brand').val(),
+            price_multiplier: $('#mci-feed-multiplier').val(),
+            default_import_mode: $('#mci-default-import-mode').val(),
+            category_mappings: collectCategoryMappings(),
+            column_map: collectColumnMappings()
+        });
+
+        if (!silent) {
+            request.done(function (response) {
+                showStatus($status, response.data.message || 'Saved.', true);
+            }).fail(function (xhr) {
+                var message = xhr.responseJSON && xhr.responseJSON.data ? xhr.responseJSON.data.message : 'Save failed.';
+                showStatus($status, message, false);
+            });
+        }
+
+        return request;
+    }
+
     $('#mci-feed-adapter').on('change', toggleGenericSections);
     $('#mci-import-mode').on('change', toggleImportDescription);
     toggleGenericSections();
     toggleImportDescription();
+    initCategoryMappingSelects();
 
     $('#mci-save-new-feed').on('click', function () {
         var $status = $('#mci-new-feed-status');
@@ -82,25 +129,8 @@
         });
     });
 
-    $('#mci-save-feed').on('click', function () {
-        var $status = $('#mci-status');
-        $.post(motorockCatalogImporter.ajaxurl, {
-            action: 'motorock_catalog_save_feed',
-            nonce: motorockCatalogImporter.nonce,
-            feed_id: $('#mci-feed-id').val(),
-            name: $('#mci-feed-name').val(),
-            adapter: $('#mci-feed-adapter').val(),
-            brand: $('#mci-feed-brand').val(),
-            price_multiplier: $('#mci-feed-multiplier').val(),
-            default_import_mode: $('#mci-default-import-mode').val(),
-            category_mappings: collectCategoryMappings(),
-            column_map: collectColumnMappings()
-        }).done(function (response) {
-            showStatus($status, response.data.message || 'Saved.', true);
-        }).fail(function (xhr) {
-            var message = xhr.responseJSON && xhr.responseJSON.data ? xhr.responseJSON.data.message : 'Save failed.';
-            showStatus($status, message, false);
-        });
+    $('#mci-save-feed, #mci-save-category-mappings').on('click', function () {
+        saveFeedSettings($('#mci-status'));
     });
 
     $('#mci-upload-csv').on('click', function () {
@@ -174,6 +204,7 @@
         importRunning = true;
         var feedId = $('#mci-feed-id').val();
         var $status = $('#mci-status');
+        var importModeLocal = importMode;
         var $progress = $('#mci-import-progress');
         var buttonLabel = importMode === 'update_only' ? 'Update running...' : 'Import running...';
 
@@ -182,57 +213,64 @@
         $('#mci-import-progress-bar').css('width', '0%').text('0%');
         $('#mci-start-import').prop('disabled', true).text(buttonLabel);
 
-        $.post(motorockCatalogImporter.ajaxurl, {
-            action: 'motorock_catalog_prepare_import',
-            nonce: motorockCatalogImporter.nonce,
-            feed_id: feedId,
-            import_mode: importMode
-        }).done(function (prepareResponse) {
-            if (!prepareResponse.success) {
-                throw new Error(prepareResponse.data && prepareResponse.data.message ? prepareResponse.data.message : 'Prepare failed.');
-            }
+        saveFeedSettings($status, true).done(function () {
+            $.post(motorockCatalogImporter.ajaxurl, {
+                action: 'motorock_catalog_prepare_import',
+                nonce: motorockCatalogImporter.nonce,
+                feed_id: feedId,
+                import_mode: importModeLocal
+            }).done(function (prepareResponse) {
+                if (!prepareResponse.success) {
+                    throw new Error(prepareResponse.data && prepareResponse.data.message ? prepareResponse.data.message : 'Prepare failed.');
+                }
 
-            var sessionKey = prepareResponse.data.session_key;
-            var total = prepareResponse.data.total;
-            var index = 0;
+                var sessionKey = prepareResponse.data.session_key;
+                var total = prepareResponse.data.total;
+                var index = 0;
 
-            function step() {
-                runImportBatch(feedId, sessionKey, index).done(function (response) {
-                    if (!response.success) {
-                        throw new Error(response.data && response.data.message ? response.data.message : 'Import batch failed.');
-                    }
+                function step() {
+                    runImportBatch(feedId, sessionKey, index).done(function (response) {
+                        if (!response.success) {
+                            throw new Error(response.data && response.data.message ? response.data.message : 'Import batch failed.');
+                        }
 
-                    var data = response.data;
-                    appendLog(data.log);
-                    $('#mci-stat-imported').text(data.stats.imported);
-                    $('#mci-stat-updated').text(data.stats.updated);
-                    $('#mci-stat-skipped').text(data.stats.skipped);
-                    $('#mci-stat-failed').text(data.stats.failed);
-                    $('#mci-import-progress-bar').css('width', data.progress + '%').text(data.progress + '%');
-                    $('#mci-import-progress-text').text('Processed ' + Math.min(data.index, total) + ' / ' + total);
+                        var data = response.data;
+                        appendLog(data.log);
+                        $('#mci-stat-imported').text(data.stats.imported);
+                        $('#mci-stat-updated').text(data.stats.updated);
+                        $('#mci-stat-skipped').text(data.stats.skipped);
+                        $('#mci-stat-failed').text(data.stats.failed);
+                        $('#mci-import-progress-bar').css('width', data.progress + '%').text(data.progress + '%');
+                        $('#mci-import-progress-text').text('Processed ' + Math.min(data.index, total) + ' / ' + total);
 
-                    if (data.done) {
+                        if (data.done) {
+                            importRunning = false;
+                            $('#mci-start-import').prop('disabled', false).text('Prepare & start import');
+                            showStatus($status, 'Import complete.', true);
+                            return;
+                        }
+
+                        index = data.index;
+                        step();
+                    }).fail(function (xhr) {
                         importRunning = false;
                         $('#mci-start-import').prop('disabled', false).text('Prepare & start import');
-                        showStatus($status, 'Import complete.', true);
-                        return;
-                    }
+                        var message = xhr.responseJSON && xhr.responseJSON.data ? xhr.responseJSON.data.message : 'Import failed.';
+                        showStatus($status, message, false);
+                    });
+                }
 
-                    index = data.index;
-                    step();
-                }).fail(function (xhr) {
-                    importRunning = false;
-                    $('#mci-start-import').prop('disabled', false).text('Prepare & start import');
-                    var message = xhr.responseJSON && xhr.responseJSON.data ? xhr.responseJSON.data.message : 'Import failed.';
-                    showStatus($status, message, false);
-                });
-            }
-
-            step();
+                step();
+            }).fail(function (xhr) {
+                importRunning = false;
+                $('#mci-start-import').prop('disabled', false).text('Prepare & start import');
+                var message = xhr.responseJSON && xhr.responseJSON.data ? xhr.responseJSON.data.message : 'Prepare failed.';
+                showStatus($status, message, false);
+            });
         }).fail(function (xhr) {
             importRunning = false;
             $('#mci-start-import').prop('disabled', false).text('Prepare & start import');
-            var message = xhr.responseJSON && xhr.responseJSON.data ? xhr.responseJSON.data.message : 'Prepare failed.';
+            var message = xhr.responseJSON && xhr.responseJSON.data ? xhr.responseJSON.data.message : 'Save failed before import.';
             showStatus($status, message, false);
         });
     }

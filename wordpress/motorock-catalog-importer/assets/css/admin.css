@@ -47,6 +47,14 @@
     transition: width 0.2s ease;
 }
 
+.motorock-catalog-importer .mci-category-mapping-select {
+    min-width: 320px;
+}
+
+.motorock-catalog-importer .select2-container {
+    max-width: 100%;
+}
+
 .motorock-catalog-importer .mci-log {
     max-height: 260px;
     overflow: auto;

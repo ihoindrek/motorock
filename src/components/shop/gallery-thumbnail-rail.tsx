@@ -435,14 +435,16 @@ export function CraftGalleryThumbButton({
   selected: boolean;
   onSelect: () => void;
   onOpenLightbox: () => void;
-  imageBackground?: "surface" | "moto" | "detail";
+  imageBackground?: "surface" | "moto" | "detail" | "white";
 }) {
   const imageBgClass =
     imageBackground === "moto"
       ? "bg-moto"
       : imageBackground === "detail"
         ? "bg-detail"
-        : "bg-surface";
+        : imageBackground === "white"
+          ? "bg-white"
+          : "bg-surface";
 
   return (
     <button
