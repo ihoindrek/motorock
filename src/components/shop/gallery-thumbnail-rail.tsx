@@ -467,7 +467,7 @@ export function CraftGalleryThumbButton({
           alt=""
           fill
           sizes="96px"
-          className="object-contain object-center p-0.5 sm:p-1"
+          className="object-contain object-top p-0.5 sm:p-1"
         />
       </span>
     </button>

@@ -349,7 +349,7 @@ export function ProductImageGallery({
 
     return (
       <div className="flex flex-col gap-3">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-stretch lg:gap-2.5">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:gap-2.5">
           <div
             className={cn(
               "min-w-0 flex-1",
@@ -366,7 +366,7 @@ export function ProductImageGallery({
               <GalleryImageTransition
                 imageKey={activeSrc}
                 direction={slideDirection}
-                className="aspect-[4/5] w-full max-lg:rounded-none sm:aspect-[3/4] lg:aspect-[4/5]"
+                className="aspect-[3/4] w-full max-lg:rounded-none sm:aspect-[4/5] lg:aspect-[3/4]"
               >
                 <figure
                   className={`relative h-full w-full overflow-hidden ${galleryImageBgClass(imageBackground)}`}
@@ -377,7 +377,7 @@ export function ProductImageGallery({
                     fill
                     priority
                     sizes="(max-width: 1024px) 100vw, 42vw"
-                    className="object-contain object-center p-0.5 transition-transform duration-500 group-hover/openable:scale-[1.01] sm:p-1"
+                    className="object-contain object-top p-0.5 transition-transform duration-500 group-hover/openable:scale-[1.01] sm:p-1"
                   />
                   {images.length > 1 ? (
                     <span className="pointer-events-none absolute left-3 top-3 z-10 font-body text-[10px] font-bold tabular-nums tracking-aggressive text-ink">
