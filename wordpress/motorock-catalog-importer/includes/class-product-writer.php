@@ -149,6 +149,9 @@ class Motorock_Catalog_Importer_Product_Writer {
             $this->create_variation($product_id, $variation_data);
         }
 
+        WC_Product_Variable::sync($product_id);
+        wc_delete_product_transients($product_id);
+
         return (int) $product_id;
     }
 
@@ -243,6 +246,9 @@ class Motorock_Catalog_Importer_Product_Writer {
                     $this->create_variation($product_id, $variation_data);
                 }
             }
+
+            WC_Product_Variable::sync($product_id);
+            wc_delete_product_transients($product_id);
         }
 
         $this->set_categories($product_id, $data);

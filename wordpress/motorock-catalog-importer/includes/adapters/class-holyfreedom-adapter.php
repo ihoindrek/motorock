@@ -192,6 +192,9 @@ class Motorock_Catalog_Importer_Holyfreedom_Adapter extends Motorock_Catalog_Imp
                 ),
             ),
             'variations' => $variations,
+            'meta' => array(
+                '_supplier_sku' => $parent_sku,
+            ),
         );
     }
 
