@@ -6,6 +6,7 @@ import { useMemo, useState } from "react";
 import type { CatalogProduct } from "@/types/catalog-product";
 import { BrandLogo } from "@/components/shop/brand-logo";
 import { InStoreNowBadge } from "@/components/shop/in-store-now-badge";
+import { NewProductBadge } from "@/components/shop/new-product-badge";
 import { Price } from "@/components/shop/price";
 import { useDictionary, useLocale } from "@/context/locale-context";
 import {
@@ -69,16 +70,16 @@ export function ProductCard({ product }: ProductCardProps) {
             setPreviewIndex(nextIndex);
           }}
         >
-          {product.isNew ? (
-            <span className="absolute left-3 top-3 z-10 bg-accent px-2.5 py-1 font-body text-[9px] font-bold uppercase tracking-aggressive text-paper">
-              {dict.motorcycle.newBadge}
-            </span>
-          ) : null}
+          {product.isNew ? <NewProductBadge variant="overlay" /> : null}
           {isMotorcycle && product.showroomAvailable && product.inStock ? (
             <InStoreNowBadge variant="overlay" />
           ) : null}
           {!product.inStock ? (
-            <span className="absolute left-3 top-3 z-10 bg-ink px-2.5 py-1 font-body text-[9px] font-bold uppercase tracking-aggressive text-paper">
+            <span
+              className={`absolute left-3 z-10 bg-ink px-2.5 py-1 font-body text-[9px] font-bold uppercase tracking-aggressive text-paper ${
+                product.isNew ? "bottom-3 top-auto" : "top-3"
+              }`}
+            >
               {dict.search.soldOut}
             </span>
           ) : null}

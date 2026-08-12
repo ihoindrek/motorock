@@ -19,6 +19,7 @@ import { resolveActiveProductPrice } from "@/lib/shop/resolve-product-variation"
 import { formatSizeButtonParts, formatSizeLabel, isCompoundSizeLabel, isOneSizeLabel } from "@/lib/shop/size-label";
 import { sortProductSizes } from "@/lib/shop/sort-sizes";
 import { BrandLogo } from "@/components/shop/brand-logo";
+import { NewProductBadge } from "@/components/shop/new-product-badge";
 import { FinancingPriceTeaser } from "@/components/shop/financing-price-teaser";
 import { ProductImageGallery } from "@/components/shop/product-image-gallery";
 import { ProductSpecs } from "@/components/shop/product-specs";
@@ -369,7 +370,10 @@ export function EquipmentProductView({
           </nav>
 
           <div>
-            <BrandLogo brand={product.brand} size="sm" className="mb-3" />
+            <div className="mb-3 flex flex-wrap items-center gap-3">
+              <BrandLogo brand={product.brand} size="sm" />
+              {product.isNew ? <NewProductBadge /> : null}
+            </div>
             <h1 className="heading-product !normal-case text-2xl sm:text-3xl lg:text-[2.75rem]">
               {product.name}
             </h1>

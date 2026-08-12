@@ -11,6 +11,7 @@ import {
   hasMotorcycleTechnical,
 } from "@/lib/shop/normalize-motorcycle-content";
 import { BrandLogo } from "@/components/shop/brand-logo";
+import { NewProductBadge } from "@/components/shop/new-product-badge";
 import { ShareButton } from "@/components/shop/share-button";
 import { FinancingPriceTeaser } from "@/components/shop/financing-price-teaser";
 import {
@@ -220,11 +221,7 @@ function RichMotorcycleProductView({
 
               <div className="flex flex-wrap items-center gap-3">
                 <BrandLogo brand={sync.brand} size="sm" />
-                {enrichment.isNew ? (
-                  <span className="bg-accent px-2.5 py-1 font-body text-[9px] font-bold uppercase tracking-aggressive text-paper">
-                    {mc.newBadge}
-                  </span>
-                ) : null}
+                {enrichment.isNew ? <NewProductBadge /> : null}
               </div>
 
               <h1 className="heading-product !normal-case !leading-[0.92] mt-4 text-[clamp(1.65rem,5vw,4.1rem)] sm:text-[clamp(1.9rem,5.5vw,4.1rem)] lg:mt-5">
