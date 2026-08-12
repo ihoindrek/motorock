@@ -64,6 +64,10 @@ export const metadata: Metadata = {
     siteName: "Motorock.eu",
     type: "website",
   },
+  other: {
+    "norton-safeweb-site-verification":
+      "X7N74AJA0BO160NS6G3GX71LPXP77JB1-N37NX1IL6WWR045FCP-BFBD0HI912M534XYDIIAWOGU5PMIVJBRT99KW45S1NO5YY24-5JYBZ3B4MRG2I4VYZSAN2MN17ZC",
+  },
   ...(isSiteIndexable() ? {} : noIndexMetadata),
 };
 
