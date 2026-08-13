@@ -1,8 +1,12 @@
 import { notFound } from "next/navigation";
 import { ContactView } from "@/components/contact/contact-view";
+import { ShowroomGoogleReviewsSection } from "@/components/contact/showroom-google-reviews-section";
+import { JsonLd } from "@/components/seo/json-ld";
 import { isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/get-dictionary";
+import { getShowroomGoogleReviews } from "@/lib/google/fetch-showroom-reviews";
 import { buildPageMetadata } from "@/lib/seo/metadata";
+import { buildLocalBusinessJsonLd } from "@/lib/seo/site-schema";
 
 type ContactPageProps = {
   params: Promise<{ locale: string }>;
@@ -39,5 +43,20 @@ export default async function ContactPage({ params }: ContactPageProps) {
     notFound();
   }
 
-  return <ContactView locale={localeParam} />;
+  const googleReviews = await getShowroomGoogleReviews();
+
+  return (
+    <>
+      {googleReviews ? (
+        <JsonLd
+          schema={buildLocalBusinessJsonLd({
+            rating: googleReviews.rating,
+            reviewCount: googleReviews.reviewCount,
+          })}
+        />
+      ) : null}
+      <ContactView locale={localeParam} />
+      <ShowroomGoogleReviewsSection locale={localeParam} />
+    </>
+  );
 }

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { LatestBlogPostsSection } from "@/components/blog/latest-blog-posts-section";
+import { ShowroomGoogleReviewsSection } from "@/components/contact/showroom-google-reviews-section";
 import { Hero } from "@/components/hero";
 import { HomeBelowFoldSkeleton } from "@/components/home-below-fold-skeleton";
 import { RidersFavorites } from "@/components/riders-favorites";
@@ -51,6 +52,9 @@ export default async function Home({ params }: HomePageProps) {
       </Suspense>
       <Suspense fallback={<HomeBelowFoldSkeleton />}>
         <LatestBlogPostsSection locale={localeParam} />
+      </Suspense>
+      <Suspense fallback={<HomeBelowFoldSkeleton />}>
+        <ShowroomGoogleReviewsSection locale={localeParam} />
       </Suspense>
     </>
   );

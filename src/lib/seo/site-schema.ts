@@ -2,7 +2,7 @@ import type { Locale } from "@/i18n/config";
 import { localizedHref } from "@/i18n/paths";
 import { SITE_NAME } from "@/lib/seo/metadata";
 import { getStorefrontUrl } from "@/lib/storefront/url";
-import { SHOWROOM } from "@/data/showroom";
+import { SHOWROOM, SHOWROOM_GOOGLE_MAPS_URL } from "@/data/showroom";
 import type { BlogPost } from "@/types/blog-post";
 
 const SOCIAL_PROFILES = [
@@ -36,6 +36,42 @@ export function buildOrganizationJsonLd() {
       addressCountry: "EE",
     },
     sameAs: SOCIAL_PROFILES,
+  };
+}
+
+export function buildLocalBusinessJsonLd(options: {
+  rating: number;
+  reviewCount: number;
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "MotorcycleDealer",
+    "@id": `${origin()}/#local-business`,
+    name: SITE_NAME,
+    url: `${origin()}${localizedHref("en", "/contact")}`,
+    image: `${origin()}/logo.png`,
+    telephone: SHOWROOM.phone,
+    email: SHOWROOM.email,
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: SHOWROOM.addressLine,
+      addressLocality: SHOWROOM.city,
+      postalCode: "11611",
+      addressCountry: "EE",
+    },
+    geo: {
+      "@type": "GeoCoordinates",
+      latitude: SHOWROOM.latitude,
+      longitude: SHOWROOM.longitude,
+    },
+    hasMap: SHOWROOM_GOOGLE_MAPS_URL,
+    aggregateRating: {
+      "@type": "AggregateRating",
+      ratingValue: options.rating,
+      reviewCount: options.reviewCount,
+      bestRating: 5,
+      worstRating: 1,
+    },
   };
 }
 

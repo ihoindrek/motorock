@@ -134,11 +134,15 @@ export function FavoriteProductCard({
               fill
               priority={priority}
               className={
-                bareFigure
-                  ? "object-cover object-center transition-transform duration-500 ease-out group-hover:scale-[1.03] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
-                  : `object-contain object-center p-3 transition-opacity duration-300 group-hover:opacity-90 sm:p-4 ${
+                resolvedFigureBackground === "white"
+                  ? `object-contain object-center p-3 transition-transform duration-500 ease-out sm:p-4 group-hover:scale-[1.03] motion-reduce:transition-none motion-reduce:group-hover:scale-100 ${
                       imageMultiply ? "mix-blend-multiply" : ""
                     }`
+                  : bareFigure
+                    ? "object-cover object-center transition-transform duration-500 ease-out group-hover:scale-[1.03] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
+                    : `object-contain object-center p-3 transition-opacity duration-300 group-hover:opacity-90 sm:p-4 ${
+                        imageMultiply ? "mix-blend-multiply" : ""
+                      }`
               }
               sizes="(max-width: 640px) 85vw, (max-width: 1024px) 50vw, 25vw"
             />

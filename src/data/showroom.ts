@@ -41,7 +41,7 @@ export const SHOWROOM = {
   emailHref: "mailto:info@motorock.eu",
   latitude: 59.3875478,
   longitude: 24.6819526,
-  googlePlaceId: "ChIJ_yVaWQWVkkYRkZ8_yMUd-fY",
+  googlePlaceId: "ChIJRfKuvwyVkkYREebHG2948io",
   name: SHOWROOM_COPY.en.name,
   hours: SHOWROOM_COPY.en.hours,
   phoneNote: SHOWROOM_COPY.en.phoneNote,
@@ -69,5 +69,7 @@ const destinationQuery = `${SHOWROOM.latitude},${SHOWROOM.longitude}`;
 
 export const SHOWROOM_GOOGLE_MAPS_URL =
   "https://maps.app.goo.gl/asUnG4fTTzsbqfno7";
+
+export const SHOWROOM_GOOGLE_WRITE_REVIEW_URL = `https://search.google.com/local/writereview?placeid=${SHOWROOM.googlePlaceId}`;
 
 export const SHOWROOM_WAZE_URL = `https://www.waze.com/ul?ll=${destinationQuery}&navigate=yes`;
