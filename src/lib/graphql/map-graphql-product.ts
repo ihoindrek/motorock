@@ -610,6 +610,7 @@ export function mapGraphqlToCatalogProduct(
     variations,
     inStock: product.stockStatus === "IN_STOCK",
     isNew: resolveMappedIsNew(product.metaData, product.date, options),
+    publishedAt: product.date ?? undefined,
     showroomAvailable: isMotorcycle
       ? resolveMappedShowroomAvailable(product.slug, product.metaData, options)
       : undefined,
@@ -698,6 +699,7 @@ export function mapGraphqlCardToCatalogProduct(
     variations,
     inStock: product.stockStatus === "IN_STOCK",
     isNew: resolveMappedIsNew(product.metaData, product.date, options),
+    publishedAt: product.date ?? undefined,
     showroomAvailable: isMotorcycle
       ? resolveMappedShowroomAvailable(product.slug, product.metaData, options)
       : undefined,

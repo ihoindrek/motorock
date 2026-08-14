@@ -13,8 +13,7 @@ import {
 import {
   partitionPopularGearByAudience,
   pickFavoriteProducts,
-  pickHomepageWomenGear,
-  pickPopularGearProducts,
+  pickHomepageNewGearProducts,
 } from "@/lib/shop/favorite-product";
 
 const headingVideoClass =
@@ -167,7 +166,7 @@ export async function RidersFavorites({ locale }: { locale: Locale }) {
           motorcyclesTitle: "Populaarsed rattad",
           motorcyclesCta: "Vaata mootorrattaid →",
           gearEyebrow: "Sõiduvarustus",
-          gearTitle: "Populaarne sõiduvarustus",
+          gearTitle: "Uued tooted",
           gearCta: "Vaata sõiduvarustust →",
           gearTabMen: "Meestele",
           gearTabWomen: "Naistele",
@@ -182,7 +181,7 @@ export async function RidersFavorites({ locale }: { locale: Locale }) {
           motorcyclesTitle: "Popular Bikes",
           motorcyclesCta: "Shop motorcycles →",
           gearEyebrow: "Equipment",
-          gearTitle: "Popular Gear",
+          gearTitle: "New Gear",
           gearCta: "Shop equipment →",
           gearTabMen: "For men",
           gearTabWomen: "For women",
@@ -206,9 +205,14 @@ export async function RidersFavorites({ locale }: { locale: Locale }) {
   });
 
   const gearProductsByAudience = {
-    men: pickPopularGearProducts("men", gearByAudience.men, 8),
-    women: pickHomepageWomenGear(womenEquipment, 8),
-    accessories: pickPopularGearProducts("accessories", gearByAudience.accessories, 8),
+    men: pickHomepageNewGearProducts("men", gearByAudience.men, locale, 8),
+    women: pickHomepageNewGearProducts("women", gearByAudience.women, locale, 8),
+    accessories: pickHomepageNewGearProducts(
+      "accessories",
+      gearByAudience.accessories,
+      locale,
+      8,
+    ),
   };
 
   return (

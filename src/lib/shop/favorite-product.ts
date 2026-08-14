@@ -1,4 +1,5 @@
 import type { FavoriteProduct } from "@/components/riders-favorites-carousel";
+import type { Locale } from "@/i18n/config";
 import type { CatalogProduct, ProductCategory } from "@/types/catalog-product";
 import { getBrandByName } from "@/lib/shop/brands";
 import type { CategoryRoute } from "@/lib/shop/category";
@@ -69,6 +70,49 @@ export function partitionPopularGearByAudience(rawByAudience: Record<
 }
 
 const PLACEHOLDER_IMAGE = "/brixton-image.webp";
+const NEW_GEAR_POOL_SIZE = 32;
+
+function publishedAtTimestamp(product: CatalogProduct) {
+  if (!product.publishedAt) {
+    return 0;
+  }
+
+  const parsed = Date.parse(product.publishedAt);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function compareByNewest(left: CatalogProduct, right: CatalogProduct) {
+  return publishedAtTimestamp(right) - publishedAtTimestamp(left);
+}
+
+function stableDailySeed(audience: PopularGearAudience, locale: Locale) {
+  const day = new Date().toISOString().slice(0, 10);
+  return `${locale}:${audience}:${day}`;
+}
+
+function hashString(input: string) {
+  let hash = 2_166_136_261;
+
+  for (let index = 0; index < input.length; index += 1) {
+    hash ^= input.charCodeAt(index);
+    hash = Math.imul(hash, 16_777_619);
+  }
+
+  return hash >>> 0;
+}
+
+function seededShuffle<T>(items: readonly T[], seed: string) {
+  const copy = [...items];
+  let state = hashString(seed);
+
+  for (let index = copy.length - 1; index > 0; index -= 1) {
+    state = (Math.imul(1_664_525, state) + 1_013_904_223) >>> 0;
+    const swapIndex = state % (index + 1);
+    [copy[index], copy[swapIndex]] = [copy[swapIndex], copy[index]];
+  }
+
+  return copy;
+}
 
 function isEligibleFavorite(product: CatalogProduct): boolean {
   if (product.price <= 0 || !product.image || product.image === PLACEHOLDER_IMAGE) {
@@ -235,6 +279,22 @@ export function pickFavoriteProducts(
 ): FavoriteProduct[] {
   return products
     .filter(isEligibleFavorite)
+    .slice(0, limit)
+    .map(catalogToFavoriteProduct);
+}
+
+export function pickHomepageNewGearProducts(
+  audience: PopularGearAudience,
+  products: readonly CatalogProduct[],
+  locale: Locale,
+  limit: number,
+): FavoriteProduct[] {
+  const pool = products
+    .filter(isEligibleFavorite)
+    .sort(compareByNewest)
+    .slice(0, NEW_GEAR_POOL_SIZE);
+
+  return seededShuffle(pool, stableDailySeed(audience, locale))
     .slice(0, limit)
     .map(catalogToFavoriteProduct);
 }

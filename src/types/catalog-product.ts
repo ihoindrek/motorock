@@ -80,6 +80,8 @@ export type CatalogProduct = {
   colorOptions?: readonly ProductColorOption[];
   inStock: boolean;
   isNew: boolean;
+  /** ISO publish date from WooCommerce — used for homepage new-gear ordering. */
+  publishedAt?: string;
   /** Motorcycle on display at Tallinn showroom — test ride available. */
   showroomAvailable?: boolean;
   headline?: string;

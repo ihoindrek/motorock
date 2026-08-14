@@ -201,6 +201,29 @@ export const PRODUCT_CATALOG_PAGE = `
   }
 `;
 
+export const HOMEPAGE_PRODUCT_CATALOG_PAGE = `
+  query HomepageProductCatalogPage($first: Int!, $after: String, $category: String, $categoryNotIn: [String]) {
+    products(
+      first: $first
+      after: $after
+      where: {
+        status: "publish"
+        category: $category
+        categoryNotIn: $categoryNotIn
+        orderby: { field: DATE, order: DESC }
+      }
+    ) {
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+      nodes {
+        ${CATALOG_LIST_FIELDS}
+      }
+    }
+  }
+`;
+
 export const PRODUCT_SEARCH = `
   query ProductSearch($search: String!, $first: Int!, $after: String) {
     products(first: $first, after: $after, where: { search: $search, status: "publish" }) {

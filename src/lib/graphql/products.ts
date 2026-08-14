@@ -17,7 +17,7 @@ import {
   mapGraphqlToMotorcycleProduct,
   variationIdsFromProduct,
 } from "@/lib/graphql/map-graphql-product";
-import { PRODUCT_BY_SLUG, PRODUCT_BY_DATABASE_ID, PRODUCT_CATALOG_PAGE } from "@/lib/graphql/queries";
+import { PRODUCT_BY_SLUG, PRODUCT_BY_DATABASE_ID, HOMEPAGE_PRODUCT_CATALOG_PAGE, PRODUCT_CATALOG_PAGE } from "@/lib/graphql/queries";
 import type { GraphQLProduct, GraphQLProductCard } from "@/lib/graphql/types";
 import {
   mergeGraphqlProductPricing,
@@ -218,7 +218,7 @@ async function fetchCatalogNodesLimited(
     };
 
     const data = await graphqlRequest<CatalogPageResponse, CatalogPageVariables>(
-      PRODUCT_CATALOG_PAGE,
+      HOMEPAGE_PRODUCT_CATALOG_PAGE,
       variables,
     );
 
