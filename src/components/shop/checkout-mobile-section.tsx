@@ -60,7 +60,7 @@ export function CheckoutMobileSection({
           aria-expanded={mobileHeaderless ? true : open}
           aria-controls={`${id}-panel`}
           className={cn(
-            "flex w-full items-start gap-3 px-4 py-4 text-left lg:pointer-events-none lg:cursor-default lg:px-0 lg:py-0",
+            "flex w-full items-start gap-3 px-4 py-4 text-left lg:pointer-events-none lg:cursor-default lg:px-0 lg:pb-2 lg:pt-0",
             showMobileHeader ? "flex" : "hidden lg:flex",
             canToggle ? "cursor-pointer" : "cursor-default",
           )}
@@ -109,8 +109,8 @@ export function CheckoutMobileSection({
           className={cn(
             mobileHeaderless || open ? "block" : "hidden lg:block",
             mobileHeaderless
-              ? "px-4 pb-4 pt-4 lg:px-0 lg:pb-0 lg:pt-0"
-              : "px-4 pb-4 pt-3 lg:px-0 lg:pb-0 lg:pt-0",
+              ? "px-4 pb-4 pt-5 lg:px-0 lg:pb-0 lg:pt-8"
+              : "px-4 pb-4 pt-5 lg:px-0 lg:pb-0 lg:pt-8",
             locked && open && "pointer-events-none opacity-45",
           )}
         >
