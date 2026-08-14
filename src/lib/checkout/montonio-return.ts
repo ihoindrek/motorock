@@ -26,6 +26,55 @@ function resolveLocale(value: string | null | undefined) {
   return value === "en" ? "en" : "et";
 }
 
+function isSuccessfulMontonioPaymentStatus(status?: string | null) {
+  if (!status) {
+    return false;
+  }
+
+  const normalized = status.trim().toUpperCase();
+  return normalized === "PAID" || normalized === "FINALIZED";
+}
+
+function normalizeStorefrontRedirect(location: string, locale: "en" | "et") {
+  const storefrontOrigin = new URL(getStorefrontUrl()).origin;
+
+  let url: URL;
+  try {
+    url = new URL(location, getStorefrontUrl());
+  } catch {
+    return location;
+  }
+
+  if (url.origin !== storefrontOrigin) {
+    return location;
+  }
+
+  const path = url.pathname.replace(/\/$/, "") || "/";
+
+  if (path === "/checkout" || path.startsWith("/checkout/")) {
+    const error = url.searchParams.get("payment_error") ?? "Payment cancelled";
+    return cartRedirectUrl(locale, error);
+  }
+
+  if (path === "/cart") {
+    const error = url.searchParams.get("payment_error");
+    return cartRedirectUrl(locale, error);
+  }
+
+  if (
+    (path.startsWith("/order/") ||
+      path.startsWith("/shop/") ||
+      path.startsWith("/product/")) &&
+    !path.startsWith("/en/") &&
+    !path.startsWith("/et/")
+  ) {
+    url.pathname = `/${locale}${path}`;
+    return url.toString();
+  }
+
+  return url.toString();
+}
+
 function cartRedirectUrl(locale: "en" | "et", error?: string | null) {
   const url = new URL(`/${locale}/cart`, getStorefrontUrl());
   if (error) {
@@ -51,15 +100,20 @@ function thankYouRedirectUrl(input: {
   return url.toString();
 }
 
-function normalizeRedirectLocation(location: string) {
+function normalizeRedirectLocation(location: string, locale: "en" | "et") {
   try {
-    return new URL(location, getWooStoreUrl()).toString();
+    const absolute = new URL(location, getWooStoreUrl()).toString();
+    return normalizeStorefrontRedirect(absolute, locale);
   } catch {
     return null;
   }
 }
 
-async function tryWooMontonioCallback(gateway: string, orderToken: string) {
+async function tryWooMontonioCallback(
+  gateway: string,
+  orderToken: string,
+  locale: "en" | "et",
+) {
   const wooCallback = new URL(getWooStoreUrl());
   wooCallback.searchParams.set("wc-api", gateway);
   wooCallback.searchParams.set("order-token", orderToken);
@@ -71,7 +125,7 @@ async function tryWooMontonioCallback(gateway: string, orderToken: string) {
 
   const location = response.headers.get("location");
   if (location) {
-    return normalizeRedirectLocation(location);
+    return normalizeRedirectLocation(location, locale);
   }
 
   return null;
@@ -110,6 +164,32 @@ export async function resolveMontonioReturnTarget(input: MontonioReturnInput) {
     return cartRedirectUrl(locale, input.errorMessage);
   }
 
+  let decodedToken: ReturnType<typeof decodeMontonioPaymentToken> | null = null;
+
+  if (input.orderToken) {
+    try {
+      decodedToken = decodeMontonioPaymentToken(input.orderToken);
+    } catch {
+      // Woo callback may still succeed even when local token decode fails.
+    }
+  }
+
+  if (
+    decodedToken?.paymentStatus &&
+    !isSuccessfulMontonioPaymentStatus(decodedToken.paymentStatus)
+  ) {
+    logStorefrontEvent(
+      "checkout.montonio.return_incomplete",
+      {
+        locale,
+        gateway: input.gateway ?? null,
+        paymentStatus: decodedToken.paymentStatus,
+      },
+      "warn",
+    );
+    return cartRedirectUrl(locale, "Payment cancelled");
+  }
+
   if (!input.orderToken) {
     logStorefrontEvent(
       "checkout.montonio.missing_token",
@@ -122,9 +202,13 @@ export async function resolveMontonioReturnTarget(input: MontonioReturnInput) {
   let orderContext: Awaited<ReturnType<typeof fetchOrderReturnContext>> = null;
 
   try {
-    const token = decodeMontonioPaymentToken(input.orderToken);
-    if (token.merchantReference) {
-      orderContext = await fetchOrderReturnContext(token.merchantReference);
+    if (decodedToken?.merchantReference) {
+      orderContext = await fetchOrderReturnContext(decodedToken.merchantReference);
+    } else {
+      const token = decodeMontonioPaymentToken(input.orderToken);
+      if (token.merchantReference) {
+        orderContext = await fetchOrderReturnContext(token.merchantReference);
+      }
     }
   } catch {
     // Woo callback may still succeed even when local token decode fails.
@@ -135,7 +219,11 @@ export async function resolveMontonioReturnTarget(input: MontonioReturnInput) {
     orderContext?.paymentMethod,
   )) {
     try {
-      const wooTarget = await tryWooMontonioCallback(gateway, input.orderToken);
+      const wooTarget = await tryWooMontonioCallback(
+        gateway,
+        input.orderToken,
+        locale,
+      );
       if (wooTarget) {
         logStorefrontEvent("checkout.montonio.return_redirect", {
           locale,
@@ -154,7 +242,7 @@ export async function resolveMontonioReturnTarget(input: MontonioReturnInput) {
   }
 
   try {
-    const token = decodeMontonioPaymentToken(input.orderToken);
+    const token = decodedToken ?? decodeMontonioPaymentToken(input.orderToken);
     const orderId = token.merchantReference;
 
     if (orderId) {

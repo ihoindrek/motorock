@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Motorock Headless Public Lockdown
  * Description: Hides the WordPress/WooCommerce storefront on the backend domain; keeps admin, GraphQL, REST, and payment callbacks working.
- * Version: 1.3.0
+ * Version: 1.4.0
  *
  * Install: copy to wp-content/mu-plugins/motorock-headless-lockdown.php
  */
@@ -86,6 +86,14 @@ function motorock_lockdown_is_allowed_request() {
 		return true;
 	}
 
+	// PayPal (PPCP) headless checkout: GraphQL checkout returns a redirect to
+	// /checkout/order-pay/{id}/?pay_for_order=true — Woo must render that page
+	// so the gateway can forward the buyer to PayPal. Lockdown otherwise sends
+	// them straight back to the storefront cart (looks like a refresh loop).
+	if ( preg_match( '#^/checkout/order-pay/\d+#', $path ) ) {
+		return true;
+	}
+
 	return false;
 }
 
@@ -127,13 +135,16 @@ function motorock_lockdown_redirect_target() {
 		$order_id = isset( $_GET['order_id'] ) ? (int) $_GET['order_id'] : 0;
 
 		return $storefront . '/' . motorock_lockdown_order_locale( $order_id )
-			. '/checkout?payment_error=' . rawurlencode( 'Payment cancelled' );
+			. '/cart?payment_error=' . rawurlencode( 'Payment cancelled' );
 	}
 
 	// Any other classic cart/checkout URL: continue shopping on the storefront
-	// checkout rather than the homepage.
-	if ( preg_match( '#^/(cart|checkout|ostukorv|kassa)(/|$)#', $path ) ) {
-		return $storefront . '/en/checkout';
+	// checkout rather than the homepage. Skip order-pay — handled above.
+	if (
+		preg_match( '#^/(cart|checkout|ostukorv|kassa)(/|$)#', $path )
+		&& ! preg_match( '#^/checkout/order-pay/\d+#', $path )
+	) {
+		return $storefront . '/en/cart';
 	}
 
 	return $storefront . '/en';

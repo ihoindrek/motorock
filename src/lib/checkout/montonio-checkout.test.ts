@@ -4,6 +4,7 @@ import {
   needsMontonioPaymentRemint,
   pickupPointReadyForCheckout,
   resolveMontonioCheckoutGatewayId,
+  shouldRunMontonioPaymentRemint,
 } from "@/lib/checkout/montonio-checkout";
 import { MONTONIO_PAYMENT_METHOD_ID } from "@/lib/graphql/checkout";
 import type { MontonioPaymentOption } from "@/types/montonio-payment";
@@ -42,6 +43,24 @@ describe("needsMontonioPaymentRemint", () => {
   });
 });
 
+describe("shouldRunMontonioPaymentRemint", () => {
+  it("runs remint only for Montonio gateways with card-like options", () => {
+    const cardOption = {
+      kind: "card",
+      code: "card",
+      systemName: "cardPayments",
+    } as MontonioPaymentOption;
+
+    expect(
+      shouldRunMontonioPaymentRemint("wc_montonio_card", cardOption),
+    ).toBe(true);
+    expect(shouldRunMontonioPaymentRemint("ppcp-gateway", cardOption)).toBe(
+      false,
+    );
+    expect(shouldRunMontonioPaymentRemint("wc_montonio_card", null)).toBe(false);
+  });
+});
+
 describe("buildMontonioCheckoutMetaData", () => {
   it("writes bank meta for payment initiation", () => {
     const meta = buildMontonioCheckoutMetaData({
@@ -72,6 +91,19 @@ describe("buildMontonioCheckoutMetaData", () => {
     expect(meta).toEqual([
       { key: "montonio_preferred_provider", value: "cardPayments" },
     ]);
+  });
+
+  it("ignores Montonio option meta when payment gateway is PayPal", () => {
+    const meta = buildMontonioCheckoutMetaData({
+      paymentGatewayId: "ppcp-gateway",
+      montonioOption: {
+        kind: "card",
+        code: "card",
+        systemName: "cardPayments",
+      } as MontonioPaymentOption,
+    });
+
+    expect(meta).toEqual([]);
   });
 });
 

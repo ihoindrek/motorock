@@ -159,6 +159,24 @@ describe("filterMontonioOptionsForGateway", () => {
     ]);
     expect(filterMontonioOptionsForGateway(bankGateway, options)).toEqual(bankOptions);
   });
+
+  it("does not attach Montonio options to non-Montonio gateways like PayPal", () => {
+    const cardOption: MontonioPaymentOption = {
+      kind: "card",
+      code: "card",
+      systemName: "cardPayments",
+      name: "Card",
+      logoUrl: null,
+    };
+    const paypalGateway: PaymentGateway = {
+      id: "ppcp-gateway",
+      title: "PayPal",
+      description: "",
+      icon: null,
+    };
+
+    expect(filterMontonioOptionsForGateway(paypalGateway, [cardOption])).toEqual([]);
+  });
 });
 
 describe("filterSupportedPaymentGateways", () => {

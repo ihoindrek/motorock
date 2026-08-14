@@ -61,6 +61,10 @@ export function filterMontonioOptionsForGateway(
   gateway: PaymentGateway,
   options: MontonioPaymentOption[],
 ) {
+  if (!isMontonioGateway(gateway)) {
+    return [];
+  }
+
   const haystack = `${gateway.id} ${gateway.title}`.toLowerCase();
 
   if (haystack.includes("mobilepay") || haystack.includes("mobile pay")) {

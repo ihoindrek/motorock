@@ -26,7 +26,12 @@ import {
 import { useCheckoutPayment } from "@/hooks/use-checkout-payment";
 import { useMontonioPaymentOptions } from "@/hooks/use-montonio-payment-options";
 import { isLiveCheckoutEnabled } from "@/lib/checkout-mode";
-import { buildMontonioCheckoutMetaData, needsMontonioPaymentRemint, pickupPointReadyForCheckout } from "@/lib/checkout/montonio-checkout";
+import {
+  buildMontonioCheckoutMetaData,
+  isMontonioPaymentGateway,
+  pickupPointReadyForCheckout,
+  shouldRunMontonioPaymentRemint,
+} from "@/lib/checkout/montonio-checkout";
 import {
   buildCheckoutInputAddresses,
   resetCheckoutSyncState,
@@ -1009,6 +1014,7 @@ export function CartCheckoutView() {
     if (
       scopedOptions.length === 1 &&
       selectedPaymentGateway &&
+      isMontonioPaymentGateway(selectedPaymentGateway.id) &&
       !isBankMontonioGateway(selectedPaymentGateway)
     ) {
       setSelectedMontonioOption(scopedOptions[0]);
@@ -1173,7 +1179,7 @@ export function CartCheckoutView() {
         pickupPoint
           ? `Pakiautomaat: ${pickupPoint.name} (${pickupPoint.address}, ${pickupPoint.city}) [${pickupPoint.carrier}:${pickupPoint.id}]`
           : null,
-        selectedMontonioOption
+        isMontonioPaymentGateway(payment.selectedId) && selectedMontonioOption
           ? `Montonio: ${selectedMontonioOption.systemName} / ${selectedMontonioOption.code}`
           : null,
       ]
@@ -1207,9 +1213,8 @@ export function CartCheckoutView() {
       let redirectUrl = result.redirect;
 
       if (
-        needsMontonioPaymentRemint(selectedMontonioOption) &&
-        result.orderDatabaseId &&
-        selectedMontonioOption
+        shouldRunMontonioPaymentRemint(payment.selectedId, selectedMontonioOption) &&
+        result.orderDatabaseId
       ) {
         const paymentLineItems = [
           ...lines.map((line) => ({

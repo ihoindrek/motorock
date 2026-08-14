@@ -20,6 +20,17 @@ export function needsMontonioPaymentRemint(
   return Boolean(option && option.kind !== "bank");
 }
 
+export function shouldRunMontonioPaymentRemint(
+  paymentGatewayId: string | null | undefined,
+  option: MontonioPaymentOption | null | undefined,
+) {
+  return (
+    isMontonioPaymentGateway(paymentGatewayId) &&
+    needsMontonioPaymentRemint(option) &&
+    Boolean(option)
+  );
+}
+
 /**
  * Montonio redirect checkout uses `wc_montonio_payments` in headless GraphQL.
  * Non-bank methods (card, BLIK, BNPL) are selected via order meta and applied
@@ -72,8 +83,15 @@ export function buildMontonioCheckoutMetaData(input: {
     }
   }
 
-  if (input.montonioOption) {
-    appendMontonioProviderMeta(meta, input.montonioOption, input.country);
+  const montonioOption =
+    input.montonioOption &&
+    (input.paymentGatewayId == null ||
+      isMontonioPaymentGateway(input.paymentGatewayId))
+      ? input.montonioOption
+      : null;
+
+  if (montonioOption) {
+    appendMontonioProviderMeta(meta, montonioOption, input.country);
     return meta;
   }
 
