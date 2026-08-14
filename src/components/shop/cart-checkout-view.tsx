@@ -16,6 +16,11 @@ import {
   type DeliveryField,
 } from "@/lib/checkout/delivery-validation";
 import { resolveSubmitBlockReason } from "@/lib/checkout/submit-block-reason";
+import {
+  clearCheckoutDraft,
+  readCheckoutDraft,
+  writeCheckoutDraft,
+} from "@/lib/checkout/checkout-draft";
 import { useDictionary, useLocale } from "@/context/locale-context";
 import { localizedHref } from "@/i18n/paths";
 import { localizedProductHref } from "@/lib/shop/product-url";
@@ -526,15 +531,25 @@ export function CartCheckoutView() {
     clearCart,
     replaceCart,
   } = useCart();
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [phoneCountry, setPhoneCountry] = useState("EE");
+  const [firstName, setFirstName] = useState(
+    () => readCheckoutDraft()?.firstName ?? "",
+  );
+  const [lastName, setLastName] = useState(
+    () => readCheckoutDraft()?.lastName ?? "",
+  );
+  const [email, setEmail] = useState(() => readCheckoutDraft()?.email ?? "");
+  const [phone, setPhone] = useState(() => readCheckoutDraft()?.phone ?? "");
+  const [phoneCountry, setPhoneCountry] = useState(
+    () => readCheckoutDraft()?.phoneCountry ?? "",
+  );
   const phoneCountryTouchedRef = useRef(false);
-  const [address1, setAddress1] = useState("");
-  const [city, setCity] = useState("");
-  const [postcode, setPostcode] = useState("");
+  const [address1, setAddress1] = useState(
+    () => readCheckoutDraft()?.address1 ?? "",
+  );
+  const [city, setCity] = useState(() => readCheckoutDraft()?.city ?? "");
+  const [postcode, setPostcode] = useState(
+    () => readCheckoutDraft()?.postcode ?? "",
+  );
   const [couponCode, setCouponCode] = useState("");
   const [mobileStepError, setMobileStepError] = useState<string | null>(null);
   const [deliveryValidationAttempted, setDeliveryValidationAttempted] =
@@ -545,6 +560,17 @@ export function CartCheckoutView() {
     3: false,
   });
   const sectionsInitializedRef = useRef(false);
+  const draftRestoreCompletedRef = useRef(false);
+  const isRestoringDraftRef = useRef(Boolean(readCheckoutDraft()));
+  const pendingPaymentIdRef = useRef<string | null>(
+    readCheckoutDraft()?.paymentId ?? null,
+  );
+  const pendingMontonioOptionKeyRef = useRef<string | null>(
+    readCheckoutDraft()?.montonioOptionKey ?? null,
+  );
+  const pendingPickupPointRef = useRef(
+    readCheckoutDraft()?.pickupPoint ?? null,
+  );
 
   // Restore an abandoned order's cart from a payment reminder email link
   // (?restore=<orderId>&key=<orderKey>). The params are stripped right away
@@ -580,7 +606,9 @@ export function CartCheckoutView() {
       });
   }, [replaceCart]);
 
-  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(
+    () => readCheckoutDraft()?.termsAccepted ?? false,
+  );
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [orderId, setOrderId] = useState<string | null>(null);
@@ -614,10 +642,11 @@ export function CartCheckoutView() {
 
   const shipping = useCheckoutShipping(lines, customer, cartHydrated);
   const paymentCatalogReady =
-    cartHydrated && itemCount > 0 && !shipping.loading;
-  const montonioPreviewCountry =
-    shipping.country ||
-    (shipping.countries.includes("EE") ? "EE" : shipping.countries[0] ?? "EE");
+    cartHydrated &&
+    itemCount > 0 &&
+    !shipping.loading &&
+    Boolean(shipping.country);
+  const montonioPreviewCountry = shipping.country;
   const paymentRefreshKey = `${shipping.country}:${shipping.selectedRateId ?? ""}:${shipping.rates.map((rate) => rate.id).join("|")}`;
   const payment = useCheckoutPayment(paymentCatalogReady, paymentRefreshKey);
   const hasMontonioGateway = useMemo(
@@ -843,6 +872,12 @@ export function CartCheckoutView() {
 
   useEffect(() => {
     if (itemCount === 0) {
+      clearCheckoutDraft();
+    }
+  }, [itemCount]);
+
+  useEffect(() => {
+    if (itemCount === 0) {
       sectionsInitializedRef.current = false;
       setSectionsOpen({ 1: true, 2: false, 3: false });
       return;
@@ -855,8 +890,8 @@ export function CartCheckoutView() {
   }, [itemCount]);
 
   useEffect(() => {
-    setPaymentStepReachable(itemCount > 0);
-  }, [itemCount, setPaymentStepReachable]);
+    setPaymentStepReachable(itemCount > 0 && Boolean(shipping.country));
+  }, [itemCount, shipping.country, setPaymentStepReachable]);
 
   const deliverySummary = useMemo(() => {
     const parts = [
@@ -939,6 +974,162 @@ export function CartCheckoutView() {
     [],
   );
 
+  const persistCheckoutDraft = useCallback(() => {
+    if (!shipping.country) {
+      return;
+    }
+
+    writeCheckoutDraft({
+      country: shipping.country,
+      selectedRateId: shipping.selectedRateId,
+      email,
+      firstName,
+      lastName,
+      phone,
+      phoneCountry: phoneCountry || shipping.country,
+      address1,
+      city,
+      postcode,
+      paymentId: payment.selectedId,
+      montonioOptionKey: selectedMontonioOption
+        ? montonioOptionKey(selectedMontonioOption)
+        : null,
+      pickupPoint,
+      termsAccepted,
+    });
+  }, [
+    address1,
+    city,
+    email,
+    firstName,
+    lastName,
+    payment.selectedId,
+    phone,
+    phoneCountry,
+    pickupPoint,
+    postcode,
+    selectedMontonioOption,
+    shipping.country,
+    shipping.selectedRateId,
+    termsAccepted,
+  ]);
+
+  useEffect(() => {
+    if (!shipping.country) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      persistCheckoutDraft();
+    }, 400);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [persistCheckoutDraft, shipping.country]);
+
+  useEffect(() => {
+    if (draftRestoreCompletedRef.current) {
+      return;
+    }
+
+    const draft = readCheckoutDraft();
+    if (!draft) {
+      draftRestoreCompletedRef.current = true;
+      isRestoringDraftRef.current = false;
+      return;
+    }
+
+    if (shipping.loading || shipping.countriesLoading) {
+      return;
+    }
+
+    if (draft.country && shipping.country !== draft.country) {
+      if (!shipping.countries.includes(draft.country)) {
+        draftRestoreCompletedRef.current = true;
+        isRestoringDraftRef.current = false;
+        return;
+      }
+
+      shipping.setCountry(draft.country);
+      return;
+    }
+
+    if (!shipping.country) {
+      return;
+    }
+
+    if (draft.selectedRateId && shipping.selectedRateId !== draft.selectedRateId) {
+      if (shipping.syncing || shipping.rates.length === 0) {
+        return;
+      }
+
+      if (shipping.rates.some((rate) => rate.id === draft.selectedRateId)) {
+        shipping.setSelectedRateId(draft.selectedRateId);
+      }
+
+      return;
+    }
+
+    if (pendingPickupPointRef.current && !pickupPoint) {
+      setPickupPoint(pendingPickupPointRef.current);
+      pendingPickupPointRef.current = null;
+    }
+
+    if (pendingPaymentIdRef.current && !payment.selectedId) {
+      if (payment.loading) {
+        return;
+      }
+
+      selectPaymentId(pendingPaymentIdRef.current);
+      pendingPaymentIdRef.current = null;
+    }
+
+    if (
+      pendingMontonioOptionKeyRef.current &&
+      !selectedMontonioOption &&
+      (montonio.loading || montonio.options.length === 0)
+    ) {
+      return;
+    }
+
+    if (
+      pendingMontonioOptionKeyRef.current &&
+      !selectedMontonioOption &&
+      montonio.options.length > 0
+    ) {
+      const match = montonio.options.find(
+        (option) =>
+          montonioOptionKey(option) === pendingMontonioOptionKeyRef.current,
+      );
+
+      if (match) {
+        setSelectedMontonioOption(match);
+        pendingMontonioOptionKeyRef.current = null;
+      }
+    }
+
+    draftRestoreCompletedRef.current = true;
+    isRestoringDraftRef.current = false;
+  }, [
+    montonio.loading,
+    montonio.options,
+    payment.loading,
+    payment.selectedId,
+    pickupPoint,
+    selectPaymentId,
+    selectedMontonioOption,
+    shipping.countries,
+    shipping.countriesLoading,
+    shipping.country,
+    shipping.loading,
+    shipping.rates,
+    shipping.selectedRateId,
+    shipping.setCountry,
+    shipping.setSelectedRateId,
+    shipping.syncing,
+  ]);
+
   const pickupValid =
     !requiresPickupSelection ||
     Boolean(
@@ -979,6 +1170,10 @@ export function CartCheckoutView() {
     locale,
   );
   useEffect(() => {
+    if (isRestoringDraftRef.current) {
+      return;
+    }
+
     setPickupPoint(null);
     setSelectedMontonioOption(null);
   }, [shipping.selectedRateId, shipping.country]);
@@ -1066,8 +1261,9 @@ export function CartCheckoutView() {
       return;
     }
 
-    openCheckoutSection(3);
-    scrollToCheckoutStep(3);
+    const targetStep = deliveryReady ? 3 : 2;
+    openCheckoutSection(targetStep);
+    scrollToCheckoutStep(targetStep);
     setSubmitError(
       paymentError === "Payment cancelled" || paymentError === "Payment failed"
         ? t.paymentReturnError
@@ -1080,7 +1276,7 @@ export function CartCheckoutView() {
     router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname, {
       scroll: false,
     });
-  }, [openCheckoutSection, pathname, router, searchParams, t.paymentReturnError]);
+  }, [deliveryReady, openCheckoutSection, pathname, router, searchParams, t.paymentReturnError]);
 
   useEffect(() => {
     const stepParam = searchParams.get("step");
@@ -1287,11 +1483,13 @@ export function CartCheckoutView() {
         // returning buyer needs a fresh session + resync to see shipping
         // rates again.
         resetCheckoutSyncState();
+        persistCheckoutDraft();
         window.location.assign(redirectUrl);
         return;
       }
 
       setOrderId(result.orderNumber ?? `MR-${Date.now().toString(36).toUpperCase()}`);
+      clearCheckoutDraft();
       clearCart();
     } catch (cause) {
       setSubmitError(
@@ -1548,77 +1746,72 @@ export function CartCheckoutView() {
               summary={deliverySummary}
             >
               <div className="space-y-6">
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <label className="block">
-                    <DeliveryFieldLabel
-                      complete={isDeliveryChecklistComplete(deliveryChecklist, "email")}
-                    >
-                      {t.email}
-                    </DeliveryFieldLabel>
-                    <input
-                      type="email"
-                      name="email"
-                      required
-                      autoComplete="email"
-                      value={email}
-                      onChange={(event) => setEmail(event.target.value)}
-                      className={inputWithErrorClass(Boolean(showDeliveryFieldError("email")))}
-                      aria-invalid={Boolean(showDeliveryFieldError("email"))}
-                    />
-                    {showDeliveryFieldError("email") ? (
-                      <p className="mt-2 text-sm text-accent" role="alert">
-                        {showDeliveryFieldError("email")}
-                      </p>
-                    ) : null}
-                  </label>
-
-                  <label className="block">
-                    <DeliveryFieldLabel
-                      complete={isDeliveryChecklistComplete(deliveryChecklist, "country")}
-                    >
-                      {t.country}
-                    </DeliveryFieldLabel>
-                    <select
-                      name="country"
-                      required
-                      value={shipping.country}
-                      disabled={
-                        shipping.countriesLoading &&
-                        shipping.countries.length === 0
-                      }
-                      onChange={(event) => shipping.setCountry(event.target.value)}
-                      className={inputWithErrorClass(Boolean(showDeliveryFieldError("country")))}
-                      aria-invalid={Boolean(showDeliveryFieldError("country"))}
-                    >
-                      <option value="" disabled>
-                        {shipping.countriesLoading &&
-                        shipping.countries.length === 0
-                          ? t.loadingCountries
-                          : t.chooseCountry}
+                <label className="block">
+                  <DeliveryFieldLabel
+                    complete={isDeliveryChecklistComplete(deliveryChecklist, "country")}
+                  >
+                    {t.country}
+                  </DeliveryFieldLabel>
+                  <select
+                    name="country"
+                    required
+                    value={shipping.country}
+                    disabled={
+                      shipping.countriesLoading &&
+                      shipping.countries.length === 0
+                    }
+                    onChange={(event) => shipping.setCountry(event.target.value)}
+                    className={inputWithErrorClass(Boolean(showDeliveryFieldError("country")))}
+                    aria-invalid={Boolean(showDeliveryFieldError("country"))}
+                  >
+                    <option value="" disabled>
+                      {shipping.countriesLoading &&
+                      shipping.countries.length === 0
+                        ? t.loadingCountries
+                        : t.chooseCountry}
+                    </option>
+                    {shipping.countries.map((code) => (
+                      <option key={code} value={code}>
+                        {countryLabel(code)}
                       </option>
-                      {shipping.countries.map((code) => (
-                        <option key={code} value={code}>
-                          {countryLabel(code)}
-                        </option>
-                      ))}
-                    </select>
-                    {showDeliveryFieldError("country") ? (
-                      <p className="mt-2 text-sm text-accent" role="alert">
-                        {showDeliveryFieldError("country")}
+                    ))}
+                  </select>
+                  {showDeliveryFieldError("country") ? (
+                    <p className="mt-2 text-sm text-accent" role="alert">
+                      {showDeliveryFieldError("country")}
+                    </p>
+                  ) : null}
+                  {!shipping.country && shipping.suggestedCountry ? (
+                    <div className="mt-3 flex flex-wrap items-center gap-3 rounded-md border border-ink/10 bg-ink/[0.03] px-3 py-2">
+                      <p className="text-sm text-ink/70">
+                        {dict.checkout.suggestedCountryHint.replace(
+                          "{country}",
+                          countryLabel(shipping.suggestedCountry),
+                        )}
                       </p>
-                    ) : null}
-                    {shippingError ? (
-                      <p className="mt-2 text-sm text-accent">{shippingError}</p>
-                    ) : null}
-                    {!shipping.countriesLoading &&
-                    shipping.countries.length === 0 &&
-                    itemCount > 0 ? (
-                      <div className="mt-3">
-                        <CheckoutSupportNotice locale={locale} />
-                      </div>
-                    ) : null}
-                  </label>
-                </div>
+                      <button
+                        type="button"
+                        onClick={() => shipping.setCountry(shipping.suggestedCountry!)}
+                        className="border border-ink/20 px-3 py-1.5 font-body text-[11px] font-bold uppercase tracking-aggressive text-ink transition-colors hover:border-accent hover:text-accent"
+                      >
+                        {dict.checkout.useSuggestedCountry.replace(
+                          "{country}",
+                          countryLabel(shipping.suggestedCountry),
+                        )}
+                      </button>
+                    </div>
+                  ) : null}
+                  {shippingError ? (
+                    <p className="mt-2 text-sm text-accent">{shippingError}</p>
+                  ) : null}
+                  {!shipping.countriesLoading &&
+                  shipping.countries.length === 0 &&
+                  itemCount > 0 ? (
+                    <div className="mt-3">
+                      <CheckoutSupportNotice locale={locale} />
+                    </div>
+                  ) : null}
+                </label>
 
                 <div>
                   <DeliveryFieldLabel
@@ -1762,7 +1955,7 @@ export function CartCheckoutView() {
                   </div>
                 ) : null}
 
-                <div className="grid grid-cols-2 gap-3 border-t border-ink/10 pt-5 sm:gap-4">
+                <div className="grid gap-3 border-t border-ink/10 pt-5 sm:grid-cols-2 sm:gap-4">
                   <label className="block">
                     <DeliveryFieldLabel
                       complete={isDeliveryChecklistComplete(deliveryChecklist, "name")}
@@ -1807,7 +2000,29 @@ export function CartCheckoutView() {
                       </p>
                     ) : null}
                   </label>
-                  <label className="col-span-2 block">
+                  <label className="block">
+                    <DeliveryFieldLabel
+                      complete={isDeliveryChecklistComplete(deliveryChecklist, "email")}
+                    >
+                      {t.email}
+                    </DeliveryFieldLabel>
+                    <input
+                      type="email"
+                      name="email"
+                      required
+                      autoComplete="email"
+                      value={email}
+                      onChange={(event) => setEmail(event.target.value)}
+                      className={inputWithErrorClass(Boolean(showDeliveryFieldError("email")))}
+                      aria-invalid={Boolean(showDeliveryFieldError("email"))}
+                    />
+                    {showDeliveryFieldError("email") ? (
+                      <p className="mt-2 text-sm text-accent" role="alert">
+                        {showDeliveryFieldError("email")}
+                      </p>
+                    ) : null}
+                  </label>
+                  <label className="block">
                     <DeliveryFieldLabel
                       complete={isDeliveryChecklistComplete(deliveryChecklist, "phone")}
                     >
@@ -1865,24 +2080,30 @@ export function CartCheckoutView() {
                 <div className="border-t border-ink/10 pt-5 lg:border-0 lg:pt-0">
                   <p className={labelClassName}>{t.paymentMethod}</p>
                   <div className="mt-2">
-                    <CheckoutPaymentOptions
-                      gateways={visiblePaymentGateways}
-                      selectedId={payment.selectedId}
-                      onSelect={selectPaymentId}
-                      montonioOptions={montonio.options}
-                      montonioLoading={montonio.loading}
-                      montonioError={montonio.error}
-                      montonioConfigured={montonio.configured}
-                      selectedMontonioKey={
-                        selectedMontonioOption
-                          ? montonioOptionKey(selectedMontonioOption)
-                          : null
-                      }
-                      onSelectMontonioOption={selectMontonioOption}
-                      loading={paymentLoading}
-                      error={payment.error}
-                      locale={locale}
-                    />
+                    {!shipping.country ? (
+                      <p className="text-sm text-ink/60">
+                        {dict.checkout.chooseCountryForPayment}
+                      </p>
+                    ) : (
+                      <CheckoutPaymentOptions
+                        gateways={visiblePaymentGateways}
+                        selectedId={payment.selectedId}
+                        onSelect={selectPaymentId}
+                        montonioOptions={montonio.options}
+                        montonioLoading={montonio.loading}
+                        montonioError={montonio.error}
+                        montonioConfigured={montonio.configured}
+                        selectedMontonioKey={
+                          selectedMontonioOption
+                            ? montonioOptionKey(selectedMontonioOption)
+                            : null
+                        }
+                        onSelectMontonioOption={selectMontonioOption}
+                        loading={paymentLoading}
+                        error={payment.error}
+                        locale={locale}
+                      />
+                    )}
                   </div>
                 </div>
 

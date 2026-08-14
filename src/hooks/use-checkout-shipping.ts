@@ -40,6 +40,7 @@ type CheckoutShippingState = {
   error: string | null;
   countries: string[];
   country: string;
+  suggestedCountry: string | null;
   rates: ShippingRate[];
   selectedRateId: string | null;
   selectedRate: ShippingRate | null;
@@ -93,6 +94,7 @@ export function useCheckoutShipping(
   const [wcTotal, setWcTotal] = useState<number | null>(null);
   const [bootstrapNonce, setBootstrapNonce] = useState(0);
   const [countriesLoading, setCountriesLoading] = useState(true);
+  const [suggestedCountry, setSuggestedCountry] = useState<string | null>(null);
   const sessionRef = useRef<string | null>(null);
   const bootstrapReadyRef = useRef(false);
   const syncedLinesKeyRef = useRef("");
@@ -254,6 +256,7 @@ export function useCheckoutShipping(
       setSelectedRateIdState(null);
       setRates([]);
       setError(null);
+      setSuggestedCountry(null);
 
       if (!nextCountry) {
         setSyncing(false);
@@ -469,20 +472,20 @@ export function useCheckoutShipping(
 
         rememberSession(session);
 
-        // Keep an already chosen country across cart edits; otherwise prefer
-        // IP geo when it maps to an allowed shipping country. Never force EE.
+        // Keep an already chosen country across cart edits. Never auto-select
+        // a delivery country — the buyer must confirm it explicitly.
         let shipCountry = "";
         if (bootstrapReadyRef.current && countryRef.current) {
           shipCountry = sorted.includes(countryRef.current)
             ? countryRef.current
             : "";
+        }
+
+        const detected = geoPayload?.country?.trim().toUpperCase() ?? "";
+        if (!shipCountry && detected && sorted.includes(detected)) {
+          setSuggestedCountry(detected);
         } else {
-          const detected = geoPayload?.country?.trim().toUpperCase() ?? "";
-          const phoneHint =
-            customerRef.current.phoneCountry?.trim().toUpperCase() ?? "";
-          shipCountry =
-            (detected && sorted.includes(detected) ? detected : "") ||
-            (phoneHint && sorted.includes(phoneHint) ? phoneHint : "");
+          setSuggestedCountry(null);
         }
 
         countryRef.current = shipCountry;
@@ -605,6 +608,7 @@ export function useCheckoutShipping(
     error,
     countries,
     country,
+    suggestedCountry,
     rates,
     selectedRateId,
     selectedRate,

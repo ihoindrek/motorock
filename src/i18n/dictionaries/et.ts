@@ -180,6 +180,10 @@ export const et: Dictionary = {
     submitBlockPickup: "Vali kehtiv pakiautomaat.",
     completeDeliveryForPayment:
       "Makseviisi valimiseks täida eespool tarneandmed.",
+    chooseCountryForPayment:
+      "Makseviiside nägemiseks vali esmalt tarneriik.",
+    suggestedCountryHint: "Tundub, et oled riigis {country}.",
+    useSuggestedCountry: "Kasuta riiki {country}",
     deliverySectionIncomplete: "Tarneandmed puudulikud",
     trustFreeReturns: "14-päevane tasuta tagastus",
     pricesIncludeVat: "Hinnad sisaldavad käibemaksu",
