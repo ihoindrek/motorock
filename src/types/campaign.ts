@@ -3,6 +3,7 @@ export type CampaignPlacement =
   | "cart-page"
   | "checkout"
   | "blog"
+  | "header-nav"
   | "site-banner";
 
 export type CampaignProductRule = "equipment-only" | "all";
@@ -18,6 +19,7 @@ export type Campaign = {
   productRule: CampaignProductRule;
   placements: CampaignPlacement[];
   blogSlug?: string;
+  blogSlugs?: Partial<Record<"en" | "et", string>>;
   /** Loosiauhinna toote slug (nt `/toode/{slug}`). */
   prizeProductSlug?: string;
   content: {

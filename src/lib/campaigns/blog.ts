@@ -3,7 +3,15 @@ import type { Campaign } from "@/types/campaign";
 import type { BlogPost } from "@/types/blog-post";
 
 export function getCampaignByBlogSlug(slug: string): Campaign | undefined {
-  return CAMPAIGNS.find((campaign) => campaign.blogSlug === slug);
+  return CAMPAIGNS.find((campaign) => {
+    if (campaign.blogSlug === slug) {
+      return true;
+    }
+
+    return Object.values(campaign.blogSlugs ?? {}).some(
+      (blogSlug) => blogSlug === slug,
+    );
+  });
 }
 
 export function getCampaignForBlogPost(

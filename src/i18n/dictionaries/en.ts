@@ -4,6 +4,7 @@ export type Dictionary = {
     equipment: string;
     tools: string;
     blog: string;
+    giveaway: string;
     contact: string;
     about: string;
     menu: string;
@@ -624,6 +625,7 @@ export const en: Dictionary = {
     equipment: "Driving Equipment",
     tools: "Tools",
     blog: "Blog",
+    giveaway: "Giveaway",
     contact: "Contact",
     about: "About",
     menu: "Menu",

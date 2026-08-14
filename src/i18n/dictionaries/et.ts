@@ -6,6 +6,7 @@ export const et: Dictionary = {
     equipment: "Sõiduvarustus",
     tools: "Tööriistad",
     blog: "Blogi",
+    giveaway: "Auhinnamäng",
     contact: "Kontakt",
     about: "Meist",
     menu: "Menüü",

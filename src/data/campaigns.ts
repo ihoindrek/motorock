@@ -10,8 +10,18 @@ export const GIVEAWAY_2026_CAMPAIGN = {
   activeUntil: "2026-09-26T23:59:59+03:00",
   minEligibleSubtotal: 100,
   productRule: "equipment-only",
-  placements: ["cart-drawer", "cart-page", "checkout", "blog"],
+  placements: [
+    "cart-drawer",
+    "cart-page",
+    "checkout",
+    "blog",
+    "header-nav",
+  ],
   blogSlug: "win-a-brixton-crossfire-500-storr-motorock-giveaway-2026",
+  blogSlugs: {
+    en: "win-a-brixton-crossfire-500-storr-motorock-giveaway-2026",
+    et: "voida-brixton-crossfire-500-storr-motorocki-auhinnamang-2026",
+  },
   prizeProductSlug: "brixton-crossfire-500-storr",
   content: {
     progressMessage:

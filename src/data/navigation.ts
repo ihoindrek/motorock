@@ -26,11 +26,10 @@ export type MegaMenu = {
 
 export type NavGroup = "shop" | "site";
 
-export type PrimaryNavItem =
-  | { href: string; label: string; group: NavGroup; megaMenu?: undefined }
-  | {
-      href: string;
-      label: string;
-      group: NavGroup;
-      megaMenu: MegaMenu;
-    };
+export type PrimaryNavItem = {
+  href: string;
+  label: string;
+  group: NavGroup;
+  accent?: boolean;
+  megaMenu?: MegaMenu;
+};

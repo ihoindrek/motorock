@@ -122,11 +122,20 @@ function LanguageSwitcher({
 
 const EQUIPMENT_CLOSE_DELAY_MS = 120;
 
-function NavDivider({ inverted = false }: { inverted?: boolean }) {
+function NavDivider({
+  inverted = false,
+  className,
+}: {
+  inverted?: boolean;
+  className?: string;
+}) {
   return (
     <li
       aria-hidden="true"
-      className="mx-0.5 flex items-center self-stretch py-2 xl:mx-1"
+      className={cn(
+        "mx-0.5 flex items-center self-stretch py-2 xl:mx-1",
+        className,
+      )}
     >
       <span
         className={cn(
@@ -269,10 +278,11 @@ export function SiteHeader() {
     return options.scrolled ? "text-paper/75" : "text-ink/75";
   };
 
-  const renderNavItem = (item: PrimaryNavItem) =>
+  const renderNavItem = (item: PrimaryNavItem, liClassName?: string) =>
     item.megaMenu ? (
       <li
         key={item.href}
+        className={liClassName}
         onMouseEnter={openEquipmentMenu}
         onMouseLeave={closeEquipmentMenu}
         onFocus={openEquipmentMenu}
@@ -313,12 +323,14 @@ export function SiteHeader() {
         </Link>
       </li>
     ) : (
-      <li key={item.href}>
+      <li key={item.href} className={liClassName}>
         <Link
           href={item.href}
           className={cn(
             "whitespace-nowrap font-body text-sm font-bold uppercase tracking-aggressive transition-colors hover:text-accent",
-            navTextColor(item.group, { scrolled }),
+            item.accent
+              ? "text-accent"
+              : navTextColor(item.group, { scrolled }),
           )}
         >
           {item.label}
@@ -357,10 +369,10 @@ export function SiteHeader() {
           aria-label="Primary navigation"
           className={cn("hidden flex-1 lg:block", isCheckoutHeader && "lg:hidden")}
         >
-          <ul className="flex items-center justify-center gap-5 xl:gap-8">
-            {shopNav.map(renderNavItem)}
-            <NavDivider inverted={scrolled} />
-            {siteNav.map(renderNavItem)}
+          <ul className="flex items-center justify-center gap-4 lg:gap-5 xl:gap-8">
+            {shopNav.map((item) => renderNavItem(item))}
+            <NavDivider inverted={scrolled} className="hidden xl:flex" />
+            {siteNav.map((item) => renderNavItem(item, "hidden xl:block"))}
           </ul>
         </nav>
 
@@ -421,7 +433,7 @@ export function SiteHeader() {
 
           <div
             className={cn(
-              "inline-flex size-11 items-center justify-center transition-colors hover:text-accent lg:hidden",
+              "inline-flex size-11 items-center justify-center transition-colors hover:text-accent xl:hidden",
               scrolled ? "text-paper" : "text-ink",
               isCheckoutHeader && "hidden",
             )}

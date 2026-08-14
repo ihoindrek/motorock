@@ -3,6 +3,7 @@ import type { Locale } from "@/i18n/config";
 import { localizedHref } from "@/i18n/paths";
 import type { EquipmentNavTree, WcCategoryEntry, WcCategoryNode } from "@/lib/graphql/categories";
 import { getLocalizedCategoryName, getLocalizedCategorySlug } from "@/lib/graphql/categories";
+import { getActiveCampaigns } from "@/lib/campaigns/evaluate";
 import { getBrandCatalogHref } from "@/lib/shop/brand-catalog-url";
 import {
   buildEquipmentCategoryHref,
@@ -14,6 +15,7 @@ import {
   buildToolsCategoryHref,
 } from "@/lib/shop/shop-category-route";
 import type { MegaMenu, NavColumn, NavColumnId, NavLink, PrimaryNavItem } from "@/data/navigation";
+import type { Campaign } from "@/types/campaign";
 
 const equipmentBrandSlugs = [
   { slug: "pando-moto", label: "Pando Moto" },
@@ -242,6 +244,43 @@ function resolveToolsHref(
     : buildToolsCategoryHref(locale);
 }
 
+function getCampaignBlogHref(locale: Locale, campaign: Campaign): string | null {
+  const slug = campaign.blogSlugs?.[locale] ?? campaign.blogSlug;
+
+  if (!slug) {
+    return null;
+  }
+
+  return localizedHref(locale, `/blog/${slug}`);
+}
+
+export function getCampaignNavItem(
+  locale: Locale,
+  dict: Dictionary,
+  now = Date.now(),
+): PrimaryNavItem | null {
+  const campaign = getActiveCampaigns(now).find((entry) =>
+    entry.placements.includes("header-nav"),
+  );
+
+  if (!campaign) {
+    return null;
+  }
+
+  const href = getCampaignBlogHref(locale, campaign);
+
+  if (!href) {
+    return null;
+  }
+
+  return {
+    href,
+    label: dict.nav.giveaway,
+    group: "shop",
+    accent: true,
+  };
+}
+
 export function getShopNav(
   locale: Locale,
   dict: Dictionary,
@@ -268,6 +307,11 @@ export function getShopNav(
       label: dict.nav.tools,
       group: "shop",
     });
+  }
+
+  const campaignNav = getCampaignNavItem(locale, dict);
+  if (campaignNav) {
+    items.push(campaignNav);
   }
 
   return items;

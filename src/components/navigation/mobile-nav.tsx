@@ -12,6 +12,7 @@ import { getShopNav, getSiteNav } from "@/i18n/navigation";
 import { useFocusTrap } from "@/hooks/use-focus-trap";
 import { getBrandCatalogHref } from "@/lib/shop/brand-catalog-url";
 import { localizedHref } from "@/i18n/paths";
+import { cn } from "@/lib/utils";
 
 type MobileNavProps = {
   open: boolean;
@@ -325,7 +326,7 @@ export function MobileNav({ open, onClose }: MobileNavProps) {
   return createPortal(
     <>
       <div
-        className="fixed inset-0 z-[110] bg-ink/40 lg:hidden"
+        className="fixed inset-0 z-[110] bg-ink/40 xl:hidden"
         aria-hidden="true"
         onClick={onClose}
       />
@@ -336,7 +337,7 @@ export function MobileNav({ open, onClose }: MobileNavProps) {
         role="dialog"
         aria-modal="true"
         aria-labelledby={labelId}
-        className="fixed inset-y-0 right-0 z-[111] flex w-full max-w-sm translate-x-0 flex-col bg-white lg:hidden"
+        className="fixed inset-y-0 right-0 z-[111] flex w-full max-w-sm translate-x-0 flex-col bg-white xl:hidden"
       >
         <div className="flex h-16 items-center justify-between border-b border-ink/10 px-5 sm:h-20">
           <p
@@ -365,7 +366,10 @@ export function MobileNav({ open, onClose }: MobileNavProps) {
                 <Link
                   href={item.href}
                   onClick={onClose}
-                  className="block py-5 font-body text-base font-bold uppercase tracking-aggressive text-ink transition-colors hover:text-accent"
+                  className={cn(
+                    "block py-5 font-body text-base font-bold uppercase tracking-aggressive transition-colors hover:text-accent",
+                    item.accent ? "text-accent" : "text-ink",
+                  )}
                 >
                   {item.label}
                 </Link>
