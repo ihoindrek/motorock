@@ -140,24 +140,18 @@ function EquipmentBrandCard({
         className="pointer-events-none absolute inset-0 bg-gradient-to-t from-ink/45 via-transparent to-transparent"
         aria-hidden="true"
       />
-      {"logo" in brand && brand.logo ? (
-        <div className="absolute inset-0 flex items-center justify-center p-4 sm:p-6">
-          <img
-            src={brand.logo}
-            alt={brand.name}
-            className={cn(
-              "object-contain",
-              "logoInvert" in brand && brand.logoInvert
-                ? "w-[min(88%,12rem)] max-h-14 brightness-0 invert sm:max-h-[4.25rem] lg:max-h-20"
-                : "h-[4.5rem] w-auto max-w-[min(75%,11rem)] sm:h-24 lg:h-28",
-            )}
-          />
-        </div>
-      ) : (
-        <div className="absolute inset-0 flex flex-col justify-end p-4 sm:p-5">
-          <span className="section-eyebrow text-accent">{brand.name}</span>
-        </div>
-      )}
+      <div className="absolute inset-0 flex items-center justify-center p-4 sm:p-6">
+        <img
+          src={brand.logo}
+          alt={brand.name}
+          className={cn(
+            "object-contain",
+            "logoInvert" in brand && brand.logoInvert
+              ? "w-[min(88%,12rem)] max-h-14 brightness-0 invert sm:max-h-[4.25rem] lg:max-h-20"
+              : "h-[4.5rem] w-auto max-w-[min(75%,11rem)] sm:h-24 lg:h-28",
+          )}
+        />
+      </div>
     </Link>
   );
 }
