@@ -75,6 +75,13 @@ type CatalogFetchResult = {
   nodesById: Map<number, GraphQLProductCard>;
 };
 
+export type HomepageFavoriteCatalogs = {
+  motorcycles: CatalogProduct[];
+  menEquipment: CatalogProduct[];
+  womenEquipment: CatalogProduct[];
+  accessoriesEquipment: CatalogProduct[];
+};
+
 function indexCatalogNodesById(
   nodes: readonly GraphQLProductCard[],
 ): Map<number, GraphQLProductCard> {
@@ -103,6 +110,47 @@ function mergeCatalogNodesById(
   }
 
   return [...merged.values()];
+}
+
+function mergeCatalogNodeMaps(
+  ...maps: readonly Map<number, GraphQLProductCard>[]
+): Map<number, GraphQLProductCard> {
+  const merged = new Map<number, GraphQLProductCard>();
+
+  for (const map of maps) {
+    for (const [databaseId, node] of map) {
+      merged.set(databaseId, node);
+    }
+  }
+
+  return merged;
+}
+
+function isHomepageCatalogEmpty(catalog: HomepageFavoriteCatalogs) {
+  return (
+    catalog.motorcycles.length === 0 &&
+    catalog.menEquipment.length === 0 &&
+    catalog.womenEquipment.length === 0 &&
+    catalog.accessoriesEquipment.length === 0
+  );
+}
+
+function assertHomepageCatalogHasProducts(catalog: HomepageFavoriteCatalogs) {
+  if (isHomepageCatalogEmpty(catalog)) {
+    throw new Error("[homepage] favorite catalog returned no products");
+  }
+}
+
+function settledCatalogResult(
+  result: PromiseSettledResult<CatalogFetchResult>,
+  label: string,
+): CatalogFetchResult {
+  if (result.status === "fulfilled") {
+    return result.value;
+  }
+
+  console.error(`[homepage] ${label} catalog fetch failed:`, result.reason);
+  return { nodes: [], nodesById: new Map() };
 }
 
 async function buildShowroomMetaSourcesForProduct(
@@ -635,23 +683,18 @@ export async function getProductSlugAlternates(
   };
 }
 
-export type HomepageFavoriteCatalogs = {
-  motorcycles: CatalogProduct[];
-  menEquipment: CatalogProduct[];
-  womenEquipment: CatalogProduct[];
-  accessoriesEquipment: CatalogProduct[];
-};
-
 async function fetchHomepageFavoriteCatalogsUncached(
   locale: Locale,
 ): Promise<HomepageFavoriteCatalogs> {
-  const [motorcyclesResult, menResult, womenResult, accessoriesResult, helmetsResult] =
-    await Promise.all([
-      fetchCatalogNodesLimited(
-        { category: "motorcycles" },
-        locale,
-        HOMEPAGE_MOTORCYCLE_LIMIT,
-      ),
+  // Motorcycles first so a partial WP timeout still yields the hero catalog block.
+  const motorcyclesResult = await fetchCatalogNodesLimited(
+    { category: "motorcycles" },
+    locale,
+    HOMEPAGE_MOTORCYCLE_LIMIT,
+  );
+
+  const [menResult, womenResult, accessoriesResult, helmetsResult] =
+    await Promise.allSettled([
       fetchCatalogNodesLimited({ category: "for-men" }, locale, HOMEPAGE_GEAR_LIMIT),
       fetchCatalogNodesLimited(
         { category: "for-women" },
@@ -664,18 +707,25 @@ async function fetchHomepageFavoriteCatalogsUncached(
         HOMEPAGE_GEAR_LIMIT,
       ),
       fetchCatalogNodesLimited({ category: "helmets" }, locale, HOMEPAGE_GEAR_LIMIT),
-    ]);
+    ]).then((results) =>
+      results.map((result, index) =>
+        settledCatalogResult(
+          result,
+          ["men", "women", "accessories", "helmets"][index] ?? "gear",
+        ),
+      ),
+    );
 
   const accessoriesNodes = mergeCatalogNodesById(
     accessoriesResult.nodes,
     helmetsResult.nodes,
   );
-  const accessoriesNodesById = {
-    ...accessoriesResult.nodesById,
-    ...helmetsResult.nodesById,
-  };
+  const accessoriesNodesById = mergeCatalogNodeMaps(
+    accessoriesResult.nodesById,
+    helmetsResult.nodesById,
+  );
 
-  return {
+  const catalog: HomepageFavoriteCatalogs = {
     motorcycles: motorcyclesResult.nodes.map((node) =>
       mapCatalogCard(node, locale, motorcyclesResult.nodesById),
     ),
@@ -695,17 +745,20 @@ async function fetchHomepageFavoriteCatalogsUncached(
       accessoriesNodesById,
     ),
   };
+
+  assertHomepageCatalogHasProducts(catalog);
+  return catalog;
 }
 
 const getHomepageFavoriteCatalogsEn = unstable_cache(
   () => fetchHomepageFavoriteCatalogsUncached("en"),
-  ["homepage-favorite-catalogs", "en"],
+  ["homepage-favorite-catalogs", "en", "v2"],
   { revalidate: 300, tags: ["woocommerce", "homepage-en"] },
 );
 
 const getHomepageFavoriteCatalogsEt = unstable_cache(
   () => fetchHomepageFavoriteCatalogsUncached("et"),
-  ["homepage-favorite-catalogs", "et"],
+  ["homepage-favorite-catalogs", "et", "v2"],
   { revalidate: 300, tags: ["woocommerce", "homepage-et"] },
 );
 
@@ -715,17 +768,7 @@ const homepageFavoriteCatalogsByLocale = {
 } as const;
 
 export const getHomepageFavoriteCatalogs = cache(async (locale: Locale) => {
-  try {
-    return await homepageFavoriteCatalogsByLocale[locale]();
-  } catch (error) {
-    console.error("[homepage] favorite catalog fetch failed:", error);
-    return {
-      motorcycles: [],
-      menEquipment: [],
-      womenEquipment: [],
-      accessoriesEquipment: [],
-    };
-  }
+  return homepageFavoriteCatalogsByLocale[locale]();
 });
 
 export async function getMotorcycleCatalog(
