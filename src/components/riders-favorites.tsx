@@ -14,6 +14,7 @@ import {
   partitionPopularGearByAudience,
   pickFavoriteProducts,
   pickHomepageNewGearProducts,
+  filterHomepageAccessoriesProducts,
 } from "@/lib/shop/favorite-product";
 
 const headingVideoClass =
@@ -209,7 +210,7 @@ export async function RidersFavorites({ locale }: { locale: Locale }) {
     women: pickHomepageNewGearProducts("women", gearByAudience.women, locale, 8),
     accessories: pickHomepageNewGearProducts(
       "accessories",
-      gearByAudience.accessories,
+      filterHomepageAccessoriesProducts(accessoriesEquipment),
       locale,
       8,
     ),

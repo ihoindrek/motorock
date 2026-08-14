@@ -197,6 +197,26 @@ export const ACCESSORIES_BRANCH_WC_SLUGS = new Set([
   "small-accessories",
 ]);
 
+/** Homepage accessories tab — helmets, masks (goggles), bags only. */
+export const HOMEPAGE_ACCESSORIES_WC_SLUGS = new Set([
+  "helmets",
+  "all-helmets",
+  "goggles",
+  "bags-backpacks",
+]);
+
+export function productInHomepageAccessoriesTab(
+  wcCategorySlugs: readonly string[] | undefined,
+): boolean {
+  if (!wcCategorySlugs?.length) {
+    return false;
+  }
+
+  return wcCategorySlugs.some((slug) =>
+    HOMEPAGE_ACCESSORIES_WC_SLUGS.has(canonicalizeWcCategorySlug(slug)),
+  );
+}
+
 export const TOOLS_WC_SLUG = "tools-maintenance";
 
 /** Leaf Woo slugs under `for-men` — paired with {@link WOMEN_GEAR_LEAF_WC_SLUGS}. */

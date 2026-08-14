@@ -17,7 +17,7 @@ export function CheckoutProgress({
   className?: string;
 }) {
   const dict = useDictionary();
-  const { navigateToCheckoutStep } = useCheckoutStep();
+  const { navigateToCheckoutStep, paymentStepReachable } = useCheckoutStep();
   const steps = [
     { id: 1, label: dict.checkout.cart },
     { id: 2, label: dict.checkout.delivery },
@@ -42,7 +42,9 @@ export function CheckoutProgress({
         {steps.map((step, index) => {
           const done = step.id < currentStep;
           const active = step.id === currentStep;
-          const reachable = step.id <= currentStep;
+          const reachable =
+            step.id <= currentStep ||
+            (step.id === 3 && paymentStepReachable);
 
           return (
             <li

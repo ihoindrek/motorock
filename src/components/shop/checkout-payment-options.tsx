@@ -188,6 +188,13 @@ export function filterGatewaysWithMontonioOptions(
   });
 }
 
+const CARD_PAYMENT_LOGO_SIZES = {
+  container: "h-12 w-[7.5rem] sm:h-14 sm:w-[9.5rem]",
+  image: "h-11 max-w-full sm:h-14",
+  width: 152,
+  height: 56,
+} as const;
+
 function PaymentMethodIcon({
   gateway,
   className,
@@ -201,21 +208,25 @@ function PaymentMethodIcon({
     gateway.icon,
   );
   const [logoFailed, setLogoFailed] = useState(false);
+  const isCardLayout = visual.kind === "logo" && visual.layout === "card";
 
   if (visual.kind === "logo" && !logoFailed) {
     return (
       <span
         className={cn(
           "flex shrink-0 items-center justify-center",
-          className,
+          isCardLayout ? CARD_PAYMENT_LOGO_SIZES.container : className,
         )}
       >
         <img
           src={visual.src}
           alt={visual.alt}
-          width={50}
-          height={33}
-          className="h-7 w-auto max-w-full object-contain"
+          width={isCardLayout ? CARD_PAYMENT_LOGO_SIZES.width : 50}
+          height={isCardLayout ? CARD_PAYMENT_LOGO_SIZES.height : 33}
+          className={cn(
+            "w-auto object-contain",
+            isCardLayout ? CARD_PAYMENT_LOGO_SIZES.image : "h-7 max-w-full",
+          )}
           loading="lazy"
           decoding="async"
           onError={() => setLogoFailed(true)}
@@ -534,6 +545,7 @@ function MontonioOptionRow({
 }) {
   const [logoFailed, setLogoFailed] = useState(false);
   const displayName = label ?? option.name;
+  const isCardOption = option.kind === "card";
 
   return (
     <button
@@ -551,15 +563,25 @@ function MontonioOptionRow({
         <img
           src={option.logoUrl}
           alt=""
-          width={50}
-          height={33}
-          className="h-7 w-auto max-w-[4rem] object-contain"
+          width={isCardOption ? CARD_PAYMENT_LOGO_SIZES.width : 50}
+          height={isCardOption ? CARD_PAYMENT_LOGO_SIZES.height : 33}
+          className={cn(
+            "w-auto object-contain",
+            isCardOption
+              ? `${CARD_PAYMENT_LOGO_SIZES.image} max-w-[7.5rem] sm:max-w-[9.5rem]`
+              : "h-7 max-w-[4rem]",
+          )}
           loading="lazy"
           decoding="async"
           onError={() => setLogoFailed(true)}
         />
       ) : (
-        <span className="flex size-10 items-center justify-center rounded-md border border-ink/10 bg-white font-body text-[10px] font-bold uppercase text-ink/55">
+        <span
+          className={cn(
+            "flex items-center justify-center rounded-md border border-ink/10 bg-white font-body text-[10px] font-bold uppercase text-ink/55",
+            isCardOption ? CARD_PAYMENT_LOGO_SIZES.container : "size-10",
+          )}
+        >
           {displayName.slice(0, 3)}
         </span>
       )}
@@ -632,7 +654,6 @@ export function CheckoutPaymentOptions({
   selectedMontonioKey,
   onSelectMontonioOption,
   loading,
-  waitingForDelivery,
   error,
   locale,
 }: {
@@ -646,7 +667,6 @@ export function CheckoutPaymentOptions({
   selectedMontonioKey: string | null;
   onSelectMontonioOption: (option: MontonioPaymentOption | null) => void;
   loading: boolean;
-  waitingForDelivery?: boolean;
   error: string | null;
   locale: Locale;
 }) {
@@ -669,9 +689,7 @@ export function CheckoutPaymentOptions({
         </p>
       ) : null}
 
-      {waitingForDelivery ? (
-        <p className="text-sm text-ink/50">{copy.paymentWaiting}</p>
-      ) : loading ? (
+      {loading ? (
         <CheckoutPaymentOptionsSkeleton message={copy.paymentLoading} />
       ) : error ? (
         <div className="space-y-3">

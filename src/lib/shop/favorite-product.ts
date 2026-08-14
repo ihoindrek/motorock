@@ -4,6 +4,7 @@ import type { CatalogProduct, ProductCategory } from "@/types/catalog-product";
 import { getBrandByName } from "@/lib/shop/brands";
 import type { CategoryRoute } from "@/lib/shop/category";
 import { filterProductsByRoute } from "@/lib/shop/category";
+import { productInHomepageAccessoriesTab } from "@/lib/shop/wc-categories";
 
 export type PopularGearAudience = "men" | "women" | "accessories";
 
@@ -67,6 +68,14 @@ export function partitionPopularGearByAudience(rawByAudience: Record<
   );
 
   return { men, women, accessories };
+}
+
+export function filterHomepageAccessoriesProducts(
+  products: readonly CatalogProduct[],
+): CatalogProduct[] {
+  return products.filter((product) =>
+    productInHomepageAccessoriesTab(product.wcCategorySlugs),
+  );
 }
 
 const PLACEHOLDER_IMAGE = "/brixton-image.webp";

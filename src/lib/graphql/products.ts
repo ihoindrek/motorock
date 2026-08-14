@@ -89,6 +89,22 @@ function indexCatalogNodesById(
   return nodesById;
 }
 
+function mergeCatalogNodesById(
+  ...groups: readonly (readonly GraphQLProductCard[])[]
+): GraphQLProductCard[] {
+  const merged = new Map<number, GraphQLProductCard>();
+
+  for (const nodes of groups) {
+    for (const node of nodes) {
+      if (node.databaseId) {
+        merged.set(node.databaseId, node);
+      }
+    }
+  }
+
+  return [...merged.values()];
+}
+
 async function buildShowroomMetaSourcesForProduct(
   product: GraphQLProduct | GraphQLProductCard,
   locale: Locale,
@@ -629,7 +645,7 @@ export type HomepageFavoriteCatalogs = {
 async function fetchHomepageFavoriteCatalogsUncached(
   locale: Locale,
 ): Promise<HomepageFavoriteCatalogs> {
-  const [motorcyclesResult, menResult, womenResult, accessoriesResult] =
+  const [motorcyclesResult, menResult, womenResult, accessoriesResult, helmetsResult] =
     await Promise.all([
       fetchCatalogNodesLimited(
         { category: "motorcycles" },
@@ -647,7 +663,17 @@ async function fetchHomepageFavoriteCatalogsUncached(
         locale,
         HOMEPAGE_GEAR_LIMIT,
       ),
+      fetchCatalogNodesLimited({ category: "helmets" }, locale, HOMEPAGE_GEAR_LIMIT),
     ]);
+
+  const accessoriesNodes = mergeCatalogNodesById(
+    accessoriesResult.nodes,
+    helmetsResult.nodes,
+  );
+  const accessoriesNodesById = {
+    ...accessoriesResult.nodesById,
+    ...helmetsResult.nodesById,
+  };
 
   return {
     motorcycles: motorcyclesResult.nodes.map((node) =>
@@ -664,9 +690,9 @@ async function fetchHomepageFavoriteCatalogsUncached(
       womenResult.nodesById,
     ),
     accessoriesEquipment: mapEquipmentCatalogNodes(
-      accessoriesResult.nodes,
+      accessoriesNodes,
       locale,
-      accessoriesResult.nodesById,
+      accessoriesNodesById,
     ),
   };
 }

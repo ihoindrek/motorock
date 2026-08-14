@@ -608,12 +608,13 @@ export function CartCheckoutView() {
   );
 
   const shipping = useCheckoutShipping(lines, customer, cartHydrated);
-  const paymentReady =
-    !shipping.loading && shipping.rates.length > 0 && !shipping.syncing;
+  const paymentCatalogReady =
+    cartHydrated && itemCount > 0 && !shipping.loading;
+  const montonioPreviewCountry =
+    shipping.country ||
+    (shipping.countries.includes("EE") ? "EE" : shipping.countries[0] ?? "EE");
   const paymentRefreshKey = `${shipping.country}:${shipping.selectedRateId ?? ""}:${shipping.rates.map((rate) => rate.id).join("|")}`;
-  const payment = useCheckoutPayment(paymentReady, paymentRefreshKey);
-  const paymentWaiting =
-    !shipping.loading && !shipping.syncing && shipping.rates.length === 0;
+  const payment = useCheckoutPayment(paymentCatalogReady, paymentRefreshKey);
   const hasMontonioGateway = useMemo(
     () =>
       payment.gateways.some((gateway) =>
@@ -622,8 +623,8 @@ export function CartCheckoutView() {
     [payment.gateways],
   );
   const montonio = useMontonioPaymentOptions(
-    shipping.country,
-    paymentReady && hasMontonioGateway && isLiveCheckoutEnabled(),
+    montonioPreviewCountry,
+    paymentCatalogReady && hasMontonioGateway && isLiveCheckoutEnabled(),
   );
   const visiblePaymentGateways = useMemo(() => {
     if (!isLiveCheckoutEnabled() || !hasMontonioGateway || montonio.loading) {
@@ -658,7 +659,7 @@ export function CartCheckoutView() {
     );
   }, [montonio.options, selectedPaymentGateway]);
   const paymentLoading =
-    paymentReady &&
+    paymentCatalogReady &&
     (payment.loading ||
       (hasMontonioGateway && isLiveCheckoutEnabled() && montonio.loading));
   const montonioSelected = Boolean(
@@ -673,7 +674,7 @@ export function CartCheckoutView() {
       selectedPaymentGateway!,
       montonio.options,
     );
-  const { setCheckoutStep, registerCheckoutStepNavigator } = useCheckoutStep();
+  const { setCheckoutStep, registerCheckoutStepNavigator, setPaymentStepReachable } = useCheckoutStep();
 
   const needsPickupPoint = shippingMethodNeedsPickupPoint(shipping.selectedRate);
   const pickupPointSources = useMemo(() => {
@@ -844,20 +845,13 @@ export function CartCheckoutView() {
 
     if (!sectionsInitializedRef.current) {
       sectionsInitializedRef.current = true;
-      setSectionsOpen({ 1: true, 2: true, 3: false });
+      setSectionsOpen({ 1: true, 2: true, 3: true });
     }
   }, [itemCount]);
 
   useEffect(() => {
-    if (deliveryReady) {
-      setSectionsOpen((prev) => ({ ...prev, 3: true }));
-      return;
-    }
-
-    if (itemCount > 0) {
-      setSectionsOpen((prev) => ({ ...prev, 3: false, 2: prev[2] || true }));
-    }
-  }, [deliveryReady, itemCount]);
+    setPaymentStepReachable(itemCount > 0);
+  }, [itemCount, setPaymentStepReachable]);
 
   const deliverySummary = useMemo(() => {
     const parts = [
@@ -888,12 +882,8 @@ export function CartCheckoutView() {
   ]);
 
   const paymentSummary = useMemo(() => {
-    if (!deliveryReady) {
-      return null;
-    }
-
     if (!payment.selectedId) {
-      return dict.checkout.submitBlockPayment;
+      return null;
     }
 
     if (selectedMontonioOption) {
@@ -902,8 +892,6 @@ export function CartCheckoutView() {
 
     return selectedPaymentGateway?.title ?? payment.selectedId;
   }, [
-    deliveryReady,
-    dict.checkout.submitBlockPayment,
     locale,
     payment.selectedId,
     selectedMontonioOption,
@@ -1101,11 +1089,6 @@ export function CartCheckoutView() {
 
   useEffect(() => {
     registerCheckoutStepNavigator((step) => {
-      if (step === 3 && !deliveryReady) {
-        revealDeliveryIssues();
-        return;
-      }
-
       openCheckoutSection(step);
       scrollToCheckoutStep(step);
     });
@@ -1113,12 +1096,7 @@ export function CartCheckoutView() {
     return () => {
       registerCheckoutStepNavigator(null);
     };
-  }, [
-    deliveryReady,
-    openCheckoutSection,
-    registerCheckoutStepNavigator,
-    revealDeliveryIssues,
-  ]);
+  }, [openCheckoutSection, registerCheckoutStepNavigator]);
 
   useEffect(() => {
     if (itemCount === 0 || orderId) {
@@ -1876,9 +1854,7 @@ export function CartCheckoutView() {
                 setSectionsOpen((prev) => ({ ...prev, 3: open }))
               }
               summary={paymentSummary}
-              collapsible={deliveryReady}
-              locked={!deliveryReady}
-              lockedMessage={dict.checkout.completeDeliveryForPayment}
+              collapsible
             >
               <div className="space-y-6">
                 <div className="border-t border-ink/10 pt-5 lg:border-0 lg:pt-0">
@@ -1899,7 +1875,6 @@ export function CartCheckoutView() {
                       }
                       onSelectMontonioOption={selectMontonioOption}
                       loading={paymentLoading}
-                      waitingForDelivery={paymentWaiting}
                       error={payment.error}
                       locale={locale}
                     />

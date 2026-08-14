@@ -1,10 +1,15 @@
 import { DEFAULT_WOO_STORE_URL } from "@/lib/storefront/url";
+import { MONTONIO_CARD_PAYMENT_METHOD_ID } from "@/lib/checkout/montonio-checkout";
 
 const MONTONIO_ASSETS =
   `${DEFAULT_WOO_STORE_URL}/wp-content/plugins/montonio-for-woocommerce/assets/images`;
 
+/** Visa / MC / Apple Pay / Google Pay strip from Montonio API docs. */
+const MONTONIO_CARD_PAYMENTS_LOGO =
+  "https://public.montonio.com/images/logos/visa-mc-ap-gp.png";
+
 export type PaymentMethodVisual =
-  | { kind: "logo"; src: string; alt: string }
+  | { kind: "logo"; src: string; alt: string; layout?: "default" | "card" }
   | { kind: "initials"; label: string };
 
 export function resolvePaymentMethodVisual(
@@ -12,6 +17,17 @@ export function resolvePaymentMethodVisual(
   title: string,
   icon?: string | null,
 ): PaymentMethodVisual {
+  const id = gatewayId.toLowerCase();
+
+  if (id === MONTONIO_CARD_PAYMENT_METHOD_ID) {
+    return {
+      kind: "logo",
+      src: MONTONIO_CARD_PAYMENTS_LOGO,
+      alt: title,
+      layout: "card",
+    };
+  }
+
   if (icon) {
     return {
       kind: "logo",
@@ -19,8 +35,6 @@ export function resolvePaymentMethodVisual(
       alt: title,
     };
   }
-
-  const id = gatewayId.toLowerCase();
 
   if (id.includes("ppcp") || id.includes("paypal")) {
     return {

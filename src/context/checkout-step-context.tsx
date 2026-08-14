@@ -17,6 +17,8 @@ type CheckoutStepNavigator = (step: CheckoutStep) => void;
 type CheckoutStepContextValue = {
   checkoutStep: CheckoutStep | null;
   setCheckoutStep: (step: CheckoutStep | null) => void;
+  paymentStepReachable: boolean;
+  setPaymentStepReachable: (reachable: boolean) => void;
   navigateToCheckoutStep: (step: CheckoutStep) => void;
   registerCheckoutStepNavigator: (
     navigator: CheckoutStepNavigator | null,
@@ -27,6 +29,7 @@ const CheckoutStepContext = createContext<CheckoutStepContextValue | null>(null)
 
 export function CheckoutStepProvider({ children }: { children: ReactNode }) {
   const [checkoutStep, setCheckoutStep] = useState<CheckoutStep | null>(null);
+  const [paymentStepReachable, setPaymentStepReachable] = useState(false);
   const navigatorRef = useRef<CheckoutStepNavigator | null>(null);
 
   const registerCheckoutStepNavigator = useCallback(
@@ -44,10 +47,17 @@ export function CheckoutStepProvider({ children }: { children: ReactNode }) {
     () => ({
       checkoutStep,
       setCheckoutStep,
+      paymentStepReachable,
+      setPaymentStepReachable,
       navigateToCheckoutStep,
       registerCheckoutStepNavigator,
     }),
-    [checkoutStep, navigateToCheckoutStep, registerCheckoutStepNavigator],
+    [
+      checkoutStep,
+      paymentStepReachable,
+      navigateToCheckoutStep,
+      registerCheckoutStepNavigator,
+    ],
   );
 
   return (
