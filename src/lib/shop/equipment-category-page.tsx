@@ -19,6 +19,10 @@ import {
   resolveEquipmentCategoryChain,
   resolveEquipmentRoute,
 } from "@/lib/shop/equipment-route";
+import {
+  buildEquipmentSubcategories,
+  isEquipmentBranchRoot,
+} from "@/lib/shop/equipment-subcategories";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 
 type EquipmentCategoryPageArgs = {
@@ -118,13 +122,22 @@ export async function renderEquipmentCategoryPage({
     }
   }
 
-  const products = await getEquipmentCatalogForRoute(route, locale);
+  const subcategories =
+    index && isEquipmentBranchRoot(route)
+      ? buildEquipmentSubcategories(route, index, locale)
+      : [];
+
+  const products =
+    subcategories.length > 0
+      ? []
+      : await getEquipmentCatalogForRoute(route, locale);
 
   return (
     <CategoryView
       key={slug.join("/")}
       route={route}
       products={products}
+      subcategories={subcategories}
     />
   );
 }

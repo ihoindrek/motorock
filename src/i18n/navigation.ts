@@ -2,9 +2,10 @@ import type { Dictionary } from "@/i18n/dictionaries/en";
 import type { Locale } from "@/i18n/config";
 import { localizedHref } from "@/i18n/paths";
 import type { EquipmentNavTree, WcCategoryEntry, WcCategoryNode } from "@/lib/graphql/categories";
-import { getLocalizedCategoryName, getLocalizedCategorySlug } from "@/lib/graphql/categories";
+import { categoryHasProducts, getLocalizedCategoryName, getLocalizedCategorySlug } from "@/lib/graphql/categories";
 import { getActiveCampaigns } from "@/lib/campaigns/evaluate";
 import { getBrandCatalogHref } from "@/lib/shop/brand-catalog-url";
+import { HELMET_WC_SLUGS } from "@/lib/shop/wc-categories";
 import {
   buildEquipmentCategoryHref,
   buildEquipmentHubHref,
@@ -45,7 +46,11 @@ function buildCategoryColumnLinks(
 ): NavLink[] {
   const links: NavLink[] = [];
 
-  for (const child of sortCategoryChildren(children)) {
+  for (const child of sortCategoryChildren(children).filter(categoryHasProducts)) {
+    if (parent.slug === "accessories" && HELMET_WC_SLUGS.has(child.slug)) {
+      continue;
+    }
+
     links.push({
       href: localizedHref(
         locale,
@@ -73,16 +78,6 @@ export function buildEquipmentMegaMenuFromTree(
   }));
 
   const accessoriesLinks: NavLink[] = [];
-
-  if (tree.helmets) {
-    accessoriesLinks.push({
-      href: localizedHref(
-        locale,
-        buildEquipmentRootCategoryHref(tree.helmets, "helmets", locale),
-      ),
-      label: getLocalizedCategoryName(tree.helmets, locale),
-    });
-  }
 
   if (tree.accessories?.children?.nodes.length) {
     for (const link of buildCategoryColumnLinks(

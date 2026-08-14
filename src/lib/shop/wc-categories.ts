@@ -167,6 +167,15 @@ export const PROTECTION_CATEGORIES: readonly ProductCategory[] = [
 ];
 
 /** Woo slugs used for protection / accessories branch filters (routing). */
+export const HELMET_WC_SLUGS = new Set([
+  "helmets",
+  "all-helmets",
+  "helmet-accessories",
+  "kiivrid",
+  "koik-kiivrid",
+  "kiivri-tarvikud",
+]);
+
 export const PROTECTION_WC_SLUGS = new Set([
   "helmets",
   "all-helmets",

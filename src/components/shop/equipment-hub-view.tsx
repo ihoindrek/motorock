@@ -10,6 +10,7 @@ import type { Locale } from "@/i18n/config";
 import { localizedHref } from "@/i18n/paths";
 import {
   getEquipmentHubData,
+  type EquipmentHubBrand,
   type EquipmentHubCategory,
 } from "@/data/equipment-hub";
 import { cn } from "@/lib/utils";
@@ -116,6 +117,51 @@ function DesktopCategoryIndex({
   );
 }
 
+function EquipmentBrandCard({
+  brand,
+  locale,
+}: {
+  brand: EquipmentHubBrand;
+  locale: Locale;
+}) {
+  return (
+    <Link
+      href={localizedHref(locale, getBrandCatalogHref(brand.slug, locale))}
+      className="group/promo relative block aspect-[4/5] overflow-hidden bg-ink"
+    >
+      <Image
+        src={brand.image}
+        alt={brand.imageAlt[locale]}
+        fill
+        sizes="(max-width: 640px) 45vw, (max-width: 1024px) 30vw, 20vw"
+        className="object-cover transition-transform duration-500 group-hover/promo:scale-105 motion-reduce:transition-none motion-reduce:group-hover/promo:scale-100"
+      />
+      <div
+        className="pointer-events-none absolute inset-0 bg-gradient-to-t from-ink/45 via-transparent to-transparent"
+        aria-hidden="true"
+      />
+      {"logo" in brand && brand.logo ? (
+        <div className="absolute inset-0 flex items-center justify-center p-4 sm:p-6">
+          <img
+            src={brand.logo}
+            alt={brand.name}
+            className={cn(
+              "object-contain",
+              "logoInvert" in brand && brand.logoInvert
+                ? "w-[min(88%,12rem)] max-h-14 brightness-0 invert sm:max-h-[4.25rem] lg:max-h-20"
+                : "h-[4.5rem] w-auto max-w-[min(75%,11rem)] sm:h-24 lg:h-28",
+            )}
+          />
+        </div>
+      ) : (
+        <div className="absolute inset-0 flex flex-col justify-end p-4 sm:p-5">
+          <span className="section-eyebrow text-accent">{brand.name}</span>
+        </div>
+      )}
+    </Link>
+  );
+}
+
 export function EquipmentHubView({
   locale,
   hubData,
@@ -131,13 +177,13 @@ export function EquipmentHubView({
           explore: "Avasta",
           home: "Avaleht",
           categories: "Kategooriad",
-          featuredBrands: "Esiletõstetud brändid",
+          brands: "Brändid",
         }
       : {
           explore: "Explore",
           home: "Home",
           categories: "Categories",
-          featuredBrands: "Featured brands",
+          brands: "Brands",
         };
 
   const [activeId, setActiveId] = useState<string>(categories[0]?.id ?? "helmets");
@@ -283,20 +329,18 @@ export function EquipmentHubView({
         ))}
       </section>
 
-      <section className="border-t border-paper/10 bg-ink py-12 lg:py-14">
+      <section
+        aria-label="Equipment brands"
+        className="border-t border-paper/10 bg-ink py-12 lg:py-16"
+      >
         <div className="site-container">
           <p className="font-body text-[10px] font-bold uppercase tracking-[0.35em] text-paper/35">
-            {ui.featuredBrands}
+            {ui.brands}
           </p>
-          <ul className="mt-5 flex flex-wrap gap-3">
+          <ul className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-5 lg:gap-5">
             {equipmentHubBrands.map((brand) => (
-              <li key={brand.name}>
-                <Link
-                  href={localizedHref(locale, getBrandCatalogHref(brand.slug, locale))}
-                  className="inline-flex min-h-11 items-center border border-paper/15 px-5 py-2 font-body text-[10px] font-bold uppercase tracking-aggressive text-paper/70 transition-colors hover:border-accent hover:text-accent"
-                >
-                  {brand.name}
-                </Link>
+              <li key={brand.slug}>
+                <EquipmentBrandCard brand={brand} locale={locale} />
               </li>
             ))}
           </ul>

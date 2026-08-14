@@ -34,10 +34,17 @@ export function montonioReturnUrl(input: {
   gatewayId: string;
   locale?: "en" | "et";
 }) {
-  const params = new URLSearchParams({
-    gateway: input.gatewayId,
-    locale: input.locale ?? "et",
-  });
+  const params = new URLSearchParams();
 
-  return `${getStorefrontUrl()}/api/checkout/montonio-return?${params}`;
+  if (input.gatewayId) {
+    params.set("gateway", input.gatewayId);
+  }
+
+  if (input.locale) {
+    params.set("locale", input.locale);
+  }
+
+  const query = params.toString();
+
+  return `${getStorefrontUrl()}/order/payment-return${query ? `?${query}` : ""}`;
 }

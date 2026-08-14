@@ -6,6 +6,7 @@ import type {
 import type { Dictionary } from "@/i18n/dictionaries/en";
 import type { Locale } from "@/i18n/config";
 import {
+  HELMET_WC_SLUGS,
   isGenderGearLeafRoute,
   mapWcSlugToCategory,
   productHasOppositeGenderGearSlug,
@@ -28,6 +29,13 @@ export function resolveEquipmentCatalogWhere(
 ): EquipmentCatalogWhere {
   if (route.brand) {
     return { categoryNotIn: ["motorcycles", "tools-maintenance"] };
+  }
+
+  if (route.accessoriesOnly && route.wcCategorySlug) {
+    return {
+      category: route.wcCategorySlug,
+      categoryNotIn: [...HELMET_WC_SLUGS],
+    };
   }
 
   if (route.wcCategorySlug) {

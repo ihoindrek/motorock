@@ -7,6 +7,12 @@ import {
   PRODUCT_CATEGORY_NAV_TREE,
 } from "@/lib/graphql/category-queries";
 import type { GraphQLTranslation } from "@/lib/graphql/wpml";
+import { normalizeWordPressMediaUrlOptional } from "@/lib/shop/wordpress-media-url";
+
+export type CategoryImage = {
+  sourceUrl?: string | null;
+  altText?: string | null;
+};
 
 export type WcCategoryNode = {
   slug: string;
@@ -15,6 +21,7 @@ export type WcCategoryNode = {
   count?: number | null;
   languageCode?: string | null;
   translations?: GraphQLTranslation[] | null;
+  image?: CategoryImage | null;
   children?: {
     nodes: WcCategoryNode[];
   } | null;
@@ -102,6 +109,23 @@ export function getLocalizedCategorySlug(
   );
 
   return translation?.slug ?? node.slug;
+}
+
+export function categoryHasProducts(
+  node: Pick<WcCategoryNode, "count">,
+): boolean {
+  return (node.count ?? 0) > 0;
+}
+
+export function getCategoryImage(
+  node: Pick<WcCategoryNode, "image" | "name">,
+  fallbackUrl: string,
+): { url: string; alt: string } {
+  return {
+    url:
+      normalizeWordPressMediaUrlOptional(node.image?.sourceUrl) ?? fallbackUrl,
+    alt: node.image?.altText?.trim() || node.name,
+  };
 }
 
 export function findCategoryByPathSlug(
@@ -223,6 +247,7 @@ function buildIndex(
       count: node.count,
       languageCode: node.languageCode,
       translations: node.translations,
+      image: node.image,
       parentSlug: node.parent?.node?.slug ?? null,
     });
   }
@@ -242,6 +267,7 @@ export function navTreeFromIndex(index: EquipmentCategoryIndex): EquipmentNavTre
 
     const children = [...index.nodes.values()]
       .filter((node) => node.parentSlug === slug)
+      .filter(categoryHasProducts)
       .sort((left, right) => {
         const leftCount = left.count ?? 0;
         const rightCount = right.count ?? 0;

@@ -127,6 +127,10 @@ export const EQUIPMENT_CATEGORY_INDEX = `
         name
         description
         count
+        image {
+          sourceUrl
+          altText
+        }
         languageCode
         translations {
           name
@@ -154,6 +158,10 @@ export const PRODUCT_CATEGORY_BY_SLUG = `
         name
         description
         count
+        image {
+          sourceUrl
+          altText
+        }
         languageCode
         translations {
           name

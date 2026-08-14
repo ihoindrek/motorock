@@ -1,6 +1,6 @@
 import type { Locale } from "@/i18n/config";
 import type { EquipmentNavTree, WcCategoryEntry, WcCategoryNode } from "@/lib/graphql/categories";
-import { getLocalizedCategoryName } from "@/lib/graphql/categories";
+import { getCategoryImage, getLocalizedCategoryName } from "@/lib/graphql/categories";
 import { buildEquipmentRootCategoryHref } from "@/lib/shop/equipment-route";
 import {
   buildShopCategoryHref,
@@ -155,6 +155,7 @@ export function buildEquipmentHubCategories(
     }
 
     const title = getLocalizedCategoryName(node, locale);
+    const { url, alt } = getCategoryImage(node, presentation.image);
 
     categories.push({
       id: presentation.id,
@@ -163,8 +164,8 @@ export function buildEquipmentHubCategories(
       titleLines: presentation.titleLines?.[locale],
       description: presentation.description[locale],
       href: buildEquipmentRootCategoryHref(node, presentation.wcSlug, locale),
-      image: presentation.image,
-      imageAlt: presentation.imageAlt[locale],
+      image: url,
+      imageAlt: alt || presentation.imageAlt[locale],
     });
     index += 1;
   }
@@ -212,11 +213,60 @@ const equipmentHubCopyEt = {
 } as const;
 
 export const equipmentHubBrands = [
-  { name: "Pando Moto", slug: "pando-moto" },
-  { name: "Holyfreedom", slug: "holyfreedom" },
-  { name: "Johnny Reb", slug: "johnny-reb" },
-  { name: "Motogirl", slug: "motogirl" },
+  {
+    name: "Pando Moto",
+    slug: "pando-moto",
+    image: "/Small_DSC08744.webp",
+    logo: "/PandoMoto.svg",
+    logoInvert: true,
+    imageAlt: {
+      en: "Pando Moto riding gear",
+      et: "Pando Moto sõiduvarustus",
+    },
+  },
+  {
+    name: "Holyfreedom",
+    slug: "holyfreedom",
+    image: "/tutonero.jpg",
+    logo: "/HF-square-Wht.png",
+    imageAlt: {
+      en: "Holyfreedom motorcycle apparel",
+      et: "Holyfreedom mootorrattariided",
+    },
+  },
+  {
+    name: "Johnny Reb",
+    slug: "johnny-reb",
+    image: "/JRF00001-1LS.webp",
+    logo: "/johnny-reb.webp",
+    imageAlt: {
+      en: "Johnny Reb riding gear",
+      et: "Johnny Reb sõiduvarustus",
+    },
+  },
+  {
+    name: "Motogirl",
+    slug: "motogirl",
+    image: "/MotoGirl44.webp",
+    logo: "/motogirl.png",
+    imageAlt: {
+      en: "Motogirl women's motorcycle gear",
+      et: "Motogirl naiste mootorrattavarustus",
+    },
+  },
+  {
+    name: "Bobhead",
+    slug: "bobhead",
+    image: "/bobhead.png",
+    logo: "/bobhead.avif",
+    imageAlt: {
+      en: "Bobhead helmets and riding gear",
+      et: "Bobhead kiivrid ja sõiduvarustus",
+    },
+  },
 ] as const;
+
+export type EquipmentHubBrand = (typeof equipmentHubBrands)[number];
 
 export function getEquipmentHubData(
   locale: Locale,

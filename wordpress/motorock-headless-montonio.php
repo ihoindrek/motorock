@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Motorock Headless Checkout
  * Description: Bridges headless GraphQL checkout to Montonio for WooCommerce (pickup points + payment methods).
- * Version: 1.1.0
+ * Version: 1.2.0
  *
  * Install: copy to wp-content/mu-plugins/motorock-headless-montonio.php
  */
@@ -45,11 +45,36 @@ add_filter(
 		unset( $url );
 
 		return add_query_arg(
-			array( 'gateway' => $payment_method_id ),
-			trailingslashit( motorock_get_storefront_url() ) . 'api/checkout/montonio-return'
+			array(
+				'gateway' => $payment_method_id,
+			),
+			trailingslashit( motorock_get_storefront_url() ) . 'order/payment-return'
 		);
 	},
 	10,
+	2
+);
+
+add_filter(
+	'wc_montonio_before_order_data_submission',
+	function ( array $order_data, $order ) {
+		if ( ! $order instanceof WC_Order ) {
+			return $order_data;
+		}
+
+		$locale = motorock_get_checkout_locale( $order );
+
+		$order_data['returnUrl'] = add_query_arg(
+			array(
+				'gateway' => $order->get_payment_method(),
+				'locale'  => $locale,
+			),
+			trailingslashit( motorock_get_storefront_url() ) . 'order/payment-return'
+		);
+
+		return $order_data;
+	},
+	5,
 	2
 );
 
@@ -150,7 +175,9 @@ function motorock_rest_thank_you_key( WP_REST_Request $request ) {
 	}
 
 	return array(
-		'key' => $order->get_order_key(),
+		'key'           => $order->get_order_key(),
+		'locale'        => motorock_get_checkout_locale( $order ),
+		'paymentMethod' => $order->get_payment_method(),
 	);
 }
 

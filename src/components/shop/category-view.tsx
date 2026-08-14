@@ -17,6 +17,7 @@ import { isLikelyFilterSizeLabel } from "@/lib/shop/size-label";
 import { sortProductSizes } from "@/lib/shop/sort-sizes";
 import { CatalogLoadMore } from "@/components/shop/catalog-load-more";
 import { CatalogProductGrid } from "@/components/shop/catalog-product-grid";
+import { EquipmentSubcategoryGrid } from "@/components/shop/equipment-subcategory-grid";
 import {
   PRODUCT_GRID_DIVIDER_ROW_OFFSET,
   catalogProductGridClassName,
@@ -28,11 +29,13 @@ import { MobileFilterDrawer } from "@/components/ui/mobile-filter-drawer";
 import { localizedHref } from "@/i18n/paths";
 import { buildEquipmentHubHref } from "@/lib/shop/category-url";
 import { trackViewItemList } from "@/lib/analytics";
+import type { EquipmentSubcategory } from "@/lib/shop/equipment-subcategories";
 import { cn } from "@/lib/utils";
 
 type CategoryViewProps = {
   route: CategoryRoute;
   products: readonly CatalogProduct[];
+  subcategories?: readonly EquipmentSubcategory[];
   availableBrands?: readonly string[];
   showSizeFilter?: boolean;
   brandFilterVariant?: "dropdown" | "logos";
@@ -171,6 +174,7 @@ function applyClientFilters(
 export function CategoryView({
   route,
   products,
+  subcategories = [],
   availableBrands: availableBrandsProp,
   showSizeFilter = true,
   brandFilterVariant = "dropdown",
@@ -183,6 +187,19 @@ export function CategoryView({
 }: CategoryViewProps) {
   const dict = useDictionary();
   const locale = useLocale();
+  const showSubcategoryLanding = subcategories.length > 0;
+  const subcategoryCopy =
+    locale === "et"
+      ? {
+          eyebrow: "Alamkategooriad",
+          singular: "kategooria",
+          plural: "kategooriat",
+        }
+      : {
+          eyebrow: "Categories",
+          singular: "category",
+          plural: "categories",
+        };
   const useBrandLogos = brandFilterVariant === "logos";
   const motorcycleGridDividerItemClassName =
     gridColumns === 3
@@ -546,12 +563,25 @@ export function CategoryView({
                 {route.title}
               </h1>
               <p className="mt-1 font-body text-sm text-ink/50">
-                <span className="font-bold text-ink">
-                  {filteredProducts.length}
-                </span>{" "}
-                {filteredProducts.length === 1
-                  ? dict.catalog.productSingular
-                  : dict.catalog.productPlural}
+                {showSubcategoryLanding ? (
+                  <>
+                    <span className="font-bold text-ink">
+                      {subcategories.length}
+                    </span>{" "}
+                    {subcategories.length === 1
+                      ? subcategoryCopy.singular
+                      : subcategoryCopy.plural}
+                  </>
+                ) : (
+                  <>
+                    <span className="font-bold text-ink">
+                      {filteredProducts.length}
+                    </span>{" "}
+                    {filteredProducts.length === 1
+                      ? dict.catalog.productSingular
+                      : dict.catalog.productPlural}
+                  </>
+                )}
               </p>
             </div>
           </div>
@@ -562,6 +592,13 @@ export function CategoryView({
         </div>
       </header>
 
+      {showSubcategoryLanding ? (
+        <EquipmentSubcategoryGrid
+          locale={locale}
+          subcategories={subcategories}
+        />
+      ) : (
+        <>
       {useBrandLogos ? (
         <div className="mb-6 lg:hidden">
           <MotorcycleBrandLogoFilter
@@ -673,6 +710,8 @@ export function CategoryView({
       >
         <CategoryFilters {...filterProps} variant="drawer" />
       </MobileFilterDrawer>
+        </>
+      )}
 
       {footer ? <div className="mt-12">{footer}</div> : null}
       </div>
