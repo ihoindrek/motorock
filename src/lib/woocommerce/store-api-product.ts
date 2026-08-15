@@ -181,11 +181,12 @@ export function findStoreVariationId(
       isColorAttribute(attribute.name),
     );
 
+    const sizeValue = size?.value?.trim();
     const sizeMatches =
       !sizeIsGeneric &&
-      Boolean(input.size) &&
-      Boolean(size) &&
-      sizesMatch(size!.value, input.size!);
+      typeof input.size === "string" &&
+      typeof sizeValue === "string" &&
+      sizesMatch(sizeValue, input.size);
 
     const colorMatches =
       Boolean(input.color) &&
