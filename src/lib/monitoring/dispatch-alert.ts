@@ -16,23 +16,11 @@ export function isMonitoringAlertsEnabled() {
     return process.env.MONITORING_ALERTS_ENABLED === "true";
   }
 
-  return (
-    isSlackAlertsConfigured() ||
-    Boolean(process.env.RESEND_API_KEY?.trim())
-  );
+  return isSlackAlertsConfigured() || shouldSendEmailAlerts();
 }
 
 export function shouldSendEmailAlerts() {
-  if (process.env.MONITORING_EMAIL_ALERTS === "true") {
-    return true;
-  }
-
-  if (process.env.MONITORING_EMAIL_ALERTS === "false") {
-    return false;
-  }
-
-  // Default: email only when Slack is not configured.
-  return !isSlackAlertsConfigured();
+  return process.env.MONITORING_EMAIL_ALERTS === "true";
 }
 
 export async function dispatchMonitoringAlert(input: DispatchMonitoringAlertInput) {
@@ -71,7 +59,7 @@ export async function dispatchMonitoringAlert(input: DispatchMonitoringAlertInpu
   if (results.length === 0) {
     return {
       ok: false as const,
-      error: "No alert channels configured (set SLACK_WEBHOOK_URL or RESEND_API_KEY)",
+      error: "No alert channels configured (set SLACK_WEBHOOK_URL or MONITORING_EMAIL_ALERTS=true with RESEND_API_KEY)",
     };
   }
 
