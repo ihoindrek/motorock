@@ -51,6 +51,36 @@ export function formatSizeLabel(value: string | null | undefined) {
   return trimmed;
 }
 
+/** Single size embedded in Woo title/slug (e.g. per-size Terminator SKUs). */
+export function extractEmbeddedProductSize(input: {
+  name?: string | null;
+  slug?: string | null;
+}): string | undefined {
+  const name = input.name?.trim();
+  if (name) {
+    const match = name.match(
+      /\((?:shoes size|kinganumber|kingasuurus|size|suurus)\s*:\s*([^)]+)\)/i,
+    );
+    const raw = match?.[1]?.trim();
+    if (raw) {
+      return formatSizeLabel(raw);
+    }
+  }
+
+  const slug = input.slug?.trim();
+  if (slug) {
+    const match = slug.match(
+      /(?:shoes-size|kinganumber|kingasuurus|suurus|size)-([\da-z]+)$/i,
+    );
+    const raw = match?.[1]?.trim();
+    if (raw) {
+      return formatSizeLabel(raw);
+    }
+  }
+
+  return undefined;
+}
+
 function normalizeCompoundSizeKey(value: string) {
   return formatSizeLabel(value)
     .trim()

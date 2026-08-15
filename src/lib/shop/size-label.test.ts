@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  extractEmbeddedProductSize,
   formatSizeButtonParts,
   formatSizeLabel,
   isCompoundSizeLabel,
@@ -24,6 +25,39 @@ describe("formatSizeLabel", () => {
   it("normalizes locale-suffixed sizes for display", () => {
     expect(formatSizeLabel("s-et")).toBe("S");
     expect(formatSizeLabel("2xl-et")).toBe("2XL");
+  });
+});
+
+describe("extractEmbeddedProductSize", () => {
+  it("reads size from Woo product title", () => {
+    expect(
+      extractEmbeddedProductSize({
+        name: "TERMINATOR HIGH CE WATERPROOF BOOTS (shoes size: 43)",
+      }),
+    ).toBe("43");
+    expect(
+      extractEmbeddedProductSize({
+        name: "VEEKINDLAD TERMINATOR HIGH CE SAAPAD (kinganumber: 43)",
+      }),
+    ).toBe("43");
+    expect(
+      extractEmbeddedProductSize({
+        name: "TERMINATOR 2 PRUUN (kingasuurus: 39)",
+      }),
+    ).toBe("39");
+  });
+
+  it("reads size from product slug when title has no marker", () => {
+    expect(
+      extractEmbeddedProductSize({
+        slug: "terminator-high-ce-waterproof-boots-shoes-size-43",
+      }),
+    ).toBe("43");
+    expect(
+      extractEmbeddedProductSize({
+        slug: "terminator-2-pruun-kingasuurus-39",
+      }),
+    ).toBe("39");
   });
 });
 

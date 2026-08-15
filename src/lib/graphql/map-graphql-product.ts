@@ -31,7 +31,11 @@ import {
   collectProductWcCategorySlugs,
   resolveCategoryFromWcNodes,
 } from "@/lib/shop/wc-categories";
-import { formatSizeLabel, resolveSizeOptionLabel } from "@/lib/shop/size-label";
+import {
+  extractEmbeddedProductSize,
+  formatSizeLabel,
+  resolveSizeOptionLabel,
+} from "@/lib/shop/size-label";
 import { sortProductSizes } from "@/lib/shop/sort-sizes";
 import { resolveShowroomAvailableFromSources } from "@/lib/shop/resolve-showroom-available";
 import type { ShowroomMetaSource } from "@/lib/shop/resolve-showroom-available";
@@ -276,7 +280,7 @@ function colorsFromVariableProduct(product: GraphQLVariableProduct) {
   return [...new Set(fromVariations)];
 }
 
-function sizesFromVariableProduct(product: GraphQLVariableProduct) {
+export function resolveVariableProductSizes(product: GraphQLVariableProduct) {
   const sizeAttribute = product.attributes?.nodes.find((attribute) =>
     isSizeAttributeName(attribute.name),
   );
@@ -290,18 +294,6 @@ function sizesFromVariableProduct(product: GraphQLVariableProduct) {
     );
   }
 
-  if (terms.length > 0) {
-    return sortProductSizes(
-      [
-        ...new Set(
-          terms
-            .map((term) => formatSizeLabel(term.name))
-            .filter(Boolean),
-        ),
-      ],
-    );
-  }
-
   const fromVariations = (product.variations?.nodes ?? [])
     .map((variation) =>
       variation.attributes?.nodes.find((attribute) =>
@@ -312,7 +304,23 @@ function sizesFromVariableProduct(product: GraphQLVariableProduct) {
     .map((attribute) => resolveSizeOptionLabel(attribute!.value, terms))
     .filter(Boolean);
 
-  return sortProductSizes([...new Set(fromVariations)]);
+  if (fromVariations.length > 0) {
+    return sortProductSizes([...new Set(fromVariations)]);
+  }
+
+  const embedded = extractEmbeddedProductSize({
+    name: product.name,
+    slug: product.slug,
+  });
+  if (embedded) {
+    return [embedded];
+  }
+
+  return [];
+}
+
+function sizesFromVariableProduct(product: GraphQLVariableProduct) {
+  return resolveVariableProductSizes(product);
 }
 
 function mapVariations(product: GraphQLVariableProduct) {
