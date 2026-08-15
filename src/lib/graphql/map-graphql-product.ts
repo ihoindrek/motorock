@@ -258,7 +258,9 @@ function colorsFromVariableProduct(product: GraphQLVariableProduct) {
   );
 
   if (colorAttribute?.options?.length) {
-    return colorAttribute.options;
+    return colorAttribute.options.filter(
+      (option): option is string => Boolean(option?.trim()),
+    );
   }
 
   const fromVariations = (product.variations?.nodes ?? [])
@@ -268,7 +270,8 @@ function colorsFromVariableProduct(product: GraphQLVariableProduct) {
       ),
     )
     .filter(Boolean)
-    .map((attribute) => attribute!.value);
+    .map((attribute) => attribute!.value)
+    .filter((value): value is string => Boolean(value?.trim()));
 
   return [...new Set(fromVariations)];
 }
@@ -281,15 +284,21 @@ function sizesFromVariableProduct(product: GraphQLVariableProduct) {
 
   if (sizeAttribute?.options?.length) {
     return sortProductSizes(
-      sizeAttribute.options.map((option) =>
-        resolveSizeOptionLabel(option, terms),
-      ),
+      sizeAttribute.options
+        .map((option) => resolveSizeOptionLabel(option, terms))
+        .filter(Boolean),
     );
   }
 
   if (terms.length > 0) {
     return sortProductSizes(
-      [...new Set(terms.map((term) => formatSizeLabel(term.name)))],
+      [
+        ...new Set(
+          terms
+            .map((term) => formatSizeLabel(term.name))
+            .filter(Boolean),
+        ),
+      ],
     );
   }
 
@@ -300,7 +309,8 @@ function sizesFromVariableProduct(product: GraphQLVariableProduct) {
       ),
     )
     .filter(Boolean)
-    .map((attribute) => resolveSizeOptionLabel(attribute!.value, terms));
+    .map((attribute) => resolveSizeOptionLabel(attribute!.value, terms))
+    .filter(Boolean);
 
   return sortProductSizes([...new Set(fromVariations)]);
 }
@@ -342,13 +352,19 @@ export function variationIdsFromProduct(product: GraphQLVariableProduct) {
     );
 
     if (size) {
-      const raw = size.value;
+      const raw = size.value?.trim();
+      if (!raw) {
+        continue;
+      }
+
       const label = resolveSizeOptionLabel(raw, sizeTerms);
       variationIds[raw] = variation.databaseId;
       variationIds[formatSizeLabel(raw)] = variation.databaseId;
-      variationIds[label] = variation.databaseId;
-    } else if (color) {
-      variationIds[color.value] = variation.databaseId;
+      if (label) {
+        variationIds[label] = variation.databaseId;
+      }
+    } else if (color?.value?.trim()) {
+      variationIds[color.value.trim()] = variation.databaseId;
     }
   }
 

@@ -15,7 +15,7 @@ function collectBrandSlugsFromAttribute(
   const fromOptions = attribute.options ?? [];
 
   return [...fromTerms, ...fromOptions]
-    .map((value) => value.trim().toLowerCase())
+    .map((value) => value?.trim().toLowerCase() ?? "")
     .filter(Boolean);
 }
 

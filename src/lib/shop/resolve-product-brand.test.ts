@@ -60,6 +60,24 @@ describe("resolveBrandFromProductAttributes", () => {
       ),
     ).toBeUndefined();
   });
+
+  it("ignores null brand slugs from WooCommerce", () => {
+    expect(
+      resolveBrandFromProductAttributes(
+        {
+          nodes: [
+            {
+              name: "Brand",
+              options: [null, "  ", "holyfreedom"],
+              variation: false,
+              terms: { nodes: [{ name: "Holyfreedom", slug: null }] },
+            },
+          ],
+        },
+        { equipmentOnly: true },
+      ),
+    ).toBe("Holyfreedom");
+  });
 });
 
 describe("isMotorcycleBrandSlug", () => {

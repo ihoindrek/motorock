@@ -12,7 +12,11 @@ export type SizeAttributeTerm = {
 };
 
 /** Strip WPML locale suffixes from attribute option slugs (`s-et` → `s`). */
-export function stripSizeLocaleSuffix(value: string) {
+export function stripSizeLocaleSuffix(value: string | null | undefined) {
+  if (!value) {
+    return "";
+  }
+
   return value.trim().replace(/-(et|en)$/i, "");
 }
 
@@ -26,8 +30,11 @@ export function isOneSizeLabel(value: string | undefined | null) {
 }
 
 /** Normalize WooCommerce size attribute values for display and cart keys. */
-export function formatSizeLabel(value: string) {
+export function formatSizeLabel(value: string | null | undefined) {
   const trimmed = stripSizeLocaleSuffix(value);
+  if (!trimmed) {
+    return "";
+  }
 
   if (/^w\d+-l\d+$/i.test(trimmed)) {
     return trimmed.replace(/^w(\d+)-l(\d+)$/i, "W$1/L$2");
@@ -61,10 +68,10 @@ export function sizesMatch(left: string, right: string) {
 
 /** Prefer taxonomy term name over WPML option slug for UI labels. */
 export function resolveSizeOptionLabel(
-  option: string,
+  option: string | null | undefined,
   terms?: readonly SizeAttributeTerm[] | null,
 ) {
-  const raw = option.trim();
+  const raw = option?.trim();
   if (!raw) {
     return "";
   }
@@ -75,13 +82,17 @@ export function resolveSizeOptionLabel(
     const formattedOption = formatSizeLabel(raw).toLowerCase();
 
     const match = terms.find((term) => {
-      const slug = term.slug.trim().toLowerCase();
-      const name = term.name.trim().toLowerCase();
+      const slug = term.slug?.trim().toLowerCase();
+      const name = term.name?.trim().toLowerCase();
+      if (!slug && !name) {
+        return false;
+      }
+
       return (
         slug === optionKey ||
         slug === baseSlug ||
         name === optionKey ||
-        formatSizeLabel(term.name).toLowerCase() === formattedOption
+        (name ? formatSizeLabel(term.name).toLowerCase() === formattedOption : false)
       );
     });
 

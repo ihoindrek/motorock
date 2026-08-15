@@ -46,6 +46,12 @@ describe("resolveSizeOptionLabel", () => {
   it("falls back to formatSizeLabel without terms", () => {
     expect(resolveSizeOptionLabel("s-et")).toBe("S");
   });
+
+  it("ignores null or blank WooCommerce option values", () => {
+    expect(resolveSizeOptionLabel(null)).toBe("");
+    expect(resolveSizeOptionLabel(undefined)).toBe("");
+    expect(resolveSizeOptionLabel("   ")).toBe("");
+  });
 });
 
 describe("sizesMatch", () => {
