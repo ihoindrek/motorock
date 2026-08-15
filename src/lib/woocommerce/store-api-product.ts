@@ -18,7 +18,7 @@ type StoreProductAttribute = {
 
 type StoreProductVariation = {
   id: number;
-  attributes: Array<{ name: string; value: string }>;
+  attributes: Array<{ name: string; value: string | null }>;
 };
 
 type StoreProduct = {
@@ -50,12 +50,17 @@ function isColorAttribute(name: string) {
 }
 
 function colorValueMatches(
-  variationValue: string,
+  variationValue: string | null | undefined,
   selectedColor: string,
   terms?: StoreAttributeTerm[],
 ) {
+  const rawValue = variationValue?.trim();
+  if (!rawValue) {
+    return false;
+  }
+
   const normalizedSelected = selectedColor.toLowerCase();
-  const normalizedValue = variationValue.toLowerCase();
+  const normalizedValue = rawValue.toLowerCase();
 
   if (normalizedValue === normalizedSelected) {
     return true;
@@ -121,23 +126,28 @@ export function buildVariationIdsFromStoreProduct(product: StoreProduct) {
       isColorAttribute(attribute.name),
     );
 
-    if (size) {
-      const raw = size.value;
+    if (size?.value?.trim()) {
+      const raw = size.value.trim();
       const label = formatSizeLabel(raw);
       variationIds[raw] = variation.id;
-      variationIds[label] = variation.id;
+      if (label) {
+        variationIds[label] = variation.id;
+      }
       variationIds[raw.toLowerCase()] = variation.id;
     }
 
-    if (color) {
-      variationIds[color.value] = variation.id;
+    if (color?.value?.trim()) {
+      const colorValue = color.value.trim();
+      variationIds[colorValue] = variation.id;
 
       const term = colorTerms.find(
-        (entry) => entry.slug.toLowerCase() === color.value.toLowerCase(),
+        (entry) => entry.slug?.trim().toLowerCase() === colorValue.toLowerCase(),
       );
-      if (term) {
+      if (term?.slug) {
         variationIds[term.slug] = variation.id;
-        variationIds[term.name] = variation.id;
+      }
+      if (term?.name?.trim()) {
+        variationIds[term.name.trim()] = variation.id;
       }
     }
   }

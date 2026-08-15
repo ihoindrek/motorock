@@ -33,6 +33,22 @@ describe("buildVariationIdsFromStoreProduct", () => {
       Hall: 33819,
     });
   });
+
+  it("ignores variations with null attribute values", () => {
+    expect(
+      buildVariationIdsFromStoreProduct({
+        id: 1,
+        type: "variable",
+        attributes: [{ name: "size", terms: [{ name: "39", slug: "39" }] }],
+        variations: [
+          { id: 10, attributes: [{ name: "size", value: null }] },
+          { id: 11, attributes: [{ name: "size", value: "39" }] },
+        ],
+      }),
+    ).toEqual({
+      "39": 11,
+    });
+  });
 });
 
 describe("findStoreVariationId", () => {
