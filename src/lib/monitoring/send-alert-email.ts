@@ -18,23 +18,7 @@ export function getMonitoringAlertRecipients(): string[] {
     .filter(Boolean);
 }
 
-export function isMonitoringAlertsEnabled() {
-  if (process.env.MONITORING_ALERTS_ENABLED === "false") {
-    return false;
-  }
-
-  if (process.env.NODE_ENV !== "production") {
-    return process.env.MONITORING_ALERTS_ENABLED === "true";
-  }
-
-  return Boolean(process.env.RESEND_API_KEY?.trim());
-}
-
 export async function sendAlertEmail(input: SendAlertEmailInput) {
-  if (!isMonitoringAlertsEnabled()) {
-    console.info("[monitoring] alert dry-run", input);
-    return { ok: true as const, dryRun: true as const };
-  }
 
   const apiKey = process.env.RESEND_API_KEY?.trim();
   if (!apiKey) {

@@ -1,5 +1,5 @@
 import { markAlertSent, shouldSendAlert } from "@/lib/monitoring/alert-dedupe";
-import { sendAlertEmail } from "@/lib/monitoring/send-alert-email";
+import { dispatchMonitoringAlert } from "@/lib/monitoring/dispatch-alert";
 
 type NotifyStorefrontAlertInput = {
   kind: "error" | "health";
@@ -27,7 +27,8 @@ export async function notifyStorefrontAlert(input: NotifyStorefrontAlertInput) {
     `Keskkond: ${process.env.VERCEL_ENV ?? process.env.NODE_ENV ?? "unknown"}`,
   ].join("\n");
 
-  const result = await sendAlertEmail({
+  const result = await dispatchMonitoringAlert({
+    kind: input.kind,
     subject: buildAlertSubject(input.kind, input.title),
     text,
   });
