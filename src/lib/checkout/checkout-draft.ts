@@ -136,3 +136,44 @@ export function clearCheckoutDraft() {
 
   storage.removeItem(CHECKOUT_DRAFT_KEY);
 }
+
+const PAYMENT_REDIRECT_KEY = "motorock-checkout-payment-redirect";
+const PAYMENT_REDIRECT_MAX_AGE_MS = 1000 * 60 * 60 * 24;
+
+export function markCheckoutPaymentRedirect() {
+  const storage = getSessionStorage();
+  if (!storage) {
+    return;
+  }
+
+  storage.setItem(PAYMENT_REDIRECT_KEY, String(Date.now()));
+}
+
+export function hasRecentCheckoutPaymentRedirect() {
+  const storage = getSessionStorage();
+  if (!storage) {
+    return false;
+  }
+
+  const raw = storage.getItem(PAYMENT_REDIRECT_KEY);
+  if (!raw) {
+    return false;
+  }
+
+  const savedAt = Number(raw);
+  if (!Number.isFinite(savedAt) || Date.now() - savedAt > PAYMENT_REDIRECT_MAX_AGE_MS) {
+    storage.removeItem(PAYMENT_REDIRECT_KEY);
+    return false;
+  }
+
+  return true;
+}
+
+export function clearCheckoutPaymentRedirect() {
+  const storage = getSessionStorage();
+  if (!storage) {
+    return;
+  }
+
+  storage.removeItem(PAYMENT_REDIRECT_KEY);
+}

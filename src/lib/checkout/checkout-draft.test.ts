@@ -1,6 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   clearCheckoutDraft,
+  clearCheckoutPaymentRedirect,
+  hasRecentCheckoutPaymentRedirect,
+  markCheckoutPaymentRedirect,
   readCheckoutDraft,
   writeCheckoutDraft,
 } from "@/lib/checkout/checkout-draft";
@@ -69,5 +72,15 @@ describe("checkout draft", () => {
     });
 
     expect(readCheckoutDraft()).toBeNull();
+  });
+
+  it("tracks recent payment redirects", () => {
+    expect(hasRecentCheckoutPaymentRedirect()).toBe(false);
+
+    markCheckoutPaymentRedirect();
+    expect(hasRecentCheckoutPaymentRedirect()).toBe(true);
+
+    clearCheckoutPaymentRedirect();
+    expect(hasRecentCheckoutPaymentRedirect()).toBe(false);
   });
 });

@@ -192,6 +192,17 @@ export type Dictionary = {
     couponRemoveFailed: string;
     deliveryContact: string;
     shippingError: string;
+    shippingErrorSessionRestore: string;
+    shippingStatusPreparing: string;
+    shippingStatusSyncingCart: string;
+    shippingStatusLoadingRates: string;
+    shippingStatusRecovering: string;
+    shippingStatusUpdating: string;
+    paymentReturnResumeTitle: string;
+    paymentReturnResumeBody: string;
+    paymentReturnErrorTitle: string;
+    paymentReturnErrorBody: string;
+    paymentReturnDismiss: string;
     paymentError: string;
     decreaseQty: string;
     increaseQty: string;
@@ -826,6 +837,20 @@ export const en: Dictionary = {
     deliveryContact: "Delivery & contact",
     shippingError:
       "Something went wrong loading delivery options. Please try again.",
+    shippingErrorSessionRestore:
+      "We couldn't restore your checkout session. Tap Retry — your cart is still here.",
+    shippingStatusPreparing: "Preparing checkout…",
+    shippingStatusSyncingCart: "Syncing your cart…",
+    shippingStatusLoadingRates: "Loading delivery options…",
+    shippingStatusRecovering: "Restoring your order…",
+    shippingStatusUpdating: "Updating delivery options…",
+    paymentReturnResumeTitle: "Let's continue your order",
+    paymentReturnResumeBody:
+      "We restored your delivery and contact details. Choose a payment method again to finish.",
+    paymentReturnErrorTitle: "Payment was cancelled or failed",
+    paymentReturnErrorBody:
+      "Your details are still here — choose a payment method and try again.",
+    paymentReturnDismiss: "Dismiss",
     paymentError: "Payment could not be started. Please try again.",
     decreaseQty: "Decrease quantity",
     increaseQty: "Increase quantity",

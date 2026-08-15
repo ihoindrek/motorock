@@ -18,6 +18,9 @@ import {
 import { resolveSubmitBlockReason } from "@/lib/checkout/submit-block-reason";
 import {
   clearCheckoutDraft,
+  clearCheckoutPaymentRedirect,
+  hasRecentCheckoutPaymentRedirect,
+  markCheckoutPaymentRedirect,
   readCheckoutDraft,
   writeCheckoutDraft,
 } from "@/lib/checkout/checkout-draft";
@@ -69,8 +72,12 @@ import {
   trackAddPaymentInfo,
   trackAddShippingInfo,
   trackBeginCheckout,
+  trackCheckoutDraftRestored,
+  trackCheckoutPaymentReturn,
+  trackCheckoutSubmitBlocked,
   trackViewCart,
 } from "@/lib/analytics";
+import { CheckoutPaymentReturnBanner } from "@/components/shop/checkout-payment-return-banner";
 import { cn } from "@/lib/utils";
 import { buildEquipmentHubHref } from "@/lib/shop/category-url";
 import { CampaignCartPanels } from "@/components/campaigns/campaign-cart-panels";
@@ -611,6 +618,9 @@ export function CartCheckoutView() {
   );
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [paymentReturnBanner, setPaymentReturnBanner] = useState<
+    "error" | "resume" | null
+  >(() => (hasRecentCheckoutPaymentRedirect() ? "resume" : null));
   const [orderId, setOrderId] = useState<string | null>(null);
   const [previewPaymentTitle, setPreviewPaymentTitle] = useState<string | null>(
     null,
@@ -1111,6 +1121,15 @@ export function CartCheckoutView() {
 
     draftRestoreCompletedRef.current = true;
     isRestoringDraftRef.current = false;
+
+    if (hasRecentCheckoutPaymentRedirect()) {
+      trackCheckoutDraftRestored({
+        hadPayment: Boolean(draft.paymentId),
+        hadPickup: Boolean(draft.pickupPoint),
+      });
+      trackCheckoutPaymentReturn({ outcome: "resume" });
+      setPaymentReturnBanner((current) => current ?? "resume");
+    }
   }, [
     montonio.loading,
     montonio.options,
@@ -1261,6 +1280,9 @@ export function CartCheckoutView() {
       return;
     }
 
+    trackCheckoutPaymentReturn({ outcome: "error", error: paymentError });
+    setPaymentReturnBanner("error");
+
     const targetStep = deliveryReady ? 3 : 2;
     openCheckoutSection(targetStep);
     scrollToCheckoutStep(targetStep);
@@ -1323,6 +1345,9 @@ export function CartCheckoutView() {
     }
 
     if (!revealDeliveryIssues() || !canSubmit) {
+      if (!canSubmit && submitBlockReason) {
+        trackCheckoutSubmitBlocked(submitBlockReason);
+      }
       return;
     }
 
@@ -1484,12 +1509,16 @@ export function CartCheckoutView() {
         // rates again.
         resetCheckoutSyncState();
         persistCheckoutDraft();
+        markCheckoutPaymentRedirect();
+        trackCheckoutPaymentReturn({ outcome: "redirect" });
         window.location.assign(redirectUrl);
         return;
       }
 
       setOrderId(result.orderNumber ?? `MR-${Date.now().toString(36).toUpperCase()}`);
       clearCheckoutDraft();
+      clearCheckoutPaymentRedirect();
+      setPaymentReturnBanner(null);
       clearCart();
     } catch (cause) {
       setSubmitError(
@@ -1612,6 +1641,16 @@ export function CartCheckoutView() {
           {t.total}
         </p>
       </header>
+
+      {paymentReturnBanner ? (
+        <CheckoutPaymentReturnBanner
+          variant={paymentReturnBanner}
+          onDismiss={() => {
+            setPaymentReturnBanner(null);
+            clearCheckoutPaymentRedirect();
+          }}
+        />
+      ) : null}
 
       <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(18rem,22rem)] lg:items-start lg:gap-12 xl:gap-16">
         <div className="min-w-0 space-y-3 lg:space-y-0">
@@ -1820,6 +1859,12 @@ export function CartCheckoutView() {
                     {t.deliveryMethod}
                   </DeliveryFieldLabel>
                   <div className="mt-2">
+                    {shipping.statusMessage &&
+                    (shipping.loading || shipping.syncing) &&
+                    shipping.rates.length === 0 &&
+                    !shippingError ? (
+                      <p className="mb-2 text-sm text-ink/70">{shipping.statusMessage}</p>
+                    ) : null}
                     {(shipping.loading || shipping.syncing) &&
                     shipping.rates.length === 0 &&
                     !shippingError ? (

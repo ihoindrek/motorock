@@ -3,6 +3,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useDictionary } from "@/context/locale-context";
 import type { CartLine } from "@/context/cart-context";
+import {
+  trackCheckoutCountrySelected,
+  trackCheckoutShippingRatesFailed,
+  trackCheckoutShippingRatesLoaded,
+} from "@/lib/analytics/checkout-funnel";
 import { formatCouponError } from "@/lib/checkout/format-coupon-error";
 import { clearCheckoutSession } from "@/lib/graphql/checkout-client";
 import {
@@ -33,10 +38,20 @@ import {
   filterShippingRatesForCountry,
 } from "@/lib/shop/shipping-showroom-pickup";
 
+type CheckoutShippingPhase =
+  | "idle"
+  | "preparing"
+  | "syncing_cart"
+  | "loading_rates"
+  | "recovering_session"
+  | "syncing";
+
 type CheckoutShippingState = {
   loading: boolean;
   countriesLoading: boolean;
   syncing: boolean;
+  phase: CheckoutShippingPhase;
+  statusMessage: string | null;
   error: string | null;
   countries: string[];
   country: string;
@@ -78,6 +93,7 @@ export function useCheckoutShipping(
   const dict = useDictionary();
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
+  const [phase, setPhase] = useState<CheckoutShippingPhase>("idle");
   const [error, setError] = useState<string | null>(null);
   const [countries, setCountries] = useState<string[]>([]);
   const [country, setCountryState] = useState("");
@@ -129,6 +145,23 @@ export function useCheckoutShipping(
   const needsAddress = selectedRate
     ? shippingMethodNeedsAddress(selectedRate)
     : false;
+
+  const statusMessage = useMemo(() => {
+    switch (phase) {
+      case "preparing":
+        return dict.checkout.shippingStatusPreparing;
+      case "syncing_cart":
+        return dict.checkout.shippingStatusSyncingCart;
+      case "loading_rates":
+        return dict.checkout.shippingStatusLoadingRates;
+      case "recovering_session":
+        return dict.checkout.shippingStatusRecovering;
+      case "syncing":
+        return dict.checkout.shippingStatusUpdating;
+      default:
+        return null;
+    }
+  }, [dict.checkout, phase]);
 
   const linesKey = useMemo(
     () =>
@@ -260,13 +293,37 @@ export function useCheckoutShipping(
 
       if (!nextCountry) {
         setSyncing(false);
+        setPhase("idle");
         return;
       }
 
+      trackCheckoutCountrySelected(nextCountry);
       setSyncing(true);
+      setPhase("loading_rates");
 
       void pushCustomerShipping(nextCountry, false)
+        .then((rateCount) => {
+          if (rateCount > 0) {
+            trackCheckoutShippingRatesLoaded({
+              countryCode: nextCountry,
+              rateCount,
+            });
+            return;
+          }
+
+          trackCheckoutShippingRatesFailed({
+            countryCode: nextCountry,
+            reason: "zero_rates",
+          });
+          setError(
+            "Could not load delivery options. Try again or re-add items from the product page.",
+          );
+        })
         .catch((cause) => {
+          trackCheckoutShippingRatesFailed({
+            countryCode: nextCountry,
+            reason: "request_failed",
+          });
           setError(
             cause instanceof Error
               ? cause.message
@@ -275,6 +332,7 @@ export function useCheckoutShipping(
         })
         .finally(() => {
           setSyncing(false);
+          setPhase("idle");
         });
     },
     [pushCustomerShipping],
@@ -436,6 +494,7 @@ export function useCheckoutShipping(
     async function bootstrap(forceResync = false) {
       setLoading(true);
       setError(null);
+      setPhase(forceResync ? "recovering_session" : "preparing");
 
       if (forceResync) {
         resetCheckoutSyncState();
@@ -456,6 +515,8 @@ export function useCheckoutShipping(
         if (countriesRef.current.length === 0) {
           setCountries(sorted);
         }
+
+        setPhase(forceResync ? "recovering_session" : "syncing_cart");
 
         const [session, geoPayload] = await Promise.all([
           syncLocalCartToWoo(currentLines, { linesKey }),
@@ -498,9 +559,12 @@ export function useCheckoutShipping(
           if (!cancelled) {
             bootstrapReadyRef.current = true;
             setLoading(false);
+            setPhase("idle");
           }
           return;
         }
+
+        setPhase(forceResync ? "recovering_session" : "loading_rates");
 
         const rateCount = await pushCustomerShippingRef.current(
           shipCountry,
@@ -517,9 +581,20 @@ export function useCheckoutShipping(
         }
 
         if (rateCount === 0 && !cancelled) {
+          trackCheckoutShippingRatesFailed({
+            countryCode: shipCountry,
+            reason: forceResync ? "zero_rates_after_recovery" : "zero_rates",
+          });
           setError(
-            "Could not load delivery options. Try again or re-add items from the product page.",
+            forceResync
+              ? dict.checkout.shippingErrorSessionRestore
+              : "Could not load delivery options. Try again or re-add items from the product page.",
           );
+        } else if (rateCount > 0) {
+          trackCheckoutShippingRatesLoaded({
+            countryCode: shipCountry,
+            rateCount,
+          });
         }
 
         syncedLinesKeyRef.current = linesKey;
@@ -527,6 +602,7 @@ export function useCheckoutShipping(
         if (!cancelled) {
           bootstrapReadyRef.current = true;
           setLoading(false);
+          setPhase("idle");
         }
       } catch (cause) {
         if (!cancelled && !retried) {
@@ -537,13 +613,14 @@ export function useCheckoutShipping(
 
         if (!cancelled) {
           clearCheckoutSession();
-          setError(
-            cause instanceof Error
-              ? cause.message
-              : "Could not prepare checkout",
-          );
+          trackCheckoutShippingRatesFailed({
+            countryCode: countryRef.current || undefined,
+            reason: "bootstrap_failed",
+          });
+          setError(dict.checkout.shippingErrorSessionRestore);
           bootstrapReadyRef.current = true;
           setLoading(false);
+          setPhase("idle");
         }
       }
     }
@@ -571,6 +648,7 @@ export function useCheckoutShipping(
     let cancelled = false;
     setSyncing(true);
     setError(null);
+    setPhase("syncing");
 
     void syncLocalCartToWoo(linesRef.current, { linesKey })
       .then(async (session) => {
@@ -593,6 +671,7 @@ export function useCheckoutShipping(
       .finally(() => {
         if (!cancelled) {
           setSyncing(false);
+          setPhase("idle");
         }
       });
 
@@ -605,6 +684,8 @@ export function useCheckoutShipping(
     loading,
     countriesLoading,
     syncing,
+    phase,
+    statusMessage,
     error,
     countries,
     country,

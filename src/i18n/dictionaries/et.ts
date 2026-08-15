@@ -206,6 +206,20 @@ export const et: Dictionary = {
     deliveryContact: "Tarne ja kontakt",
     shippingError:
       "Tarnevalikute laadimisel läks midagi valesti. Proovi uuesti.",
+    shippingErrorSessionRestore:
+      "Checkout sessiooni ei õnnestunud taastada. Vajuta „Proovi uuesti“ — ostukorv on alles.",
+    shippingStatusPreparing: "Valmistame checkout'i ette…",
+    shippingStatusSyncingCart: "Sünkroniseerime ostukorvi…",
+    shippingStatusLoadingRates: "Laeme tarneviise…",
+    shippingStatusRecovering: "Taastame sinu tellimust…",
+    shippingStatusUpdating: "Uuendame tarneviise…",
+    paymentReturnResumeTitle: "Jätkame sinu tellimusega",
+    paymentReturnResumeBody:
+      "Taastasime sinu tarne- ja kontaktandmed. Vali makseviis uuesti, et tellimus lõpetada.",
+    paymentReturnErrorTitle: "Makse katkestati või ebaõnnestus",
+    paymentReturnErrorBody:
+      "Sinu andmed on alles — vali makseviis ja proovi uuesti.",
+    paymentReturnDismiss: "Sulge",
     paymentError: "Makset ei õnnestunud alustada. Proovi uuesti.",
     decreaseQty: "Vähenda kogust",
     increaseQty: "Suurenda kogust",
