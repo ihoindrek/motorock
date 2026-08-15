@@ -11,6 +11,7 @@
     "test:watch": "vitest",
     "audit:variations": "node scripts/audit-graphql-variations.mjs",
     "revalidate": "node scripts/revalidate-storefront.mjs",
+    "health:check": "node scripts/check-storefront-health.mjs",
     "import:holyfreedom": "node scripts/holyfreedom-woocommerce-import.mjs"
   },
   "dependencies": {

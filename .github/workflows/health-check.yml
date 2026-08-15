@@ -1,0 +1,34 @@
+name: Storefront health check
+
+on:
+  schedule:
+    - cron: "5,35 * * * *"
+  workflow_dispatch:
+
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check production storefront health
+        env:
+          MONITORING_SECRET: ${{ secrets.REVALIDATE_SECRET }}
+        run: |
+          if [ -z "$MONITORING_SECRET" ]; then
+            echo "REVALIDATE_SECRET is not configured in GitHub secrets."
+            exit 1
+          fi
+
+          response="$(curl -sS -w '\n%{http_code}' \
+            -H "Authorization: Bearer ${MONITORING_SECRET}" \
+            "https://motorock.eu/api/monitoring/health")"
+
+          body="$(printf '%s' "$response" | sed '$d')"
+          status="$(printf '%s' "$response" | tail -n 1)"
+
+          echo "$body"
+          echo "HTTP $status"
+
+          if [ "$status" != "200" ]; then
+            exit 1
+          fi

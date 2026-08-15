@@ -58,6 +58,15 @@ export async function captureStorefrontError(
     error: normalized,
   });
 
+  try {
+    const { notifyStorefrontErrorAlert } = await import(
+      "@/lib/monitoring/notify-alert"
+    );
+    await notifyStorefrontErrorAlert(error, meta);
+  } catch (alertError) {
+    console.error("[monitoring] failed to send error alert:", alertError);
+  }
+
   const dsn = process.env.SENTRY_DSN?.trim();
   if (!dsn || process.env.NEXT_RUNTIME === "edge") {
     return;
