@@ -12,10 +12,16 @@ jobs:
     steps:
       - name: Check production storefront health
         env:
-          MONITORING_SECRET: ${{ secrets.REVALIDATE_SECRET }}
+          MONITORING_ALERT_SECRET: ${{ secrets.MONITORING_ALERT_SECRET }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
         run: |
+          MONITORING_SECRET="${MONITORING_ALERT_SECRET:-${CRON_SECRET:-${REVALIDATE_SECRET:-}}}"
+
           if [ -z "$MONITORING_SECRET" ]; then
-            echo "REVALIDATE_SECRET is not configured in GitHub secrets."
+            echo "No monitoring secret configured in GitHub repository secrets."
+            echo "Add one of: MONITORING_ALERT_SECRET, CRON_SECRET, or REVALIDATE_SECRET"
+            echo "(same value as in Vercel production env)."
             exit 1
           fi
 
