@@ -233,7 +233,11 @@ export function GalleryThumbnailRail({
   );
 
   const thumbRailMeta = (
-    <div className="flex shrink-0 flex-col items-center gap-1 pt-1">
+    <div
+      className={`flex shrink-0 flex-col items-center gap-1 pt-1 ${
+        isVertical ? "" : "hidden lg:flex"
+      }`}
+    >
       <p className="font-body text-[10px] font-bold tabular-nums tracking-aggressive text-ink/70">
         {String(activeIndex + 1).padStart(2, "0")}
         <span className="text-ink/35">

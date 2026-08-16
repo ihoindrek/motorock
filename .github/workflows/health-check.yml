@@ -35,6 +35,12 @@ jobs:
           echo "$body"
           echo "HTTP $status"
 
+          if [ "$status" = "401" ]; then
+            echo "Unauthorized — GitHub secret does not match Vercel REVALIDATE_SECRET (or MONITORING_ALERT_SECRET)."
+            exit 1
+          fi
+
           if [ "$status" != "200" ]; then
+            echo "Health check failed — see checks above."
             exit 1
           fi

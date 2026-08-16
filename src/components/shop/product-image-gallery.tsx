@@ -348,8 +348,8 @@ export function ProductImageGallery({
     );
 
     return (
-      <div className="flex flex-col gap-3">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:gap-2.5">
+      <div className="flex flex-col gap-1.5 lg:gap-3">
+        <div className="flex flex-col gap-1.5 lg:flex-row lg:items-start lg:gap-2.5">
           <div
             className={cn(
               "min-w-0 flex-1",
@@ -366,18 +366,20 @@ export function ProductImageGallery({
               <GalleryImageTransition
                 imageKey={activeSrc}
                 direction={slideDirection}
-                className="aspect-[3/4] w-full max-lg:rounded-none sm:aspect-[4/5] lg:aspect-[3/4]"
+                sizeToContent
+                className="w-full max-lg:rounded-none"
               >
                 <figure
-                  className={`relative h-full w-full overflow-hidden ${galleryImageBgClass(imageBackground)}`}
+                  className={`relative w-full overflow-hidden max-lg:leading-none ${galleryImageBgClass(imageBackground)}`}
                 >
                   <Image
                     src={activeSrc}
                     alt={alt}
-                    fill
+                    width={1200}
+                    height={1500}
                     priority
                     sizes="(max-width: 1024px) 100vw, 42vw"
-                    className="object-contain object-top p-0.5 transition-transform duration-500 group-hover/openable:scale-[1.01] sm:p-1"
+                    className="mx-auto block h-auto w-full max-h-[min(72vh,44rem)] object-contain object-top p-0.5 transition-transform duration-500 group-hover/openable:scale-[1.01] sm:p-1"
                   />
                   {images.length > 1 ? (
                     <span className="pointer-events-none absolute left-3 top-3 z-10 font-body text-[10px] font-bold tabular-nums tracking-aggressive text-ink">
@@ -394,7 +396,7 @@ export function ProductImageGallery({
           </div>
 
           {images.length > 1 ? (
-            <div className="hidden h-full min-h-0 shrink-0 lg:flex">
+            <div className="hidden shrink-0 lg:flex">
               {craftThumbRail("vertical")}
             </div>
           ) : null}

@@ -37,6 +37,8 @@ type GalleryImageTransitionProps = {
   imageKey: string;
   direction: 1 | -1;
   className?: string;
+  /** Size the wrapper to image content instead of a fixed aspect box. */
+  sizeToContent?: boolean;
   children: ReactNode;
 };
 
@@ -44,12 +46,15 @@ export function GalleryImageTransition({
   imageKey,
   direction,
   className = "",
+  sizeToContent = false,
   children,
 }: GalleryImageTransitionProps) {
   const reduceMotion = useReducedMotion();
 
   return (
-    <div className={`relative overflow-hidden ${className}`}>
+    <div
+      className={`relative overflow-hidden ${sizeToContent ? "w-full max-lg:h-auto" : ""} ${className}`}
+    >
       <AnimatePresence initial={false} custom={direction} mode="popLayout">
         <motion.div
           key={imageKey}
@@ -87,7 +92,7 @@ export function GalleryImageTransition({
             duration: reduceMotion ? 0 : 0.42,
             ease: [0.22, 1, 0.36, 1],
           }}
-          className="absolute inset-0"
+          className={sizeToContent ? "relative w-full" : "absolute inset-0"}
         >
           {children}
         </motion.div>

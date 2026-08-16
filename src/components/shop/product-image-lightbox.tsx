@@ -421,7 +421,7 @@ export function OpenableImageTrigger({
   onOpen,
   label = "Open image full size",
   className = "",
-  theme = "light",
+  theme: _theme = "light",
   onSwipeLeft,
   onSwipeRight,
 }: OpenableImageTriggerProps) {
@@ -480,23 +480,6 @@ export function OpenableImageTrigger({
       className={`group/openable relative block w-full cursor-zoom-in text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${className}`}
     >
       {children}
-      <span
-        className={`pointer-events-none absolute bottom-3 right-3 flex size-10 items-center justify-center border opacity-0 shadow-lg backdrop-blur-md transition-all duration-300 group-hover/openable:opacity-100 group-focus-visible/openable:opacity-100 ${
-          theme === "dark"
-            ? "border-paper/20 bg-ink/70 text-paper"
-            : "border-ink/10 bg-paper/90 text-ink"
-        }`}
-        aria-hidden="true"
-      >
-        <svg viewBox="0 0 24 24" fill="none" className="size-4" aria-hidden="true">
-          <path
-            d="M9 3H3v6M15 3h6v6M9 21H3v-6M15 21h6v-6"
-            stroke="currentColor"
-            strokeWidth="1.75"
-            strokeLinecap="square"
-          />
-        </svg>
-      </span>
     </button>
   );
 }

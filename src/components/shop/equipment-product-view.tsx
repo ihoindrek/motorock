@@ -331,16 +331,16 @@ export function EquipmentProductView({
 
   return (
     <>
-    <div className="bg-white pb-24 lg:pb-0">
+    <div className="bg-white max-lg:pb-16 lg:pb-0">
       <div className="site-container max-lg:pt-0 py-6 lg:py-10">
-      <div className="flex flex-col gap-10 max-lg:gap-6 lg:grid lg:grid-cols-12 lg:items-start lg:gap-x-12 xl:gap-x-16">
+      <div className="flex flex-col gap-6 lg:grid lg:grid-cols-12 lg:items-start lg:gap-x-12 xl:gap-x-16">
         <ProductBreadcrumbs
-          className="order-1 mb-6 max-lg:order-2 lg:hidden"
+          className="order-1 mb-0 lg:hidden"
           crumbs={breadcrumbs}
           currentLabel={product.name}
         />
 
-        <div className="order-3 space-y-6 lg:order-1 lg:col-span-6 lg:sticky lg:top-24 lg:self-start xl:col-span-5">
+        <div className="order-3 space-y-6 lg:order-none lg:col-span-6 lg:sticky lg:top-24 lg:self-start lg:row-start-1 xl:col-span-5">
           <ProductBreadcrumbs
             className="mb-6 hidden lg:block"
             crumbs={breadcrumbs}
@@ -476,22 +476,21 @@ export function EquipmentProductView({
 
         </div>
 
-        <div className="order-2 flex flex-col gap-8 max-lg:contents lg:order-2 lg:col-span-6 xl:col-span-7">
-          <div className="order-2 w-full max-lg:order-1 lg:order-none lg:max-w-2xl xl:max-w-3xl lg:ml-auto lg:w-full">
-            <ProductImageGallery
-              images={galleryImages}
-              alt={product.name}
-              variant="scene"
-              theme="light"
-              layout="craft"
-              imageBackground="white"
-              productVideo={product.productVideo}
-              videoTitle={product.name}
-              fullBleedMobile
-            />
-          </div>
+        <div className="order-2 w-full lg:order-none lg:col-span-6 lg:col-start-7 lg:row-start-1 xl:col-span-7 xl:col-start-6 lg:max-w-2xl xl:max-w-3xl lg:ml-auto lg:w-full">
+          <ProductImageGallery
+            images={galleryImages}
+            alt={product.name}
+            variant="scene"
+            theme="light"
+            layout="craft"
+            imageBackground="white"
+            productVideo={product.productVideo}
+            videoTitle={product.name}
+            fullBleedMobile
+          />
+        </div>
 
-          <div className="order-4 w-full max-w-md space-y-8 sm:max-w-lg lg:order-none lg:ml-auto lg:w-full lg:max-w-xl xl:max-w-2xl">
+        <div className="order-4 w-full max-w-md space-y-8 sm:max-w-lg lg:order-none lg:col-span-6 lg:col-start-7 lg:row-start-2 xl:col-span-7 xl:col-start-6 lg:ml-auto lg:w-full lg:max-w-xl xl:max-w-2xl">
           {isVideoSrc(product.lifestyleImage) ? (
             <figure className="relative aspect-[16/9] overflow-hidden bg-white">
               <video
@@ -607,7 +606,6 @@ export function EquipmentProductView({
                 active={activeAccordion === "shipping"}
               />
             </CraftAccordion>
-          </div>
           </div>
         </div>
       </div>
