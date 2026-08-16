@@ -890,7 +890,16 @@ export async function getCatalogProductsBySlugs(
   const products = await Promise.all(
     slugs.map((slug) => getProductBySlug(slug, locale)),
   );
-  return products.filter((product): product is CatalogProduct => product !== undefined);
+
+  const bySlug = new Map(
+    products
+      .filter((product): product is CatalogProduct => product !== undefined)
+      .map((product) => [product.slug, product]),
+  );
+
+  return slugs
+    .map((slug) => bySlug.get(slug))
+    .filter((product): product is CatalogProduct => product !== undefined);
 }
 
 export async function getSimilarProducts(

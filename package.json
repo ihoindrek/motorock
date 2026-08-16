@@ -12,7 +12,10 @@
     "audit:variations": "node scripts/audit-graphql-variations.mjs",
     "revalidate": "node scripts/revalidate-storefront.mjs",
     "health:check": "node scripts/check-storefront-health.mjs",
-    "import:holyfreedom": "node scripts/holyfreedom-woocommerce-import.mjs"
+    "import:holyfreedom": "node scripts/holyfreedom-woocommerce-import.mjs",
+    "commerce-ai:p0:related:scan": "node scripts/commerce-ai-p0-related.mjs --scan-only --limit=50",
+    "commerce-ai:p0:related:dry-run": "node scripts/commerce-ai-p0-related.mjs --dry-run --limit=5",
+    "commerce-ai:p0:seo:scan": "node scripts/ai-batch-pilot.mjs --scan-only --limit=30"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.20",

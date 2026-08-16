@@ -1,15 +1,14 @@
 import { isLocale } from "@/i18n/config";
 import {
+  getCatalogProductsBySlugs,
   getEquipmentCatalog,
   getMotorcycleCatalog,
   getProductBySlug,
 } from "@/lib/graphql/products";
 import {
-  mergeSuggestionCandidates,
-  pickCartComplementaryProducts,
-} from "@/lib/shop/cart-complementary-products";
-import { pickSimilarProducts } from "@/lib/shop/similar-products";
-import type { ProductCategory } from "@/types/catalog-product";
+  pickCuratedRelatedProducts,
+  resolveCartSuggestions,
+} from "@/lib/shop/cart-suggestions";
 
 export const dynamic = "force-dynamic";
 
@@ -39,19 +38,6 @@ function toSuggestionProduct(
   };
 }
 
-function resolveCartCategories(
-  exclude: ReadonlySet<string>,
-  catalog: readonly { slug: string; category: ProductCategory }[],
-) {
-  const bySlug = new Map(catalog.map((product) => [product.slug, product.category]));
-
-  return new Set(
-    [...exclude]
-      .map((slug) => bySlug.get(slug))
-      .filter((category): category is ProductCategory => Boolean(category)),
-  );
-}
-
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const slug = searchParams.get("slug")?.trim() ?? "";
@@ -75,34 +61,45 @@ export async function GET(request: Request) {
       return Response.json({ products: [] as CartSuggestionProduct[] });
     }
 
-    const catalog =
-      product.type === "motorcycle"
+    const relatedSlugs = product.relatedSlugs?.filter((item) => !exclude.has(item)) ?? [];
+    const excludeList = [...exclude];
+
+    const [curatedRelated, excludedProducts] = await Promise.all([
+      relatedSlugs.length > 0
+        ? getCatalogProductsBySlugs(relatedSlugs, locale)
+        : Promise.resolve([]),
+      excludeList.length > 0
+        ? getCatalogProductsBySlugs(excludeList, locale)
+        : Promise.resolve([]),
+    ]);
+
+    const cartCategories = new Set(
+      excludedProducts.map((item) => item.category),
+    );
+
+    const curatedCount = pickCuratedRelatedProducts(
+      product,
+      curatedRelated,
+      exclude,
+      6,
+    ).length;
+    const needsCatalog =
+      product.type === "motorcycle" || curatedCount < 6;
+
+    const catalog = needsCatalog
+      ? product.type === "motorcycle"
         ? await getMotorcycleCatalog(locale)
-        : await getEquipmentCatalog(locale);
+        : await getEquipmentCatalog(locale)
+      : [];
 
-    const cartCategories = resolveCartCategories(exclude, catalog);
-
-    let suggestions =
-      product.type === "equipment"
-        ? pickCartComplementaryProducts(product, catalog, {
-            excludeSlugs: exclude,
-            cartCategories,
-            limit: 6,
-          })
-        : [];
-
-    if (suggestions.length < 6) {
-      const similar = pickSimilarProducts(product, catalog, 12);
-      suggestions = mergeSuggestionCandidates(product, suggestions, similar, {
-        excludeSlugs: exclude,
-        cartCategories,
-        limit: 6,
-      });
-    }
-
-    if (product.type === "motorcycle" && suggestions.length === 0) {
-      suggestions = pickSimilarProducts(product, catalog, 6);
-    }
+    const suggestions = resolveCartSuggestions({
+      anchor: product,
+      catalog,
+      curatedRelated,
+      excludeSlugs: exclude,
+      cartCategories,
+      limit: 6,
+    });
 
     const products = suggestions
       .filter((candidate) => !exclude.has(candidate.slug))
