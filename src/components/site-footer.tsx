@@ -5,8 +5,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { brands } from "@/data/brands";
+import { equipmentHubBrands } from "@/data/equipment-hub";
 import { useCategoryTree, useToolsCategory } from "@/context/category-tree-context";
 import { useDictionary, useLocale } from "@/context/locale-context";
+import type { Locale } from "@/i18n/config";
 import {
   getFooterCompanyLinks,
   getFooterLegalLinks,
@@ -15,7 +17,9 @@ import {
 } from "@/i18n/navigation";
 import { localizedHref, stripLocaleFromPath } from "@/i18n/paths";
 import { getBrandCatalogHref } from "@/lib/shop/brand-catalog-url";
+import { isMotorcycleBrandSlug } from "@/lib/shop/resolve-product-brand";
 import { SHOWROOM } from "@/data/showroom";
+import { cn } from "@/lib/utils";
 
 function SocialIcon({ children }: { children: ReactNode }) {
   return (
@@ -102,9 +106,89 @@ function SocialIconLink({
   );
 }
 
-const motorcycleBrands = brands.filter(
-  (brand): brand is typeof brand & { logo: string } => Boolean(brand.logo),
+const footerMotorcycleBrands = brands.filter(
+  (brand): brand is typeof brand & { logo: string } =>
+    Boolean(brand.logo) && isMotorcycleBrandSlug(brand.slug),
 );
+
+const footerBrandLogos = [
+  ...footerMotorcycleBrands.map((brand) => ({
+    slug: brand.slug,
+    name: brand.name,
+    logo: brand.logo,
+    width: brand.width ?? 120,
+    height: brand.height ?? 36,
+    className: cn(brand.logoClassLg, "brightness-0 invert"),
+  })),
+  ...equipmentHubBrands.map((brand) => ({
+    slug: brand.slug,
+    name: brand.name,
+    logo: brand.logo,
+    width: 120,
+    height: 36,
+    className: cn(
+      "h-5 w-auto max-w-[7rem] sm:h-6",
+      brand.logoInvert && "brightness-0 invert",
+    ),
+  })),
+];
+
+type FooterBrandLogo = (typeof footerBrandLogos)[number];
+
+function FooterBrandLogoLink({
+  brand,
+  locale,
+  decorative = false,
+}: {
+  brand: FooterBrandLogo;
+  locale: Locale;
+  decorative?: boolean;
+}) {
+  return (
+    <Link
+      href={localizedHref(locale, getBrandCatalogHref(brand.slug, locale))}
+      className="opacity-45 transition-opacity duration-300 hover:opacity-100"
+      tabIndex={decorative ? -1 : undefined}
+      aria-hidden={decorative ? true : undefined}
+    >
+      <Image
+        src={brand.logo}
+        alt={decorative ? "" : brand.name}
+        width={brand.width}
+        height={brand.height}
+        className={brand.className}
+      />
+    </Link>
+  );
+}
+
+function FooterBrandLogos({ locale }: { locale: Locale }) {
+  return (
+    <>
+      <div className="overflow-hidden lg:hidden">
+        <ul className="animate-spec-marquee flex w-max items-center gap-x-8 py-1 motion-reduce:animate-none">
+          {footerBrandLogos.map((brand) => (
+            <li key={brand.slug} className="shrink-0">
+              <FooterBrandLogoLink brand={brand} locale={locale} />
+            </li>
+          ))}
+          {footerBrandLogos.map((brand) => (
+            <li key={`${brand.slug}-repeat`} className="shrink-0" aria-hidden="true">
+              <FooterBrandLogoLink brand={brand} locale={locale} decorative />
+            </li>
+          ))}
+        </ul>
+      </div>
+      <ul className="hidden flex-nowrap items-center gap-x-6 lg:flex lg:justify-between lg:gap-x-6 xl:gap-x-8">
+        {footerBrandLogos.map((brand) => (
+          <li key={brand.slug} className="shrink-0">
+            <FooterBrandLogoLink brand={brand} locale={locale} />
+          </li>
+        ))}
+      </ul>
+    </>
+  );
+}
 
 function FooterLink({ href, label }: { href: string; label: string }) {
   return (
@@ -296,31 +380,14 @@ export function SiteFooter() {
           </div>
 
           <div className="border-t border-paper/10 py-10">
-            <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
-              <div>
+            <div className="flex flex-col gap-6 lg:gap-8">
+              <div className="max-w-2xl">
                 <p className="section-eyebrow text-paper/45">{dictionary.footer.ourBrands}</p>
-                <p className="mt-3 max-w-md text-sm text-paper/45">
+                <p className="mt-3 text-sm text-paper/45">
                   {dictionary.footer.brandsBlurb}
                 </p>
               </div>
-              <ul className="flex flex-wrap items-center gap-x-8 gap-y-4">
-                {motorcycleBrands.map((brand) => (
-                  <li key={brand.slug}>
-                    <Link
-                      href={localizedHref(locale, getBrandCatalogHref(brand.slug, locale))}
-                      className="opacity-45 transition-opacity duration-300 hover:opacity-100"
-                    >
-                      <Image
-                        src={brand.logo}
-                        alt={brand.name}
-                        width={brand.width ?? 120}
-                        height={brand.height ?? 36}
-                        className={`${brand.logoClassLg} brightness-0 invert`}
-                      />
-                    </Link>
-                  </li>
-                ))}
-              </ul>
+              <FooterBrandLogos locale={locale} />
             </div>
           </div>
 

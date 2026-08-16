@@ -146,7 +146,7 @@ export function EquipmentProductView({
   const router = useRouter();
   const locale = useLocale();
   const dict = useDictionary();
-  const { addItem, openCart } = useCart();
+  const { addItem, addItemAndOpenCart } = useCart();
   const sizes = useMemo(
     () => sortProductSizes(product.sizes),
     [product.sizes],
@@ -318,8 +318,7 @@ export function EquipmentProductView({
   };
 
   const handleAdd = () => {
-    addItem(cartPayload);
-    openCart();
+    addItemAndOpenCart(cartPayload);
     setAdded(true);
     window.setTimeout(() => setAdded(false), 2000);
   };

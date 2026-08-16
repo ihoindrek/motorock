@@ -229,6 +229,7 @@ export const equipmentHubBrands = [
     slug: "holyfreedom",
     image: "/tutonero.jpg",
     logo: "/HF-square-Wht.png",
+    logoInvert: false,
     imageAlt: {
       en: "Holyfreedom motorcycle apparel",
       et: "Holyfreedom mootorrattariided",
@@ -239,6 +240,7 @@ export const equipmentHubBrands = [
     slug: "johnny-reb",
     image: "/JRF00001-1LS.webp",
     logo: "/johnny-reb.webp",
+    logoInvert: false,
     imageAlt: {
       en: "Johnny Reb riding gear",
       et: "Johnny Reb sõiduvarustus",
@@ -249,6 +251,7 @@ export const equipmentHubBrands = [
     slug: "motogirl",
     image: "/MotoGirl44.webp",
     logo: "/motogirl.png",
+    logoInvert: false,
     imageAlt: {
       en: "Motogirl women's motorcycle gear",
       et: "Motogirl naiste mootorrattavarustus",
@@ -259,6 +262,7 @@ export const equipmentHubBrands = [
     slug: "bobhead",
     image: "/bobhead.png",
     logo: "/bobhead.avif",
+    logoInvert: true,
     imageAlt: {
       en: "Bobhead helmets and riding gear",
       et: "Bobhead kiivrid ja sõiduvarustus",

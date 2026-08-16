@@ -2,9 +2,9 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
-import { useCart } from "@/context/cart-context";
+import { useCart, cartLineKey } from "@/context/cart-context";
 import { useDictionary, useLocale } from "@/context/locale-context";
 import { localizedHref } from "@/i18n/paths";
 import { localizedProductHref } from "@/lib/shop/product-url";
@@ -14,6 +14,7 @@ import { formatPrice } from "@/lib/shop/category";
 import { Price } from "@/components/shop/price";
 import { cn } from "@/lib/utils";
 import { CampaignCartPanels } from "@/components/campaigns/campaign-cart-panels";
+import { CartDrawerSuggestions } from "@/components/shop/cart-drawer-suggestions";
 import { buildEquipmentHubHref } from "@/lib/shop/category-url";
 
 function CloseIcon() {
@@ -39,6 +40,7 @@ export function CartDrawer() {
     itemCount,
     subtotal,
     drawerOpen,
+    lastAddedLineKey,
     closeCart,
     updateQuantity,
     removeItem,
@@ -65,6 +67,8 @@ export function CartDrawer() {
           total: "Kokku",
           checkout: "Kassa",
           continueShopping: "Jätka ostlemist",
+          addedSuccess: "Toode lisati ostukorvi",
+          cartSuggestions: "Soovitame ka",
         }
       : {
           closeCart: "Close cart",
@@ -84,8 +88,43 @@ export function CartDrawer() {
           total: "Total",
           checkout: "Checkout",
           continueShopping: "Continue shopping",
+          addedSuccess: "Product added to your cart",
+          cartSuggestions: "We also suggest",
         };
   const [mounted, setMounted] = useState(false);
+
+  const cartSlugs = useMemo(
+    () => [...new Set(lines.map((line) => line.slug))],
+    [lines],
+  );
+
+  const suggestionSourceSlug = useMemo(() => {
+    if (lastAddedLineKey) {
+      const added = lines.find(
+        (line) => cartLineKey(line) === lastAddedLineKey,
+      );
+      if (added) {
+        return added.slug;
+      }
+    }
+
+    return lines.at(-1)?.slug ?? null;
+  }, [lastAddedLineKey, lines]);
+
+  const sortedLines = useMemo(() => {
+    if (!lastAddedLineKey) {
+      return lines;
+    }
+
+    const highlighted = lines.filter(
+      (line) => cartLineKey(line) === lastAddedLineKey,
+    );
+    const rest = lines.filter(
+      (line) => cartLineKey(line) !== lastAddedLineKey,
+    );
+
+    return [...highlighted, ...rest];
+  }, [lastAddedLineKey, lines]);
 
   const { total } = getCartTotals(subtotal);
 
@@ -189,20 +228,38 @@ export function CartDrawer() {
           </div>
         ) : (
           <>
+            {lastAddedLineKey ? (
+              <div className="border-b border-accent/20 bg-accent/5 px-5 py-3 sm:px-6">
+                <p className="flex items-center gap-2 font-body text-sm font-bold text-ink">
+                  <span
+                    className="inline-flex size-5 items-center justify-center rounded-full bg-accent text-[11px] font-bold text-paper"
+                    aria-hidden="true"
+                  >
+                    ✓
+                  </span>
+                  {t.addedSuccess}
+                </p>
+              </div>
+            ) : null}
+
             <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               <ul className="divide-y divide-ink/10 px-5 sm:px-6">
-                {lines.map((line) => {
+                {sortedLines.map((line) => {
                 if (!line.name || !line.image) {
                   return null;
                 }
 
                 const lineTotal = line.price * line.quantity;
                 const thumbnail = cartLineThumbnailClass(line);
+                const isHighlighted = cartLineKey(line) === lastAddedLineKey;
 
                 return (
                   <li
-                    key={`${line.slug}:${line.size ?? ""}`}
-                    className="flex gap-4 py-5 first:pt-5"
+                    key={cartLineKey(line)}
+                    className={cn(
+                      "flex gap-4 py-5 first:pt-5",
+                      isHighlighted && "bg-accent/[0.03]",
+                    )}
                   >
                     <Link
                       href={localizedProductHref(line.slug, locale)}
@@ -298,14 +355,22 @@ export function CartDrawer() {
               })}
               </ul>
 
-              <div className="mt-4 border-t border-ink/10 px-5 pt-5 sm:px-6">
-                <div className="overflow-hidden rounded-lg bg-white p-4 shadow-[0_4px_20px_rgb(11_11_11_/_0.06)]">
-                  <CampaignCartPanels
-                    placement="cart-drawer"
-                    variant="compact"
-                    flat
-                  />
-                </div>
+              <div className="border-t border-ink/10 px-5 pt-5 sm:px-6">
+                <CartDrawerSuggestions
+                  sourceSlug={suggestionSourceSlug}
+                  excludeSlugs={cartSlugs}
+                  title={t.cartSuggestions}
+                  onNavigate={closeCart}
+                />
+              </div>
+
+              <div className="my-8 border-y border-ink/10 px-5 py-6 sm:px-6">
+                <CampaignCartPanels
+                  placement="cart-drawer"
+                  variant="compact"
+                  flat
+                  ctaVariant="link"
+                />
               </div>
             </div>
 

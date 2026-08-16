@@ -1,10 +1,12 @@
 import Image from "next/image";
 import Link from "next/link";
 import { HeroBannerMedia } from "@/components/hero-banner-media";
+import { equipmentHubBrands } from "@/data/equipment-hub";
 import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries/en";
 import { buildEquipmentHubHref } from "@/lib/shop/category-url";
 import { localizedHref } from "@/i18n/paths";
+import { cn } from "@/lib/utils";
 
 const motorcycleLogos = [
   {
@@ -13,6 +15,7 @@ const motorcycleLogos = [
     width: 130,
     height: 34,
     className: "h-7 w-auto sm:h-8",
+    invert: true,
   },
   {
     name: "Mutt",
@@ -20,6 +23,7 @@ const motorcycleLogos = [
     width: 88,
     height: 32,
     className: "h-6 w-auto sm:h-7",
+    invert: true,
   },
   {
     name: "Motron",
@@ -27,6 +31,7 @@ const motorcycleLogos = [
     width: 120,
     height: 48,
     className: "h-7 w-auto sm:h-8",
+    invert: true,
   },
   {
     name: "Malaguti",
@@ -34,8 +39,18 @@ const motorcycleLogos = [
     width: 120,
     height: 22,
     className: "h-5 w-auto sm:h-6",
+    invert: true,
   },
 ] as const;
+
+const equipmentLogos = equipmentHubBrands.map((brand) => ({
+  name: brand.name,
+  src: brand.logo,
+  width: 110,
+  height: 36,
+  invert: brand.logoInvert ?? false,
+  className: "h-5 w-auto max-w-[5.25rem] sm:h-6 sm:max-w-[6rem]",
+}));
 
 type HeroProps = {
   locale: Locale;
@@ -56,6 +71,7 @@ export function Hero({ locale, dictionary }: HeroProps) {
       cta: dictionary.hero.shopMotorcycles,
       ctaClass: "btn-hero-primary",
       logos: motorcycleLogos,
+      compactLogos: false,
     },
     {
       label: dictionary.hero.equipment,
@@ -68,7 +84,8 @@ export function Hero({ locale, dictionary }: HeroProps) {
       titleClass: "text-2xl sm:text-3xl lg:text-4xl xl:text-5xl",
       cta: dictionary.hero.browseProducts,
       ctaClass: "btn-hero-ghost",
-      logos: null,
+      logos: equipmentLogos,
+      compactLogos: true,
     },
   ] as const;
 
@@ -121,7 +138,14 @@ export function Hero({ locale, dictionary }: HeroProps) {
               </h2>
 
               {banner.logos ? (
-                <ul className="flex flex-wrap items-center justify-center gap-5 sm:gap-7 lg:gap-8">
+                <ul
+                  className={cn(
+                    "flex flex-wrap items-center justify-center",
+                    banner.compactLogos
+                      ? "gap-3 sm:gap-4"
+                      : "gap-5 sm:gap-7 lg:gap-8",
+                  )}
+                >
                   {banner.logos.map((logo) => (
                     <li key={logo.name}>
                       <Image
@@ -129,7 +153,11 @@ export function Hero({ locale, dictionary }: HeroProps) {
                         alt={logo.name}
                         width={logo.width}
                         height={logo.height}
-                        className={`${logo.className} brightness-0 invert opacity-90 transition-opacity duration-300 group-hover:opacity-100`}
+                        className={cn(
+                          logo.className,
+                          "opacity-90 transition-opacity duration-300 group-hover:opacity-100",
+                          logo.invert && "brightness-0 invert",
+                        )}
                       />
                     </li>
                   ))}

@@ -37,10 +37,15 @@ type CartContextValue = {
   /** True after localStorage cart has been read on the client. */
   hydrated: boolean;
   drawerOpen: boolean;
+  /** Set when the drawer opens right after add-to-cart (for highlight UX). */
+  lastAddedLineKey: string | null;
   openCart: () => void;
   closeCart: () => void;
   toggleCart: () => void;
   addItem: (line: Omit<CartLine, "quantity"> & { quantity?: number }) => void;
+  addItemAndOpenCart: (
+    line: Omit<CartLine, "quantity"> & { quantity?: number },
+  ) => void;
   removeItem: (slug: string, size?: string) => void;
   updateQuantity: (slug: string, quantity: number, size?: string) => void;
   clearCart: () => void;
@@ -54,6 +59,10 @@ const STORAGE_KEY = "motorock-cart";
 
 function lineKey(slug: string, size?: string) {
   return `${slug}:${size ?? ""}`;
+}
+
+export function cartLineKey(line: Pick<CartLine, "slug" | "size">) {
+  return lineKey(line.slug, line.size);
 }
 
 function readStoredLines(): CartLine[] {
@@ -78,6 +87,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [lines, setLines] = useState<CartLine[]>([]);
   const [hydrated, setHydrated] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [lastAddedLineKey, setLastAddedLineKey] = useState<string | null>(null);
 
   const openCart = useCallback(() => {
     setDrawerOpen(true);
@@ -85,6 +95,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const closeCart = useCallback(() => {
     setDrawerOpen(false);
+    setLastAddedLineKey(null);
   }, []);
 
   const toggleCart = useCallback(() => {
@@ -162,6 +173,20 @@ export function CartProvider({ children }: { children: ReactNode }) {
       });
     },
     [],
+  );
+
+  const addItemAndOpenCart = useCallback(
+    (line: Omit<CartLine, "quantity"> & { quantity?: number }) => {
+      const normalizedSize =
+        line.size && !isOneSizeLabel(line.size)
+          ? formatSizeLabel(line.size)
+          : line.size;
+
+      setLastAddedLineKey(lineKey(line.slug, normalizedSize));
+      setDrawerOpen(true);
+      addItem({ ...line, size: normalizedSize });
+    },
+    [addItem],
   );
 
   const removeItem = useCallback((slug: string, size?: string) => {
@@ -245,10 +270,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
       subtotal,
       hydrated,
       drawerOpen,
+      lastAddedLineKey,
       openCart,
       closeCart,
       toggleCart,
       addItem,
+      addItemAndOpenCart,
       removeItem,
       updateQuantity,
       clearCart,
@@ -260,10 +287,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
       subtotal,
       hydrated,
       drawerOpen,
+      lastAddedLineKey,
       openCart,
       closeCart,
       toggleCart,
       addItem,
+      addItemAndOpenCart,
       removeItem,
       updateQuantity,
       clearCart,

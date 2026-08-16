@@ -10,13 +10,15 @@ import {
   useState,
   type KeyboardEvent as ReactKeyboardEvent,
 } from "react";
+import { createPortal } from "react-dom";
+import { usePathname } from "next/navigation";
 import { GrainOverlay } from "@/components/ui/grain-overlay";
 import { useDictionary, useLocale } from "@/context/locale-context";
 import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries/en";
 import { buildEquipmentHubHref } from "@/lib/shop/category-url";
 import { localizedHref } from "@/i18n/paths";
-import { localizedProductHref } from "@/lib/shop/product-url";
+import { isProductPath, localizedProductHref } from "@/lib/shop/product-url";
 import { buildToolsCategoryHref } from "@/lib/shop/shop-category-route";
 import {
   HEADER_SEARCH_LIMIT,
@@ -376,7 +378,9 @@ function QuickBrowseCard({
 export function HeaderSearch({ inverted = false }: HeaderSearchProps) {
   const locale = useLocale();
   const dictionary = useDictionary();
+  const pathname = usePathname();
   const quickBrowse = getQuickBrowse(locale, dictionary);
+  const onProductPage = isProductPath(pathname);
   const dialogId = useId();
   const inputId = `${dialogId}-input`;
   const inputRef = useRef<HTMLInputElement>(null);
@@ -384,6 +388,7 @@ export function HeaderSearch({ inverted = false }: HeaderSearchProps) {
   const abortRef = useRef<AbortController | null>(null);
 
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<ProductSearchResult[]>([]);
   const [state, setState] = useState<SearchState>("idle");
@@ -402,6 +407,10 @@ export function HeaderSearch({ inverted = false }: HeaderSearchProps) {
 
   const openSearch = useCallback(() => {
     setOpen(true);
+  }, []);
+
+  useEffect(() => {
+    setMounted(true);
   }, []);
 
   useEffect(() => {
@@ -557,8 +566,228 @@ export function HeaderSearch({ inverted = false }: HeaderSearchProps) {
 
   const trimmedQuery = query.trim();
   const showQuickBrowse = trimmedQuery.length < 2;
+  const showQuickBrowseCards = showQuickBrowse && !onProductPage;
   const previewResult =
     activeIndex >= 0 ? (results[activeIndex] ?? null) : (results[0] ?? null);
+
+  const searchDialog =
+    open && mounted ? (
+      <div
+        id={dialogId}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={`${dialogId}-label`}
+        className="fixed inset-0 z-[130] flex h-[100dvh] flex-col overflow-hidden animate-search-in bg-ink pb-[var(--search-kb-inset,0px)] pt-[env(safe-area-inset-top)]"
+      >
+        <GrainOverlay variant="dark" emphasis className="opacity-100" />
+
+        <button
+          type="button"
+          aria-label={dictionary.search.close}
+          className="absolute inset-0 z-[1]"
+          onClick={close}
+        />
+
+        <div className="relative z-[2] flex min-h-0 flex-1 flex-col overflow-hidden">
+          <div className="site-container flex shrink-0 items-center justify-end py-3 sm:py-6">
+            <button
+              type="button"
+              onClick={close}
+              aria-label={dictionary.search.close}
+              className="inline-flex size-11 items-center justify-center text-paper/70 transition-colors hover:text-accent"
+            >
+              <CloseIcon className="size-5" />
+            </button>
+          </div>
+
+          <div className="site-container shrink-0 pb-5 sm:pb-8">
+            <label htmlFor={inputId} id={`${dialogId}-label`} className="sr-only">
+              {dictionary.search.label}
+            </label>
+            <h2 className="font-body text-2xl font-extrabold uppercase leading-none tracking-tight text-paper sm:text-3xl lg:text-4xl">
+              {dictionary.search.title}
+            </h2>
+
+            <div className="relative mt-6 sm:mt-8">
+              <div className="pointer-events-none absolute inset-x-0 -bottom-px h-px overflow-hidden">
+                <div
+                  className={cn(
+                    "h-full w-1/2 bg-gradient-to-r from-transparent via-accent to-transparent",
+                    state === "loading" && "animate-search-scan",
+                  )}
+                  aria-hidden="true"
+                />
+              </div>
+              <div className="flex items-center gap-4 border-b border-paper/15 pb-4 sm:gap-5 sm:pb-5">
+                <SearchIcon className="size-6 shrink-0 text-accent sm:size-8" />
+                <input
+                  ref={inputRef}
+                  id={inputId}
+                  type="search"
+                  enterKeyHint="search"
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  onKeyDown={handleInputKeyDown}
+                  placeholder={dictionary.search.placeholder}
+                  autoComplete="off"
+                  spellCheck={false}
+                  className="min-w-0 flex-1 bg-transparent font-body text-2xl font-bold uppercase tracking-tight text-paper outline-none placeholder:text-paper/20 sm:text-4xl"
+                />
+                <kbd className="hidden shrink-0 rounded-sm border border-paper/15 px-2 py-1 font-body text-[10px] font-bold uppercase tracking-aggressive text-paper/35 md:inline">
+                  ⌘K
+                </kbd>
+              </div>
+            </div>
+          </div>
+
+          <div className="site-container flex min-h-0 flex-1 flex-col overflow-hidden">
+            <div className="grid min-h-0 flex-1 gap-8 lg:grid-cols-[minmax(0,1fr)_22rem] xl:grid-cols-[minmax(0,1fr)_24rem] xl:gap-10">
+              <div className="relative flex h-full min-h-0 min-w-0 flex-col overflow-hidden">
+                <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-8 [-ms-overflow-style:none] [scrollbar-width:none] sm:pb-12 lg:pr-1 [&::-webkit-scrollbar]:hidden">
+                {showQuickBrowse ? (
+                  <div>
+                    {showQuickBrowseCards ? (
+                      <div className="hidden lg:block">
+                        <p className="font-body text-[10px] font-bold uppercase tracking-aggressive text-paper/40">
+                          {dictionary.search.browseShop}
+                        </p>
+                        <ul className="mt-4 grid grid-cols-3 gap-4">
+                          {quickBrowse.map((item, index) => (
+                            <li key={item.href} className="min-w-0">
+                              <QuickBrowseCard
+                                {...item}
+                                index={index}
+                                onSelect={close}
+                                className="size-full"
+                              />
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ) : null}
+                    <p
+                      className={cn(
+                        "font-body text-sm text-paper/45",
+                        showQuickBrowseCards && "mt-6",
+                      )}
+                    >
+                      {dictionary.search.typeHint}
+                    </p>
+                  </div>
+                ) : null}
+
+                {state === "loading" ? (
+                  <div className="space-y-3">
+                    {Array.from({ length: 4 }).map((_, index) => (
+                      <div
+                        key={index}
+                        className="flex animate-pulse items-center gap-4 border border-paper/5 px-3 py-3 sm:px-4"
+                      >
+                        <div className="size-16 rounded-sm bg-paper/10 sm:size-[4.5rem]" />
+                        <div className="flex-1 space-y-2">
+                          <div className="h-2 w-14 rounded-sm bg-paper/10" />
+                          <div className="h-3 w-4/5 rounded-sm bg-paper/10" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+
+                {state === "error" ? (
+                  <p className="py-8 font-body text-sm text-paper/60">
+                    {dictionary.search.unavailable}
+                  </p>
+                ) : null}
+
+                {state === "ready" && results.length === 0 ? (
+                  <p className="py-8 font-body text-sm text-paper/60">
+                    {dictionary.search.noResults}
+                  </p>
+                ) : null}
+
+                {results.length > 0 ? (
+                  <div className="space-y-1">
+                    <p
+                      className="mb-3 font-body text-[10px] font-bold uppercase tracking-aggressive text-paper/40"
+                      aria-live="polite"
+                    >
+                      {hasMore
+                        ? `${HEADER_SEARCH_LIMIT}+ ${dictionary.search.matches}`
+                        : `${results.length} ${
+                            results.length === 1
+                              ? dictionary.search.match
+                              : dictionary.search.matches
+                          }`}
+                    </p>
+                    {results.map((result, index) => (
+                      <SearchResultRow
+                        key={result.slug}
+                        result={result}
+                        query={trimmedQuery}
+                        active={index === activeIndex}
+                        index={index}
+                        locale={locale}
+                        dictionary={dictionary}
+                        onSelect={close}
+                        onHover={() => setActiveIndex(index)}
+                      />
+                    ))}
+                    {hasMore ? (
+                      <div className="border-t border-paper/10 pt-4">
+                        <Link
+                          href={localizedHref(
+                            locale,
+                            `/search?q=${encodeURIComponent(trimmedQuery)}`,
+                          )}
+                          onClick={close}
+                          className="inline-flex items-center gap-2 font-body text-xs font-bold uppercase tracking-aggressive text-paper/70 transition-colors hover:text-accent"
+                        >
+                          {dictionary.search.viewMore}
+                          <ArrowIcon className="size-3.5" />
+                        </Link>
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
+                </div>
+                <div
+                  className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-14 bg-gradient-to-t from-ink via-ink/70 to-transparent"
+                  aria-hidden="true"
+                />
+              </div>
+
+              <div className="hidden min-h-0 lg:block">
+                <div className="lg:sticky lg:top-0">
+                  <SearchPreview
+                    result={showQuickBrowse ? null : previewResult}
+                    query={trimmedQuery}
+                    locale={locale}
+                    dictionary={dictionary}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="site-container shrink-0 border-t border-paper/10 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+            <p className="font-body text-[11px] text-paper/35">
+              {state === "loading"
+                ? dictionary.search.scanning
+                : results.length > 0
+                  ? (
+                      <>
+                        <span className="sm:hidden">{dictionary.search.tapResult}</span>
+                        <span className="hidden sm:inline">
+                          {dictionary.search.keyboardHint}
+                        </span>
+                      </>
+                    )
+                  : dictionary.search.categoriesHint}
+            </p>
+          </div>
+        </div>
+      </div>
+    ) : null;
 
   return (
     <>
@@ -577,214 +806,7 @@ export function HeaderSearch({ inverted = false }: HeaderSearchProps) {
         <SearchIcon className="size-5 transition-transform duration-200 group-hover:scale-110" />
       </button>
 
-      {open ? (
-        <div
-          id={dialogId}
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby={`${dialogId}-label`}
-          className="fixed inset-0 z-[130] flex h-[100dvh] flex-col overflow-hidden animate-search-in bg-ink pb-[var(--search-kb-inset,0px)] pt-[env(safe-area-inset-top)]"
-        >
-          <GrainOverlay variant="dark" emphasis className="opacity-100" />
-
-          <button
-            type="button"
-            aria-label={dictionary.search.close}
-            className="absolute inset-0 z-[1]"
-            onClick={close}
-          />
-
-          <div className="relative z-[2] flex min-h-0 flex-1 flex-col overflow-hidden">
-            <div className="site-container flex shrink-0 items-center justify-end py-3 sm:py-6">
-              <button
-                type="button"
-                onClick={close}
-                aria-label={dictionary.search.close}
-                className="inline-flex size-11 items-center justify-center text-paper/70 transition-colors hover:text-accent"
-              >
-                <CloseIcon className="size-5" />
-              </button>
-            </div>
-
-            <div className="site-container shrink-0 pb-5 sm:pb-8">
-              <label htmlFor={inputId} id={`${dialogId}-label`} className="sr-only">
-                {dictionary.search.label}
-              </label>
-              <h2 className="font-body text-2xl font-extrabold uppercase leading-none tracking-tight text-paper sm:text-3xl lg:text-4xl">
-                {dictionary.search.title}
-              </h2>
-
-              <div className="relative mt-6 sm:mt-8">
-                <div className="pointer-events-none absolute inset-x-0 -bottom-px h-px overflow-hidden">
-                  <div
-                    className={cn(
-                      "h-full w-1/2 bg-gradient-to-r from-transparent via-accent to-transparent",
-                      state === "loading" && "animate-search-scan",
-                    )}
-                    aria-hidden="true"
-                  />
-                </div>
-                <div className="flex items-center gap-4 border-b border-paper/15 pb-4 sm:gap-5 sm:pb-5">
-                  <SearchIcon className="size-6 shrink-0 text-accent sm:size-8" />
-                  <input
-                    ref={inputRef}
-                    id={inputId}
-                    type="search"
-                    enterKeyHint="search"
-                    value={query}
-                    onChange={(event) => setQuery(event.target.value)}
-                    onKeyDown={handleInputKeyDown}
-                    placeholder={dictionary.search.placeholder}
-                    autoComplete="off"
-                    spellCheck={false}
-                    className="min-w-0 flex-1 bg-transparent font-body text-2xl font-bold uppercase tracking-tight text-paper outline-none placeholder:text-paper/20 sm:text-4xl"
-                  />
-                  <kbd className="hidden shrink-0 rounded-sm border border-paper/15 px-2 py-1 font-body text-[10px] font-bold uppercase tracking-aggressive text-paper/35 md:inline">
-                    ⌘K
-                  </kbd>
-                </div>
-              </div>
-            </div>
-
-            <div className="site-container min-h-0 flex-1 overflow-hidden">
-              <div className="grid h-full min-h-0 gap-8 lg:grid-cols-[minmax(0,1fr)_22rem] xl:grid-cols-[minmax(0,1fr)_24rem] xl:gap-10">
-                <div className="relative flex min-h-0 min-w-0 flex-col overflow-hidden">
-                  <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-8 [-ms-overflow-style:none] [scrollbar-width:none] sm:pb-12 lg:pr-1 [&::-webkit-scrollbar]:hidden">
-                  {showQuickBrowse ? (
-                    <div>
-                      <p className="font-body text-[10px] font-bold uppercase tracking-aggressive text-paper/40">
-                        {dictionary.search.browseShop}
-                      </p>
-                      <ul className="mt-4 flex flex-col gap-3 md:grid md:grid-cols-3 md:gap-4">
-                        {quickBrowse.map((item, index) => (
-                          <li key={item.href} className="md:min-w-0">
-                            <QuickBrowseCard
-                              {...item}
-                              index={index}
-                              onSelect={close}
-                              className="size-full"
-                            />
-                          </li>
-                        ))}
-                      </ul>
-                      <p className="mt-5 font-body text-sm text-paper/45 sm:mt-6">
-                        {dictionary.search.typeHint}
-                      </p>
-                    </div>
-                  ) : null}
-
-                  {state === "loading" ? (
-                    <div className="space-y-3">
-                      {Array.from({ length: 4 }).map((_, index) => (
-                        <div
-                          key={index}
-                          className="flex animate-pulse items-center gap-4 border border-paper/5 px-3 py-3 sm:px-4"
-                        >
-                          <div className="size-16 rounded-sm bg-paper/10 sm:size-[4.5rem]" />
-                          <div className="flex-1 space-y-2">
-                            <div className="h-2 w-14 rounded-sm bg-paper/10" />
-                            <div className="h-3 w-4/5 rounded-sm bg-paper/10" />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : null}
-
-                  {state === "error" ? (
-                    <p className="py-8 font-body text-sm text-paper/60">
-                      {dictionary.search.unavailable}
-                    </p>
-                  ) : null}
-
-                  {state === "ready" && results.length === 0 ? (
-                    <p className="py-8 font-body text-sm text-paper/60">
-                      {dictionary.search.noResults}
-                    </p>
-                  ) : null}
-
-                  {results.length > 0 ? (
-                    <div className="space-y-1">
-                      <p
-                        className="mb-3 font-body text-[10px] font-bold uppercase tracking-aggressive text-paper/40"
-                        aria-live="polite"
-                      >
-                        {hasMore
-                          ? `${HEADER_SEARCH_LIMIT}+ ${dictionary.search.matches}`
-                          : `${results.length} ${
-                              results.length === 1
-                                ? dictionary.search.match
-                                : dictionary.search.matches
-                            }`}
-                      </p>
-                      {results.map((result, index) => (
-                        <SearchResultRow
-                          key={result.slug}
-                          result={result}
-                          query={trimmedQuery}
-                          active={index === activeIndex}
-                          index={index}
-                          locale={locale}
-                          dictionary={dictionary}
-                          onSelect={close}
-                          onHover={() => setActiveIndex(index)}
-                        />
-                      ))}
-                      {hasMore ? (
-                        <div className="border-t border-paper/10 pt-4">
-                          <Link
-                            href={localizedHref(
-                              locale,
-                              `/search?q=${encodeURIComponent(trimmedQuery)}`,
-                            )}
-                            onClick={close}
-                            className="inline-flex items-center gap-2 font-body text-xs font-bold uppercase tracking-aggressive text-paper/70 transition-colors hover:text-accent"
-                          >
-                            {dictionary.search.viewMore}
-                            <ArrowIcon className="size-3.5" />
-                          </Link>
-                        </div>
-                      ) : null}
-                    </div>
-                  ) : null}
-                  </div>
-                  <div
-                    className="pointer-events-none absolute inset-x-0 bottom-8 h-12 bg-gradient-to-t from-ink to-transparent"
-                    aria-hidden="true"
-                  />
-                </div>
-
-                <div className="hidden min-h-0 lg:block">
-                  <div className="lg:sticky lg:top-0">
-                    <SearchPreview
-                      result={showQuickBrowse ? null : previewResult}
-                      query={trimmedQuery}
-                      locale={locale}
-                      dictionary={dictionary}
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="site-container shrink-0 border-t border-paper/10 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
-              <p className="font-body text-[11px] text-paper/35">
-                {state === "loading"
-                  ? dictionary.search.scanning
-                  : results.length > 0
-                    ? (
-                        <>
-                          <span className="sm:hidden">{dictionary.search.tapResult}</span>
-                          <span className="hidden sm:inline">
-                            {dictionary.search.keyboardHint}
-                          </span>
-                        </>
-                      )
-                    : dictionary.search.categoriesHint}
-              </p>
-            </div>
-          </div>
-        </div>
-      ) : null}
+      {searchDialog ? createPortal(searchDialog, document.body) : null}
     </>
   );
 }

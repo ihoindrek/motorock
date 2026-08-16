@@ -29,9 +29,7 @@ export function cartLineThumbnailClass(line: CartLine) {
   return {
     frame: isMotorcycle
       ? "aspect-[4/3] bg-white"
-      : "aspect-[4/5] bg-surface",
-    image: isMotorcycle
-      ? "object-contain object-center p-1.5"
-      : "object-cover object-center",
+      : "aspect-[4/5] bg-white",
+    image: "object-contain object-center p-1.5",
   };
 }
