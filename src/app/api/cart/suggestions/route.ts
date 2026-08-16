@@ -1,11 +1,14 @@
 import { isLocale } from "@/i18n/config";
 import {
-  getCatalogProductsBySlugs,
   getEquipmentCatalog,
+  getMotorcycleCatalog,
   getProductBySlug,
-  getSimilarProducts,
 } from "@/lib/graphql/products";
-import { pickCartComplementaryProducts } from "@/lib/shop/cart-complementary-products";
+import {
+  mergeSuggestionCandidates,
+  pickCartComplementaryProducts,
+} from "@/lib/shop/cart-complementary-products";
+import { pickSimilarProducts } from "@/lib/shop/similar-products";
 import type { ProductCategory } from "@/types/catalog-product";
 
 export const dynamic = "force-dynamic";
@@ -36,6 +39,19 @@ function toSuggestionProduct(
   };
 }
 
+function resolveCartCategories(
+  exclude: ReadonlySet<string>,
+  catalog: readonly { slug: string; category: ProductCategory }[],
+) {
+  const bySlug = new Map(catalog.map((product) => [product.slug, product.category]));
+
+  return new Set(
+    [...exclude]
+      .map((slug) => bySlug.get(slug))
+      .filter((category): category is ProductCategory => Boolean(category)),
+  );
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const slug = searchParams.get("slug")?.trim() ?? "";
@@ -59,54 +75,33 @@ export async function GET(request: Request) {
       return Response.json({ products: [] as CartSuggestionProduct[] });
     }
 
-    const cartProducts = exclude.size
-      ? await getCatalogProductsBySlugs([...exclude], locale)
-      : [];
-    const cartCategories = new Set<ProductCategory>(
-      cartProducts.map((item) => item.category),
-    );
+    const catalog =
+      product.type === "motorcycle"
+        ? await getMotorcycleCatalog(locale)
+        : await getEquipmentCatalog(locale);
+
+    const cartCategories = resolveCartCategories(exclude, catalog);
 
     let suggestions =
       product.type === "equipment"
-        ? pickCartComplementaryProducts(
-            product,
-            await getEquipmentCatalog(locale),
-            {
-              excludeSlugs: exclude,
-              cartCategories,
-              limit: 6,
-            },
-          )
+        ? pickCartComplementaryProducts(product, catalog, {
+            excludeSlugs: exclude,
+            cartCategories,
+            limit: 6,
+          })
         : [];
 
     if (suggestions.length < 6) {
-      const similar = await getSimilarProducts(product, 8, locale);
-      const seen = new Set(suggestions.map((item) => item.slug));
-
-      for (const candidate of similar) {
-        if (suggestions.length >= 6) {
-          break;
-        }
-
-        if (exclude.has(candidate.slug) || seen.has(candidate.slug)) {
-          continue;
-        }
-
-        if (
-          product.type === "equipment" &&
-          (candidate.category === product.category ||
-            cartCategories.has(candidate.category))
-        ) {
-          continue;
-        }
-
-        suggestions.push(candidate);
-        seen.add(candidate.slug);
-      }
+      const similar = pickSimilarProducts(product, catalog, 12);
+      suggestions = mergeSuggestionCandidates(product, suggestions, similar, {
+        excludeSlugs: exclude,
+        cartCategories,
+        limit: 6,
+      });
     }
 
     if (product.type === "motorcycle" && suggestions.length === 0) {
-      suggestions = await getSimilarProducts(product, 6, locale);
+      suggestions = pickSimilarProducts(product, catalog, 6);
     }
 
     const products = suggestions
@@ -115,7 +110,14 @@ export async function GET(request: Request) {
       .map((candidate) => toSuggestionProduct(candidate))
       .filter((candidate): candidate is CartSuggestionProduct => candidate !== null);
 
-    return Response.json({ products });
+    return Response.json(
+      { products },
+      {
+        headers: {
+          "Cache-Control": "private, max-age=60, stale-while-revalidate=300",
+        },
+      },
+    );
   } catch (error) {
     console.error("[cart/suggestions] fetch failed:", error);
     return Response.json(

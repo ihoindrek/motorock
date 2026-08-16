@@ -57,7 +57,6 @@ export function CartDrawerSuggestions({
 
         const response = await fetch(`/api/cart/suggestions?${params}`, {
           signal: controller.signal,
-          cache: "no-store",
         });
 
         const payload = (await response.json()) as {

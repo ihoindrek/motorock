@@ -771,7 +771,7 @@ export const getHomepageFavoriteCatalogs = cache(async (locale: Locale) => {
   return homepageFavoriteCatalogsByLocale[locale]();
 });
 
-export async function getMotorcycleCatalog(
+async function fetchMotorcycleCatalogUncached(
   locale: Locale = "en",
 ): Promise<CatalogProduct[]> {
   try {
@@ -791,7 +791,7 @@ export async function getMotorcycleCatalog(
   }
 }
 
-export async function getEquipmentCatalog(
+async function fetchEquipmentCatalogUncached(
   locale: Locale = "en",
 ): Promise<CatalogProduct[]> {
   try {
@@ -808,6 +808,48 @@ export async function getEquipmentCatalog(
     throw error;
   }
 }
+
+const getMotorcycleCatalogEn = unstable_cache(
+  () => fetchMotorcycleCatalogUncached("en"),
+  ["motorcycle-catalog", "en"],
+  { revalidate: 300, tags: ["woocommerce", "motorcycle-catalog"] },
+);
+
+const getMotorcycleCatalogEt = unstable_cache(
+  () => fetchMotorcycleCatalogUncached("et"),
+  ["motorcycle-catalog", "et"],
+  { revalidate: 300, tags: ["woocommerce", "motorcycle-catalog"] },
+);
+
+const getEquipmentCatalogEn = unstable_cache(
+  () => fetchEquipmentCatalogUncached("en"),
+  ["equipment-catalog", "en"],
+  { revalidate: 300, tags: ["woocommerce", "equipment-catalog"] },
+);
+
+const getEquipmentCatalogEt = unstable_cache(
+  () => fetchEquipmentCatalogUncached("et"),
+  ["equipment-catalog", "et"],
+  { revalidate: 300, tags: ["woocommerce", "equipment-catalog"] },
+);
+
+const motorcycleCatalogByLocale = {
+  en: getMotorcycleCatalogEn,
+  et: getMotorcycleCatalogEt,
+} as const;
+
+const equipmentCatalogByLocale = {
+  en: getEquipmentCatalogEn,
+  et: getEquipmentCatalogEt,
+} as const;
+
+export const getMotorcycleCatalog = cache(async (locale: Locale = "en") => {
+  return motorcycleCatalogByLocale[locale]();
+});
+
+export const getEquipmentCatalog = cache(async (locale: Locale = "en") => {
+  return equipmentCatalogByLocale[locale]();
+});
 
 export async function getEquipmentCatalogForRoute(
   route: CategoryRoute,
