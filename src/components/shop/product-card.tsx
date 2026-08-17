@@ -100,15 +100,7 @@ export function ProductCard({ product }: ProductCardProps) {
         <div
           className={`flex flex-1 flex-col gap-1 ${isMotorcycle ? "pt-2" : "pt-3"}`}
         >
-          <BrandLogo
-            brand={product.brand}
-            size="sm"
-            className={
-              isMotorcycle
-                ? "h-6 max-w-[132px] contrast-125 text-ink"
-                : undefined
-            }
-          />
+          <BrandLogo brand={product.brand} size="sm" />
           <h3
             className={`font-body normal-case leading-snug tracking-normal transition-colors duration-200 ${
               isMotorcycle

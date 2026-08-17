@@ -228,7 +228,7 @@ export const equipmentHubBrands = [
     name: "Holyfreedom",
     slug: "holyfreedom",
     image: "/tutonero.jpg",
-    logo: "/HF-square-Wht.png",
+    logo: "/HF-Wht.png",
     logoInvert: false,
     imageAlt: {
       en: "Holyfreedom motorcycle apparel",

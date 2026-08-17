@@ -59,11 +59,11 @@ export const brands: readonly BrandConfig[] = [
   {
     name: "Holyfreedom",
     slug: "holyfreedom",
-    logo: "/HF-square-Wht.png",
-    width: 72,
-    height: 72,
-    logoClass: "h-6 w-auto max-w-[56px] sm:h-7",
-    logoClassLg: "h-7 w-auto max-w-[64px] sm:h-8",
+    logo: "/HF-Wht.png",
+    width: 140,
+    height: 36,
+    logoClass: "h-4 w-auto max-w-[100px] sm:h-5",
+    logoClassLg: "h-5 w-auto max-w-[120px] sm:h-6",
   },
   {
     name: "Johnny Reb",

@@ -1,8 +1,6 @@
 "use client";
 
-import Image from "next/image";
 import { useDictionary } from "@/context/locale-context";
-import { getBrandByName } from "@/lib/shop/brands";
 import { cn } from "@/lib/utils";
 
 type MotorcycleBrandLogoFilterProps = {
@@ -31,8 +29,6 @@ function BrandLogoButton({
   compact?: boolean;
   filterByBrandLabel: string;
 }) {
-  const config = getBrandByName(brand);
-
   return (
     <button
       type="button"
@@ -40,37 +36,17 @@ function BrandLogoButton({
       aria-pressed={selected}
       aria-label={filterByBrandLabel}
       className={cn(
-        "relative flex items-center justify-center overflow-hidden rounded-xl transition-all duration-200",
+        "relative flex items-center justify-center overflow-hidden rounded-xl font-body text-[10px] font-bold uppercase tracking-aggressive transition-all duration-200 sm:text-xs",
         compact
           ? "h-12 min-w-[4.75rem] px-3"
           : "h-14 min-w-[5.5rem] px-4 sm:h-16 sm:min-w-[6.5rem] sm:px-5",
         selected
-          ? "bg-ink"
-          : "bg-paper hover:shadow-[0_8px_24px_-16px_rgba(11,11,11,0.15)]",
+          ? "bg-ink text-paper"
+          : "bg-paper text-ink/70 hover:text-ink hover:shadow-[0_8px_24px_-16px_rgba(11,11,11,0.15)]",
       )}
     >
       {selected ? <span aria-hidden="true" className={selectedBrandGlow} /> : null}
-      {config?.logo ? (
-        <Image
-          src={config.logo}
-          alt=""
-          width={config.width ?? 120}
-          height={config.height ?? 36}
-          className={cn(
-            "relative z-10 h-5 w-auto max-w-[88px] object-contain transition-[filter] duration-200 sm:h-6 sm:max-w-[100px]",
-            selected ? "brightness-0 invert" : "brightness-0",
-          )}
-        />
-      ) : (
-        <span
-          className={cn(
-            "relative z-10 font-body text-[10px] font-bold uppercase tracking-aggressive sm:text-xs",
-            selected ? "text-paper" : "text-ink",
-          )}
-        >
-          {brand}
-        </span>
-      )}
+      <span className="relative z-10">{brand}</span>
     </button>
   );
 }
