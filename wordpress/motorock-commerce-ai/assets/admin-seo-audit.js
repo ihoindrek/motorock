@@ -1,5 +1,5 @@
 (function () {
-  if (typeof MotorockCommerceAiSeoAudit === "undefined") {
+  if (typeof MotorockCommerceAiSeoAudit === "undefined" || typeof MotorockAiStorefront === "undefined") {
     return;
   }
 
@@ -364,20 +364,22 @@
     );
   }
 
+  function wrapRequest(promise) {
+    if (window.MotorockAiConnectionGuard) {
+      return MotorockAiConnectionGuard.wrap(promise);
+    }
+    return promise;
+  }
+
   function fetchAuditChunk(target) {
-    return window.wp.apiFetch({
-      url: MotorockCommerceAiSeoAudit.restUrl,
-      method: "POST",
-      headers: {
-        "X-WP-Nonce": MotorockCommerceAiSeoAudit.nonce,
-      },
-      data: {
+    return wrapRequest(
+      window.MotorockAiStorefront.runCommerceAi({
         skill: "seo.audit",
         locale: selectedLocale(),
         target: target,
         options: { dryRun: true },
-      },
-    });
+      })
+    );
   }
 
   function runAudit() {
@@ -479,32 +481,26 @@
       });
     });
 
-    return chain.then(function () {
-      showProgress(100, MotorockCommerceAiSeoAudit.i18n.finalizing, false);
-      return mergeAuditReport(allItems, scope, selectedLocale());
-    });
+    return wrapRequest(
+      chain.then(function () {
+        showProgress(100, MotorockCommerceAiSeoAudit.i18n.finalizing, false);
+        return mergeAuditReport(allItems, scope, selectedLocale());
+      })
+    );
   }
 
   function runFixRequest(input) {
-    return window.wp
-      .apiFetch({
-        url: MotorockCommerceAiSeoAudit.restUrl,
-        method: "POST",
-        headers: {
-          "X-WP-Nonce": MotorockCommerceAiSeoAudit.nonce,
+    return wrapRequest(
+      window.MotorockAiStorefront.runCommerceAi({
+        skill: "product.content_writer",
+        locale: input.locale || selectedLocale(),
+        target: { productId: input.productId },
+        options: {
+          dryRun: false,
+          publishStatus: "draft",
+          sections: input.sections,
         },
-        data: {
-          skill: "product.content_writer",
-          locale: input.locale || selectedLocale(),
-          target: { productId: input.productId },
-          options: {
-            dryRun: false,
-            publishStatus: "draft",
-            sections: input.sections,
-          },
-        },
-      })
-      .then(function (data) {
+      }).then(function (data) {
         var inner = data && data.result ? data.result : data;
         var ok = Boolean(
           (data && data.ok) ||
@@ -523,7 +519,8 @@
             (inner && inner.error) ||
             (ok ? "" : MotorockCommerceAiSeoAudit.i18n.fixFailed),
         };
-      });
+      })
+    );
   }
 
   function fixProductWithAi(button) {

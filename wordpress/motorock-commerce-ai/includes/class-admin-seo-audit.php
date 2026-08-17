@@ -22,20 +22,18 @@ class Motorock_Commerce_Ai_Admin_Seo_Audit {
 			MOTOROCK_COMMERCE_AI_VERSION
 		);
 
-		wp_enqueue_script(
+		wp_register_script(
 			'motorock-commerce-ai-admin-seo-audit',
 			plugins_url( '../assets/admin-seo-audit.js', __FILE__ ),
-			array( 'wp-api-fetch' ),
+			array( 'motorock-ai-storefront-client' ),
 			MOTOROCK_COMMERCE_AI_VERSION,
 			true
 		);
 
-		wp_localize_script(
+		Motorock_Ai_Admin_Storefront_Config::enqueue_for(
 			'motorock-commerce-ai-admin-seo-audit',
 			'MotorockCommerceAiSeoAudit',
 			array(
-				'restUrl'        => rest_url( 'motorock/v1/commerce-ai/run' ),
-				'nonce'          => wp_create_nonce( 'wp_rest' ),
 				'productEditUrl' => admin_url( 'post.php?post=PRODUCT_ID&action=edit' ),
 				'chunkSize'      => 20,
 				'maxBulkFix'     => 25,
@@ -48,15 +46,15 @@ class Motorock_Commerce_Ai_Admin_Seo_Audit {
 					'progressPosts'    => __( 'Scanning blog posts', 'motorock-commerce-ai' ),
 					'progressCount'    => __( '%1$d of ~%2$d items scanned', 'motorock-commerce-ai' ),
 					'progressFetching' => __( 'fetching batch (%1$d of ~%2$d so far)', 'motorock-commerce-ai' ),
-					'scanned'      => __( 'Scanned', 'motorock-commerce-ai' ),
-					'errors'       => __( 'Errors', 'motorock-commerce-ai' ),
-					'warnings'     => __( 'Warnings', 'motorock-commerce-ai' ),
-					'avgScore'     => __( 'Avg score', 'motorock-commerce-ai' ),
-					'noIssues'     => __( 'No issues found in scanned items.', 'motorock-commerce-ai' ),
-					'showingTop100'=> __( 'Showing top 100 of %d items.', 'motorock-commerce-ai' ),
-					'fixWithAi'    => __( 'Fix with AI', 'motorock-commerce-ai' ),
-					'openProduct'  => __( 'Open product', 'motorock-commerce-ai' ),
-					'fixRunning'   => __( 'Generating draft… 30–60s', 'motorock-commerce-ai' ),
+					'scanned'          => __( 'Scanned', 'motorock-commerce-ai' ),
+					'errors'           => __( 'Errors', 'motorock-commerce-ai' ),
+					'warnings'         => __( 'Warnings', 'motorock-commerce-ai' ),
+					'avgScore'         => __( 'Avg score', 'motorock-commerce-ai' ),
+					'noIssues'         => __( 'No issues found in scanned items.', 'motorock-commerce-ai' ),
+					'showingTop100'    => __( 'Showing top 100 of %d items.', 'motorock-commerce-ai' ),
+					'fixWithAi'        => __( 'Fix with AI', 'motorock-commerce-ai' ),
+					'openProduct'      => __( 'Open product', 'motorock-commerce-ai' ),
+					'fixRunning'       => __( 'Generating draft… 30–60s. WordPress stays responsive.', 'motorock-commerce-ai' ),
 					'fixDone'          => __( 'Draft saved — review in product editor', 'motorock-commerce-ai' ),
 					'fixFailed'        => __( 'AI fix failed.', 'motorock-commerce-ai' ),
 					'bulkFixSelected'  => __( 'Fix selected with AI', 'motorock-commerce-ai' ),

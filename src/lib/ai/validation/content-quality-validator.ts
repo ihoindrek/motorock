@@ -8,6 +8,7 @@ import type {
   SeoSectionOutput,
 } from "@/lib/ai/validation/schemas";
 import { findForbiddenHtmlTags } from "@/lib/ai/validation/html-safety";
+import { matchesLocaleHeuristic } from "@/lib/ai/domain/locale-heuristic";
 import { isForbiddenFaqTopic } from "@/lib/ai/validation/faq-forbidden-topics";
 
 export class ContentQualityValidator {
@@ -165,12 +166,4 @@ function mentionsBrand(text: string, brand: string) {
   return text.toLowerCase().includes(brand.toLowerCase());
 }
 
-function matchesLocaleHeuristic(text: string, locale: Locale) {
-  const sample = text.toLowerCase();
-
-  if (locale === "et") {
-    return /[äöüõ]/.test(sample) || /\b(ja|või|ning|le|on|jaoks)\b/.test(sample);
-  }
-
-  return !/[äöüõ]/.test(sample) || /\b(the|and|for|with|your)\b/.test(sample);
-}
+export { matchesLocaleHeuristic };

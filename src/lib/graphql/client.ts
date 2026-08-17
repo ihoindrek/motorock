@@ -59,7 +59,7 @@ function isRetryableGraphqlError(error: unknown): boolean {
     return false;
   }
 
-  const match = error.message.match(/^GraphQL HTTP (\d{3})$/);
+  const match = error.message.match(/^GraphQL HTTP (\d{3})\b/);
   if (!match) {
     return false;
   }
@@ -90,7 +90,13 @@ async function graphqlRequestOnce<TData, TVariables>(
   });
 
   if (!response.ok) {
-    throw new Error(`GraphQL HTTP ${response.status}`);
+    const body = await response.text();
+    const snippet = body.replace(/\s+/g, " ").trim().slice(0, 180);
+    throw new Error(
+      snippet
+        ? `GraphQL HTTP ${response.status}: ${snippet}`
+        : `GraphQL HTTP ${response.status}`,
+    );
   }
 
   const payload = (await response.json()) as GraphQLResponse<TData>;

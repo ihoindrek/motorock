@@ -1,5 +1,5 @@
 (function () {
-  if (typeof MotorockCommerceAiRelated === "undefined") {
+  if (typeof MotorockCommerceAiRelated === "undefined" || typeof MotorockAiStorefront === "undefined") {
     return;
   }
 
@@ -100,14 +100,16 @@
     return html;
   }
 
+  function wrapRequest(promise) {
+    if (window.MotorockAiConnectionGuard) {
+      return MotorockAiConnectionGuard.wrap(promise);
+    }
+    return promise;
+  }
+
   function runRelatedRequest(productId, locale, dryRun) {
-    return window.wp.apiFetch({
-      url: MotorockCommerceAiRelated.restUrl,
-      method: "POST",
-      headers: {
-        "X-WP-Nonce": MotorockCommerceAiRelated.nonce,
-      },
-      data: {
+    return wrapRequest(
+      window.MotorockAiStorefront.runCommerceAi({
         skill: "catalog.related_products",
         locale: locale,
         target: {
@@ -116,8 +118,8 @@
         options: {
           dryRun: dryRun,
         },
-      },
-    }).then(function (data) {
+      })
+    ).then(function (data) {
       var ok = data && (data.ok || (data.result && data.result.ok));
       return {
         ok: Boolean(ok),

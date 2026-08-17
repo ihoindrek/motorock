@@ -1,5 +1,10 @@
 import { clientRateLimitKey, isRateLimited } from "@/lib/forms/rate-limit";
 import { verifyAiRouteAuth } from "@/lib/ai/api/route-auth";
+import {
+  commerceAiJson,
+  commerceAiOptions,
+  commerceAiResponse,
+} from "@/lib/ai/api/admin-cors-response";
 import { mapAiEngineErrorResponse } from "@/lib/ai/api/error-response";
 import { AiEngineError } from "@/lib/ai/core/errors";
 import { parseAiBatchRequestBody } from "@/lib/ai/validation/schemas";
@@ -9,15 +14,20 @@ import { createCommerceAiContainer } from "@/lib/commerce-ai/core/container";
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
+export async function OPTIONS(request: Request) {
+  return commerceAiOptions(request);
+}
+
 export async function POST(request: Request) {
   const auth = verifyAiRouteAuth(request);
   if (!auth.ok) {
-    return auth.response;
+    return commerceAiResponse(request, auth.response);
   }
 
   const rateLimitKey = `ai-batch:${clientRateLimitKey(request)}`;
   if (isRateLimited(rateLimitKey)) {
-    return Response.json(
+    return commerceAiJson(
+      request,
       { ok: false, error: "Too many batch requests. Try again shortly." },
       { status: 429 },
     );
@@ -27,12 +37,13 @@ export async function POST(request: Request) {
   try {
     body = await request.json();
   } catch {
-    return Response.json({ ok: false, error: "Invalid request body" }, { status: 400 });
+    return commerceAiJson(request, { ok: false, error: "Invalid request body" }, { status: 400 });
   }
 
   const parsed = parseAiBatchRequestBody(body);
   if (!parsed) {
-    return Response.json(
+    return commerceAiJson(
+      request,
       {
         ok: false,
         error:
@@ -58,10 +69,10 @@ export async function POST(request: Request) {
     const result = unwrapCommerceAiBatchResult(commerceResult);
     const status = result.succeeded > 0 ? 200 : 422;
 
-    return Response.json(result, { status });
+    return commerceAiJson(request, result, { status });
   } catch (error) {
     if (error instanceof AiEngineError) {
-      return mapAiEngineErrorResponse(error);
+      return commerceAiResponse(request, mapAiEngineErrorResponse(error));
     }
 
     throw error;

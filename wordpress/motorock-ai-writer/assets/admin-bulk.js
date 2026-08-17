@@ -1,5 +1,5 @@
 (function () {
-  if (typeof MotorockAiBulk === "undefined") {
+  if (typeof MotorockAiBulk === "undefined" || typeof MotorockAiStorefront === "undefined") {
     return;
   }
 
@@ -98,6 +98,12 @@
     });
   }
 
+  function resumeGuard() {
+    if (window.MotorockAiConnectionGuard) {
+      MotorockAiConnectionGuard.resume();
+    }
+  }
+
   startButton.addEventListener("click", function () {
     var productIds = selectedProductIds();
     var locales = checkedValues("motorock_ai_bulk_locale");
@@ -130,6 +136,9 @@
     var startedAt = Date.now();
 
     startButton.disabled = true;
+    if (window.MotorockAiConnectionGuard) {
+      MotorockAiConnectionGuard.suspend();
+    }
     progressEl.innerHTML = "<p><strong>" + escapeHtml(MotorockAiBulk.i18n.starting) + "</strong></p>";
     logEl.innerHTML = "<ul class='motorock-ai-bulk-log-list'></ul>";
     var logList = logEl.querySelector(".motorock-ai-bulk-log-list");
@@ -151,6 +160,7 @@
           formatDuration(Date.now() - startedAt) +
           ")</p>";
         startButton.disabled = false;
+        resumeGuard();
         return;
       }
 
@@ -166,23 +176,17 @@
         escapeHtml(ids.join(", ")) +
         "]</p>";
 
-      window.wp
-        .apiFetch({
-          url: MotorockAiBulk.restBatchUrl,
-          method: "POST",
-          headers: {
-            "X-WP-Nonce": MotorockAiBulk.nonce,
-          },
-          data: {
-            productIds: ids,
-            locales: locales,
-            sections: sections,
-            dryRun: dryRun,
-            overwrite: overwrite,
-            publishStatus: "draft",
-            provider: provider,
-          },
-        })
+      window.MotorockAiStorefront.batchProductContent({
+        productIds: ids,
+        locales: locales,
+        sections: sections,
+        options: {
+          dryRun: dryRun,
+          overwrite: overwrite,
+          publishStatus: "draft",
+          provider: provider,
+        },
+      })
         .then(function (data) {
           totalSucceeded += data && typeof data.succeeded === "number" ? data.succeeded : 0;
           totalFailed += data && typeof data.failed === "number" ? data.failed : 0;
@@ -218,6 +222,7 @@
           progressEl.innerHTML =
             "<p class='notice notice-error inline'>" + escapeHtml(message) + "</p>";
           startButton.disabled = false;
+          resumeGuard();
         });
     }
 

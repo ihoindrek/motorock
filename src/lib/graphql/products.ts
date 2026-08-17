@@ -323,7 +323,7 @@ async function fetchAllCatalogNodes(
     const data = await graphqlRequest<CatalogPageResponse, CatalogPageVariables>(
       PRODUCT_CATALOG_PAGE,
       variables,
-      { next: { revalidate: 3600 } },
+      { next: { revalidate: 3600 }, retryAttempts: 5 },
     );
 
     rawNodes.push(...data.products.nodes);

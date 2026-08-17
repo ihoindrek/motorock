@@ -15,23 +15,21 @@ class Motorock_Commerce_Ai_Admin_Blog {
 			return;
 		}
 
-		wp_enqueue_script(
+		wp_register_script(
 			'motorock-commerce-ai-admin-blog',
 			plugins_url( '../assets/admin-blog.js', __FILE__ ),
-			array( 'wp-api-fetch' ),
+			array( 'motorock-ai-storefront-client' ),
 			MOTOROCK_COMMERCE_AI_VERSION,
 			true
 		);
 
-		wp_localize_script(
+		Motorock_Ai_Admin_Storefront_Config::enqueue_for(
 			'motorock-commerce-ai-admin-blog',
 			'MotorockCommerceAiBlog',
 			array(
-				'restUrl'     => rest_url( 'motorock/v1/commerce-ai/run' ),
-				'nonce'       => wp_create_nonce( 'wp_rest' ),
 				'postEditUrl' => admin_url( 'post.php?post=POST_ID&action=edit' ),
 				'i18n'        => array(
-					'running'   => __( 'Generating article… this can take 30–90 seconds.', 'motorock-commerce-ai' ),
+					'running'   => __( 'Generating article… this can take 30–90 seconds. WordPress stays responsive.', 'motorock-commerce-ai' ),
 					'dryRunOk'  => __( 'Dry run complete — preview below. Nothing saved.', 'motorock-commerce-ai' ),
 					'saved'     => __( 'Draft post created in WordPress.', 'motorock-commerce-ai' ),
 					'failed'    => __( 'Generation failed.', 'motorock-commerce-ai' ),

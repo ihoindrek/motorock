@@ -39,6 +39,16 @@ class Motorock_Commerce_Ai_Rest_Proxy {
 			)
 		);
 
+		register_rest_route(
+			'motorock/v1',
+			'/commerce-ai/health',
+			array(
+				'methods'             => 'GET',
+				'callback'            => array( __CLASS__, 'handle_health' ),
+				'permission_callback' => array( __CLASS__, 'verify_admin' ),
+			)
+		);
+
 		// Legacy aliases used by existing admin JS.
 		register_rest_route(
 			'motorock/v1',
@@ -65,17 +75,118 @@ class Motorock_Commerce_Ai_Rest_Proxy {
 		return current_user_can( 'edit_products' );
 	}
 
-	public static function handle_skills() {
+	public static function handle_health() {
+		$health = self::check_storefront_health( '/api/commerce-ai/skills' );
+
+		if ( is_wp_error( $health ) ) {
+			return $health;
+		}
+
+		return new WP_REST_Response( $health, $health['ok'] ? 200 : 502 );
+	}
+
+	public static function check_storefront_health( $path = '/api/commerce-ai/skills' ) {
 		$api_url    = self::get_api_url();
 		$api_secret = self::get_api_secret();
 
 		if ( ! $api_url || ! $api_secret ) {
+			return array(
+				'ok'          => false,
+				'configured'  => false,
+				'storefrontUrl' => $api_url ?: null,
+				'error'       => 'MOTOROCK_AI_API_SECRET or MOTOROCK_STOREFRONT_URL is missing in wp-config.php',
+			);
+		}
+
+		$response = wp_remote_get(
+			$api_url . $path,
+			array(
+				'timeout'     => 20,
+				'redirection' => 0,
+				'headers'     => array(
+					'Authorization' => 'Bearer ' . $api_secret,
+				),
+			)
+		);
+
+		if ( is_wp_error( $response ) ) {
+			return array(
+				'ok'            => false,
+				'configured'    => true,
+				'storefrontUrl' => $api_url,
+				'error'         => $response->get_error_message(),
+			);
+		}
+
+		$status = (int) wp_remote_retrieve_response_code( $response );
+		$body   = wp_remote_retrieve_body( $response );
+		$data   = json_decode( $body, true );
+
+		if ( $status >= 300 && $status < 400 ) {
+			return array(
+				'ok'            => false,
+				'configured'    => true,
+				'storefrontUrl' => $api_url,
+				'httpStatus'    => $status,
+				'error'         => 'Storefront URL redirects (HTTP ' . $status . '). Use https://motorock.eu without shop/www.',
+			);
+		}
+
+		if ( ! is_array( $data ) ) {
+			$snippet = is_string( $body ) ? substr( preg_replace( '/\s+/', ' ', trim( $body ) ), 0, 180 ) : '';
+
+			return array(
+				'ok'            => false,
+				'configured'    => true,
+				'storefrontUrl' => $api_url,
+				'httpStatus'    => $status,
+				'error'         => 'Invalid JSON from storefront (HTTP ' . $status . '). Check MOTOROCK_STOREFRONT_URL and MOTOROCK_AI_API_SECRET.',
+				'responseSnippet' => $snippet,
+			);
+		}
+
+		if ( $status === 401 ) {
+			return array(
+				'ok'            => false,
+				'configured'    => true,
+				'storefrontUrl' => $api_url,
+				'httpStatus'    => $status,
+				'error'         => 'Unauthorized — MOTOROCK_AI_API_SECRET in wp-config.php must match AI_API_SECRET on Vercel.',
+			);
+		}
+
+		if ( $status >= 400 ) {
+			return array(
+				'ok'            => false,
+				'configured'    => true,
+				'storefrontUrl' => $api_url,
+				'httpStatus'    => $status,
+				'error'         => isset( $data['error'] ) ? (string) $data['error'] : 'Storefront health check failed.',
+			);
+		}
+
+		return array(
+			'ok'            => true,
+			'configured'    => true,
+			'storefrontUrl' => $api_url,
+			'httpStatus'    => $status,
+			'skills'        => isset( $data['skills'] ) && is_array( $data['skills'] ) ? count( $data['skills'] ) : 0,
+		);
+	}
+
+	public static function handle_skills() {
+		$health = self::check_storefront_health( '/api/commerce-ai/skills' );
+
+		if ( empty( $health['ok'] ) ) {
 			return new WP_Error(
 				'motorock_commerce_ai_api_not_configured',
-				'MOTOROCK_AI_API_SECRET or storefront URL is not configured in wp-config.php',
+				$health['error'] ?? 'Commerce AI storefront is not reachable',
 				array( 'status' => 503 )
 			);
 		}
+
+		$api_url    = self::get_api_url();
+		$api_secret = self::get_api_secret();
 
 		$response = wp_remote_get(
 			$api_url . '/api/commerce-ai/skills',
@@ -223,14 +334,7 @@ class Motorock_Commerce_Ai_Rest_Proxy {
 
 		$response = wp_remote_post(
 			$api_url . '/api/commerce-ai/run',
-			array(
-				'timeout' => 300,
-				'headers' => array(
-					'Content-Type'  => 'application/json',
-					'Authorization' => 'Bearer ' . $api_secret,
-				),
-				'body'    => wp_json_encode( $payload ),
-			)
+			self::build_proxy_request_args( $payload )
 		);
 
 		return self::proxy_storefront_response( $response, $legacy );
@@ -259,14 +363,7 @@ class Motorock_Commerce_Ai_Rest_Proxy {
 
 		$response = wp_remote_post(
 			$api_url . '/api/commerce-ai/batch',
-			array(
-				'timeout' => 300,
-				'headers' => array(
-					'Content-Type'  => 'application/json',
-					'Authorization' => 'Bearer ' . $api_secret,
-				),
-				'body'    => wp_json_encode( $payload ),
-			)
+			self::build_proxy_request_args( $payload )
 		);
 
 		return self::proxy_storefront_response( $response, $legacy );
@@ -286,14 +383,19 @@ class Motorock_Commerce_Ai_Rest_Proxy {
 
 		if ( ! is_array( $data ) ) {
 			$body    = wp_remote_retrieve_body( $response );
-			$status  = (int) wp_remote_retrieve_response_code( $response );
 			$snippet = is_string( $body ) ? substr( preg_replace( '/\s+/', ' ', trim( $body ) ), 0, 180 ) : '';
+			$hint    = 'Use MOTOROCK_STOREFRONT_URL=https://motorock.eu (not shop/www) and match MOTOROCK_AI_API_SECRET to Vercel AI_API_SECRET.';
+
+			if ( $status === 401 ) {
+				$hint = 'MOTOROCK_AI_API_SECRET in wp-config.php must match AI_API_SECRET on Vercel.';
+			}
 
 			return new WP_Error(
 				'motorock_commerce_ai_api_invalid_response',
 				sprintf(
-					'Storefront Commerce AI API returned an invalid response (HTTP %1$d). Use MOTOROCK_STOREFRONT_URL=https://motorock.eu (not shop/www).%2$s',
+					'Storefront Commerce AI API returned an invalid response (HTTP %1$d). %2$s%3$s',
 					$status,
+					$hint,
 					$snippet ? ' Response: ' . $snippet : ''
 				),
 				array( 'status' => 502 )
@@ -305,6 +407,18 @@ class Motorock_Commerce_Ai_Rest_Proxy {
 		}
 
 		return new WP_REST_Response( $data, $status > 0 ? $status : 502 );
+	}
+
+	private static function build_proxy_request_args( array $payload ) {
+		return array(
+			'timeout'     => 300,
+			'redirection' => 0,
+			'headers'     => array(
+				'Content-Type'  => 'application/json',
+				'Authorization' => 'Bearer ' . self::get_api_secret(),
+			),
+			'body'        => wp_json_encode( $payload ),
+		);
 	}
 
 	private static function unwrap_legacy_admin_response( array $data ) {

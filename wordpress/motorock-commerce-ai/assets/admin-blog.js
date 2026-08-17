@@ -1,5 +1,5 @@
 (function () {
-  if (typeof MotorockCommerceAiBlog === "undefined") {
+  if (typeof MotorockCommerceAiBlog === "undefined" || typeof MotorockAiStorefront === "undefined") {
     return;
   }
 
@@ -102,13 +102,8 @@
     button.disabled = true;
     resultEl.innerHTML = "<p>" + escapeHtml(MotorockCommerceAiBlog.i18n.running) + "</p>";
 
-    window.wp.apiFetch({
-      url: MotorockCommerceAiBlog.restUrl,
-      method: "POST",
-      headers: {
-        "X-WP-Nonce": MotorockCommerceAiBlog.nonce,
-      },
-      data: {
+    wrapRequest(
+      window.MotorockAiStorefront.runCommerceAi({
         skill: "content.blog_generate",
         locale: selectedLocale(),
         target: target,
@@ -116,8 +111,8 @@
           dryRun: document.getElementById("motorock-blog-dry-run").checked,
           publishStatus: "draft",
         },
-      },
-    })
+      })
+    )
       .then(function (data) {
         var ok = data && (data.ok || (data.result && data.result.ok));
         resultEl.innerHTML =

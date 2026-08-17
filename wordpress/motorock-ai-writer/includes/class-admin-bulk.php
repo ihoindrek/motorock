@@ -179,31 +179,29 @@ class Motorock_Ai_Admin_Bulk {
 			'0.4.0'
 		);
 
-		wp_enqueue_script(
+		wp_register_script(
 			'motorock-ai-admin-bulk',
 			content_url( 'mu-plugins/motorock-ai-writer/assets/admin-bulk.js' ),
-			array( 'wp-api-fetch' ),
-			'0.4.0',
+			array( 'motorock-ai-storefront-client' ),
+			defined( 'MOTOROCK_COMMERCE_AI_VERSION' ) ? MOTOROCK_COMMERCE_AI_VERSION : '0.5.6',
 			true
 		);
 
-		wp_localize_script(
+		Motorock_Ai_Admin_Storefront_Config::enqueue_for(
 			'motorock-ai-admin-bulk',
 			'MotorockAiBulk',
 			array(
-				'restBatchUrl' => rest_url( 'motorock/v1/ai/batch' ),
-				'nonce'        => wp_create_nonce( 'wp_rest' ),
-				'chunkSize'    => self::DEFAULT_CHUNK_SIZE,
-				'i18n'         => array(
-					'starting'       => __( 'Starting batch…', 'motorock-ai-writer' ),
-					'chunk'          => __( 'Processing chunk', 'motorock-ai-writer' ),
-					'done'           => __( 'Batch complete.', 'motorock-ai-writer' ),
-					'failed'         => __( 'Batch failed.', 'motorock-ai-writer' ),
-					'notConfigured'  => __( 'AI API not configured on server (MOTOROCK_AI_API_SECRET).', 'motorock-ai-writer' ),
-					'pickProducts'   => __( 'Select at least one product.', 'motorock-ai-writer' ),
-					'pickSections'   => __( 'Pick at least one locale and section.', 'motorock-ai-writer' ),
-					'succeeded'      => __( 'Succeeded', 'motorock-ai-writer' ),
-					'failedCount'    => __( 'Failed', 'motorock-ai-writer' ),
+				'chunkSize' => self::DEFAULT_CHUNK_SIZE,
+				'i18n'      => array(
+					'starting'      => __( 'Starting batch…', 'motorock-ai-writer' ),
+					'chunk'         => __( 'Processing chunk', 'motorock-ai-writer' ),
+					'done'          => __( 'Batch complete.', 'motorock-ai-writer' ),
+					'failed'        => __( 'Batch failed.', 'motorock-ai-writer' ),
+					'notConfigured' => __( 'AI API not configured on server (MOTOROCK_AI_API_SECRET).', 'motorock-ai-writer' ),
+					'pickProducts'  => __( 'Select at least one product.', 'motorock-ai-writer' ),
+					'pickSections'  => __( 'Pick at least one locale and section.', 'motorock-ai-writer' ),
+					'succeeded'     => __( 'Succeeded', 'motorock-ai-writer' ),
+					'failedCount'   => __( 'Failed', 'motorock-ai-writer' ),
 				),
 			)
 		);

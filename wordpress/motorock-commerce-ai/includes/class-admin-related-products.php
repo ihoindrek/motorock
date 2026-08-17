@@ -57,23 +57,21 @@ class Motorock_Commerce_Ai_Admin_Related_Products {
 			MOTOROCK_COMMERCE_AI_VERSION
 		);
 
-		wp_enqueue_script(
+		wp_register_script(
 			'motorock-commerce-ai-admin-related',
 			plugins_url( '../assets/admin-related-products.js', __FILE__ ),
-			array( 'wp-api-fetch' ),
+			array( 'motorock-ai-storefront-client' ),
 			MOTOROCK_COMMERCE_AI_VERSION,
 			true
 		);
 
-		wp_localize_script(
+		Motorock_Ai_Admin_Storefront_Config::enqueue_for(
 			'motorock-commerce-ai-admin-related',
 			'MotorockCommerceAiRelated',
 			array(
-				'restUrl'  => rest_url( 'motorock/v1/commerce-ai/run' ),
-				'nonce'    => wp_create_nonce( 'wp_rest' ),
-				'maxBulk'  => self::MAX_PRODUCTS,
-				'i18n'     => array(
-					'running'          => __( 'Generating recommendations… this can take 20–60 seconds.', 'motorock-commerce-ai' ),
+				'maxBulk' => self::MAX_PRODUCTS,
+				'i18n'    => array(
+					'running'          => __( 'Generating recommendations… this can take 20–60 seconds. WordPress stays responsive.', 'motorock-commerce-ai' ),
 					'dryRunOk'         => __( 'Dry run complete — preview below. Nothing saved.', 'motorock-commerce-ai' ),
 					'saved'            => __( 'Related product slugs saved to WooCommerce meta.', 'motorock-commerce-ai' ),
 					'failed'           => __( 'Generation failed.', 'motorock-commerce-ai' ),

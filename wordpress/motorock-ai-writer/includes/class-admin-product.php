@@ -30,38 +30,37 @@ class Motorock_Ai_Admin_Product {
 			return;
 		}
 
-		wp_enqueue_script(
-			'motorock-ai-admin-product',
-			content_url( 'mu-plugins/motorock-ai-writer/assets/admin-product.js' ),
-			array( 'wp-api-fetch' ),
-			'0.3.2',
-			true
-		);
-
 		$product_id = (int) get_the_ID();
 		$draft_locales = self::list_draft_locales( $product_id );
 
-		wp_localize_script(
+		wp_register_script(
+			'motorock-ai-admin-product',
+			content_url( 'mu-plugins/motorock-ai-writer/assets/admin-product.js' ),
+			array( 'wp-api-fetch', 'motorock-ai-storefront-client' ),
+			MOTOROCK_COMMERCE_AI_VERSION,
+			true
+		);
+
+		Motorock_Ai_Admin_Storefront_Config::enqueue_for(
 			'motorock-ai-admin-product',
 			'MotorockAiAdmin',
 			array(
-				'restUrl'       => rest_url( 'motorock/v1/ai/generate' ),
-				'publishUrl'    => rest_url( 'motorock/v1/ai/publish-admin' ),
-				'nonce'         => wp_create_nonce( 'wp_rest' ),
-				'productId'     => $product_id,
-				'draftLocales'  => $draft_locales,
-				'status'        => self::read_status( $product_id ),
-				'i18n'          => array(
-					'running'        => __( 'Generating… this can take 30–60 seconds.', 'motorock-ai-writer' ),
-					'dryRunOk'       => __( 'Dry run complete — preview below. Nothing saved.', 'motorock-ai-writer' ),
-					'saved'          => __( 'Content saved to WooCommerce.', 'motorock-ai-writer' ),
-					'savedDraft'     => __( 'Draft saved for review. Use Approve & publish when ready.', 'motorock-ai-writer' ),
-					'published'      => __( 'Draft content published.', 'motorock-ai-writer' ),
-					'failed'         => __( 'Generation failed.', 'motorock-ai-writer' ),
-					'notConfigured'  => __( 'AI API not configured on server (MOTOROCK_AI_API_SECRET).', 'motorock-ai-writer' ),
-					'pickSections'   => __( 'Pick at least one locale and section.', 'motorock-ai-writer' ),
-					'publishing'     => __( 'Publishing draft content…', 'motorock-ai-writer' ),
-					'publishingAll'  => __( 'Publishing draft content for all locales…', 'motorock-ai-writer' ),
+				'publishUrl'   => rest_url( 'motorock/v1/ai/publish-admin' ),
+				'nonce'        => wp_create_nonce( 'wp_rest' ),
+				'productId'    => $product_id,
+				'draftLocales' => $draft_locales,
+				'status'       => self::read_status( $product_id ),
+				'i18n'         => array(
+					'running'       => __( 'Generating… this can take 30–60 seconds. WordPress stays responsive.', 'motorock-ai-writer' ),
+					'dryRunOk'      => __( 'Dry run complete — preview below. Nothing saved.', 'motorock-ai-writer' ),
+					'saved'         => __( 'Content saved to WooCommerce.', 'motorock-ai-writer' ),
+					'savedDraft'    => __( 'Draft saved for review. Use Approve & publish when ready.', 'motorock-ai-writer' ),
+					'published'     => __( 'Draft content published.', 'motorock-ai-writer' ),
+					'failed'        => __( 'Generation failed.', 'motorock-ai-writer' ),
+					'notConfigured' => __( 'AI API not configured on server (MOTOROCK_AI_API_SECRET).', 'motorock-ai-writer' ),
+					'pickSections'  => __( 'Pick at least one locale and section.', 'motorock-ai-writer' ),
+					'publishing'    => __( 'Publishing draft content…', 'motorock-ai-writer' ),
+					'publishingAll' => __( 'Publishing draft content for all locales…', 'motorock-ai-writer' ),
 				),
 			)
 		);

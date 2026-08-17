@@ -87,16 +87,18 @@ function sectionHasExistingContent(
   section: AiContentSection,
   product: NormalizedProduct,
 ) {
+  const locale = product.locale;
+
   if (section === "description") {
-    return hasExistingDescriptionContent(product.existing);
+    return hasExistingDescriptionContent(product.existing, locale);
   }
 
   if (section === "seo") {
-    return hasExistingSeoContent(product.existing);
+    return hasExistingSeoContent(product.existing, locale);
   }
 
   if (section === "faq") {
-    return hasExistingFaqContent(product.existing);
+    return hasExistingFaqContent(product.existing, locale);
   }
 
   return hasExistingAltTextContent(product);

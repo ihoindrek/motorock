@@ -1,5 +1,5 @@
 (function () {
-  if (typeof MotorockAiAdmin === "undefined") {
+  if (typeof MotorockAiAdmin === "undefined" || typeof MotorockAiStorefront === "undefined") {
     return;
   }
 
@@ -108,6 +108,13 @@
     return html;
   }
 
+  function wrapRequest(promise) {
+    if (window.MotorockAiConnectionGuard) {
+      return MotorockAiConnectionGuard.wrap(promise);
+    }
+    return promise;
+  }
+
   button.addEventListener("click", function () {
     var locales = checkedValues("motorock_ai_locale");
     var sections = checkedValues("motorock_ai_section");
@@ -125,13 +132,8 @@
     button.disabled = true;
     resultEl.innerHTML = "<p>" + escapeHtml(MotorockAiAdmin.i18n.running) + "</p>";
 
-    window.wp.apiFetch({
-      url: MotorockAiAdmin.restUrl,
-      method: "POST",
-      headers: {
-        "X-WP-Nonce": MotorockAiAdmin.nonce,
-      },
-      data: {
+    wrapRequest(
+      window.MotorockAiStorefront.generateProductContent({
         productId: MotorockAiAdmin.productId,
         locales: locales,
         sections: sections,
@@ -139,8 +141,8 @@
         overwrite: overwrite,
         publishStatus: publishStatus,
         provider: provider,
-      },
-    })
+      })
+    )
       .then(function (data) {
         var ok = data && (data.ok || data.succeeded > 0);
         var headline = dryRun
@@ -195,17 +197,19 @@
         ) +
         "</p>";
 
-      window.wp.apiFetch({
-        url: MotorockAiAdmin.publishUrl,
-        method: "POST",
-        headers: {
-          "X-WP-Nonce": MotorockAiAdmin.nonce,
-        },
-        data: {
-          productId: MotorockAiAdmin.productId,
-          locales: draftLocales,
-        },
-      })
+      wrapRequest(
+        window.wp.apiFetch({
+          url: MotorockAiAdmin.publishUrl,
+          method: "POST",
+          headers: {
+            "X-WP-Nonce": MotorockAiAdmin.nonce,
+          },
+          data: {
+            productId: MotorockAiAdmin.productId,
+            locales: draftLocales,
+          },
+        })
+      )
         .then(function (data) {
           if (data && data.ok) {
             resultEl.innerHTML =

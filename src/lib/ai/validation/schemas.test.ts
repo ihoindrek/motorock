@@ -82,6 +82,32 @@ describe("AI domain helpers", () => {
     ).toBe(true);
   });
 
+  it("treats WPML-copied English copy as empty for Estonian locale", () => {
+    expect(
+      hasExistingDescriptionContent(
+        {
+          shortDescription:
+            "<p>The Holyfreedom Definitive Jacket in Orange brings vintage style to everyday riding.</p>",
+          description: "<p>" + "Detailed English riding jacket copy. ".repeat(20) + "</p>",
+        },
+        "et",
+      ),
+    ).toBe(false);
+  });
+
+  it("detects Estonian description as existing for et locale", () => {
+    expect(
+      hasExistingDescriptionContent(
+        {
+          shortDescription:
+            "<p>Holyfreedom Definitive Jacket Orange on vintage-stiilis mootorrattajope igapäevaseks sõiduks.</p>",
+          description: "<p>" + "Eestikeelne pikk tootekirjeldus ja detailid. ".repeat(20) + "</p>",
+        },
+        "et",
+      ),
+    ).toBe(true);
+  });
+
   it("flags forbidden HTML tags", () => {
     expect(findForbiddenHtmlTags('<p>ok</p><script>alert(1)</script>')).toContain("script");
   });

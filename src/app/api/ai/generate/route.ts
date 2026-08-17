@@ -1,5 +1,10 @@
 import { clientRateLimitKey, isRateLimited } from "@/lib/forms/rate-limit";
 import { verifyAiRouteAuth } from "@/lib/ai/api/route-auth";
+import {
+  commerceAiJson,
+  commerceAiOptions,
+  commerceAiResponse,
+} from "@/lib/ai/api/admin-cors-response";
 import { mapAiEngineErrorResponse } from "@/lib/ai/api/error-response";
 import { AiEngineError } from "@/lib/ai/core/errors";
 import { parseAiGenerateRequestBody } from "@/lib/ai/validation/schemas";
@@ -9,15 +14,20 @@ import { createCommerceAiContainer } from "@/lib/commerce-ai/core/container";
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
 
+export async function OPTIONS(request: Request) {
+  return commerceAiOptions(request);
+}
+
 export async function POST(request: Request) {
   const auth = verifyAiRouteAuth(request);
   if (!auth.ok) {
-    return auth.response;
+    return commerceAiResponse(request, auth.response);
   }
 
   const rateLimitKey = `ai:${clientRateLimitKey(request)}`;
   if (isRateLimited(rateLimitKey)) {
-    return Response.json(
+    return commerceAiJson(
+      request,
       { ok: false, error: "Too many requests. Try again shortly." },
       { status: 429 },
     );
@@ -27,12 +37,12 @@ export async function POST(request: Request) {
   try {
     body = await request.json();
   } catch {
-    return Response.json({ ok: false, error: "Invalid request body" }, { status: 400 });
+    return commerceAiJson(request, { ok: false, error: "Invalid request body" }, { status: 400 });
   }
 
   const parsed = parseAiGenerateRequestBody(body);
   if (!parsed) {
-    return Response.json({ ok: false, error: "Invalid generate request" }, { status: 400 });
+    return commerceAiJson(request, { ok: false, error: "Invalid generate request" }, { status: 400 });
   }
 
   const { engine } = createCommerceAiContainer();
@@ -56,10 +66,10 @@ export async function POST(request: Request) {
           ? 501
           : 422;
 
-    return Response.json(result, { status });
+    return commerceAiJson(request, result, { status });
   } catch (error) {
     if (error instanceof AiEngineError) {
-      return mapAiEngineErrorResponse(error);
+      return commerceAiResponse(request, mapAiEngineErrorResponse(error));
     }
 
     throw error;
@@ -69,7 +79,7 @@ export async function POST(request: Request) {
 export async function GET(request: Request) {
   const auth = verifyAiRouteAuth(request);
   if (!auth.ok) {
-    return auth.response;
+    return commerceAiResponse(request, auth.response);
   }
 
   const url = new URL(request.url);
@@ -77,7 +87,8 @@ export async function GET(request: Request) {
   const localeParam = url.searchParams.get("locale");
 
   if (!Number.isInteger(productId) || productId <= 0 || (localeParam !== "en" && localeParam !== "et")) {
-    return Response.json(
+    return commerceAiJson(
+      request,
       { ok: false, error: "productId and locale query params are required" },
       { status: 400 },
     );

@@ -126,6 +126,7 @@ class Motorock_Commerce_Ai_Admin_Dashboard {
 		}
 
 		$skills = self::get_skill_catalog();
+		$health = Motorock_Commerce_Ai_Rest_Proxy::check_storefront_health();
 		$domains = array(
 			'product'      => __( 'Product', 'motorock-commerce-ai' ),
 			'content'      => __( 'Content', 'motorock-commerce-ai' ),
@@ -157,6 +158,31 @@ class Motorock_Commerce_Ai_Admin_Dashboard {
 					</p>
 				</div>
 			</header>
+
+			<?php if ( empty( $health['ok'] ) ) : ?>
+				<div class="notice notice-error">
+					<p>
+						<strong><?php esc_html_e( 'Storefront connection failed', 'motorock-commerce-ai' ); ?></strong><br />
+						<?php echo esc_html( $health['error'] ?? __( 'Commerce AI cannot reach motorock.eu.', 'motorock-commerce-ai' ) ); ?>
+						<?php if ( ! empty( $health['storefrontUrl'] ) ) : ?>
+							<br /><span class="description"><?php esc_html_e( 'Configured URL:', 'motorock-commerce-ai' ); ?> <?php echo esc_html( (string) $health['storefrontUrl'] ); ?></span>
+						<?php endif; ?>
+					</p>
+				</div>
+			<?php else : ?>
+				<div class="notice notice-success is-dismissible">
+					<p>
+						<?php
+						printf(
+							/* translators: 1: storefront URL, 2: skill count */
+							esc_html__( 'Connected to %1$s (%2$d skills available).', 'motorock-commerce-ai' ),
+							esc_html( (string) $health['storefrontUrl'] ),
+							(int) ( $health['skills'] ?? 0 )
+						);
+						?>
+					</p>
+				</div>
+			<?php endif; ?>
 
 			<?php foreach ( $grouped as $domain => $domain_skills ) : ?>
 				<section class="motorock-commerce-ai-domain">
