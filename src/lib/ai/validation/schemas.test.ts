@@ -61,6 +61,22 @@ describe("AI validation schemas", () => {
     });
   });
 
+  it("parses batch request with empty provider option", () => {
+    const parsed = parseAiBatchRequestBody({
+      productIds: [25800],
+      locales: ["en"],
+      sections: ["description"],
+      options: { dryRun: false, overwrite: "always", provider: "" },
+    });
+
+    expect(parsed).toEqual({
+      productIds: [25800],
+      locales: ["en"],
+      sections: ["description"],
+      options: { dryRun: false, overwrite: "always" },
+    });
+  });
+
   it("rejects batch requests above job limit", () => {
     const parsed = parseAiBatchRequestBody({
       productIds: Array.from({ length: 20 }, (_, index) => index + 1),

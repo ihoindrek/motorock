@@ -154,22 +154,25 @@ export type AiWritePayload = z.infer<typeof AiWritePayloadSchema>;
 
 const OverwriteStrategySchema = z.enum(["if_empty", "always", "never"]);
 
+const AiGenerateOptionsObjectSchema = z.object({
+  dryRun: z.boolean().optional(),
+  revalidate: z.boolean().optional(),
+  overwrite: OverwriteStrategySchema.optional(),
+  provider: z
+    .union([z.enum(["openai", "anthropic", "gemini"]), z.literal("")])
+    .optional()
+    .transform((value) => (value ? value : undefined)),
+  publishStatus: z.enum(["draft", "published"]).optional(),
+});
+
+const AiGenerateOptionsSchema = AiGenerateOptionsObjectSchema.optional();
+
 export const AiGenerateRequestBodySchema = z.object({
   productId: z.number().int().positive(),
   locale: z.enum(["en", "et"]),
   sections: z.array(z.enum(["description", "seo", "faq", "alt_text"])).min(1),
-  options: z
-    .object({
-      dryRun: z.boolean().optional(),
-      revalidate: z.boolean().optional(),
-      overwrite: OverwriteStrategySchema.optional(),
-      provider: z.enum(["openai", "anthropic", "gemini"]).optional(),
-      publishStatus: z.enum(["draft", "published"]).optional(),
-    })
-    .optional(),
+  options: AiGenerateOptionsSchema,
 });
-
-const AiGenerateOptionsSchema = AiGenerateRequestBodySchema.shape.options;
 
 export const AiBatchRequestBodySchema = z.object({
   productIds: z.array(z.number().int().positive()).min(1).max(25),
