@@ -9,11 +9,13 @@ import { getEquipmentMegaMenu } from "@/i18n/navigation";
 import { buildEquipmentCategoryHref, buildEquipmentRootCategoryHref } from "@/lib/shop/equipment-route";
 import { localizedHref } from "@/i18n/paths";
 import { sortProductSizes } from "@/lib/shop/sort-sizes";
+import type { ProductCategory } from "@/types/catalog-product";
 import type { CategoryRoute } from "@/lib/shop/category";
 
 export type ActiveFilters = {
   brands: string[];
   sizes: string[];
+  categories: ProductCategory[];
   inStockOnly: boolean;
   priceMin: number;
   priceMax: number;
@@ -25,9 +27,11 @@ type CategoryFiltersProps = {
   priceBounds: { min: number; max: number };
   availableBrands: readonly string[];
   availableSizes?: readonly string[];
+  availableProductCategories?: readonly { id: ProductCategory; label: string }[];
   showSizeFilter?: boolean;
   showBrandFilter?: boolean;
   showCategoryFilter?: boolean;
+  showProductCategoryFilter?: boolean;
   variant?: "bar" | "drawer";
   embedded?: boolean;
   embeddedAlign?: "start" | "end";
@@ -35,6 +39,7 @@ type CategoryFiltersProps = {
   whiteFilterTriggers?: boolean;
   onToggleBrand: (brand: string) => void;
   onToggleSize: (size: string) => void;
+  onToggleCategory?: (category: ProductCategory) => void;
   onInStockChange: (value: boolean) => void;
   onPriceMinChange: (value: number) => void;
   onPriceMaxChange: (value: number) => void;
@@ -162,6 +167,34 @@ function BrandControls({
   );
 }
 
+function ProductCategoryControls({
+  categories,
+  activeFilters,
+  onToggleCategory,
+}: {
+  categories: readonly { id: ProductCategory; label: string }[];
+  activeFilters: ActiveFilters;
+  onToggleCategory: (category: ProductCategory) => void;
+}) {
+  return (
+    <ul className="min-w-[13rem] space-y-3">
+      {categories.map((category) => (
+        <li key={category.id}>
+          <label className="flex min-h-11 cursor-pointer items-center gap-3 text-base text-ink">
+            <input
+              type="checkbox"
+              checked={activeFilters.categories.includes(category.id)}
+              onChange={() => onToggleCategory(category.id)}
+              className="size-5 accent-accent"
+            />
+            {category.label}
+          </label>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 function SizeControls({
   availableSizes,
   activeFilters,
@@ -272,9 +305,11 @@ export function CategoryFilters({
   priceBounds,
   availableBrands,
   availableSizes = [],
+  availableProductCategories = [],
   showSizeFilter = true,
   showBrandFilter = true,
   showCategoryFilter = true,
+  showProductCategoryFilter = false,
   variant = "bar",
   embedded = false,
   embeddedAlign = "end",
@@ -282,6 +317,7 @@ export function CategoryFilters({
   whiteFilterTriggers = false,
   onToggleBrand,
   onToggleSize,
+  onToggleCategory,
   onInStockChange,
   onPriceMinChange,
   onPriceMaxChange,
@@ -350,6 +386,7 @@ export function CategoryFilters({
 
   const showCategoryDropdown =
     showCategoryFilter &&
+    !showProductCategoryFilter &&
     (showGenderNav || (showSubcategoryNav && subcategoryLinks.length > 0));
 
   const priceIsActive =
@@ -358,6 +395,7 @@ export function CategoryFilters({
 
   const activeFilterCount =
     activeFilters.brands.length +
+    activeFilters.categories.length +
     activeFilters.sizes.length +
     (activeFilters.inStockOnly ? 1 : 0) +
     (priceIsActive ? 1 : 0);
@@ -485,6 +523,22 @@ export function CategoryFilters({
         }`}
       >
         <div className="flex flex-wrap items-center gap-3">
+          {showProductCategoryFilter && onToggleCategory ? (
+            <FilterDropdown
+              label={dict.catalog.category}
+              activeCount={activeFilters.categories.length}
+              open={openFilter === "category"}
+              onToggle={() => toggleFilter("category")}
+              whiteBackground={triggerWhiteBackground}
+            >
+              <ProductCategoryControls
+                categories={availableProductCategories}
+                activeFilters={activeFilters}
+                onToggleCategory={onToggleCategory}
+              />
+            </FilterDropdown>
+          ) : null}
+
           {showCategoryDropdown ? (
             <FilterDropdown
               label={dict.catalog.category}
@@ -590,6 +644,16 @@ export function CategoryFilters({
           {dict.catalog.clearAll}
         </button>
       </div>
+
+      {showProductCategoryFilter && onToggleCategory ? (
+        <FilterSection title={dict.catalog.category}>
+          <ProductCategoryControls
+            categories={availableProductCategories}
+            activeFilters={activeFilters}
+            onToggleCategory={onToggleCategory}
+          />
+        </FilterSection>
+      ) : null}
 
       {showCategoryDropdown ? (
         <FilterSection title={dict.catalog.category}>{categoryLinks}</FilterSection>

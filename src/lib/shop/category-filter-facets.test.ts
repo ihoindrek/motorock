@@ -57,5 +57,6 @@ describe("resolveCategoryFilterFacets", () => {
       product("Pando Moto"),
     ]);
     expect(facets.showBrandFilter).toBe(false);
+    expect(facets.showCategoryFilter).toBe(false);
   });
 });

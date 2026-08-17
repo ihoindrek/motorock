@@ -5,6 +5,9 @@ import {
   type FavoriteProduct,
 } from "@/components/riders-favorites-carousel";
 import { PopularGearSection } from "@/components/popular-gear-section";
+import { HomePromoBanners } from "@/components/home-promo-banners";
+import { HomeSpotlightSection } from "@/components/home-spotlight-section";
+import { ACTIVE_HOMEPAGE_SPOTLIGHT } from "@/data/homepage-spotlight";
 import type { Locale } from "@/i18n/config";
 import { localizedHref } from "@/i18n/paths";
 import {
@@ -14,11 +17,12 @@ import {
   partitionPopularGearByAudience,
   pickFavoriteProducts,
   pickHomepageNewGearProducts,
+  pickHomepageSpotlightProducts,
   filterHomepageAccessoriesProducts,
 } from "@/lib/shop/favorite-product";
 
 const headingVideoClass =
-  "font-display text-5xl font-extrabold uppercase leading-[0.95] tracking-tight sm:text-6xl lg:text-8xl";
+  "font-display text-5xl font-extrabold uppercase leading-[0.95] tracking-tight sm:text-6xl lg:text-5xl xl:text-6xl";
 
 const blocks = [
   {
@@ -216,10 +220,16 @@ export async function RidersFavorites({ locale }: { locale: Locale }) {
     ),
   };
 
+  const spotlightProducts = pickHomepageSpotlightProducts(
+    ACTIVE_HOMEPAGE_SPOTLIGHT,
+    [...gearByAudience.men, ...gearByAudience.women, ...accessoriesEquipment],
+    locale,
+  );
+
   return (
     <section aria-labelledby="favorites-heading">
-      <header className="relative overflow-hidden bg-ink px-5 py-16 text-paper sm:px-8 lg:px-12 lg:py-24">
-        <div className="relative z-10 mx-auto flex max-w-site flex-col gap-6 lg:flex-row lg:items-end lg:justify-between lg:gap-12">
+      <header className="relative overflow-hidden bg-ink px-5 py-16 text-paper sm:px-8 lg:px-12 lg:py-14 xl:py-16">
+        <div className="relative z-10 mx-auto flex max-w-site flex-col gap-6 lg:flex-row lg:items-end lg:justify-between lg:gap-8">
           <h2
             id="favorites-heading"
             className={`max-w-4xl shrink-0 ${headingVideoClass}`}
@@ -263,6 +273,14 @@ export async function RidersFavorites({ locale }: { locale: Locale }) {
             accessories: copy.gearTabAccessories,
           },
         }}
+      />
+
+      <HomePromoBanners locale={locale} />
+
+      <HomeSpotlightSection
+        locale={locale}
+        spotlight={ACTIVE_HOMEPAGE_SPOTLIGHT}
+        products={spotlightProducts}
       />
     </section>
   );

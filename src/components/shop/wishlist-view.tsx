@@ -77,7 +77,7 @@ export function WishlistView() {
                       className="object-cover object-center"
                     />
                   </figure>
-                  <div className="flex flex-1 flex-col gap-1 p-4">
+                  <div className="flex flex-1 flex-col gap-1.5 px-4 pb-4 pt-5">
                     {item.brand ? (
                       <BrandLogo brand={item.brand} size="sm" />
                     ) : null}

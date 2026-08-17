@@ -98,7 +98,7 @@ export function ProductCard({ product }: ProductCardProps) {
         </figure>
 
         <div
-          className={`flex flex-1 flex-col gap-1 ${isMotorcycle ? "pt-2" : "pt-3"}`}
+          className={`flex flex-1 flex-col gap-1.5 ${isMotorcycle ? "pt-3 sm:pt-4" : "pt-4 sm:pt-5"}`}
         >
           <BrandLogo brand={product.brand} size="sm" />
           <h3

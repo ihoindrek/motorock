@@ -64,7 +64,7 @@ export function Hero({ locale, dictionary }: HeroProps) {
       href: localizedHref(locale, "/shop/motorcycles"),
       image: "/brixton-image.webp",
       mobileImage: "/hero-fallback.webp",
-      video: "/mc-hero.webm",
+      video: "/Brixton-Neu.webm",
       span: "col-span-1 md:col-span-2",
       imageSizes: "(max-width: 768px) 100vw, 66vw",
       titleClass: "text-3xl sm:text-4xl lg:text-6xl",
@@ -102,7 +102,7 @@ export function Hero({ locale, dictionary }: HeroProps) {
             href={banner.href}
             prefetch
             scroll
-            className={`group relative flex min-h-[40svh] items-center justify-center overflow-hidden sm:min-h-[46svh] lg:min-h-[52svh] ${banner.span}`}
+            className={`group relative flex min-h-[40svh] items-center justify-center overflow-hidden sm:min-h-[46svh] lg:min-h-[62svh] ${banner.span}`}
           >
             {banner.video ? (
               <HeroBannerMedia

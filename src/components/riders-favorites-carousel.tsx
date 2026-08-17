@@ -8,6 +8,7 @@ import { A11y } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/react";
 
 import { CarouselArrow } from "@/components/ui/carousel-arrow";
+import { BrandLogo } from "@/components/shop/brand-logo";
 import { Price } from "@/components/shop/price";
 import { useDictionary, useLocale } from "@/context/locale-context";
 import { localizedProductHref } from "@/lib/shop/product-url";
@@ -25,7 +26,6 @@ export type FavoriteProduct = {
   brand: string;
   price: number;
   image: string;
-  brandLogo?: string;
 };
 
 type CarouselTheme = "light" | "dark";
@@ -39,37 +39,12 @@ const figureBackgroundClass: Record<FigureBackground, string> = {
   none: "",
 };
 
-function ProductBrandLogo({
-  src,
-  brand,
-  theme,
-  prominent = false,
-}: {
-  src: string;
-  brand: string;
-  theme: CarouselTheme;
-  prominent?: boolean;
-}) {
-  return (
-    <img
-      src={src}
-      alt={brand}
-      className={`block w-auto object-contain object-left ${
-        prominent ? "h-6 max-w-[132px] contrast-125" : "h-5 max-w-[120px]"
-      } ${
-        theme === "light" ? "brightness-0" : "brightness-0 invert"
-      }`}
-    />
-  );
-}
-
 type FavoriteProductCardProps = {
   slug: string;
   name: string;
   brand: string;
   price: number;
   image: string;
-  brandLogo?: string;
   theme?: CarouselTheme;
   imageMultiply?: boolean;
   compact?: boolean;
@@ -83,7 +58,6 @@ export function FavoriteProductCard({
   brand,
   price,
   image,
-  brandLogo,
   theme = "dark",
   imageMultiply = false,
   compact = false,
@@ -149,24 +123,13 @@ export function FavoriteProductCard({
           </figure>
         )}
         <div
-          className={`flex flex-1 flex-col items-start ${compact ? "gap-1 pt-2" : "gap-1 pt-3"}`}
+          className={`flex flex-1 flex-col items-start ${compact ? "gap-1.5 pt-3 sm:pt-4" : "gap-1.5 pt-4 sm:pt-5"}`}
         >
-          {brandLogo ? (
-            <ProductBrandLogo
-              src={brandLogo}
-              brand={brand}
-              theme={theme}
-              prominent={prominentMeta}
-            />
-          ) : (
-            <p
-              className={`font-body text-[10px] font-bold uppercase tracking-aggressive sm:text-xs ${
-                prominentMeta ? "text-ink" : "text-accent"
-              }`}
-            >
-              {brand}
-            </p>
-          )}
+          <BrandLogo
+            brand={brand}
+            size="sm"
+            className={prominentMeta ? "text-ink" : undefined}
+          />
           <h3
             className={`font-body text-base !normal-case leading-snug tracking-normal transition-colors duration-200 group-hover:text-accent sm:text-lg ${
               prominentMeta

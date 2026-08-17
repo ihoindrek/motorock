@@ -67,7 +67,7 @@ function RecentlyViewedCard({
           )}
         />
       </figure>
-      <div className="flex flex-1 flex-col gap-1 p-3">
+      <div className="flex flex-1 flex-col gap-1.5 px-3 pb-3 pt-4 sm:pt-5">
         {item.brand ? <BrandLogo brand={item.brand} size="sm" /> : null}
         <h3 className="line-clamp-2 font-body text-sm font-semibold leading-snug text-ink">
           {item.name}

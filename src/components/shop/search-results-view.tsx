@@ -93,6 +93,7 @@ function getInitialFilters(products: readonly CatalogProduct[]): ActiveFilters {
     return {
       brands: [],
       sizes: [],
+      categories: [],
       inStockOnly: false,
       priceMin: 0,
       priceMax: 500,
@@ -104,6 +105,7 @@ function getInitialFilters(products: readonly CatalogProduct[]): ActiveFilters {
   return {
     brands: [],
     sizes: [],
+    categories: [],
     inStockOnly: false,
     priceMin: Math.min(...prices),
     priceMax: Math.max(...prices),

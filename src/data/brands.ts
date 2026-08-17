@@ -4,6 +4,8 @@ export type BrandConfig = {
   logo?: string;
   width?: number;
   height?: number;
+  /** When false, show the logo file as-is (badge / full-color artwork). */
+  logoInvert?: boolean;
   /** Product card / compact contexts */
   logoClass: string;
   /** Product page / larger contexts */
@@ -62,6 +64,7 @@ export const brands: readonly BrandConfig[] = [
     logo: "/HF-Wht.png",
     width: 140,
     height: 36,
+    logoInvert: true,
     logoClass: "h-4 w-auto max-w-[100px] sm:h-5",
     logoClassLg: "h-5 w-auto max-w-[120px] sm:h-6",
   },
@@ -70,9 +73,10 @@ export const brands: readonly BrandConfig[] = [
     slug: "johnny-reb",
     logo: "/johnny-reb.webp",
     width: 120,
-    height: 36,
-    logoClass: "h-4 w-auto max-w-[90px] sm:h-5",
-    logoClassLg: "h-5 w-auto max-w-[110px] sm:h-6",
+    height: 148,
+    logoInvert: false,
+    logoClass: "h-9 w-auto max-w-[52px] sm:h-10",
+    logoClassLg: "h-11 w-auto max-w-[60px] sm:h-12",
   },
   {
     name: "Bobhead",
@@ -80,6 +84,7 @@ export const brands: readonly BrandConfig[] = [
     logo: "/bobhead.avif",
     width: 110,
     height: 32,
+    logoInvert: true,
     logoClass: "h-4 w-auto max-w-[90px] sm:h-5",
     logoClassLg: "h-5 w-auto max-w-[110px] sm:h-6",
   },
@@ -89,6 +94,7 @@ export const brands: readonly BrandConfig[] = [
     logo: "/motogirl.png",
     width: 110,
     height: 36,
+    logoInvert: false,
     logoClass: "h-4 w-auto max-w-[90px] sm:h-5",
     logoClassLg: "h-5 w-auto max-w-[110px] sm:h-6",
   },

@@ -248,6 +248,14 @@ export function resolveCategoryFilterFacets(
     };
   }
 
+  if (route.brand) {
+    return {
+      showSizeFilter: products.some(productHasSizeOptions),
+      showBrandFilter: false,
+      showCategoryFilter: false,
+    };
+  }
+
   // Equipment categories (for-women, for-men, accessories, …):
   // always expose brand filter unless this is a single-brand archive page.
   return {

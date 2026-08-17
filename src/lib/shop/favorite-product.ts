@@ -1,7 +1,7 @@
 import type { FavoriteProduct } from "@/components/riders-favorites-carousel";
+import type { HomepageSpotlightConfig } from "@/data/homepage-spotlight";
 import type { Locale } from "@/i18n/config";
 import type { CatalogProduct, ProductCategory } from "@/types/catalog-product";
-import { getBrandByName } from "@/lib/shop/brands";
 import type { CategoryRoute } from "@/lib/shop/category";
 import { filterProductsByRoute } from "@/lib/shop/category";
 import { productInHomepageAccessoriesTab } from "@/lib/shop/wc-categories";
@@ -270,15 +270,12 @@ export function pickHomepageWomenGear(
 export function catalogToFavoriteProduct(
   product: CatalogProduct,
 ): FavoriteProduct {
-  const brandConfig = getBrandByName(product.brand);
-
   return {
     slug: product.slug,
     name: product.name,
     brand: product.brand,
     price: product.price,
     image: product.image,
-    brandLogo: brandConfig?.logo,
   };
 }
 
@@ -306,6 +303,93 @@ export function pickHomepageNewGearProducts(
   return seededShuffle(pool, stableDailySeed(audience, locale))
     .slice(0, limit)
     .map(catalogToFavoriteProduct);
+}
+
+function matchesSpotlightCategory(
+  product: CatalogProduct,
+  categories: readonly ProductCategory[],
+  wcCategorySlugs: readonly string[],
+) {
+  return (
+    categories.includes(product.category) ||
+    (product.wcCategorySlugs ?? []).some((slug) => wcCategorySlugs.includes(slug))
+  );
+}
+
+function matchesSpotlightBrand(product: CatalogProduct, brands?: readonly string[]) {
+  if (!brands?.length) {
+    return true;
+  }
+
+  return brands.includes(product.brand);
+}
+
+function pickSpotlightWithBrandDiversity(
+  products: readonly CatalogProduct[],
+  limit: number,
+) {
+  const picked: CatalogProduct[] = [];
+  const pickedSlugs = new Set<string>();
+  const brandCounts = new Map<string, number>();
+
+  const tryPick = (product: CatalogProduct, maxPerBrand: number) => {
+    if (picked.length >= limit || pickedSlugs.has(product.slug)) {
+      return false;
+    }
+
+    const brandCount = brandCounts.get(product.brand) ?? 0;
+    if (brandCount >= maxPerBrand) {
+      return false;
+    }
+
+    picked.push(product);
+    pickedSlugs.add(product.slug);
+    brandCounts.set(product.brand, brandCount + 1);
+    return true;
+  };
+
+  for (const product of products) {
+    tryPick(product, 1);
+    if (picked.length >= limit) {
+      return picked;
+    }
+  }
+
+  for (const product of products) {
+    tryPick(product, Number.POSITIVE_INFINITY);
+    if (picked.length >= limit) {
+      break;
+    }
+  }
+
+  return picked;
+}
+
+export function pickHomepageSpotlightProducts(
+  spotlight: Pick<
+    HomepageSpotlightConfig,
+    "id" | "categories" | "wcCategorySlugs" | "brands" | "limit"
+  >,
+  products: readonly CatalogProduct[],
+  locale: Locale,
+): FavoriteProduct[] {
+  const pool = products
+    .filter(isEligibleFavorite)
+    .filter((product) =>
+      matchesSpotlightCategory(product, spotlight.categories, spotlight.wcCategorySlugs),
+    )
+    .filter((product) => matchesSpotlightBrand(product, spotlight.brands));
+
+  const shuffled = seededShuffle(
+    pool,
+    `${stableDailySeed("men", locale)}:${spotlight.id}`,
+  );
+
+  const selected = spotlight.brands?.length
+    ? shuffled.slice(0, spotlight.limit)
+    : pickSpotlightWithBrandDiversity(shuffled, spotlight.limit);
+
+  return selected.map(catalogToFavoriteProduct);
 }
 
 export function pickPopularGearProducts(
