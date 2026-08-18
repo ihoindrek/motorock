@@ -9,7 +9,7 @@ import {
   trackCheckoutShippingRatesLoaded,
 } from "@/lib/analytics/checkout-funnel";
 import { formatCouponError } from "@/lib/checkout/format-coupon-error";
-import { readWooSessionToken, writeWooSessionToken } from "@/lib/graphql/checkout-client";
+import { clearCheckoutSession, readWooSessionToken, writeWooSessionToken } from "@/lib/graphql/checkout-client";
 import {
   applyCheckoutCoupon,
   fetchAllowedCountries,
