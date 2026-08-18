@@ -13,6 +13,7 @@ type StoreAttributeTerm = {
 
 type StoreProductAttribute = {
   name: string;
+  taxonomy?: string;
   terms?: StoreAttributeTerm[];
 };
 
@@ -63,6 +64,15 @@ function findProductAttribute(product: StoreProduct, attributeName: string) {
   return product.attributes?.find(
     (attribute) => normalizeAttributeName(attribute.name) === target,
   );
+}
+
+function productAttributeTaxonomy(attribute: StoreProductAttribute) {
+  const taxonomy = attribute.taxonomy?.trim().toLowerCase();
+  if (taxonomy) {
+    return taxonomy;
+  }
+
+  return wooPaAttributeName(attribute.name);
 }
 
 function resolveAttributeValueSlug(
@@ -298,10 +308,13 @@ function wooPaAttributeName(attributeName: string) {
 
   if (
     normalized === "värv" ||
-    normalized === "color" ||
-    normalized === "colour"
+    normalized === "color"
   ) {
     return "pa_color";
+  }
+
+  if (normalized === "colour") {
+    return "pa_colour";
   }
 
   if (isSizeAttribute(attributeName)) {
@@ -394,7 +407,7 @@ export function buildAddToCartVariationAttributes(
     );
     if (sizeAttr) {
       attributes.push({
-        attributeName: wooPaAttributeName(sizeAttr.name),
+        attributeName: productAttributeTaxonomy(sizeAttr),
         attributeValue: resolveSizeAttributeSlug(line.size, product),
       });
     }
@@ -414,7 +427,7 @@ export function buildAddToCartVariationAttributes(
       );
 
       attributes.push({
-        attributeName: wooPaAttributeName(colorAttr.name),
+        attributeName: productAttributeTaxonomy(colorAttr),
         attributeValue: match?.slug ?? normalized,
       });
     }
@@ -438,7 +451,7 @@ export function buildAddToCartVariationAttributes(
       }
 
       attributes.push({
-        attributeName: wooPaAttributeName(productAttr.name),
+        attributeName: productAttributeTaxonomy(productAttr),
         attributeValue: resolveAttributeValueSlug(productAttr, value),
       });
     }

@@ -77,6 +77,37 @@ describe("buildAddToCartVariationAttributes", () => {
     ]);
   });
 
+  it("uses pa_colour taxonomy from Store API for British Colour attribute", () => {
+    const product = {
+      id: 35839,
+      type: "variable",
+      attributes: [
+        {
+          name: "Colour",
+          taxonomy: "pa_colour",
+          terms: [{ name: "NAVY", slug: "navy-blue-blue-check" }],
+        },
+        { name: "size", taxonomy: "pa_size", terms: [{ name: "Small", slug: "small" }] },
+      ],
+      variations: [
+        {
+          id: 35859,
+          attributes: [
+            { name: "Colour", value: "navy-blue-blue-check" },
+            { name: "size", value: "5x-large" },
+          ],
+        },
+      ],
+    };
+
+    expect(
+      buildAddToCartVariationAttributes(product, {}, 35859),
+    ).toEqual([
+      { attributeName: "pa_colour", attributeValue: "navy-blue-blue-check" },
+      { attributeName: "pa_size", attributeValue: "5x-large" },
+    ]);
+  });
+
   it("skips color when the product has no color attribute", () => {
     const product = {
       id: 3,
