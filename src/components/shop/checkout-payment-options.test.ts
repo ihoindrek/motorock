@@ -199,6 +199,19 @@ describe("filterSupportedPaymentGateways", () => {
 });
 
 describe("resolveVisiblePaymentGateways", () => {
+  it("keeps Woo bank link in live checkout without gating on Montonio options", () => {
+    const gateways: PaymentGateway[] = [
+      { id: "ppcp-gateway", title: "PayPal", description: "", icon: null },
+      { id: MONTONIO_PAYMENT_METHOD_ID, title: "Pay with your bank", description: "", icon: null },
+    ];
+
+    const live = resolveVisiblePaymentGateways(gateways, [], "et", true);
+    expect(live.map((gateway) => gateway.id)).toEqual([
+      "ppcp-gateway",
+      MONTONIO_PAYMENT_METHOD_ID,
+    ]);
+  });
+
   it("hides synthetic BNPL/hire-purchase rows in live checkout", () => {
     const gateways: PaymentGateway[] = [
       { id: "ppcp-gateway", title: "PayPal", description: "", icon: null },

@@ -210,10 +210,8 @@ export function resolveVisiblePaymentGateways(
     );
   }
 
-  return filterGatewaysWithMontonioOptions(
-    gateways.map((gateway) => localizePaymentGateway(gateway, locale)),
-    montonioOptions,
-  );
+  // Woo bank link must stay visible — do not gate it on async Montonio option fetch.
+  return gateways.map((gateway) => localizePaymentGateway(gateway, locale));
 }
 
 const CARD_PAYMENT_LOGO_SIZES = {

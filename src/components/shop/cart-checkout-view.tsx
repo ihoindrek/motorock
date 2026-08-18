@@ -693,15 +693,28 @@ export function CartCheckoutView() {
     paymentCatalogReady && hasMontonioGateway && isLiveCheckoutEnabled(),
   );
   const visiblePaymentGateways = useMemo(() => {
-    if (!hasMontonioGateway || montonio.loading) {
+    if (!payment.gateways.length) {
       return payment.gateways;
+    }
+
+    if (!isLiveCheckoutEnabled()) {
+      if (!hasMontonioGateway || montonio.loading) {
+        return payment.gateways;
+      }
+
+      return resolveVisiblePaymentGateways(
+        payment.gateways,
+        montonio.options,
+        locale,
+        false,
+      );
     }
 
     return resolveVisiblePaymentGateways(
       payment.gateways,
       montonio.options,
       locale,
-      isLiveCheckoutEnabled(),
+      true,
     );
   }, [
     hasMontonioGateway,
