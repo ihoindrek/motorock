@@ -192,6 +192,30 @@ export function filterGatewaysWithMontonioOptions(
   });
 }
 
+/**
+ * Live headless checkout must only expose Woo-enabled gateways. Synthetic
+ * BNPL/hire-purchase/card rows send provider meta that wc_montonio_payments
+ * cannot complete (checkout.result failure).
+ */
+export function resolveVisiblePaymentGateways(
+  gateways: PaymentGateway[],
+  montonioOptions: MontonioPaymentOption[],
+  locale: Locale,
+  liveCheckout: boolean,
+) {
+  if (!liveCheckout) {
+    return filterGatewaysWithMontonioOptions(
+      expandMontonioPaymentGateways(gateways, montonioOptions, locale),
+      montonioOptions,
+    );
+  }
+
+  return filterGatewaysWithMontonioOptions(
+    gateways.map((gateway) => localizePaymentGateway(gateway, locale)),
+    montonioOptions,
+  );
+}
+
 const CARD_PAYMENT_LOGO_SIZES = {
   container: "h-12 w-[7.5rem] sm:h-14 sm:w-[9.5rem]",
   image: "h-11 max-w-full sm:h-14",

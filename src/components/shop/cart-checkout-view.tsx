@@ -90,11 +90,10 @@ import { CheckoutPickupPointSelector } from "@/components/shop/checkout-pickup-p
 import { CheckoutPhoneField } from "@/components/shop/checkout-phone-field";
 import {
   CheckoutPaymentOptions,
-  expandMontonioPaymentGateways,
-  filterGatewaysWithMontonioOptions,
   filterMontonioOptionsForGateway,
   gatewayNeedsMontonioSubselection,
   isBankMontonioGateway,
+  resolveVisiblePaymentGateways,
 } from "@/components/shop/checkout-payment-options";
 import { CheckoutSupportNotice } from "@/components/shop/checkout-support-notice";
 import {
@@ -694,13 +693,15 @@ export function CartCheckoutView() {
     paymentCatalogReady && hasMontonioGateway && isLiveCheckoutEnabled(),
   );
   const visiblePaymentGateways = useMemo(() => {
-    if (!isLiveCheckoutEnabled() || !hasMontonioGateway || montonio.loading) {
+    if (!hasMontonioGateway || montonio.loading) {
       return payment.gateways;
     }
 
-    return filterGatewaysWithMontonioOptions(
-      expandMontonioPaymentGateways(payment.gateways, montonio.options, locale),
+    return resolveVisiblePaymentGateways(
+      payment.gateways,
       montonio.options,
+      locale,
+      isLiveCheckoutEnabled(),
     );
   }, [
     hasMontonioGateway,
@@ -1568,6 +1569,10 @@ export function CartCheckoutView() {
       setPaymentReturnBanner(null);
       clearCart();
     } catch (cause) {
+      if (isLiveCheckoutEnabled()) {
+        resetCheckoutSyncState();
+      }
+
       setSubmitError(
         cause instanceof Error
           ? friendlyCheckoutError(

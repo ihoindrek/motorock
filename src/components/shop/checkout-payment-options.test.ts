@@ -3,6 +3,7 @@ import {
   expandMontonioPaymentGateways,
   filterMontonioOptionsForGateway,
   isBankMontonioGateway,
+  resolveVisiblePaymentGateways,
 } from "@/components/shop/checkout-payment-options";
 import {
   filterSupportedPaymentGateways,
@@ -194,5 +195,42 @@ describe("filterSupportedPaymentGateways", () => {
       "ppcp-gateway",
       MONTONIO_PAYMENT_METHOD_ID,
     ]);
+  });
+});
+
+describe("resolveVisiblePaymentGateways", () => {
+  it("hides synthetic BNPL/hire-purchase rows in live checkout", () => {
+    const gateways: PaymentGateway[] = [
+      { id: "ppcp-gateway", title: "PayPal", description: "", icon: null },
+      { id: MONTONIO_PAYMENT_METHOD_ID, title: "Pay with your bank", description: "", icon: null },
+    ];
+    const options: MontonioPaymentOption[] = [
+      ...bankOptions,
+      {
+        kind: "bnpl",
+        code: "bnpl",
+        systemName: "bnpl",
+        name: "Pay later",
+        logoUrl: null,
+      },
+      {
+        kind: "hirePurchase",
+        code: "hirePurchase",
+        systemName: "hirePurchase",
+        name: "Hire purchase",
+        logoUrl: null,
+      },
+    ];
+
+    const live = resolveVisiblePaymentGateways(gateways, options, "et", true);
+    expect(live.map((gateway) => gateway.id)).toEqual([
+      "ppcp-gateway",
+      MONTONIO_PAYMENT_METHOD_ID,
+    ]);
+
+    const preview = resolveVisiblePaymentGateways(gateways, options, "et", false);
+    expect(preview.map((gateway) => gateway.id)).toEqual(
+      expect.arrayContaining(["wc_montonio_bnpl", "wc_montonio_hire_purchase"]),
+    );
   });
 });
