@@ -1,7 +1,7 @@
 import type { MontonioPaymentOption } from "@/types/montonio-payment";
 import type { PickupPoint } from "@/types/pickup-point";
-import { MONTONIO_PAYMENT_METHOD_ID } from "@/lib/graphql/checkout";
 
+export const MONTONIO_PAYMENT_METHOD_ID = "wc_montonio_payments";
 export const MONTONIO_CARD_PAYMENT_METHOD_ID = "wc_montonio_card";
 
 export type CheckoutMetaDataInput = {

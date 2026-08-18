@@ -33,13 +33,14 @@ import {
 } from "@/lib/woocommerce/store-api-product";
 import {
   type CheckoutMetaDataInput,
+  MONTONIO_PAYMENT_METHOD_ID,
   resolveMontonioCheckoutGatewayId,
 } from "@/lib/checkout/montonio-checkout";
-
-export const MONTONIO_PAYMENT_METHOD_ID = "wc_montonio_payments";
 import { parseGraphqlPrice } from "@/lib/shop/parse-graphql-price";
 import { filterShippingRatesForCountry } from "@/lib/shop/shipping-showroom-pickup";
 import type { ShippingRate } from "@/lib/shop/shipping-method";
+
+export { MONTONIO_PAYMENT_METHOD_ID };
 
 type AllowedCountriesResponse = {
   allowedCountries: string[];
