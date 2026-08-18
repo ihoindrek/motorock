@@ -300,6 +300,7 @@ export type Dictionary = {
     category: string;
     brand: string;
     size: string;
+    displacement: string;
     price: string;
     availability: string;
     inStock: string;
@@ -959,6 +960,7 @@ export const en: Dictionary = {
     category: "Category",
     brand: "Brand",
     size: "Size",
+    displacement: "Displacement",
     price: "Price",
     availability: "Availability",
     inStock: "In stock",

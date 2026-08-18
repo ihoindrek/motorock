@@ -42,6 +42,7 @@ describe("resolveCategoryFilterFacets", () => {
 
     const facets = resolveCategoryFilterFacets(route, [product("Motogirl")]);
     expect(facets.showBrandFilter).toBe(true);
+    expect(facets.showDisplacementFilter).toBe(false);
   });
 
   it("hides brand filter on single-brand archive routes", () => {
@@ -58,5 +59,6 @@ describe("resolveCategoryFilterFacets", () => {
     ]);
     expect(facets.showBrandFilter).toBe(false);
     expect(facets.showCategoryFilter).toBe(false);
+    expect(facets.showDisplacementFilter).toBe(false);
   });
 });

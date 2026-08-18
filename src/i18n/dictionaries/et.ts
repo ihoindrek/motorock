@@ -329,6 +329,7 @@ export const et: Dictionary = {
     category: "Kategooria",
     brand: "Bränd",
     size: "Suurus",
+    displacement: "Töömaht",
     price: "Hind",
     availability: "Saadavus",
     inStock: "Laos",

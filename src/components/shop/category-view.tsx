@@ -36,6 +36,11 @@ import { localizedHref } from "@/i18n/paths";
 import { buildEquipmentHubHref } from "@/lib/shop/category-url";
 import { trackViewItemList } from "@/lib/analytics";
 import type { EquipmentSubcategory } from "@/lib/shop/equipment-subcategories";
+import {
+  matchDisplacementsFromParam,
+  resolveAvailableDisplacements,
+  resolveProductDisplacement,
+} from "@/lib/shop/motorcycle-displacement";
 import { cn } from "@/lib/utils";
 
 type CategoryViewProps = {
@@ -85,6 +90,7 @@ function getInitialFilters(
       brands: route?.brand ? [route.brand] : [],
       sizes: [],
       categories: [],
+      displacements: [],
       inStockOnly: false,
       priceMin: 0,
       priceMax: 500,
@@ -97,6 +103,7 @@ function getInitialFilters(
     brands: route?.brand ? [route.brand] : [],
     sizes: [],
     categories: [],
+    displacements: [],
     inStockOnly: false,
     priceMin: Math.min(...prices),
     priceMax: Math.max(...prices),
@@ -172,6 +179,13 @@ function applyClientFilters(
       !product.sizes.some((size) => filters.sizes.includes(size))
     ) {
       return false;
+    }
+
+    if (filters.displacements.length > 0) {
+      const displacement = resolveProductDisplacement(product);
+      if (!displacement || !filters.displacements.includes(displacement)) {
+        return false;
+      }
     }
 
     if (filters.inStockOnly && !matchesAvailabilityFilter(product, route)) {
@@ -258,6 +272,11 @@ export function CategoryView({
     [routeProducts, dict],
   );
 
+  const availableDisplacements = useMemo(
+    () => resolveAvailableDisplacements(routeProducts),
+    [routeProducts],
+  );
+
   const showProductCategoryFilter = useMemo(
     () => shouldShowBrandProductCategoryFilter(route.brand, availableProductCategories),
     [availableProductCategories, route.brand],
@@ -312,11 +331,19 @@ export function CategoryView({
 
     const brandParam = params.get("brand");
     const categoryParam = params.get("category");
+    const displacementParam = params.get("displacement");
     const sizeParam = params.get("size");
     const stockParam = params.get("stock");
     const priceParam = params.get("price");
 
-    if (!brandParam && !categoryParam && !sizeParam && !stockParam && !priceParam) {
+    if (
+      !brandParam &&
+      !categoryParam &&
+      !displacementParam &&
+      !sizeParam &&
+      !stockParam &&
+      !priceParam
+    ) {
       return;
     }
 
@@ -337,6 +364,16 @@ export function CategoryView({
         );
         if (categories.length > 0) {
           next.categories = categories;
+        }
+      }
+
+      if (displacementParam) {
+        const displacements = matchDisplacementsFromParam(
+          displacementParam,
+          availableDisplacements,
+        );
+        if (displacements.length > 0) {
+          next.displacements = displacements;
         }
       }
 
@@ -361,7 +398,13 @@ export function CategoryView({
 
       return next;
     });
-  }, [availableBrands, availableProductCategories, availableSizes, priceBounds]);
+  }, [
+    availableBrands,
+    availableDisplacements,
+    availableProductCategories,
+    availableSizes,
+    priceBounds,
+  ]);
 
   // Reflect the active filters back into the URL (replaceState keeps the
   // navigation client-side) so the current view can be copied and shared.
@@ -400,6 +443,10 @@ export function CategoryView({
     setOrDelete(
       "category",
       filters.categories.length > 0 ? filters.categories.join(",") : null,
+    );
+    setOrDelete(
+      "displacement",
+      filters.displacements.length > 0 ? filters.displacements.join(",") : null,
     );
     setOrDelete("stock", filters.inStockOnly ? "1" : null);
     const priceNarrowed =
@@ -458,7 +505,7 @@ export function CategoryView({
   }, [filteredProducts, pageSize]);
 
   const visibleProducts = filteredProducts.slice(0, visibleCount);
-  const catalogResetKey = `${sort}-${filters.brands.join(",")}-${filters.categories.join(",")}-${filters.sizes.join(",")}-${filters.inStockOnly}-${filters.priceMin}-${filters.priceMax}`;
+  const catalogResetKey = `${sort}-${filters.brands.join(",")}-${filters.categories.join(",")}-${filters.displacements.join(",")}-${filters.sizes.join(",")}-${filters.inStockOnly}-${filters.priceMin}-${filters.priceMax}`;
 
   useEffect(() => {
     if (visibleProducts.length === 0) {
@@ -512,6 +559,15 @@ export function CategoryView({
     }));
   };
 
+  const toggleDisplacement = (displacement: number) => {
+    setFilters((current) => ({
+      ...current,
+      displacements: current.displacements.includes(displacement)
+        ? current.displacements.filter((value) => value !== displacement)
+        : [...current.displacements, displacement],
+    }));
+  };
+
   const selectedBrand =
     filters.brands.length === 1 ? filters.brands[0] : null;
 
@@ -529,6 +585,7 @@ export function CategoryView({
     availableBrands,
     availableSizes,
     availableProductCategories,
+    availableDisplacements,
     showSizeFilter: showSizeFilter && filterFacets.showSizeFilter,
     // Prefer live available brands so the Brand control is not hidden when facets
     // under-count unique brands (equipment main categories).
@@ -538,10 +595,12 @@ export function CategoryView({
       (filterFacets.showBrandFilter || availableBrands.length > 0),
     showCategoryFilter: filterFacets.showCategoryFilter && !showProductCategoryFilter,
     showProductCategoryFilter,
+    showDisplacementFilter: filterFacets.showDisplacementFilter,
     whiteFilterTriggers: !useBrandLogos,
     onToggleBrand: toggleBrand,
     onToggleSize: toggleSize,
     onToggleCategory: toggleCategory,
+    onToggleDisplacement: toggleDisplacement,
     onInStockChange: (value: boolean) =>
       setFilters((current) => ({ ...current, inStockOnly: value })),
     onPriceMinChange: (value: number) =>

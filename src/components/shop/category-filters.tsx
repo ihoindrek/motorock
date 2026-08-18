@@ -9,6 +9,7 @@ import { getEquipmentMegaMenu } from "@/i18n/navigation";
 import { buildEquipmentCategoryHref, buildEquipmentRootCategoryHref } from "@/lib/shop/equipment-route";
 import { localizedHref } from "@/i18n/paths";
 import { sortProductSizes } from "@/lib/shop/sort-sizes";
+import { formatDisplacementLabel } from "@/lib/shop/motorcycle-displacement";
 import type { ProductCategory } from "@/types/catalog-product";
 import type { CategoryRoute } from "@/lib/shop/category";
 
@@ -16,6 +17,7 @@ export type ActiveFilters = {
   brands: string[];
   sizes: string[];
   categories: ProductCategory[];
+  displacements: number[];
   inStockOnly: boolean;
   priceMin: number;
   priceMax: number;
@@ -28,10 +30,12 @@ type CategoryFiltersProps = {
   availableBrands: readonly string[];
   availableSizes?: readonly string[];
   availableProductCategories?: readonly { id: ProductCategory; label: string }[];
+  availableDisplacements?: readonly number[];
   showSizeFilter?: boolean;
   showBrandFilter?: boolean;
   showCategoryFilter?: boolean;
   showProductCategoryFilter?: boolean;
+  showDisplacementFilter?: boolean;
   variant?: "bar" | "drawer";
   embedded?: boolean;
   embeddedAlign?: "start" | "end";
@@ -40,13 +44,14 @@ type CategoryFiltersProps = {
   onToggleBrand: (brand: string) => void;
   onToggleSize: (size: string) => void;
   onToggleCategory?: (category: ProductCategory) => void;
+  onToggleDisplacement?: (displacement: number) => void;
   onInStockChange: (value: boolean) => void;
   onPriceMinChange: (value: number) => void;
   onPriceMaxChange: (value: number) => void;
   onClear: () => void;
 };
 
-type OpenFilter = "category" | "brand" | "size" | "price" | null;
+type OpenFilter = "category" | "brand" | "size" | "displacement" | "price" | null;
 
 const filterTriggerBase =
   "inline-flex min-h-12 items-center gap-2.5 border px-5 py-3 font-body text-xs font-bold uppercase tracking-aggressive transition-colors";
@@ -195,6 +200,36 @@ function ProductCategoryControls({
   );
 }
 
+function DisplacementControls({
+  displacements,
+  activeFilters,
+  onToggleDisplacement,
+}: {
+  displacements: readonly number[];
+  activeFilters: ActiveFilters;
+  onToggleDisplacement: (displacement: number) => void;
+}) {
+  const locale = useLocale();
+
+  return (
+    <ul className="min-w-[13rem] space-y-3">
+      {displacements.map((displacement) => (
+        <li key={displacement}>
+          <label className="flex min-h-11 cursor-pointer items-center gap-3 text-base text-ink">
+            <input
+              type="checkbox"
+              checked={activeFilters.displacements.includes(displacement)}
+              onChange={() => onToggleDisplacement(displacement)}
+              className="size-5 accent-accent"
+            />
+            {formatDisplacementLabel(displacement, locale)}
+          </label>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 function SizeControls({
   availableSizes,
   activeFilters,
@@ -306,10 +341,12 @@ export function CategoryFilters({
   availableBrands,
   availableSizes = [],
   availableProductCategories = [],
+  availableDisplacements = [],
   showSizeFilter = true,
   showBrandFilter = true,
   showCategoryFilter = true,
   showProductCategoryFilter = false,
+  showDisplacementFilter = false,
   variant = "bar",
   embedded = false,
   embeddedAlign = "end",
@@ -318,6 +355,7 @@ export function CategoryFilters({
   onToggleBrand,
   onToggleSize,
   onToggleCategory,
+  onToggleDisplacement,
   onInStockChange,
   onPriceMinChange,
   onPriceMaxChange,
@@ -397,6 +435,7 @@ export function CategoryFilters({
     activeFilters.brands.length +
     activeFilters.categories.length +
     activeFilters.sizes.length +
+    activeFilters.displacements.length +
     (activeFilters.inStockOnly ? 1 : 0) +
     (priceIsActive ? 1 : 0);
 
@@ -583,6 +622,22 @@ export function CategoryFilters({
             </FilterDropdown>
           ) : null}
 
+          {showDisplacementFilter && onToggleDisplacement ? (
+            <FilterDropdown
+              label={dict.catalog.displacement}
+              activeCount={activeFilters.displacements.length}
+              open={openFilter === "displacement"}
+              onToggle={() => toggleFilter("displacement")}
+              whiteBackground={triggerWhiteBackground}
+            >
+              <DisplacementControls
+                displacements={availableDisplacements}
+                activeFilters={activeFilters}
+                onToggleDisplacement={onToggleDisplacement}
+              />
+            </FilterDropdown>
+          ) : null}
+
           <FilterDropdown
             label={dict.catalog.price}
             activeCount={priceIsActive ? 1 : 0}
@@ -675,6 +730,16 @@ export function CategoryFilters({
             availableSizes={availableSizes}
             activeFilters={activeFilters}
             onToggleSize={onToggleSize}
+          />
+        </FilterSection>
+      ) : null}
+
+      {showDisplacementFilter && onToggleDisplacement ? (
+        <FilterSection title={dict.catalog.displacement}>
+          <DisplacementControls
+            displacements={availableDisplacements}
+            activeFilters={activeFilters}
+            onToggleDisplacement={onToggleDisplacement}
           />
         </FilterSection>
       ) : null}

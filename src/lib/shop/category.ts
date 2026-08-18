@@ -16,6 +16,7 @@ import {
   productMatchesWcCategoryRoute,
   productNameIndicatesGender,
 } from "@/lib/shop/wc-categories";
+import { resolveAvailableDisplacements } from "@/lib/shop/motorcycle-displacement";
 import { buildBrandCatalogHref } from "@/lib/shop/brand-url";
 import { getBrandBySlug } from "@/lib/shop/brands";
 
@@ -214,6 +215,7 @@ export type CategoryFilterFacets = {
   showSizeFilter: boolean;
   showBrandFilter: boolean;
   showCategoryFilter: boolean;
+  showDisplacementFilter: boolean;
 };
 
 export function productHasSizeOptions(product: CatalogProduct): boolean {
@@ -233,10 +235,13 @@ export function resolveCategoryFilterFacets(
   );
 
   if (route.category === "motorcycles") {
+    const displacements = resolveAvailableDisplacements(products);
+
     return {
       showSizeFilter: false,
       showBrandFilter: true,
       showCategoryFilter: false,
+      showDisplacementFilter: displacements.length > 1,
     };
   }
 
@@ -245,6 +250,7 @@ export function resolveCategoryFilterFacets(
       showSizeFilter: false,
       showBrandFilter: brands.size > 1,
       showCategoryFilter: false,
+      showDisplacementFilter: false,
     };
   }
 
@@ -253,6 +259,7 @@ export function resolveCategoryFilterFacets(
       showSizeFilter: products.some(productHasSizeOptions),
       showBrandFilter: false,
       showCategoryFilter: false,
+      showDisplacementFilter: false,
     };
   }
 
@@ -262,6 +269,7 @@ export function resolveCategoryFilterFacets(
     showSizeFilter: products.some(productHasSizeOptions),
     showBrandFilter: !route.brand,
     showCategoryFilter: true,
+    showDisplacementFilter: false,
   };
 }
 
