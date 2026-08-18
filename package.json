@@ -9,6 +9,7 @@
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:e2e": "playwright test",
     "audit:variations": "node scripts/audit-graphql-variations.mjs",
     "revalidate": "node scripts/revalidate-storefront.mjs",
     "health:check": "node scripts/check-storefront-health.mjs",
@@ -39,6 +40,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@playwright/test": "^1.58.2",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",

@@ -118,9 +118,12 @@ export async function checkoutGraphqlRequest<
     response.headers.get("woocommerce-session") ??
     response.headers.get("Woocommerce-Session");
 
+  let resolvedSessionToken = token ?? null;
+
   if (nextSession) {
     const normalized = nextSession.replace(/^Session\s+/i, "");
     writeWooSessionToken(normalized);
+    resolvedSessionToken = normalized;
   }
 
   const contentType = response.headers.get("content-type") ?? "";
@@ -147,6 +150,6 @@ export async function checkoutGraphqlRequest<
 
   return {
     data: payload.data,
-    sessionToken: readWooSessionToken(),
+    sessionToken: resolvedSessionToken,
   };
 }

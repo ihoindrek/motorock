@@ -58,7 +58,7 @@ export type CheckoutCartTotals = {
   total: string;
   discountTotal: string;
   needsShippingAddress: boolean;
-  chosenShippingMethods: string[];
+  chosenShippingMethods: string[] | null | undefined;
   appliedCoupons: Array<{
     code: string;
     discountAmount: string;
@@ -66,7 +66,7 @@ export type CheckoutCartTotals = {
   availableShippingMethods: Array<{
     packageDetails: string | null;
     rates: ShippingRate[] | null;
-  }>;
+  }> | null | undefined;
 };
 
 type CartShippingResponse = {
@@ -140,7 +140,7 @@ export function flattenShippingRates(
 ) {
   const rates: ShippingRate[] = [];
 
-  for (const shippingPackage of packages) {
+  for (const shippingPackage of packages ?? []) {
     for (const rate of shippingPackage.rates ?? []) {
       if (!rates.some((existing) => existing.id === rate.id)) {
         rates.push(rate);
@@ -246,15 +246,17 @@ export async function resolveCartLineIds(line: CartLine): Promise<{
 
 export async function syncLocalCartToWoo(
   lines: CartLine[],
-  options?: { linesKey?: string },
+  options?: { linesKey?: string; sessionToken?: string | null },
 ) {
   const linesKey = options?.linesKey;
-  let activeSession = readWooSessionToken();
+  let activeSession = options?.sessionToken ?? readWooSessionToken();
 
   if (activeSession) {
     const itemCount = await fetchCartItemCount(activeSession);
     const syncedKeyMatches =
-      Boolean(linesKey) && readSyncedCartLinesKey() === linesKey;
+      !options?.sessionToken &&
+      Boolean(linesKey) &&
+      readSyncedCartLinesKey() === linesKey;
 
     if (syncedKeyMatches && itemCount >= lines.length) {
       return activeSession;
@@ -311,7 +313,7 @@ export async function syncLocalCartToWoo(
     );
   }
 
-  if (linesKey) {
+  if (linesKey && !options?.sessionToken) {
     writeSyncedCartLinesKey(linesKey);
   }
 
@@ -333,6 +335,7 @@ export function resolveSelectedShippingRateId(
 export async function prepareCheckoutSession(input: {
   lines: CartLine[];
   linesKey?: string;
+  sessionToken?: string | null;
   selectedRateId?: string | null;
   customer?: {
     country: string;
@@ -347,6 +350,7 @@ export async function prepareCheckoutSession(input: {
 }) {
   let session = await syncLocalCartToWoo(input.lines, {
     linesKey: input.linesKey,
+    sessionToken: input.sessionToken,
   });
 
   if (input.customer?.country) {
@@ -456,7 +460,7 @@ export async function selectShippingRate(
     appliedCoupons: parseAppliedCoupons(
       data.updateShippingMethod.cart.appliedCoupons,
     ),
-    chosenRateId: data.updateShippingMethod.cart.chosenShippingMethods[0] ?? null,
+    chosenRateId: data.updateShippingMethod.cart.chosenShippingMethods?.[0] ?? null,
     sessionToken: nextSession,
   };
 }
@@ -605,6 +609,16 @@ function ensureHeadlessMontonioBankGateway(
   ];
 }
 
+export function filterWooPaymentGatewayIds(gateways: PaymentGateway[]) {
+  return gateways
+    .filter(
+      (gateway) =>
+        !UNSUPPORTED_GATEWAY_IDS.has(gateway.id) &&
+        !HEADLESS_CHECKOUT_FAILURE_GATEWAY_IDS.has(gateway.id),
+    )
+    .map((gateway) => gateway.id);
+}
+
 export function filterSupportedPaymentGateways(gateways: PaymentGateway[]) {
   const filtered = gateways.filter(
     (gateway) =>
@@ -613,6 +627,16 @@ export function filterSupportedPaymentGateways(gateways: PaymentGateway[]) {
   );
 
   return ensureHeadlessMontonioBankGateway(filtered, gateways);
+}
+
+export async function fetchWooPaymentGatewayIds(sessionToken?: string | null) {
+  const { data } = await checkoutGraphqlRequest<PaymentGatewaysResponse>(
+    PAYMENT_GATEWAYS,
+    undefined,
+    sessionToken,
+  );
+
+  return filterWooPaymentGatewayIds(data.paymentGateways?.nodes ?? []);
 }
 
 export async function fetchPaymentGateways(sessionToken?: string | null) {
@@ -697,14 +721,13 @@ export async function submitCheckout(
   },
   sessionToken?: string | null,
 ) {
-  const enabledGateways = await fetchPaymentGateways(sessionToken);
-  const enabledGatewayIds = enabledGateways.map((gateway) => gateway.id);
+  const wooGatewayIds = await fetchWooPaymentGatewayIds(sessionToken);
   const selectedPaymentMethod =
     input.paymentMethod ??
     (await resolveCheckoutPaymentMethod(sessionToken));
   const paymentMethod = resolveMontonioCheckoutGatewayId(
     selectedPaymentMethod,
-    enabledGatewayIds,
+    wooGatewayIds,
   );
 
   const { data, sessionToken: nextSession } = await checkoutGraphqlRequest<

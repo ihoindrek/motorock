@@ -34,20 +34,14 @@ import {
 import { useCheckoutPayment } from "@/hooks/use-checkout-payment";
 import { useMontonioPaymentOptions } from "@/hooks/use-montonio-payment-options";
 import { isLiveCheckoutEnabled } from "@/lib/checkout-mode";
+import { orchestrateCheckout } from "@/lib/checkout/orchestrate-checkout";
 import {
-  buildMontonioCheckoutMetaData,
   isMontonioPaymentGateway,
   pickupPointReadyForCheckout,
-  shouldRunMontonioPaymentRemint,
 } from "@/lib/checkout/montonio-checkout";
-import {
-  buildCheckoutInputAddresses,
-  resetCheckoutSyncState,
-  submitCheckout,
-  prepareCheckoutSession,
-  updateCheckoutCustomerShipping,
-} from "@/lib/graphql/checkout";
-import { readWooSessionToken } from "@/lib/graphql/checkout-client";
+import { resetCheckoutSyncState } from "@/lib/graphql/checkout";
+import { readWooSessionToken, writeWooSessionToken } from "@/lib/graphql/checkout-client";
+import { reportClientError } from "@/lib/monitoring/observability-client";
 import {
   CheckoutOrderSummary,
   CheckoutSummaryShell,
@@ -75,6 +69,7 @@ import {
   trackBeginCheckout,
   trackCheckoutDraftRestored,
   trackCheckoutPaymentReturn,
+  trackCheckoutPreflightFailed,
   trackCheckoutSubmitBlocked,
   trackViewCart,
 } from "@/lib/analytics";
@@ -1449,119 +1444,43 @@ export function CartCheckoutView() {
           : pickupPoint?.name || fallbackLocation.city,
       };
 
-      let activeSession = await prepareCheckoutSession({
+      const checkoutResult = await orchestrateCheckout({
+        sessionToken: readWooSessionToken(),
         lines,
         linesKey: checkoutLinesKey,
-        selectedRateId: shipping.selectedRateId,
         customer: checkoutCustomer,
-      });
-
-      const { billing, shipping: shippingAddress } =
-        buildCheckoutInputAddresses(checkoutCustomer);
-      const pickupNote = [
-        pickupPoint
-          ? `Pakiautomaat: ${pickupPoint.name} (${pickupPoint.address}, ${pickupPoint.city}) [${pickupPoint.carrier}:${pickupPoint.id}]`
-          : null,
-        isMontonioPaymentGateway(payment.selectedId) && selectedMontonioOption
-          ? `Montonio: ${selectedMontonioOption.systemName} / ${selectedMontonioOption.code}`
-          : null,
-      ]
-        .filter(Boolean)
-        .join("\n") || undefined;
-
-      const { sessionToken: customerSession } = await updateCheckoutCustomerShipping(
-        checkoutCustomer,
-        activeSession,
-      );
-      activeSession = customerSession;
-
-      const checkoutMetaData = buildMontonioCheckoutMetaData({
-        pickupPoint,
+        selectedShippingRateId: shipping.selectedRateId,
+        paymentMethodId: payment.selectedId ?? "",
         montonioOption: selectedMontonioOption,
-        country: shipping.country,
-        paymentGatewayId: payment.selectedId,
+        needsMontonioProvider,
+        pickupPoint,
         locale,
+        displayTotal,
+        displayShipping,
       });
 
-      const result = await submitCheckout(
-        {
-          paymentMethod: payment.selectedId ?? undefined,
-          billing,
-          shipping: shippingAddress,
-          ...(pickupNote ? { customerNote: pickupNote } : {}),
-          ...(checkoutMetaData.length ? { metaData: checkoutMetaData } : {}),
-        },
-        activeSession,
-      );
-
-      let redirectUrl = result.redirect;
-
-      if (
-        shouldRunMontonioPaymentRemint(payment.selectedId, selectedMontonioOption) &&
-        result.orderDatabaseId
-      ) {
-        const paymentLineItems = [
-          ...lines.map((line) => ({
-            name: line.size ? `${line.name} (${line.size})` : line.name,
-            finalPrice: line.price * line.quantity,
-            quantity: line.quantity,
-          })),
-          ...(displayShipping > 0
-            ? [{ name: "SHIPPING", finalPrice: displayShipping, quantity: 1 }]
-            : []),
-        ];
-
-        const remintResponse = await fetch("/api/checkout/montonio-payment", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            orderDatabaseId: result.orderDatabaseId,
-            orderNumber: result.orderNumber,
-            total: displayTotal,
-            currency: "EUR",
-            locale,
-            country: shipping.country,
-            montonioOption: selectedMontonioOption,
-            billing: {
-              firstName,
-              lastName,
-              email,
-              phone: formatPhoneWithCountryCode(phoneCountry, phone),
-              address1: billing.address1,
-              city: billing.city,
-              postcode: billing.postcode,
-              country: billing.country,
-            },
-            shipping: {
-              firstName: shippingAddress.firstName,
-              lastName: shippingAddress.lastName,
-              email,
-              phone: formatPhoneWithCountryCode(phoneCountry, phone),
-              address1: shippingAddress.address1,
-              city: shippingAddress.city,
-              postcode: shippingAddress.postcode,
-              country: shippingAddress.country,
-            },
-            lineItems: paymentLineItems,
-          }),
-        });
-
-        const remintBody = (await remintResponse.json()) as {
-          redirect?: string;
-          error?: string;
-        };
-
-        if (!remintResponse.ok || !remintBody.redirect) {
-          throw new Error(
-            remintBody.error ??
-              (locale === "et"
-                ? "Makse käivitamine ebaõnnestus. Proovi uuesti."
-                : "Could not start payment. Please try again."),
-          );
+      if (!checkoutResult.ok) {
+        if (checkoutResult.code === "PREFLIGHT_FAILED") {
+          trackCheckoutPreflightFailed({
+            reason: checkoutResult.errors[0] ?? "Checkout preflight failed",
+            paymentMethod: payment.selectedId,
+            shippingRate: shipping.selectedRateId,
+          });
         }
 
-        redirectUrl = remintBody.redirect;
+        throw new Error(
+          checkoutResult.errors[0] ??
+            (locale === "et"
+              ? "Makse käivitamine ebaõnnestus. Proovi uuesti."
+              : "Could not start payment. Please try again."),
+        );
       }
+
+      if (checkoutResult.sessionToken) {
+        writeWooSessionToken(checkoutResult.sessionToken);
+      }
+
+      const redirectUrl = checkoutResult.redirect;
 
       if (redirectUrl) {
         // Keep the local cart intact for the external payment page — if the
@@ -1578,7 +1497,9 @@ export function CartCheckoutView() {
         return;
       }
 
-      setOrderId(result.orderNumber ?? `MR-${Date.now().toString(36).toUpperCase()}`);
+      setOrderId(
+        checkoutResult.orderNumber ?? `MR-${Date.now().toString(36).toUpperCase()}`,
+      );
       clearCheckoutDraft();
       clearCheckoutPaymentRedirect();
       setPaymentReturnBanner(null);
@@ -1586,6 +1507,16 @@ export function CartCheckoutView() {
     } catch (cause) {
       if (isLiveCheckoutEnabled()) {
         resetCheckoutSyncState();
+      }
+
+      if (cause instanceof Error) {
+        void reportClientError(cause, {
+          source: "checkout",
+          step: "submit",
+          paymentMethod: payment.selectedId,
+          shippingRate: shipping.selectedRateId,
+          country: shipping.country,
+        });
       }
 
       setSubmitError(

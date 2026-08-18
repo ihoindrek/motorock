@@ -16,6 +16,7 @@ export {
   trackCheckoutDraftRestored,
   trackCheckoutFunnelEvent,
   trackCheckoutPaymentReturn,
+  trackCheckoutPreflightFailed,
   trackCheckoutShippingRatesFailed,
   trackCheckoutShippingRatesLoaded,
   trackCheckoutSubmitBlocked,

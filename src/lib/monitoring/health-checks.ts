@@ -127,6 +127,52 @@ async function checkHomepageLocale(locale: "en" | "et") {
   };
 }
 
+async function checkCheckoutMontonioMethods() {
+  const response = await fetch(
+    `${getStorefrontUrl()}/api/checkout/montonio-payment-methods?country=EE`,
+    {
+      cache: "no-store",
+      headers: { "user-agent": "motorock-health-check" },
+    },
+  );
+
+  if (!response.ok) {
+    return { ok: false, message: `Montonio methods HTTP ${response.status}` };
+  }
+
+  const payload = (await response.json()) as {
+    configured?: boolean;
+    options?: Array<{ kind?: string }>;
+    error?: string;
+  };
+
+  if (payload.error) {
+    return { ok: false, message: payload.error };
+  }
+
+  if (!payload.configured) {
+    return {
+      ok: false,
+      message: "Montonio payment methods API is not configured",
+    };
+  }
+
+  const bankCount =
+    payload.options?.filter((option) => option.kind === "bank").length ?? 0;
+
+  if (bankCount === 0) {
+    return {
+      ok: false,
+      message: "Montonio returned 0 bank payment options for EE",
+    };
+  }
+
+  return {
+    ok: true,
+    message: `${bankCount} Montonio bank options for EE`,
+  };
+}
+
 async function checkMotorcycleCatalog() {
   const response = await fetch(`${getStorefrontUrl()}/en/shop/motorcycles`, {
     cache: "no-store",
@@ -156,6 +202,7 @@ export async function runStorefrontHealthChecks(): Promise<StorefrontHealthRepor
     timedCheck("homepage-en", () => checkHomepageLocale("en")),
     timedCheck("homepage-et", () => checkHomepageLocale("et")),
     timedCheck("motorcycles-catalog", checkMotorcycleCatalog),
+    timedCheck("checkout-montonio-methods", checkCheckoutMontonioMethods),
   ]);
 
   return {

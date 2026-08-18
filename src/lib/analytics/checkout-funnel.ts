@@ -47,6 +47,18 @@ export function trackCheckoutSubmitBlocked(reason: string) {
   });
 }
 
+export function trackCheckoutPreflightFailed(input: {
+  reason: string;
+  paymentMethod?: string | null;
+  shippingRate?: string | null;
+}) {
+  trackCheckoutFunnelEvent("checkout_submit_blocked", {
+    reason: `preflight:${input.reason}`,
+    payment_method: input.paymentMethod ?? undefined,
+    shipping_rate: input.shippingRate ?? undefined,
+  });
+}
+
 export function trackCheckoutPaymentReturn(input: {
   outcome: "redirect" | "error" | "resume";
   error?: string;
