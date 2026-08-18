@@ -10,13 +10,27 @@ import { MONTONIO_PAYMENT_METHOD_ID } from "@/lib/graphql/checkout";
 import type { MontonioPaymentOption } from "@/types/montonio-payment";
 
 describe("resolveMontonioCheckoutGatewayId", () => {
-  it("maps any Montonio UI gateway to wc_montonio_payments", () => {
-    expect(resolveMontonioCheckoutGatewayId("wc_montonio_card")).toBe(
-      MONTONIO_PAYMENT_METHOD_ID,
-    );
-    expect(resolveMontonioCheckoutGatewayId("wc_montonio_payments")).toBe(
-      MONTONIO_PAYMENT_METHOD_ID,
-    );
+  it("keeps enabled Montonio gateway ids", () => {
+    const enabled = [MONTONIO_PAYMENT_METHOD_ID, "wc_montonio_bnpl"];
+
+    expect(
+      resolveMontonioCheckoutGatewayId(MONTONIO_PAYMENT_METHOD_ID, enabled),
+    ).toBe(MONTONIO_PAYMENT_METHOD_ID);
+    expect(
+      resolveMontonioCheckoutGatewayId("wc_montonio_bnpl", enabled),
+    ).toBe("wc_montonio_bnpl");
+  });
+
+  it("maps synthetic Montonio gateways to the first enabled Woo gateway", () => {
+    expect(
+      resolveMontonioCheckoutGatewayId("wc_montonio_card", [
+        MONTONIO_PAYMENT_METHOD_ID,
+        "wc_montonio_bnpl",
+      ]),
+    ).toBe(MONTONIO_PAYMENT_METHOD_ID);
+    expect(
+      resolveMontonioCheckoutGatewayId("wc_montonio_card", ["wc_montonio_bnpl"]),
+    ).toBe("wc_montonio_bnpl");
   });
 
   it("passes through non-Montonio gateways", () => {
@@ -25,7 +39,7 @@ describe("resolveMontonioCheckoutGatewayId", () => {
 });
 
 describe("needsMontonioPaymentRemint", () => {
-  it("requires remint for card, blik, bnpl and hire purchase", () => {
+  it("requires remint for bank and card-like Montonio options", () => {
     expect(
       needsMontonioPaymentRemint({
         kind: "card",
@@ -39,20 +53,29 @@ describe("needsMontonioPaymentRemint", () => {
         code: "LHVBEE22",
         systemName: "paymentInitiation",
       } as MontonioPaymentOption),
-    ).toBe(false);
+    ).toBe(true);
+    expect(needsMontonioPaymentRemint(null)).toBe(false);
   });
 });
 
 describe("shouldRunMontonioPaymentRemint", () => {
-  it("runs remint only for Montonio gateways with card-like options", () => {
+  it("runs remint for Montonio bank and card gateways", () => {
     const cardOption = {
       kind: "card",
       code: "card",
       systemName: "cardPayments",
     } as MontonioPaymentOption;
+    const bankOption = {
+      kind: "bank",
+      code: "EEUHEE2X",
+      systemName: "paymentInitiation",
+    } as MontonioPaymentOption;
 
     expect(
       shouldRunMontonioPaymentRemint("wc_montonio_card", cardOption),
+    ).toBe(true);
+    expect(
+      shouldRunMontonioPaymentRemint(MONTONIO_PAYMENT_METHOD_ID, bankOption),
     ).toBe(true);
     expect(shouldRunMontonioPaymentRemint("ppcp-gateway", cardOption)).toBe(
       false,

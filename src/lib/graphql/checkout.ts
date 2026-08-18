@@ -609,11 +609,14 @@ export async function submitCheckout(
   },
   sessionToken?: string | null,
 ) {
+  const enabledGateways = await fetchPaymentGateways(sessionToken);
+  const enabledGatewayIds = enabledGateways.map((gateway) => gateway.id);
   const selectedPaymentMethod =
     input.paymentMethod ??
     (await resolveCheckoutPaymentMethod(sessionToken));
   const paymentMethod = resolveMontonioCheckoutGatewayId(
     selectedPaymentMethod,
+    enabledGatewayIds,
   );
 
   const { data, sessionToken: nextSession } = await checkoutGraphqlRequest<

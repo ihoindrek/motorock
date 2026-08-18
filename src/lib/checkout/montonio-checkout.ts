@@ -13,11 +13,11 @@ export function isMontonioPaymentGateway(gatewayId: string | null | undefined) {
   return Boolean(gatewayId?.toLowerCase().includes("montonio"));
 }
 
-/** Card/BLIK/BNPL need a server-side Montonio order — Woo bank gateway ignores meta. */
+/** Headless checkout always mints Montonio payment URLs server-side (incl. bank link). */
 export function needsMontonioPaymentRemint(
   option: MontonioPaymentOption | null | undefined,
 ) {
-  return Boolean(option && option.kind !== "bank");
+  return Boolean(option);
 }
 
 export function shouldRunMontonioPaymentRemint(
@@ -31,19 +31,35 @@ export function shouldRunMontonioPaymentRemint(
   );
 }
 
+const WOO_MONTONIO_GATEWAY_IDS = [
+  MONTONIO_PAYMENT_METHOD_ID,
+  MONTONIO_CARD_PAYMENT_METHOD_ID,
+  "wc_montonio_mobilepay",
+  "wc_montonio_blik",
+  "wc_montonio_bnpl",
+  "wc_montonio_hire_purchase",
+] as const;
+
 /**
- * Montonio redirect checkout uses `wc_montonio_payments` in headless GraphQL.
- * Non-bank methods (card, BLIK, BNPL) are selected via order meta and applied
- * on WooCommerce by `wordpress/motorock-headless-montonio.php`.
+ * Map UI / synthetic Montonio gateway ids to a gateway WooGraphQL checkout accepts.
+ * Synthetic rows (e.g. card when Woo only exposes bank link) must fall back to an
+ * enabled Woo Montonio gateway — otherwise checkout returns "Invalid payment method".
  */
 export function resolveMontonioCheckoutGatewayId(
   selectedGatewayId: string,
+  enabledGatewayIds?: readonly string[],
 ) {
-  if (isMontonioPaymentGateway(selectedGatewayId)) {
-    return MONTONIO_PAYMENT_METHOD_ID;
+  if (!isMontonioPaymentGateway(selectedGatewayId)) {
+    return selectedGatewayId;
   }
 
-  return selectedGatewayId;
+  const enabled = enabledGatewayIds ?? [];
+  if (enabled.includes(selectedGatewayId)) {
+    return selectedGatewayId;
+  }
+
+  const fallback = WOO_MONTONIO_GATEWAY_IDS.find((id) => enabled.includes(id));
+  return fallback ?? MONTONIO_PAYMENT_METHOD_ID;
 }
 
 export function pickupPointReadyForCheckout(point: PickupPoint | null | undefined) {

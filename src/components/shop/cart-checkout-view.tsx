@@ -162,6 +162,12 @@ function friendlyCheckoutError(
     return message;
   }
 
+  if (/invalid payment method/i.test(message)) {
+    return locale === "et"
+      ? "Valitud makseviis ei ole hetkel saadaval. Vali pangalink uuesti või värskenda lehte."
+      : "The selected payment method is not available. Choose bank link again or refresh the page.";
+  }
+
   if (
     message.includes("GraphQL") ||
     message.includes("HTTP") ||
@@ -1492,8 +1498,8 @@ export function CartCheckoutView() {
           throw new Error(
             remintBody.error ??
               (locale === "et"
-                ? "Kaardimakse käivitamine ebaõnnestus. Proovi uuesti."
-                : "Could not start card payment. Please try again."),
+                ? "Makse käivitamine ebaõnnestus. Proovi uuesti."
+                : "Could not start payment. Please try again."),
           );
         }
 
