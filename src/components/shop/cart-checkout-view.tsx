@@ -44,6 +44,7 @@ import {
   buildCheckoutInputAddresses,
   resetCheckoutSyncState,
   submitCheckout,
+  prepareCheckoutSession,
   updateCheckoutCustomerShipping,
 } from "@/lib/graphql/checkout";
 import { readWooSessionToken } from "@/lib/graphql/checkout-client";
@@ -166,6 +167,16 @@ function friendlyCheckoutError(
     return locale === "et"
       ? "Valitud makseviis ei ole hetkel saadaval. Vali pangalink uuesti või värskenda lehte."
       : "The selected payment method is not available. Choose bank link again or refresh the page.";
+  }
+
+  if (/checkout payment could not be started/i.test(message)) {
+    return locale === "et"
+      ? "Makset ei õnnestunud käivitada. Vali pangalink või PayPal ja proovi uuesti."
+      : "Payment could not be started. Choose bank link or PayPal and try again.";
+  }
+
+  if (/choose a delivery method|vali tarneviis/i.test(message)) {
+    return message;
   }
 
   if (
@@ -1168,6 +1179,8 @@ export function CartCheckoutView() {
     Boolean(payment.selectedId) &&
     !paymentLoading &&
     !payment.error &&
+    !shipping.loading &&
+    !shipping.syncing &&
     (!needsMontonioProvider || Boolean(selectedMontonioOption)) &&
     pickupValid;
 
@@ -1383,6 +1396,27 @@ export function CartCheckoutView() {
         );
       }
 
+      if (!shipping.selectedRateId) {
+        throw new Error(
+          locale === "et"
+            ? "Vali tarneviis enne maksmist."
+            : "Choose a delivery method before paying.",
+        );
+      }
+
+      const checkoutLinesKey = lines
+        .map(
+          (line) =>
+            `${line.slug}:${line.size ?? ""}:${line.quantity}:${line.variationId ?? ""}`,
+        )
+        .join("|");
+
+      let activeSession = await prepareCheckoutSession({
+        lines,
+        linesKey: checkoutLinesKey,
+        selectedRateId: shipping.selectedRateId,
+      });
+
       const fallbackLocation = defaultLocationForCountry(shipping.country);
       const checkoutCustomer = {
         email,
@@ -1413,10 +1447,11 @@ export function CartCheckoutView() {
         .filter(Boolean)
         .join("\n") || undefined;
 
-      const { sessionToken: activeSession } = await updateCheckoutCustomerShipping(
+      const { sessionToken: customerSession } = await updateCheckoutCustomerShipping(
         checkoutCustomer,
-        readWooSessionToken(),
+        activeSession,
       );
+      activeSession = customerSession;
 
       const checkoutMetaData = buildMontonioCheckoutMetaData({
         pickupPoint,

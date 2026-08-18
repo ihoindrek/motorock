@@ -317,6 +317,35 @@ export async function syncLocalCartToWoo(
   return activeSession;
 }
 
+/** Keep explicit buyer selection when refreshing cart rates — never mirror Woo defaults. */
+export function resolveSelectedShippingRateId(
+  current: string | null,
+  nextRates: ShippingRate[],
+) {
+  if (current && nextRates.some((rate) => rate.id === current)) {
+    return current;
+  }
+
+  return null;
+}
+
+export async function prepareCheckoutSession(input: {
+  lines: CartLine[];
+  linesKey?: string;
+  selectedRateId?: string | null;
+}) {
+  let session = await syncLocalCartToWoo(input.lines, {
+    linesKey: input.linesKey,
+  });
+
+  if (input.selectedRateId) {
+    const shipping = await selectShippingRate(input.selectedRateId, session);
+    session = shipping.sessionToken ?? session;
+  }
+
+  return session;
+}
+
 export async function updateCheckoutCustomerShipping(
   shipping: {
     country: string;
@@ -522,9 +551,16 @@ const UNSUPPORTED_GATEWAY_IDS = new Set([
   "ppcp-googlepay",
 ]);
 
+/** Gateways Woo accepts but headless checkout cannot complete (payment stays pending). */
+const HEADLESS_CHECKOUT_FAILURE_GATEWAY_IDS = new Set([
+  "wc_montonio_bnpl",
+]);
+
 export function filterSupportedPaymentGateways(gateways: PaymentGateway[]) {
   return gateways.filter(
-    (gateway) => !UNSUPPORTED_GATEWAY_IDS.has(gateway.id),
+    (gateway) =>
+      !UNSUPPORTED_GATEWAY_IDS.has(gateway.id) &&
+      !HEADLESS_CHECKOUT_FAILURE_GATEWAY_IDS.has(gateway.id),
   );
 }
 
@@ -648,7 +684,9 @@ export async function submitCheckout(
   const checkout = data.checkout;
   if (!checkout || checkout.result !== "success") {
     throw new Error(
-      "Checkout could not be completed. Please verify delivery and payment details, then try again.",
+      checkout?.result === "failure"
+        ? "Checkout payment could not be started. Choose bank link or PayPal and try again."
+        : "Checkout could not be completed. Please verify delivery and payment details, then try again.",
     );
   }
 

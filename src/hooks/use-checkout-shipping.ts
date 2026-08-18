@@ -17,6 +17,7 @@ import {
   parseCartMoney,
   removeCheckoutCoupon,
   resetCheckoutSyncState,
+  resolveSelectedShippingRateId,
   selectShippingRate,
   syncLocalCartToWoo,
   updateCheckoutCustomerShipping,
@@ -190,18 +191,9 @@ export function useCheckoutShipping(
       setWcSubtotal(parseCartMoney(cart.cart.subtotal));
       setWcTotal(parseCartMoney(cart.cart.total));
 
-      const chosen =
-        cart.cart.chosenShippingMethods.find((rateId) =>
-          nextRates.some((rate) => rate.id === rateId),
-        ) ?? null;
-
-      setSelectedRateIdState((current) => {
-        if (current && nextRates.some((rate) => rate.id === current)) {
-          return current;
-        }
-
-        return chosen;
-      });
+      setSelectedRateIdState((current) =>
+        resolveSelectedShippingRateId(current, nextRates),
+      );
     },
     [rememberSession],
   );
