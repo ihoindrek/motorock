@@ -62,6 +62,11 @@ export function resolveMontonioCheckoutGatewayId(
     return selectedGatewayId;
   }
 
+  // Bank link must stay on wc_montonio_payments — card gateway ignores bank meta.
+  if (selectedGatewayId === MONTONIO_PAYMENT_METHOD_ID) {
+    return MONTONIO_PAYMENT_METHOD_ID;
+  }
+
   const fallback = WOO_MONTONIO_GATEWAY_IDS.find((id) => enabled.includes(id));
   return fallback ?? MONTONIO_PAYMENT_METHOD_ID;
 }

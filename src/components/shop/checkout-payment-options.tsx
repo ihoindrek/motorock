@@ -180,9 +180,14 @@ export function expandMontonioPaymentGateways(
 export function filterGatewaysWithMontonioOptions(
   gateways: PaymentGateway[],
   montonioOptions: MontonioPaymentOption[],
+  wooGatewayIds?: ReadonlySet<string>,
 ) {
   return gateways.filter((gateway) => {
     if (!isMontonioGateway(gateway)) {
+      return true;
+    }
+
+    if (wooGatewayIds?.has(gateway.id)) {
       return true;
     }
 
@@ -192,10 +197,49 @@ export function filterGatewaysWithMontonioOptions(
   });
 }
 
+function hasBankPaymentInitiationOptions(options: MontonioPaymentOption[]) {
+  return options.some(
+    (option) =>
+      option.kind === "bank" && option.systemName === "paymentInitiation",
+  );
+}
+
+/** Inject bank link when Montonio API has banks but Woo omitted wc_montonio_payments. */
+export function ensureLiveBankPaymentGateway(
+  gateways: PaymentGateway[],
+  montonioOptions: MontonioPaymentOption[],
+  locale: Locale,
+) {
+  if (!hasBankPaymentInitiationOptions(montonioOptions)) {
+    return gateways;
+  }
+
+  if (gateways.some((gateway) => gateway.id === MONTONIO_PAYMENT_METHOD_ID)) {
+    return gateways;
+  }
+
+  const bankDef = getLocalizedMontonioGatewayDefs(locale).find(
+    (def) => def.id === MONTONIO_PAYMENT_METHOD_ID,
+  );
+
+  if (!bankDef) {
+    return gateways;
+  }
+
+  return [
+    {
+      id: bankDef.id,
+      title: bankDef.title,
+      description: bankDef.description,
+      icon: null,
+    },
+    ...gateways,
+  ];
+}
+
 /**
- * Live headless checkout must only expose Woo-enabled gateways. Synthetic
- * BNPL/hire-purchase/card rows send provider meta that wc_montonio_payments
- * cannot complete (checkout.result failure).
+ * Live checkout exposes Woo-enabled Montonio gateways plus any Montonio API
+ * providers missing from Woo (e.g. bank link when Vercel only gets card).
  */
 export function resolveVisiblePaymentGateways(
   gateways: PaymentGateway[],
@@ -203,15 +247,16 @@ export function resolveVisiblePaymentGateways(
   locale: Locale,
   liveCheckout: boolean,
 ) {
-  if (!liveCheckout) {
-    return filterGatewaysWithMontonioOptions(
-      expandMontonioPaymentGateways(gateways, montonioOptions, locale),
-      montonioOptions,
-    );
-  }
+  const wooGatewayIds = new Set(gateways.map((gateway) => gateway.id));
+  const base = liveCheckout
+    ? ensureLiveBankPaymentGateway(gateways, montonioOptions, locale)
+    : gateways;
 
-  // Woo bank link must stay visible — do not gate it on async Montonio option fetch.
-  return gateways.map((gateway) => localizePaymentGateway(gateway, locale));
+  return filterGatewaysWithMontonioOptions(
+    expandMontonioPaymentGateways(base, montonioOptions, locale),
+    montonioOptions,
+    wooGatewayIds,
+  ).map((gateway) => localizePaymentGateway(gateway, locale));
 }
 
 const CARD_PAYMENT_LOGO_SIZES = {

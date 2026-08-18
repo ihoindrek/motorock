@@ -381,8 +381,9 @@ export function useCheckoutShipping(
     setSyncing(true);
     setError(null);
 
-    void selectShippingRate(rateId, activeSession())
-      .then((result) => {
+    void (async () => {
+      const applySelection = async () => {
+        const result = await selectShippingRate(rateId, activeSession());
         rememberSession(result.sessionToken);
         setRates(filterShippingRatesForCountry(result.rates, countryRef.current));
         setShippingTotal(parseCartMoney(result.cart.shippingTotal));
@@ -398,17 +399,44 @@ export function useCheckoutShipping(
         }
 
         setSelectedRateIdState(appliedRateId);
-      })
-      .catch((cause) => {
+      };
+
+      try {
+        await applySelection();
+      } catch (cause) {
+        const message =
+          cause instanceof Error ? cause.message : "Could not update shipping";
+        const shipCountry = countryRef.current;
+
+        if (
+          shipCountry &&
+          message.includes("not an available shipping method")
+        ) {
+          try {
+            await pushCustomerShippingRef.current(
+              shipCountry,
+              needsAddress && Boolean(customerRef.current.address1),
+            );
+            await applySelection();
+            return;
+          } catch (retryCause) {
+            setSelectedRateIdState(previousRateId);
+            setError(
+              retryCause instanceof Error
+                ? retryCause.message
+                : "Could not update shipping",
+            );
+            return;
+          }
+        }
+
         setSelectedRateIdState(previousRateId);
-        setError(
-          cause instanceof Error ? cause.message : "Could not update shipping",
-        );
-      })
-      .finally(() => {
+        setError(message);
+      } finally {
         setSyncing(false);
-      });
-  }, [activeSession, rememberSession]);
+      }
+    })();
+  }, [activeSession, needsAddress, rememberSession]);
 
   const applyCoupon = useCallback(
     async (code: string) => {

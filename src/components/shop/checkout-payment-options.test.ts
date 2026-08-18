@@ -196,6 +196,19 @@ describe("filterSupportedPaymentGateways", () => {
       MONTONIO_PAYMENT_METHOD_ID,
     ]);
   });
+
+  it("adds bank link alongside card when Woo omits wc_montonio_payments", () => {
+    const gateways: PaymentGateway[] = [
+      { id: "ppcp-gateway", title: "PayPal", icon: null },
+      { id: "wc_montonio_card", title: "Card Payment", icon: null },
+    ];
+
+    expect(filterSupportedPaymentGateways(gateways).map((gateway) => gateway.id)).toEqual([
+      MONTONIO_PAYMENT_METHOD_ID,
+      "ppcp-gateway",
+      "wc_montonio_card",
+    ]);
+  });
 });
 
 describe("resolveVisiblePaymentGateways", () => {
@@ -207,12 +220,12 @@ describe("resolveVisiblePaymentGateways", () => {
 
     const live = resolveVisiblePaymentGateways(gateways, [], "et", true);
     expect(live.map((gateway) => gateway.id)).toEqual([
-      "ppcp-gateway",
       MONTONIO_PAYMENT_METHOD_ID,
+      "ppcp-gateway",
     ]);
   });
 
-  it("hides synthetic BNPL/hire-purchase rows in live checkout", () => {
+  it("shows Montonio financing rows in live checkout when API supports them", () => {
     const gateways: PaymentGateway[] = [
       { id: "ppcp-gateway", title: "PayPal", description: "", icon: null },
       { id: MONTONIO_PAYMENT_METHOD_ID, title: "Pay with your bank", description: "", icon: null },
@@ -236,14 +249,29 @@ describe("resolveVisiblePaymentGateways", () => {
     ];
 
     const live = resolveVisiblePaymentGateways(gateways, options, "et", true);
-    expect(live.map((gateway) => gateway.id)).toEqual([
-      "ppcp-gateway",
-      MONTONIO_PAYMENT_METHOD_ID,
-    ]);
+    expect(live.map((gateway) => gateway.id)).toEqual(
+      expect.arrayContaining([
+        "ppcp-gateway",
+        MONTONIO_PAYMENT_METHOD_ID,
+        "wc_montonio_bnpl",
+        "wc_montonio_hire_purchase",
+      ]),
+    );
+  });
 
-    const preview = resolveVisiblePaymentGateways(gateways, options, "et", false);
-    expect(preview.map((gateway) => gateway.id)).toEqual(
-      expect.arrayContaining(["wc_montonio_bnpl", "wc_montonio_hire_purchase"]),
+  it("injects bank link in live checkout when Woo only returns card", () => {
+    const gateways: PaymentGateway[] = [
+      { id: "ppcp-gateway", title: "PayPal", description: "", icon: null },
+      { id: "wc_montonio_card", title: "Card Payment", description: "", icon: null },
+    ];
+
+    const live = resolveVisiblePaymentGateways(gateways, bankOptions, "et", true);
+    expect(live.map((gateway) => gateway.id)).toEqual(
+      expect.arrayContaining([
+        MONTONIO_PAYMENT_METHOD_ID,
+        "wc_montonio_card",
+        "ppcp-gateway",
+      ]),
     );
   });
 });

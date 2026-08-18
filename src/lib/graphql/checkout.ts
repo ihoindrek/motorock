@@ -333,10 +333,28 @@ export async function prepareCheckoutSession(input: {
   lines: CartLine[];
   linesKey?: string;
   selectedRateId?: string | null;
+  customer?: {
+    country: string;
+    postcode?: string;
+    city?: string;
+    address1?: string;
+    firstName?: string;
+    lastName?: string;
+    phone?: string;
+    email?: string;
+  };
 }) {
   let session = await syncLocalCartToWoo(input.lines, {
     linesKey: input.linesKey,
   });
+
+  if (input.customer?.country) {
+    const { sessionToken } = await updateCheckoutCustomerShipping(
+      input.customer,
+      session,
+    );
+    session = sessionToken ?? session;
+  }
 
   if (input.selectedRateId) {
     const shipping = await selectShippingRate(input.selectedRateId, session);
@@ -552,16 +570,42 @@ const UNSUPPORTED_GATEWAY_IDS = new Set([
 ]);
 
 /** Gateways Woo accepts but headless checkout cannot complete (payment stays pending). */
-const HEADLESS_CHECKOUT_FAILURE_GATEWAY_IDS = new Set([
-  "wc_montonio_bnpl",
-]);
+const HEADLESS_CHECKOUT_FAILURE_GATEWAY_IDS = new Set<string>();
+
+function ensureHeadlessMontonioBankGateway(
+  gateways: PaymentGateway[],
+  sourceGateways: PaymentGateway[],
+) {
+  const hasMontonio = sourceGateways.some((gateway) =>
+    gateway.id.toLowerCase().includes("montonio"),
+  );
+  const hasBank = gateways.some(
+    (gateway) => gateway.id === MONTONIO_PAYMENT_METHOD_ID,
+  );
+
+  if (!hasMontonio || hasBank) {
+    return gateways;
+  }
+
+  return [
+    {
+      id: MONTONIO_PAYMENT_METHOD_ID,
+      title: "Pay with your bank",
+      description: null,
+      icon: null,
+    },
+    ...gateways,
+  ];
+}
 
 export function filterSupportedPaymentGateways(gateways: PaymentGateway[]) {
-  return gateways.filter(
+  const filtered = gateways.filter(
     (gateway) =>
       !UNSUPPORTED_GATEWAY_IDS.has(gateway.id) &&
       !HEADLESS_CHECKOUT_FAILURE_GATEWAY_IDS.has(gateway.id),
   );
+
+  return ensureHeadlessMontonioBankGateway(filtered, gateways);
 }
 
 export async function fetchPaymentGateways(sessionToken?: string | null) {

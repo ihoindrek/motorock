@@ -690,7 +690,7 @@ export function CartCheckoutView() {
   );
   const montonio = useMontonioPaymentOptions(
     montonioPreviewCountry,
-    paymentCatalogReady && hasMontonioGateway && isLiveCheckoutEnabled(),
+    paymentCatalogReady && isLiveCheckoutEnabled(),
   );
   const visiblePaymentGateways = useMemo(() => {
     if (!payment.gateways.length) {
@@ -742,7 +742,7 @@ export function CartCheckoutView() {
   const paymentLoading =
     paymentCatalogReady &&
     (payment.loading ||
-      (hasMontonioGateway && isLiveCheckoutEnabled() && montonio.loading));
+      (isLiveCheckoutEnabled() && montonio.loading));
   const montonioSelected = Boolean(
     selectedPaymentGateway?.id?.toLowerCase().includes("montonio"),
   );
@@ -1431,12 +1431,6 @@ export function CartCheckoutView() {
         )
         .join("|");
 
-      let activeSession = await prepareCheckoutSession({
-        lines,
-        linesKey: checkoutLinesKey,
-        selectedRateId: shipping.selectedRateId,
-      });
-
       const fallbackLocation = defaultLocationForCountry(shipping.country);
       const checkoutCustomer = {
         email,
@@ -1454,6 +1448,14 @@ export function CartCheckoutView() {
           ? address1
           : pickupPoint?.name || fallbackLocation.city,
       };
+
+      let activeSession = await prepareCheckoutSession({
+        lines,
+        linesKey: checkoutLinesKey,
+        selectedRateId: shipping.selectedRateId,
+        customer: checkoutCustomer,
+      });
+
       const { billing, shipping: shippingAddress } =
         buildCheckoutInputAddresses(checkoutCustomer);
       const pickupNote = [
