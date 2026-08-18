@@ -50,6 +50,15 @@ function isTransientFetchError(error: unknown): boolean {
   );
 }
 
+function isKnownPartialGraphqlError(message: string) {
+  const normalized = message.toLowerCase();
+  return (
+    normalized.includes("product type") &&
+    normalized.includes("variation") &&
+    normalized.includes("not supported")
+  );
+}
+
 function isRetryableGraphqlError(error: unknown): boolean {
   if (isTransientFetchError(error)) {
     return true;
@@ -108,10 +117,15 @@ async function graphqlRequestOnce<TData, TVariables>(
 
     // WooGraphQL + WPML can return partial product data when a translation
     // resolves to an unsupported variation post type.
-    console.warn(
-      "[graphql] partial errors:",
-      payload.errors.map((error) => error.message).join("; "),
+    const notableErrors = payload.errors.filter(
+      (error) => !isKnownPartialGraphqlError(error.message),
     );
+    if (notableErrors.length > 0) {
+      console.warn(
+        "[graphql] partial errors:",
+        notableErrors.map((error) => error.message).join("; "),
+      );
+    }
   }
 
   if (!payload.data) {

@@ -124,7 +124,8 @@ async function fetchMontonioPickupPointsRequest(input: {
         accept: "application/json",
         Authorization: `Bearer ${token}`,
       },
-      next: { revalidate: 60 * 60 },
+      // In-memory cache above; skip Next data cache (DE novaPost lists exceed 2MB).
+      cache: "no-store",
     },
   );
 

@@ -6,6 +6,7 @@ import { brands } from "@/data/brands";
 import type { Locale } from "@/i18n/config";
 import { localizedHref } from "@/i18n/paths";
 import { getBrandCatalogHref } from "@/lib/shop/brand-catalog-url";
+import { cn } from "@/lib/utils";
 
 const purchaseReasonsByLocale: Record<Locale, readonly {
   title: string;
@@ -65,6 +66,21 @@ const purchaseReasonsByLocale: Record<Locale, readonly {
 const motorcycleBrands = brands.filter(
   (brand): brand is typeof brand & { logo: string } => Boolean(brand.logo),
 );
+
+type BrandedLogo = (typeof motorcycleBrands)[number];
+
+/** Monochrome black logos on the light about canvas; dark badges stay as-is. */
+function aboutBrandLogoClassName(brand: BrandedLogo) {
+  if (brand.slug === "johnny-reb") {
+    return "h-10 w-auto sm:h-11";
+  }
+
+  if (brand.slug === "motogirl") {
+    return cn(brand.logoClassLg);
+  }
+
+  return cn(brand.logoClassLg, "brightness-0");
+}
 
 const proseClassName =
   "text-base font-medium leading-[1.7] text-ink sm:text-lg";
@@ -265,7 +281,7 @@ export function AboutView({ locale }: AboutViewProps) {
               alt="Motorock"
               width={140}
               height={44}
-              className="h-8 w-auto opacity-60 sm:h-9"
+              className="h-8 w-auto opacity-60 brightness-0 sm:h-9"
             />
           </div>
         </section>
@@ -310,28 +326,19 @@ export function AboutView({ locale }: AboutViewProps) {
             <h2 className={headingClassName}>{t.dealer}</h2>
           </div>
 
-          <ul className="mt-12 flex flex-wrap items-center gap-x-10 gap-y-8 lg:mt-16 lg:gap-x-14">
-            {motorcycleBrands.map((brand, index) => (
-              <li
-                key={brand.slug}
-                className={
-                  index % 3 === 1
-                    ? "lg:translate-y-4"
-                    : index % 3 === 2
-                      ? "lg:-translate-y-2"
-                      : undefined
-                }
-              >
+          <ul className="about-brand-logos mt-12 flex w-full min-w-0 items-center justify-between gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] sm:gap-3 md:overflow-visible lg:mt-16 [&::-webkit-scrollbar]:hidden">
+            {motorcycleBrands.map((brand) => (
+              <li key={brand.slug} className="flex shrink-0 items-center first:pl-0 last:pr-0">
                 <Link
                   href={localizedHref(locale, getBrandCatalogHref(brand.slug, locale))}
-                  className="opacity-45 mix-blend-multiply transition-opacity hover:opacity-100"
+                  className="opacity-60 transition-opacity hover:opacity-100"
                 >
                   <Image
                     src={brand.logo}
                     alt={brand.name}
                     width={brand.width ?? 120}
                     height={brand.height ?? 36}
-                    className={brand.logoClassLg}
+                    className={aboutBrandLogoClassName(brand)}
                   />
                 </Link>
               </li>

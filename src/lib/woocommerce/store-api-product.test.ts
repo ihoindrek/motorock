@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildAddToCartVariationAttributes,
   buildVariationIdsFromStoreProduct,
   cartSizeToWooAttributeSlug,
   findStoreVariationId,
@@ -23,6 +24,72 @@ const kaelasoojendajad = {
     { id: 33819, attributes: [{ name: "Värv", value: "hall" }] },
   ],
 };
+
+describe("buildAddToCartVariationAttributes", () => {
+  it("uses only size when the product has no color attribute", () => {
+    const product = {
+      id: 1,
+      type: "variable",
+      attributes: [{ name: "Size", terms: [{ name: "M", slug: "m" }] }],
+      variations: [
+        {
+          id: 10,
+          attributes: [
+            { name: "Size", value: "m" },
+            { name: "Finish", value: "black" },
+          ],
+        },
+      ],
+    };
+
+    expect(
+      buildAddToCartVariationAttributes(product, {}, 10),
+    ).toEqual([{ attributeName: "pa_size", attributeValue: "m" }]);
+  });
+
+  it("maps leg length attributes to pa_leg-length", () => {
+    const product = {
+      id: 2,
+      type: "variable",
+      attributes: [
+        { name: "size", terms: [{ name: "W32/L34", slug: "w32-l34" }] },
+        {
+          name: "Leg length",
+          terms: [{ name: "L34", slug: "l34" }],
+        },
+      ],
+      variations: [
+        {
+          id: 20,
+          attributes: [
+            { name: "size", value: "w32-l34" },
+            { name: "Leg length", value: "l34" },
+          ],
+        },
+      ],
+    };
+
+    expect(
+      buildAddToCartVariationAttributes(product, {}, 20),
+    ).toEqual([
+      { attributeName: "pa_size", attributeValue: "w32-l34" },
+      { attributeName: "pa_leg-length", attributeValue: "l34" },
+    ]);
+  });
+
+  it("skips color when the product has no color attribute", () => {
+    const product = {
+      id: 3,
+      type: "variable",
+      attributes: [{ name: "Size", terms: [{ name: "L", slug: "l" }] }],
+      variations: [],
+    };
+
+    expect(
+      buildAddToCartVariationAttributes(product, { color: "black" }),
+    ).toEqual([]);
+  });
+});
 
 describe("buildVariationIdsFromStoreProduct", () => {
   it("maps color slugs and term names to variation ids", () => {

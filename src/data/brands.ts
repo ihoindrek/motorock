@@ -91,7 +91,7 @@ export const brands: readonly BrandConfig[] = [
   {
     name: "Motogirl",
     slug: "motogirl",
-    logo: "/motogirl.png",
+    logo: "/motogirl_logo-black.avif",
     width: 110,
     height: 36,
     logoInvert: false,

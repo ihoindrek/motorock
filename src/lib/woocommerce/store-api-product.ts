@@ -49,6 +49,36 @@ function isColorAttribute(name: string) {
   );
 }
 
+function isLegLengthAttribute(name: string) {
+  const normalized = normalizeAttributeName(name);
+  return (
+    normalized === "leg length" ||
+    normalized === "leg-length" ||
+    normalized === "jala pikkus"
+  );
+}
+
+function findProductAttribute(product: StoreProduct, attributeName: string) {
+  const target = normalizeAttributeName(attributeName);
+  return product.attributes?.find(
+    (attribute) => normalizeAttributeName(attribute.name) === target,
+  );
+}
+
+function resolveAttributeValueSlug(
+  attribute: StoreProductAttribute,
+  value: string,
+) {
+  const normalized = value.trim().toLowerCase();
+  const match = attribute.terms?.find(
+    (term) =>
+      term.slug.trim().toLowerCase() === normalized ||
+      term.name.trim().toLowerCase() === normalized,
+  );
+
+  return match?.slug ?? value.trim();
+}
+
 function colorValueMatches(
   variationValue: string | null | undefined,
   selectedColor: string,
@@ -278,7 +308,11 @@ function wooPaAttributeName(attributeName: string) {
     return "pa_size";
   }
 
-  return `pa_${normalized}`;
+  if (isLegLengthAttribute(attributeName)) {
+    return "pa_leg-length";
+  }
+
+  return `pa_${normalized.replace(/\s+/g, "-")}`;
 }
 
 /** Convert cart/UI size label to Woo `pa_size` slug (no Store API needed). */
@@ -355,30 +389,35 @@ export function buildAddToCartVariationAttributes(
   const attributes: WooVariationAttributeInput[] = [];
 
   if (line.size && !isOneSizeLabel(line.size)) {
-    attributes.push({
-      attributeName: "pa_size",
-      attributeValue: resolveSizeAttributeSlug(line.size, product),
-    });
+    const sizeAttr = product.attributes?.find((attribute) =>
+      isSizeAttribute(attribute.name),
+    );
+    if (sizeAttr) {
+      attributes.push({
+        attributeName: wooPaAttributeName(sizeAttr.name),
+        attributeValue: resolveSizeAttributeSlug(line.size, product),
+      });
+    }
   }
 
   if (line.color) {
     const colorAttr = product.attributes?.find((attribute) =>
       isColorAttribute(attribute.name),
     );
-    const terms = colorAttr?.terms ?? [];
-    const normalized = line.color.trim().toLowerCase();
-    const match = terms.find(
-      (term) =>
-        term.slug.toLowerCase() === normalized ||
-        term.name.toLowerCase() === normalized,
-    );
+    if (colorAttr) {
+      const terms = colorAttr.terms ?? [];
+      const normalized = line.color.trim().toLowerCase();
+      const match = terms.find(
+        (term) =>
+          term.slug.toLowerCase() === normalized ||
+          term.name.toLowerCase() === normalized,
+      );
 
-    attributes.push({
-      attributeName: colorAttr
-        ? wooPaAttributeName(colorAttr.name)
-        : "pa_color",
-      attributeValue: match?.slug ?? normalized,
-    });
+      attributes.push({
+        attributeName: wooPaAttributeName(colorAttr.name),
+        attributeValue: match?.slug ?? normalized,
+      });
+    }
   }
 
   if (
@@ -393,9 +432,14 @@ export function buildAddToCartVariationAttributes(
         continue;
       }
 
+      const productAttr = findProductAttribute(product, attribute.name);
+      if (!productAttr) {
+        continue;
+      }
+
       attributes.push({
-        attributeName: wooPaAttributeName(attribute.name),
-        attributeValue: value,
+        attributeName: wooPaAttributeName(productAttr.name),
+        attributeValue: resolveAttributeValueSlug(productAttr, value),
       });
     }
   }

@@ -162,23 +162,23 @@ async function computeProductShippingEstimate(input: {
     addInput.variationId = input.variationId;
   }
 
-  const variationAttrs = buildAddToCartVariationAttributesFromCartLine({
-    size: input.size,
-    color: input.color,
-  });
-  if (variationAttrs.length > 0) {
-    addInput.variation = variationAttrs;
-  } else if (input.variationId) {
-    const storeProduct = await fetchStoreProduct(input.productId);
-    if (storeProduct) {
-      const fromStore = buildAddToCartVariationAttributes(
-        storeProduct,
-        input,
-        input.variationId,
-      );
-      if (fromStore.length > 0) {
-        addInput.variation = fromStore;
-      }
+  const storeProduct = await fetchStoreProduct(input.productId);
+  if (storeProduct) {
+    const fromStore = buildAddToCartVariationAttributes(
+      storeProduct,
+      input,
+      input.variationId,
+    );
+    if (fromStore.length > 0) {
+      addInput.variation = fromStore;
+    }
+  } else {
+    const variationAttrs = buildAddToCartVariationAttributesFromCartLine({
+      size: input.size,
+      color: input.color,
+    });
+    if (variationAttrs.length > 0) {
+      addInput.variation = variationAttrs;
     }
   }
 
