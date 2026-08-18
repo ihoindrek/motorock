@@ -33,13 +33,13 @@ describe("resolveMontonioCheckoutGatewayId", () => {
     ).toBe("wc_montonio_bnpl");
   });
 
-  it("keeps bank link gateway even when Woo only exposes card", () => {
+  it("maps bank link to an enabled Montonio gateway when synthetic id is missing from Woo", () => {
     expect(
       resolveMontonioCheckoutGatewayId(MONTONIO_PAYMENT_METHOD_ID, [
         "ppcp-gateway",
         "wc_montonio_card",
       ]),
-    ).toBe(MONTONIO_PAYMENT_METHOD_ID);
+    ).toBe("wc_montonio_card");
   });
 
   it("passes through non-Montonio gateways", () => {

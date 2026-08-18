@@ -9,7 +9,7 @@ import {
   trackCheckoutShippingRatesLoaded,
 } from "@/lib/analytics/checkout-funnel";
 import { formatCouponError } from "@/lib/checkout/format-coupon-error";
-import { clearCheckoutSession } from "@/lib/graphql/checkout-client";
+import { readWooSessionToken, writeWooSessionToken } from "@/lib/graphql/checkout-client";
 import {
   applyCheckoutCoupon,
   fetchAllowedCountries,
@@ -23,7 +23,6 @@ import {
   updateCheckoutCustomerShipping,
   type AppliedCoupon,
 } from "@/lib/graphql/checkout";
-import { readWooSessionToken } from "@/lib/graphql/checkout-client";
 import {
   countryLabel,
   defaultLocationForCountry,
@@ -75,6 +74,7 @@ type CheckoutShippingState = {
   applyCoupon: (code: string) => Promise<{ ok: boolean }>;
   removeCoupon: (code: string) => Promise<{ ok: boolean }>;
   commitDeliveryAddress: () => void;
+  wooSessionKey: string;
 };
 
 export function useCheckoutShipping(
@@ -112,6 +112,7 @@ export function useCheckoutShipping(
   const [bootstrapNonce, setBootstrapNonce] = useState(0);
   const [countriesLoading, setCountriesLoading] = useState(true);
   const [suggestedCountry, setSuggestedCountry] = useState<string | null>(null);
+  const [wooSessionKey, setWooSessionKey] = useState("");
   const sessionRef = useRef<string | null>(null);
   const bootstrapReadyRef = useRef(false);
   const syncedLinesKeyRef = useRef("");
@@ -130,6 +131,8 @@ export function useCheckoutShipping(
   const rememberSession = useCallback((token: string | null | undefined) => {
     if (token) {
       sessionRef.current = token;
+      writeWooSessionToken(token);
+      setWooSessionKey(token.slice(-12));
     }
   }, []);
 
@@ -728,6 +731,7 @@ export function useCheckoutShipping(
     applyCoupon,
     removeCoupon,
     commitDeliveryAddress,
+    wooSessionKey,
   };
 }
 

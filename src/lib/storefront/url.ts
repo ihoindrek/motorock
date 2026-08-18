@@ -30,6 +30,14 @@ export function getWooGraphqlUrl() {
   );
 }
 
+/** Browser checkout GraphQL — must hit Woo from the buyer IP (not Vercel server IP). */
+export function getPublicWooGraphqlUrl() {
+  return (
+    process.env.NEXT_PUBLIC_WOOCOMMERCE_GRAPHQL_URL?.replace(/\/$/, "") ??
+    `${DEFAULT_WOO_STORE_URL}/graphql`
+  );
+}
+
 export function montonioReturnUrl(input: {
   gatewayId: string;
   locale?: "en" | "et";

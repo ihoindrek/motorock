@@ -1,4 +1,4 @@
-import { getWooGraphqlUrl } from "@/lib/storefront/url";
+import { getPublicWooGraphqlUrl, getWooGraphqlUrl } from "@/lib/storefront/url";
 
 const SESSION_STORAGE_KEY = "motorock-wc-session";
 const SYNCED_LINES_KEY = "motorock-wc-synced-lines";
@@ -27,7 +27,9 @@ type GraphQLResponse<T> = {
 
 export function getCheckoutGraphqlEndpoint() {
   if (typeof window !== "undefined") {
-    return new URL("/api/checkout/graphql", window.location.origin).toString();
+    // Vercel proxy uses a US IP — Montonio then exposes card instead of bank link
+    // and checkout rejects wc_montonio_payments. Woo CORS allows direct browser calls.
+    return getPublicWooGraphqlUrl();
   }
 
   // Server (API routes): talk to Woo directly — relative URLs are invalid in Node fetch.

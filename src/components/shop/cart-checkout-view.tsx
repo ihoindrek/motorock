@@ -679,7 +679,7 @@ export function CartCheckoutView() {
     !shipping.loading &&
     Boolean(shipping.country);
   const montonioPreviewCountry = shipping.country;
-  const paymentRefreshKey = `${shipping.country}:${shipping.selectedRateId ?? ""}:${shipping.rates.map((rate) => rate.id).join("|")}`;
+  const paymentRefreshKey = `${shipping.wooSessionKey}:${shipping.country}:${shipping.selectedRateId ?? ""}:${shipping.rates.map((rate) => rate.id).join("|")}`;
   const payment = useCheckoutPayment(paymentCatalogReady, paymentRefreshKey);
   const hasMontonioGateway = useMemo(
     () =>

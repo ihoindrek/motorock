@@ -2,35 +2,22 @@
 
 import { useEffect, useMemo, useState } from "react";
 import {
+  fetchPaymentGateways,
   type PaymentGateway,
 } from "@/lib/graphql/checkout";
 import { readWooSessionToken } from "@/lib/graphql/checkout-client";
 
-async function fetchPaymentGatewaysFromApi(sessionToken: string | null) {
-  const headers: Record<string, string> = {};
-
-  if (sessionToken) {
-    headers["x-woo-session"] = sessionToken;
-  }
-
-  const response = await fetch("/api/checkout/payment-gateways", {
-    headers,
-    cache: "no-store",
-  });
-
-  const payload = (await response.json()) as {
-    gateways?: PaymentGateway[];
-    error?: string;
-  };
-
-  if (!response.ok) {
-    throw new Error(payload.error ?? "Could not load payment methods");
-  }
-
-  return payload.gateways ?? [];
+function resolveCheckoutSessionToken(
+  readSession?: () => string | null,
+) {
+  return readSession?.() ?? readWooSessionToken();
 }
 
-export function useCheckoutPayment(ready: boolean, refreshKey = "") {
+export function useCheckoutPayment(
+  ready: boolean,
+  refreshKey = "",
+  readSession?: () => string | null,
+) {
   const [gateways, setGateways] = useState<PaymentGateway[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -52,7 +39,9 @@ export function useCheckoutPayment(ready: boolean, refreshKey = "") {
       setError(null);
 
       try {
-        const nodes = await fetchPaymentGatewaysFromApi(readWooSessionToken());
+        const nodes = await fetchPaymentGateways(
+          resolveCheckoutSessionToken(readSession),
+        );
         if (cancelled) {
           return;
         }
@@ -85,7 +74,7 @@ export function useCheckoutPayment(ready: boolean, refreshKey = "") {
     return () => {
       cancelled = true;
     };
-  }, [ready, refreshKey]);
+  }, [ready, refreshKey, readSession]);
 
   const selectedGateway = useMemo(
     () => gateways.find((gateway) => gateway.id === selectedId) ?? null,

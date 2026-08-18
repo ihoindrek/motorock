@@ -36,6 +36,7 @@ import {
   MONTONIO_PAYMENT_METHOD_ID,
   resolveMontonioCheckoutGatewayId,
 } from "@/lib/checkout/montonio-checkout";
+import { getMontonioConfig } from "@/lib/montonio/config";
 import { parseGraphqlPrice } from "@/lib/shop/parse-graphql-price";
 import { filterShippingRatesForCountry } from "@/lib/shop/shipping-showroom-pickup";
 import type { ShippingRate } from "@/lib/shop/shipping-method";
@@ -576,14 +577,20 @@ function ensureHeadlessMontonioBankGateway(
   gateways: PaymentGateway[],
   sourceGateways: PaymentGateway[],
 ) {
-  const hasMontonio = sourceGateways.some((gateway) =>
-    gateway.id.toLowerCase().includes("montonio"),
-  );
   const hasBank = gateways.some(
     (gateway) => gateway.id === MONTONIO_PAYMENT_METHOD_ID,
   );
 
-  if (!hasMontonio || hasBank) {
+  if (hasBank || gateways.length === 0) {
+    return gateways;
+  }
+
+  const hasMontonio = sourceGateways.some((gateway) =>
+    gateway.id.toLowerCase().includes("montonio"),
+  );
+  const montonioConfigured = getMontonioConfig().isConfigured;
+
+  if (!hasMontonio && !montonioConfigured) {
     return gateways;
   }
 
