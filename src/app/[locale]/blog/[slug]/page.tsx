@@ -8,7 +8,6 @@ import { localizedHref } from "@/i18n/paths";
 import {
   getBlogPostBySlug,
   getBlogPostSlugAlternates,
-  getBlogPostSlugs,
   getRelatedBlogPosts,
 } from "@/lib/blog/posts";
 import { blogSlugsMatch, normalizeBlogSlug } from "@/lib/blog/slug";
@@ -26,15 +25,9 @@ type BlogPostPageProps = {
 
 export const revalidate = 300;
 
-export async function generateStaticParams() {
-  const [enSlugs, etSlugs] = await Promise.all([
-    getBlogPostSlugs("en"),
-    getBlogPostSlugs("et"),
-  ]);
-  return [
-    ...enSlugs.map((slug) => ({ locale: "en", slug })),
-    ...etSlugs.map((slug) => ({ locale: "et", slug })),
-  ];
+// No build-time prerender — blog posts fetch WordPress at runtime and ISR-cache.
+export function generateStaticParams() {
+  return [];
 }
 
 export async function generateMetadata({
