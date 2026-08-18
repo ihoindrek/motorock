@@ -175,6 +175,12 @@ function friendlyCheckoutError(
       : "Payment could not be started. Choose bank link or PayPal and try again.";
   }
 
+  if (/invalid payment reference/i.test(message)) {
+    return locale === "et"
+      ? "Makse viide aegus. Värskenda lehte ja proovi uuesti."
+      : "Payment reference expired. Refresh the page and try again.";
+  }
+
   if (/choose a delivery method|vali tarneviis/i.test(message)) {
     return message;
   }

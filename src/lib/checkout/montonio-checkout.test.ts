@@ -39,7 +39,7 @@ describe("resolveMontonioCheckoutGatewayId", () => {
 });
 
 describe("needsMontonioPaymentRemint", () => {
-  it("requires remint for bank and card-like Montonio options", () => {
+  it("requires remint for card-like Montonio options but not bank link", () => {
     expect(
       needsMontonioPaymentRemint({
         kind: "card",
@@ -53,13 +53,13 @@ describe("needsMontonioPaymentRemint", () => {
         code: "LHVBEE22",
         systemName: "paymentInitiation",
       } as MontonioPaymentOption),
-    ).toBe(true);
+    ).toBe(false);
     expect(needsMontonioPaymentRemint(null)).toBe(false);
   });
 });
 
 describe("shouldRunMontonioPaymentRemint", () => {
-  it("runs remint for Montonio bank and card gateways", () => {
+  it("runs remint for card but uses Woo redirect for bank link", () => {
     const cardOption = {
       kind: "card",
       code: "card",
@@ -76,7 +76,7 @@ describe("shouldRunMontonioPaymentRemint", () => {
     ).toBe(true);
     expect(
       shouldRunMontonioPaymentRemint(MONTONIO_PAYMENT_METHOD_ID, bankOption),
-    ).toBe(true);
+    ).toBe(false);
     expect(shouldRunMontonioPaymentRemint("ppcp-gateway", cardOption)).toBe(
       false,
     );

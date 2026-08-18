@@ -13,11 +13,15 @@ export function isMontonioPaymentGateway(gatewayId: string | null | undefined) {
   return Boolean(gatewayId?.toLowerCase().includes("montonio"));
 }
 
-/** Headless checkout always mints Montonio payment URLs server-side (incl. bank link). */
+/**
+ * Card/BLIK/etc. need a server-side Montonio order — Woo bank gateway ignores meta.
+ * Bank link must NOT remint: Woo checkout already creates the Montonio payment and
+ * a second order with the same merchantReference returns "Invalid payment reference".
+ */
 export function needsMontonioPaymentRemint(
   option: MontonioPaymentOption | null | undefined,
 ) {
-  return Boolean(option);
+  return Boolean(option && option.kind !== "bank");
 }
 
 export function shouldRunMontonioPaymentRemint(
