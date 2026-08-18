@@ -45,7 +45,7 @@ export function CheckoutMobileSection({
     >
       <div
         className={cn(
-          "overflow-hidden rounded-lg bg-white shadow-[0_4px_20px_rgb(11_11_11_/_0.06)]",
+          "overflow-visible rounded-lg bg-white shadow-[0_4px_20px_rgb(11_11_11_/_0.06)]",
           "lg:rounded-none lg:bg-transparent lg:shadow-none",
         )}
       >
