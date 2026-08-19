@@ -16,6 +16,8 @@ import {
 } from "@/lib/shop/category-url";
 import {
   getCanonicalEquipmentSlugSegments,
+  normalizeEquipmentSlugSegments,
+  equipmentSlugSegmentsMatch,
   resolveEquipmentCategoryChain,
   resolveEquipmentRoute,
 } from "@/lib/shop/equipment-route";
@@ -36,9 +38,10 @@ export async function generateEquipmentCategoryMetadata({
   slug,
   routeTree,
 }: EquipmentCategoryPageArgs): Promise<Metadata> {
+  const normalizedSlug = normalizeEquipmentSlugSegments(slug);
   const dictionary = getDictionary(locale);
   const index = await fetchEquipmentCategoryIndex(locale);
-  const route = resolveEquipmentRoute(slug, index, locale, dictionary);
+  const route = resolveEquipmentRoute(normalizedSlug, index, locale, dictionary);
 
   if (!route) {
     return { title: "Category not found" };
@@ -50,7 +53,7 @@ export async function generateEquipmentCategoryMetadata({
       : null;
   const canonicalSlug = chain
     ? getCanonicalEquipmentSlugSegments(chain, locale)
-    : slug;
+    : normalizedSlug;
 
   return buildPageMetadata({
     locale,
@@ -65,10 +68,21 @@ export async function renderEquipmentCategoryPage({
   slug,
   routeTree,
 }: EquipmentCategoryPageArgs) {
+  const normalizedSlug = normalizeEquipmentSlugSegments(slug);
+
+  if (!equipmentSlugSegmentsMatch(normalizedSlug, slug)) {
+    redirect(
+      localizedHref(
+        locale,
+        buildEquipmentCategoryHref(locale, ...normalizedSlug),
+      ),
+    );
+  }
+
   if (equipmentRouteTreeForLocale(locale) !== routeTree) {
     const dictionary = getDictionary(locale);
     const index = await fetchEquipmentCategoryIndex(locale);
-    const route = resolveEquipmentRoute(slug, index, locale, dictionary);
+    const route = resolveEquipmentRoute(normalizedSlug, index, locale, dictionary);
 
     if (route?.wcCategoryPath && index) {
       const chain = resolveEquipmentCategoryChain(route.wcCategoryPath, index, locale);
@@ -86,7 +100,7 @@ export async function renderEquipmentCategoryPage({
       }
     }
 
-    redirect(localizedHref(locale, buildEquipmentCategoryHref(locale, ...slug)));
+    redirect(localizedHref(locale, buildEquipmentCategoryHref(locale, ...normalizedSlug)));
   }
 
   const dictionary = getDictionary(locale);
@@ -94,11 +108,11 @@ export async function renderEquipmentCategoryPage({
 
   // A transient GraphQL failure must not get cached as a 404 by ISR;
   // throwing keeps the previously cached page being served instead.
-  if (!index && slug.length > 0) {
+  if (!index && normalizedSlug.length > 0) {
     throw new Error("Equipment category index unavailable");
   }
 
-  const route = resolveEquipmentRoute(slug, index, locale, dictionary);
+  const route = resolveEquipmentRoute(normalizedSlug, index, locale, dictionary);
 
   if (!route) {
     notFound();
@@ -112,7 +126,7 @@ export async function renderEquipmentCategoryPage({
   if (chain) {
     const canonicalSlug = getCanonicalEquipmentSlugSegments(chain, locale);
 
-    if (slug.join("/") !== canonicalSlug.join("/")) {
+    if (normalizedSlug.join("/") !== canonicalSlug.join("/")) {
       redirect(
         localizedHref(
           locale,
@@ -134,7 +148,7 @@ export async function renderEquipmentCategoryPage({
 
   return (
     <CategoryView
-      key={slug.join("/")}
+      key={normalizedSlug.join("/")}
       route={route}
       products={products}
       subcategories={subcategories}

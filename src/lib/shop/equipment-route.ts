@@ -22,6 +22,44 @@ import type { ProductGender } from "@/types/catalog-product";
 
 export { buildEquipmentCategoryHref, buildEquipmentHubHref } from "@/lib/shop/category-url";
 
+/** Decode slug segments and split embedded `/` (e.g. meestele%2Fkapuutsid → two segments). */
+export function normalizeEquipmentSlugSegments(
+  slugSegments: readonly string[],
+): string[] {
+  const normalized: string[] = [];
+
+  for (const segment of slugSegments) {
+    let decoded = segment;
+
+    try {
+      decoded = decodeURIComponent(segment);
+    } catch {
+      decoded = segment;
+    }
+
+    for (const part of decoded.split("/")) {
+      const trimmed = part.trim();
+
+      if (trimmed) {
+        normalized.push(trimmed);
+      }
+    }
+  }
+
+  return normalized;
+}
+
+export function equipmentSlugSegmentsMatch(
+  left: readonly string[],
+  right: readonly string[],
+) {
+  if (left.length !== right.length) {
+    return false;
+  }
+
+  return left.every((segment, index) => segment === right[index]);
+}
+
 export function buildEquipmentCategoryHrefFromNodes(
   chain: readonly WcCategoryNode[],
   locale: Locale,

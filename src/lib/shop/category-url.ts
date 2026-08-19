@@ -35,6 +35,30 @@ export function isEquipmentCategoryPath(pathname: string) {
   );
 }
 
+export function resolveEncodedSlashEquipmentPath(basePath: string): string | null {
+  if (!/%2f/i.test(basePath)) {
+    return null;
+  }
+
+  let decoded = basePath;
+
+  try {
+    decoded = decodeURIComponent(basePath);
+  } catch {
+    return null;
+  }
+
+  if (
+    decoded === basePath ||
+    (!decoded.startsWith(`${EQUIPMENT_HUB_PATH.en}/`) &&
+      !decoded.startsWith(`${EQUIPMENT_HUB_PATH.et}/`))
+  ) {
+    return null;
+  }
+
+  return decoded;
+}
+
 export function resolveEquipmentPathPrefixRedirect(
   basePath: string,
   locale: Locale,

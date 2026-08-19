@@ -861,7 +861,7 @@ export async function getEquipmentCatalogForRoute(
     return mapCatalogNodesForRoute(nodes, route, locale, nodesById);
   } catch (error) {
     console.error("[equipment] GraphQL catalog fetch failed:", error);
-    throw error;
+    return [];
   }
 }
 

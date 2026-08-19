@@ -10,7 +10,7 @@ import {
   inferLocaleFromLegacyPath,
   resolveWordPressLegacyRedirect,
 } from "@/lib/shop/wordpress-legacy-redirects";
-import { resolveEquipmentPathPrefixRedirect } from "@/lib/shop/category-url";
+import { resolveEquipmentPathPrefixRedirect, resolveEncodedSlashEquipmentPath } from "@/lib/shop/category-url";
 import { resolveBrandPathPrefixRedirect, resolveLegacyBrandSlugRedirect } from "@/lib/shop/brand-url";
 import { resolveProductPathPrefixRedirect } from "@/lib/shop/product-url";
 import {
@@ -24,6 +24,12 @@ function applyLocalePathRedirects(
   basePath: string,
 ) {
   let resolvedPath = basePath;
+  const encodedSlashTarget = resolveEncodedSlashEquipmentPath(resolvedPath);
+
+  if (encodedSlashTarget) {
+    resolvedPath = encodedSlashTarget;
+  }
+
   const wordpressTarget = resolveWordPressLegacyRedirect(resolvedPath, locale);
 
   if (wordpressTarget) {
