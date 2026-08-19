@@ -29,7 +29,7 @@ export function SiteAnnouncementBar({ locale }: { locale: Locale }) {
   return (
     <div
       role="status"
-      className="border-b border-[#a88484]/30 bg-[#d4b5b0] px-4 py-2.5 text-center font-body text-[11px] font-bold uppercase tracking-aggressive text-ink sm:text-xs"
+      className="border-b border-[#c98a98]/35 bg-[#e8b4bc] px-4 py-2.5 text-center font-body text-[11px] font-bold uppercase tracking-aggressive text-ink sm:text-xs"
     >
       {copy[locale]}
     </div>
