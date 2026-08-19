@@ -408,6 +408,7 @@ export type Dictionary = {
   motorcycle: {
     modelOverview: string;
     newBadge: string;
+    saleDiscountAria: string;
     onDisplay: string;
     availableToOrder: string;
     bookTestRide: string;
@@ -1084,6 +1085,7 @@ export const en: Dictionary = {
   motorcycle: {
     modelOverview: "Model overview",
     newBadge: "New",
+    saleDiscountAria: "{percent}% off",
     onDisplay:
       "On display in our Tallinn showroom — come see it and book a test ride",
     availableToOrder:

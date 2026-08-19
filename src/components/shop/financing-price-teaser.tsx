@@ -7,12 +7,14 @@ import {
   getInbankCalculatorConfig,
   isInbankCalculatorAmount,
 } from "@/lib/montonio/inbank-calculator";
+import { MotorcyclePrice } from "@/components/shop/motorcycle-price";
 import { Price } from "@/components/shop/price";
 import { MontonioFinancingCalculator } from "@/components/shop/montonio-financing-calculator";
 import type { ComponentProps } from "react";
 
 type FinancingPriceTeaserProps = {
   price: number;
+  regularPrice?: number;
   variant?: "hero" | "compact";
   priceVariant?: ComponentProps<typeof Price>["variant"];
   className?: string;
@@ -22,6 +24,7 @@ type FinancingPriceTeaserProps = {
 
 export function FinancingPriceTeaser({
   price,
+  regularPrice,
   variant = "hero",
   priceVariant,
   className,
@@ -54,7 +57,16 @@ export function FinancingPriceTeaser({
       <div className={className}>
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2 sm:flex-nowrap">
           <div className="shrink-0">
-            <Price value={price} variant={resolvedPriceVariant} />
+            {regularPrice ? (
+              <MotorcyclePrice
+                price={price}
+                regularPrice={regularPrice}
+                variant={resolvedPriceVariant}
+                showDiscountBadge
+              />
+            ) : (
+              <Price value={price} variant={resolvedPriceVariant} />
+            )}
           </div>
           {financing ? (
             <>
@@ -78,7 +90,16 @@ export function FinancingPriceTeaser({
             {dict.financing.retail}
           </p>
           <p className="mt-0.5">
-            <Price value={price} variant={resolvedPriceVariant} />
+            {regularPrice ? (
+              <MotorcyclePrice
+                price={price}
+                regularPrice={regularPrice}
+                variant={resolvedPriceVariant}
+                showDiscountBadge
+              />
+            ) : (
+              <Price value={price} variant={resolvedPriceVariant} />
+            )}
           </p>
         </div>
         {financing ? (

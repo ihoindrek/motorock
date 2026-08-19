@@ -18,7 +18,7 @@ import {
 } from "@/lib/shop/parse-brixton-html";
 import { resolveProductLeadCopy, htmlToPlainText } from "@/lib/shop/product-lead-copy";
 import { decodeHtmlEntities } from "@/lib/html/decode-html-entities";
-import { parseGraphqlPrice } from "@/lib/shop/parse-graphql-price";
+import { resolveGraphqlProductPrice } from "@/lib/shop/resolve-product-price";
 import { getCanonicalBrandName } from "@/lib/shop/brands";
 import {
   MOTORCYCLE_BRAND_SLUGS,
@@ -194,7 +194,7 @@ function resolveEquipmentBrand(
 }
 
 function parseCardPrice(product: GraphQLProductCard) {
-  return parseGraphqlPrice(product.price ?? product.regularPrice);
+  return resolveGraphqlProductPrice(product);
 }
 
 function hasGenderCategory(
@@ -332,12 +332,14 @@ function mapVariations(product: GraphQLVariableProduct) {
       variation.attributes?.nodes[0]?.value ??
       variation.name ??
       "Default";
+    const pricing = resolveGraphqlProductPrice(variation);
 
     return {
       databaseId: variation.databaseId,
       sku: variation.sku ?? `${product.slug}-${variation.databaseId}`,
       color,
-      price: parseGraphqlPrice(variation.regularPrice ?? variation.price),
+      price: pricing.price,
+      regularPrice: pricing.regularPrice,
       image: normalizeWordPressMediaUrlOptional(variation.image?.sourceUrl),
     };
   });
@@ -467,9 +469,7 @@ export function mapGraphqlToMotorcycleProduct(
 
   const variations = isVariable ? mapVariations(product) : [];
 
-  const price = isVariable
-    ? parseGraphqlPrice(product.price ?? product.regularPrice)
-  : parseGraphqlPrice(product.regularPrice ?? product.price);
+  const pricing = resolveGraphqlProductPrice(product);
 
   const content = normalizeMotorcycleContent({
     shortHtml,
@@ -505,7 +505,8 @@ export function mapGraphqlToMotorcycleProduct(
       sku: product.sku ?? product.slug,
       name: displayName(product.name, brand),
       brand,
-      price,
+      price: pricing.price,
+      regularPrice: pricing.regularPrice,
       shortDescription:
         resolveProductLeadCopy(
           parsedShort.tagline,
@@ -584,11 +585,7 @@ export function mapGraphqlToCatalogProduct(
     ? mapVariations(variableProduct)
     : undefined;
 
-  const price = parseGraphqlPrice(
-    isVariable
-      ? (product.price ?? product.regularPrice)
-      : (product.regularPrice ?? product.price),
-  );
+  const pricing = resolveGraphqlProductPrice(product);
 
   const parsedShort = parseMotorcycleShortDescription(product.shortDescription ?? "");
   const shortHtml = product.shortDescription ?? "";
@@ -615,7 +612,8 @@ export function mapGraphqlToCatalogProduct(
       : undefined,
     name: isMotorcycle ? displayName(product.name, brand) : decodeHtmlEntities(product.name),
     brand,
-    price,
+    price: pricing.price,
+    regularPrice: pricing.regularPrice,
     sku: product.sku ?? product.slug,
     image: productImages[0] ?? featured,
     lifestyleImage: lifestyleImages[0] ?? productImages[0] ?? featured,
@@ -690,7 +688,7 @@ export function mapGraphqlCardToCatalogProduct(
   const image = normalizeWordPressMediaUrl(
     product.image?.sourceUrl ?? "/brixton-image.webp",
   );
-  const price = parseCardPrice(product);
+  const pricing = parseCardPrice(product);
   const colors = variableProduct
     ? colorsFromVariableProduct(variableProduct)
     : [];
@@ -709,7 +707,8 @@ export function mapGraphqlCardToCatalogProduct(
       : undefined,
     name: isMotorcycle ? displayName(localized.name, brand) : decodeHtmlEntities(localized.name),
     brand,
-    price,
+    price: pricing.price,
+    regularPrice: pricing.regularPrice,
     sku: product.sku ?? localized.slug,
     image,
     lifestyleImage: image,

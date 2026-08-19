@@ -1,13 +1,14 @@
 "use client";
 
 import { useDictionary } from "@/context/locale-context";
-import { Price } from "@/components/shop/price";
+import { MotorcyclePrice } from "@/components/shop/motorcycle-price";
 import { TestRideIcon } from "@/components/ui/test-ride-icon";
 
 type MotorcycleCtaBarProps = {
   name: string;
   color: string;
   price: number;
+  regularPrice?: number;
   inStock: boolean;
   showroomAvailable: boolean;
   onPrimaryClick: () => void;
@@ -17,6 +18,7 @@ export function MotorcycleCtaBar({
   name,
   color,
   price,
+  regularPrice,
   inStock,
   showroomAvailable,
   onPrimaryClick,
@@ -34,10 +36,11 @@ export function MotorcycleCtaBar({
           </p>
           <p className="truncate text-sm font-bold sm:text-base">{name}</p>
         </div>
-        <Price
-          value={price}
+        <MotorcyclePrice
+          price={price}
+          regularPrice={regularPrice}
           variant="lg"
-          className="hidden text-accent sm:block"
+          className="hidden sm:block"
         />
         <div className="flex shrink-0 items-center gap-2">
           <button

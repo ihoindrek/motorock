@@ -1627,19 +1627,6 @@ export function CartCheckoutView() {
 
   return (
     <div className="site-container pb-8 pt-4 lg:pb-14 lg:pt-10">
-      <header className="mb-3 max-w-2xl lg:mb-6">
-        <h1 className="text-3xl font-extrabold uppercase sm:text-4xl">
-          {dict.checkout.cart}
-        </h1>
-        <p className="mt-2 hidden text-sm text-ink/60 lg:block">
-          {itemCount} {itemCount === 1 ? t.item : t.items} ·{" "}
-          <span className="font-body font-extrabold tabular-nums text-ink">
-            {formatCheckoutPrice(displayTotal, locale)}
-          </span>{" "}
-          {t.total}
-        </p>
-      </header>
-
       {paymentReturnBanner ? (
         <CheckoutPaymentReturnBanner
           variant={paymentReturnBanner}

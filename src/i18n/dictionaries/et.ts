@@ -452,6 +452,7 @@ export const et: Dictionary = {
   motorcycle: {
     modelOverview: "Mudelist",
     newBadge: "Uus",
+    saleDiscountAria: "{percent}% soodustus",
     onDisplay:
       "Motorocki salongis Tallinnas — tule vaatama ja küsi proovisõitu",
     availableToOrder:

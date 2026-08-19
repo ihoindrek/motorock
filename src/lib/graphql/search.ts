@@ -15,6 +15,7 @@ export type ProductSearchResult = {
   name: string;
   brand: string;
   price: number;
+  regularPrice?: number;
   image: string;
   type: ProductType;
   categoryLabel: string;
@@ -82,6 +83,7 @@ function mapSearchNode(
     name: product.name,
     brand: product.brand,
     price: product.price,
+    regularPrice: product.regularPrice,
     image: product.image,
     type: product.type,
     categoryLabel: product.backLabel,

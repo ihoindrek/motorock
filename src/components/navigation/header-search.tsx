@@ -24,6 +24,7 @@ import {
   HEADER_SEARCH_LIMIT,
   type ProductSearchResult,
 } from "@/lib/graphql/search";
+import { MotorcyclePrice } from "@/components/shop/motorcycle-price";
 import { Price } from "@/components/shop/price";
 import { trackSearch } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
@@ -218,11 +219,21 @@ function SearchPreview({
           <p className="font-body text-[10px] font-bold uppercase tracking-aggressive text-paper/55">
             {result.categoryLabel}
           </p>
-          <Price
-            value={result.price}
-            variant="lg"
-            className="text-paper"
-          />
+          {isMotorcycle ? (
+            <MotorcyclePrice
+              price={result.price}
+              regularPrice={result.regularPrice}
+              variant="lg"
+              className="text-paper"
+              inverted
+            />
+          ) : (
+            <Price
+              value={result.price}
+              variant="lg"
+              className="text-paper"
+            />
+          )}
         </div>
         <p className="mt-4 inline-flex items-center gap-2 font-body text-[10px] font-bold uppercase tracking-aggressive text-paper/80 transition-colors group-hover:text-accent">
           {dictionary.search.viewProduct}
@@ -304,11 +315,21 @@ function SearchResultRow({
       </div>
 
       <div className="flex shrink-0 flex-col items-end gap-2">
-        <Price
-          value={result.price}
-          variant="sm"
-          className="text-paper"
-        />
+        {isMotorcycle ? (
+          <MotorcyclePrice
+            price={result.price}
+            regularPrice={result.regularPrice}
+            variant="sm"
+            className="text-paper"
+            inverted
+          />
+        ) : (
+          <Price
+            value={result.price}
+            variant="sm"
+            className="text-paper"
+          />
+        )}
         <ArrowIcon
           className={cn(
             "size-4 text-paper/30 transition-all duration-200",

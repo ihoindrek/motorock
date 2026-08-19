@@ -8,6 +8,8 @@ export type MotorcycleVariation = {
   sku: string;
   color: string;
   price?: number;
+  /** Original price when variation is on sale. */
+  regularPrice?: number;
   image?: string;
   hex?: string;
 };
@@ -22,6 +24,8 @@ export type MotomadSyncFields = {
   brand: string;
   /** Motorock retail price (CSV / manual / adjusted — not raw B2B). */
   price: number;
+  /** Original price when product is on sale. */
+  regularPrice?: number;
   shortDescription: string;
   /** Supplier HTML — often contains a spec table. */
   descriptionHtml: string;

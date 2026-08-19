@@ -46,6 +46,8 @@ export type ProductVariation = {
   sku: string;
   color: string;
   price?: number;
+  /** Original price when variation is on sale. */
+  regularPrice?: number;
   image?: string;
   hex?: string;
 };
@@ -60,6 +62,8 @@ export type CatalogProduct = {
   name: string;
   brand: string;
   price: number;
+  /** Original price when product is on sale. */
+  regularPrice?: number;
   image: string;
   lifestyleImage: string;
   sku?: string;

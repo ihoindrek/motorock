@@ -7,6 +7,7 @@ import type { CatalogProduct } from "@/types/catalog-product";
 import { BrandLogo } from "@/components/shop/brand-logo";
 import { InStoreNowBadge } from "@/components/shop/in-store-now-badge";
 import { NewProductBadge } from "@/components/shop/new-product-badge";
+import { MotorcyclePrice } from "@/components/shop/motorcycle-price";
 import { Price } from "@/components/shop/price";
 import { useDictionary, useLocale } from "@/context/locale-context";
 import {
@@ -110,11 +111,21 @@ export function ProductCard({ product }: ProductCardProps) {
           >
             {product.name}
           </h3>
-          <Price
-            value={product.price}
-            as="p"
-            className="mt-auto transition-colors duration-200 group-hover:text-accent"
-          />
+          {isMotorcycle ? (
+            <MotorcyclePrice
+              price={product.price}
+              regularPrice={product.regularPrice}
+              showDiscountBadge
+              as="p"
+              className="mt-auto transition-colors duration-200 group-hover:text-accent"
+            />
+          ) : (
+            <Price
+              value={product.price}
+              as="p"
+              className="mt-auto transition-colors duration-200 group-hover:text-accent"
+            />
+          )}
           {!isMotorcycle && visibleColorOptions.length > 0 ? (
             <div className="mt-2 flex items-center gap-1.5">
               {visibleColorOptions.map((option) => (
