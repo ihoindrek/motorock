@@ -392,6 +392,80 @@ export function pickHomepageSpotlightProducts(
   return selected.map(catalogToFavoriteProduct);
 }
 
+const PROTECTED_GEAR_CATEGORIES: readonly ProductCategory[] = [
+  "jackets",
+  "helmets",
+  "gloves",
+  "pants",
+  "vests",
+  "safety",
+  "footwear",
+];
+
+const PROTECTED_GEAR_WC_SLUGS = new Set([
+  "jackets-and-tags",
+  "jakid-ja-tagid",
+  "helmets",
+  "kiivrid",
+  "gloves",
+  "kindad",
+  "protection",
+  "kaitse",
+  "pants",
+  "püksid",
+  "vests",
+  "safety",
+  "footwear",
+]);
+
+function isProtectedGearProduct(product: CatalogProduct): boolean {
+  if (PROTECTED_GEAR_CATEGORIES.includes(product.category)) {
+    return true;
+  }
+
+  if ((product.wcCategorySlugs ?? []).some((slug) => PROTECTED_GEAR_WC_SLUGS.has(slug))) {
+    return true;
+  }
+
+  return /protect|armou?r|ce rated|turva|kaitse|kiiver|jope/i.test(product.name);
+}
+
+function scoreProtectedGearProduct(product: CatalogProduct): number {
+  const categoryScores: Partial<Record<ProductCategory, number>> = {
+    jackets: 30,
+    helmets: 28,
+    gloves: 24,
+    safety: 22,
+    pants: 18,
+    vests: 16,
+    footwear: 14,
+  };
+
+  let score = categoryScores[product.category] ?? 0;
+
+  if (/ce|protect|armou?r|turva|kaitse/i.test(product.name)) {
+    score += 8;
+  }
+
+  if (product.price >= 100) {
+    score += 4;
+  }
+
+  return score;
+}
+
+export function pickHomepageProtectedGearProducts(
+  products: readonly CatalogProduct[],
+  limit: number,
+): FavoriteProduct[] {
+  const pool = products
+    .filter(isEligibleFavorite)
+    .filter(isProtectedGearProduct)
+    .sort((a, b) => scoreProtectedGearProduct(b) - scoreProtectedGearProduct(a));
+
+  return pickSpotlightWithBrandDiversity(pool, limit).map(catalogToFavoriteProduct);
+}
+
 export function pickPopularGearProducts(
   audience: PopularGearAudience,
   products: readonly CatalogProduct[],

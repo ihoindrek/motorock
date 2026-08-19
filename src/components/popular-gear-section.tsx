@@ -66,9 +66,38 @@ export function PopularGearSection({
   const activeTab = tabs.find((tab) => tab.id === activeId) ?? tabs[0];
   const products = activeTab ? productsByAudience[activeTab.id] : [];
 
+  const audienceTabs = tabs.filter((tab) => tab.id === "men" || tab.id === "women");
+  const accessoriesTab = tabs.find((tab) => tab.id === "accessories");
+
   if (tabs.length === 0 || products.length === 0) {
     return null;
   }
+
+  const renderTabButton = (
+    tab: (typeof tabs)[number],
+    options?: { mobileProminent?: boolean },
+  ) => {
+    const isActive = tab.id === activeTab?.id;
+
+    return (
+      <button
+        key={tab.id}
+        type="button"
+        role="tab"
+        aria-selected={isActive}
+        onClick={() => setActiveId(tab.id)}
+        className={cn(
+          "inline-flex min-h-10 shrink-0 items-center justify-center whitespace-nowrap px-4 py-2 font-body text-xs font-bold uppercase tracking-aggressive transition-colors sm:px-5",
+          options?.mobileProminent && "min-h-12 w-full text-sm sm:min-h-10 sm:w-auto sm:text-xs",
+          isActive
+            ? "bg-ink text-paper"
+            : "text-ink/60 hover:bg-surface hover:text-ink",
+        )}
+      >
+        {tab.label}
+      </button>
+    );
+  };
 
   return (
     <section
@@ -91,32 +120,44 @@ export function PopularGearSection({
           </Link>
         </header>
 
+        {audienceTabs.length > 0 ? (
+          <div
+            className={cn(
+              "mb-2 grid gap-2 sm:hidden",
+              audienceTabs.length > 1 ? "grid-cols-2" : "grid-cols-1",
+            )}
+            role="tablist"
+            aria-label={copy.title}
+          >
+            {audienceTabs.map((tab) => renderTabButton(tab, { mobileProminent: true }))}
+          </div>
+        ) : null}
+
+        {accessoriesTab ? (
+          <div className="mb-4 flex sm:hidden">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab?.id === "accessories"}
+              onClick={() => setActiveId("accessories")}
+              className={cn(
+                "font-body text-[11px] font-bold uppercase tracking-aggressive underline-offset-4 transition-colors",
+                activeTab?.id === "accessories"
+                  ? "text-ink underline"
+                  : "text-ink/50 hover:text-ink",
+              )}
+            >
+              {accessoriesTab.label}
+            </button>
+          </div>
+        ) : null}
+
         <div
-          className="mb-6 flex gap-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] sm:gap-2 [&::-webkit-scrollbar]:hidden"
+          className="mb-6 hidden gap-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] sm:flex sm:gap-2 [&::-webkit-scrollbar]:hidden"
           role="tablist"
           aria-label={copy.title}
         >
-          {tabs.map((tab) => {
-            const isActive = tab.id === activeTab?.id;
-
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                role="tab"
-                aria-selected={isActive}
-                onClick={() => setActiveId(tab.id)}
-                className={cn(
-                  "inline-flex min-h-10 shrink-0 items-center whitespace-nowrap px-4 py-2 font-body text-xs font-bold uppercase tracking-aggressive transition-colors sm:px-5",
-                  isActive
-                    ? "bg-ink text-paper"
-                    : "text-ink/60 hover:bg-surface hover:text-ink",
-                )}
-              >
-                {tab.label}
-              </button>
-            );
-          })}
+          {tabs.map((tab) => renderTabButton(tab))}
         </div>
 
         <div role="tabpanel" aria-labelledby="favorites-equipment">

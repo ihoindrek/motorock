@@ -207,7 +207,7 @@
 }
 
 @utility btn-hero-primary {
-  @apply inline-flex items-center justify-center border-2 border-accent bg-ink px-8 py-4 font-body text-xs font-bold uppercase tracking-aggressive text-paper transition-all duration-300 hover:bg-accent active:scale-[0.98];
+  @apply inline-flex items-center justify-center border-2 border-accent bg-accent px-8 py-4 font-body text-xs font-bold uppercase tracking-aggressive text-paper transition-all duration-300 hover:border-accent-hover hover:bg-accent-hover active:scale-[0.98];
 }
 
 @utility btn-hero-ghost {

@@ -83,7 +83,7 @@ export function Hero({ locale, dictionary }: HeroProps) {
       imageSizes: "(max-width: 768px) 100vw, 33vw",
       titleClass: "text-2xl sm:text-3xl lg:text-4xl xl:text-5xl",
       cta: dictionary.hero.browseProducts,
-      ctaClass: "btn-hero-ghost",
+      ctaClass: "btn-hero-primary",
       logos: equipmentLogos,
       compactLogos: true,
     },

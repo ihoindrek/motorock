@@ -67,4 +67,40 @@ export const HOMEPAGE_SPOTLIGHT_HOODIES = {
   },
 } satisfies HomepageSpotlightConfig;
 
-export const ACTIVE_HOMEPAGE_SPOTLIGHT = HOMEPAGE_SPOTLIGHT_TSHIRTS;
+export const HOMEPAGE_SPOTLIGHT_BEST_SELLERS = {
+  id: "best-sellers",
+  categories: ["jackets", "helmets", "gloves", "pants", "vests", "safety"],
+  wcCategorySlugs: [
+    "jackets-and-tags",
+    "jakid-ja-tagid",
+    "helmets",
+    "kiivrid",
+    "gloves",
+    "kindad",
+    "protection",
+    "kaitse",
+    "pants",
+    "püksid",
+    "vests",
+    "safety",
+  ],
+  limit: 8,
+  copy: {
+    et: {
+      eyebrow: "Enimmüüdud",
+      title: "Top turvavarustus",
+      cta: "Vaata kaitsevarustust →",
+    },
+    en: {
+      eyebrow: "Best sellers",
+      title: "Top protected gear",
+      cta: "Shop protection →",
+    },
+  },
+  categoryHref: {
+    et: buildEquipmentCategoryHref("et", "protection"),
+    en: buildEquipmentCategoryHref("en", "protection"),
+  },
+} satisfies HomepageSpotlightConfig;
+
+export const ACTIVE_HOMEPAGE_SPOTLIGHT = HOMEPAGE_SPOTLIGHT_BEST_SELLERS;

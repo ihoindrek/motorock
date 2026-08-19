@@ -17,7 +17,7 @@ import {
   partitionPopularGearByAudience,
   pickFavoriteProducts,
   pickHomepageNewGearProducts,
-  pickHomepageSpotlightProducts,
+  pickHomepageProtectedGearProducts,
   filterHomepageAccessoriesProducts,
 } from "@/lib/shop/favorite-product";
 
@@ -220,15 +220,14 @@ export async function RidersFavorites({ locale }: { locale: Locale }) {
     ),
   };
 
-  const spotlightProducts = pickHomepageSpotlightProducts(
-    ACTIVE_HOMEPAGE_SPOTLIGHT,
+  const spotlightProducts = pickHomepageProtectedGearProducts(
     [...gearByAudience.men, ...gearByAudience.women, ...accessoriesEquipment],
-    locale,
+    ACTIVE_HOMEPAGE_SPOTLIGHT.limit,
   );
 
   return (
-    <section aria-labelledby="favorites-heading">
-      <header className="relative overflow-hidden bg-ink px-5 py-16 text-paper sm:px-8 lg:px-12 lg:py-14 xl:py-16">
+    <section>
+      <header className="relative hidden overflow-hidden bg-ink px-5 py-16 text-paper sm:px-8 lg:block lg:px-12 lg:py-14 xl:py-16">
         <div className="relative z-10 mx-auto flex max-w-site flex-col gap-6 lg:flex-row lg:items-end lg:justify-between lg:gap-8">
           <h2
             id="favorites-heading"

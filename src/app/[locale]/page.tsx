@@ -4,6 +4,7 @@ import { LatestBlogPostsSection } from "@/components/blog/latest-blog-posts-sect
 import { ShowroomGoogleReviewsSection } from "@/components/contact/showroom-google-reviews-section";
 import { Hero } from "@/components/hero";
 import { HomeBelowFoldSkeleton } from "@/components/home-below-fold-skeleton";
+import { HomeTrustBar } from "@/components/home-trust-bar";
 import { RidersFavorites } from "@/components/riders-favorites";
 import { isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/get-dictionary";
@@ -47,15 +48,18 @@ export default async function Home({ params }: HomePageProps) {
   return (
     <>
       <Hero locale={localeParam} dictionary={dictionary} />
+      <HomeTrustBar locale={localeParam} />
       <Suspense fallback={<HomeBelowFoldSkeleton />}>
         <RidersFavorites locale={localeParam} />
       </Suspense>
-      <Suspense fallback={<HomeBelowFoldSkeleton />}>
-        <LatestBlogPostsSection locale={localeParam} />
-      </Suspense>
-      <Suspense fallback={<HomeBelowFoldSkeleton />}>
-        <ShowroomGoogleReviewsSection locale={localeParam} />
-      </Suspense>
+      <div className="bg-white">
+        <Suspense fallback={<HomeBelowFoldSkeleton />}>
+          <ShowroomGoogleReviewsSection locale={localeParam} />
+        </Suspense>
+        <Suspense fallback={<HomeBelowFoldSkeleton />}>
+          <LatestBlogPostsSection locale={localeParam} />
+        </Suspense>
+      </div>
     </>
   );
 }

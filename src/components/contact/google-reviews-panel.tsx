@@ -73,7 +73,7 @@ export function GoogleReviewsPanel({ locale, reviews }: GoogleReviewsPanelProps)
   return (
     <section
       aria-labelledby="google-reviews-heading"
-      className="border-t border-ink/10 bg-paper py-14 lg:py-20"
+      className="border-t border-ink/10 bg-white py-14 lg:py-20"
     >
       <div className="site-container">
         <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
@@ -99,7 +99,7 @@ export function GoogleReviewsPanel({ locale, reviews }: GoogleReviewsPanelProps)
               target="_blank"
               rel="noopener noreferrer"
               aria-label={t.readAllLabel}
-              className="inline-flex items-center gap-1.5 rounded-full border border-ink/15 bg-paper px-7 py-3 font-body text-xs font-bold uppercase tracking-aggressive text-ink transition-colors duration-200 hover:border-ink/30 hover:bg-surface"
+              className="inline-flex items-center gap-1.5 rounded-full border border-ink/15 bg-white px-7 py-3 font-body text-xs font-bold uppercase tracking-aggressive text-ink transition-colors duration-200 hover:border-ink/30 hover:bg-surface"
             >
               <span>{t.readAllPrefix}</span>
               <GoogleIcon className="size-3.5 shrink-0" />
@@ -119,6 +119,7 @@ export function GoogleReviewsPanel({ locale, reviews }: GoogleReviewsPanelProps)
         <DesignTestimonial
           items={items}
           verticalLabel={t.carouselLabel}
+          compactMobile
           className="mt-10 lg:mt-12"
         />
       </div>

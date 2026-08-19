@@ -27,6 +27,7 @@ type DesignTestimonialProps = {
   items: readonly DesignTestimonialItem[];
   verticalLabel?: string;
   className?: string;
+  compactMobile?: boolean;
 };
 
 const AUTOPLAY_MS = 6000;
@@ -35,6 +36,7 @@ export function DesignTestimonial({
   items,
   verticalLabel = "Reviews",
   className,
+  compactMobile = false,
 }: DesignTestimonialProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
@@ -148,7 +150,12 @@ export function DesignTestimonial({
       </motion.div>
 
       <div className="relative flex flex-col lg:flex-row">
-        <div className="flex flex-row items-center gap-6 border-b border-ink/10 pb-6 lg:flex-col lg:items-center lg:justify-center lg:border-b-0 lg:border-r lg:pb-0 lg:pr-12">
+        <div
+          className={cn(
+            "flex flex-row items-center gap-6 border-b border-ink/10 pb-6 lg:flex-col lg:items-center lg:justify-center lg:border-b-0 lg:border-r lg:pb-0 lg:pr-12",
+            compactMobile && "hidden lg:flex",
+          )}
+        >
           <motion.span
             className="font-body text-[10px] font-bold uppercase tracking-[0.25em] text-ink/40 lg:[writing-mode:vertical-rl]"
             initial={{ opacity: 0 }}
@@ -179,7 +186,12 @@ export function DesignTestimonial({
           </div>
         </div>
 
-        <div className="flex-1 py-8 lg:py-10 lg:pl-12">
+        <div
+          className={cn(
+            "flex-1 lg:py-10 lg:pl-12",
+            compactMobile ? "py-0" : "py-8",
+          )}
+        >
           <AnimatePresence mode="wait">
             <motion.div
               key={activeIndex}
@@ -201,11 +213,23 @@ export function DesignTestimonial({
             </motion.div>
           </AnimatePresence>
 
-          <div className="relative mb-10 min-h-[120px] sm:min-h-[140px]">
+          <div
+            className={cn(
+              "relative mb-10",
+              compactMobile
+                ? "mb-5 min-h-0 lg:mb-10 lg:min-h-[140px]"
+                : "min-h-[120px] sm:min-h-[140px]",
+            )}
+          >
             <AnimatePresence mode="wait">
               <motion.blockquote
                 key={activeIndex}
-                className="font-body text-2xl font-light leading-[1.2] tracking-tight text-ink sm:text-3xl lg:text-4xl"
+                className={cn(
+                  "font-body font-light leading-[1.2] tracking-tight text-ink",
+                  compactMobile
+                    ? "text-lg sm:text-2xl lg:text-4xl"
+                    : "text-2xl sm:text-3xl lg:text-4xl",
+                )}
                 initial="hidden"
                 animate="visible"
                 exit="exit"
@@ -281,7 +305,12 @@ export function DesignTestimonial({
           </div>
 
           {items.length > 1 ? (
-            <div className="mt-10 flex flex-wrap items-center justify-center gap-2 sm:justify-start">
+            <div
+              className={cn(
+                "mt-10 flex flex-wrap items-center justify-center gap-2 sm:justify-start",
+                compactMobile && "mt-6 lg:mt-10",
+              )}
+            >
               {items.map((item, index) => {
                 const isActive = activeIndex === index;
                 const isHovered = hoveredIndex === index && !isActive;
@@ -334,7 +363,12 @@ export function DesignTestimonial({
         </div>
       </div>
 
-      <div className="pointer-events-none absolute -bottom-12 left-0 right-0 overflow-hidden opacity-[0.06]">
+      <div
+        className={cn(
+          "pointer-events-none absolute -bottom-12 left-0 right-0 overflow-hidden opacity-[0.06]",
+          compactMobile && "hidden lg:block",
+        )}
+      >
         <motion.div
           className="flex whitespace-nowrap font-display text-4xl font-extrabold uppercase tracking-tight text-ink sm:text-6xl"
           animate={{ x: [0, -1000] }}
