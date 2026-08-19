@@ -9,7 +9,7 @@ const cartLineSchema = z.object({
   price: z.number(),
   image: z.string(),
   brand: z.string().optional(),
-  type: z.string().optional(),
+  type: z.enum(["equipment", "motorcycle"]).optional(),
   quantity: z.number().int().positive(),
   size: z.string().optional(),
   color: z.string().optional(),
