@@ -218,7 +218,7 @@ describe("resolveVisiblePaymentGateways", () => {
       { id: MONTONIO_PAYMENT_METHOD_ID, title: "Pay with your bank", description: "", icon: null },
     ];
 
-    const live = resolveVisiblePaymentGateways(gateways, [], "et", true);
+    const live = resolveVisiblePaymentGateways(gateways, [], "et", true, "EE");
     expect(live.map((gateway) => gateway.id)).toEqual([
       MONTONIO_PAYMENT_METHOD_ID,
       "ppcp-gateway",
@@ -248,7 +248,7 @@ describe("resolveVisiblePaymentGateways", () => {
       },
     ];
 
-    const live = resolveVisiblePaymentGateways(gateways, options, "et", true);
+    const live = resolveVisiblePaymentGateways(gateways, options, "et", true, "EE");
     expect(live.map((gateway) => gateway.id)).toEqual(
       expect.arrayContaining([
         "ppcp-gateway",
@@ -265,7 +265,7 @@ describe("resolveVisiblePaymentGateways", () => {
       { id: "wc_montonio_card", title: "Card Payment", description: "", icon: null },
     ];
 
-    const live = resolveVisiblePaymentGateways(gateways, bankOptions, "et", true);
+    const live = resolveVisiblePaymentGateways(gateways, bankOptions, "et", true, "EE");
     expect(live.map((gateway) => gateway.id)).toEqual(
       expect.arrayContaining([
         MONTONIO_PAYMENT_METHOD_ID,
@@ -273,5 +273,23 @@ describe("resolveVisiblePaymentGateways", () => {
         "ppcp-gateway",
       ]),
     );
+  });
+
+  it("hides Montonio gateways outside supported countries", () => {
+    const gateways: PaymentGateway[] = [
+      { id: "ppcp-gateway", title: "PayPal", description: "", icon: null },
+      { id: MONTONIO_PAYMENT_METHOD_ID, title: "Pay with your bank", description: "", icon: null },
+      { id: "wc_montonio_card", title: "Card Payment", description: "", icon: null },
+    ];
+
+    const live = resolveVisiblePaymentGateways(
+      gateways,
+      bankOptions,
+      "en",
+      true,
+      "DE",
+    );
+
+    expect(live.map((gateway) => gateway.id)).toEqual(["ppcp-gateway"]);
   });
 });

@@ -21,6 +21,7 @@ import {
   montonioOptionKey,
   montonioOptionLabel,
 } from "@/types/montonio-payment";
+import { isMontonioPaymentCountry } from "@/lib/montonio/payment-countries";
 import { cn } from "@/lib/utils";
 import { CheckoutSupportNotice } from "@/components/shop/checkout-support-notice";
 
@@ -237,6 +238,18 @@ export function ensureLiveBankPaymentGateway(
   ];
 }
 
+/** Hide Montonio gateways outside supported checkout countries. */
+export function filterMontonioGatewaysByCountry(
+  gateways: PaymentGateway[],
+  country: string | null | undefined,
+) {
+  if (isMontonioPaymentCountry(country)) {
+    return gateways;
+  }
+
+  return gateways.filter((gateway) => !isMontonioGateway(gateway));
+}
+
 /**
  * Live checkout exposes Woo-enabled Montonio gateways plus any Montonio API
  * providers missing from Woo (e.g. bank link when Vercel only gets card).
@@ -246,15 +259,22 @@ export function resolveVisiblePaymentGateways(
   montonioOptions: MontonioPaymentOption[],
   locale: Locale,
   liveCheckout: boolean,
+  country?: string | null,
 ) {
-  const wooGatewayIds = new Set(gateways.map((gateway) => gateway.id));
+  const montonioAllowed = isMontonioPaymentCountry(country);
+  const scopedGateways = montonioAllowed
+    ? gateways
+    : filterMontonioGatewaysByCountry(gateways, country);
+  const scopedOptions = montonioAllowed ? montonioOptions : [];
+
+  const wooGatewayIds = new Set(scopedGateways.map((gateway) => gateway.id));
   const base = liveCheckout
-    ? ensureLiveBankPaymentGateway(gateways, montonioOptions, locale)
-    : gateways;
+    ? ensureLiveBankPaymentGateway(scopedGateways, scopedOptions, locale)
+    : scopedGateways;
 
   return filterGatewaysWithMontonioOptions(
-    expandMontonioPaymentGateways(base, montonioOptions, locale),
-    montonioOptions,
+    expandMontonioPaymentGateways(base, scopedOptions, locale),
+    scopedOptions,
     wooGatewayIds,
   ).map((gateway) => localizePaymentGateway(gateway, locale));
 }
