@@ -4,8 +4,8 @@ import type { Locale } from "@/i18n/config";
 const VISIBLE_THROUGH = "2026-08-20";
 
 const copy = {
-  et: "20.08 showroom suletud · e-pood avatud",
-  en: "Showroom closed 20 Aug · shop online as usual",
+  et: "20. augustil on showroom suletud — veebist tellida saab",
+  en: "Showroom closed on 20 August — online orders still welcome",
 } as const;
 
 function todayInTallinn(now = new Date()) {
