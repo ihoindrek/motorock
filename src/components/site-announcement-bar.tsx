@@ -4,8 +4,8 @@ import type { Locale } from "@/i18n/config";
 const VISIBLE_THROUGH = "2026-08-20";
 
 const copy = {
-  et: "Showroom on 20.08 suletud",
-  en: "Showroom closed on 20 August",
+  et: "20.08 showroom suletud · e-pood avatud",
+  en: "Showroom closed 20 Aug · shop online as usual",
 } as const;
 
 function todayInTallinn(now = new Date()) {
@@ -29,7 +29,7 @@ export function SiteAnnouncementBar({ locale }: { locale: Locale }) {
   return (
     <div
       role="status"
-      className="border-b border-accent/20 bg-accent px-4 py-2.5 text-center font-body text-[11px] font-bold uppercase tracking-aggressive text-paper sm:text-xs"
+      className="border-b border-[#a88484]/30 bg-[#d4b5b0] px-4 py-2.5 text-center font-body text-[11px] font-bold uppercase tracking-aggressive text-ink sm:text-xs"
     >
       {copy[locale]}
     </div>
