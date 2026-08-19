@@ -32,7 +32,7 @@ import {
   useCheckoutShipping,
 } from "@/hooks/use-checkout-shipping";
 import { useCheckoutPayment } from "@/hooks/use-checkout-payment";
-import { isMontonioPaymentCountry } from "@/lib/montonio/payment-countries";
+import { useMontonioPaymentOptions } from "@/hooks/use-montonio-payment-options";
 import { isLiveCheckoutEnabled } from "@/lib/checkout-mode";
 import { orchestrateCheckout } from "@/lib/checkout/orchestrate-checkout";
 import {
@@ -676,47 +676,27 @@ export function CartCheckoutView() {
   const montonioPreviewCountry = shipping.country;
   const paymentRefreshKey = `${shipping.wooSessionKey}:${shipping.country}:${shipping.selectedRateId ?? ""}:${shipping.rates.map((rate) => rate.id).join("|")}`;
   const payment = useCheckoutPayment(paymentCatalogReady, paymentRefreshKey);
-  const hasMontonioGateway = useMemo(
-    () =>
-      payment.gateways.some((gateway) =>
-        gateway.id.toLowerCase().includes("montonio"),
-      ),
-    [payment.gateways],
-  );
   const montonio = useMontonioPaymentOptions(
     montonioPreviewCountry,
-    paymentCatalogReady &&
-      isLiveCheckoutEnabled() &&
-      isMontonioPaymentCountry(montonioPreviewCountry),
+    paymentCatalogReady && isLiveCheckoutEnabled(),
   );
   const visiblePaymentGateways = useMemo(() => {
     if (!payment.gateways.length) {
       return payment.gateways;
     }
 
-    if (!isLiveCheckoutEnabled()) {
-      if (!hasMontonioGateway || montonio.loading) {
-        return payment.gateways;
-      }
-
-      return resolveVisiblePaymentGateways(
-        payment.gateways,
-        montonio.options,
-        locale,
-        false,
-        montonioPreviewCountry,
-      );
-    }
+    const liveCheckout = isLiveCheckoutEnabled();
+    const montonioOptions =
+      liveCheckout && !montonio.loading ? montonio.options : [];
 
     return resolveVisiblePaymentGateways(
       payment.gateways,
-      montonio.options,
+      montonioOptions,
       locale,
-      true,
+      liveCheckout,
       montonioPreviewCountry,
     );
   }, [
-    hasMontonioGateway,
     locale,
     montonio.loading,
     montonio.options,

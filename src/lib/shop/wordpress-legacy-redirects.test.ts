@@ -56,6 +56,9 @@ describe("resolveWordPressLegacyRedirect", () => {
   it("maps shop landing pages to equipment hubs", () => {
     expect(resolveWordPressLegacyRedirect("/shop", "en")).toBe("/shop/equipment");
     expect(resolveWordPressLegacyRedirect("/pood", "et")).toBe("/tootekategooria");
+    expect(resolveWordPressLegacyRedirect("/pood/mootorrattad", "et")).toBe(
+      "/shop/motorcycles",
+    );
   });
   it("maps Estonian static page slugs to canonical routes", () => {
     expect(resolveWordPressLegacyRedirect("/kontakt", "et")).toBe("/contact");

@@ -275,21 +275,31 @@ describe("resolveVisiblePaymentGateways", () => {
     );
   });
 
-  it("hides Montonio gateways outside supported countries", () => {
+  it("keeps Montonio card payments outside supported countries", () => {
     const gateways: PaymentGateway[] = [
       { id: "ppcp-gateway", title: "PayPal", description: "", icon: null },
       { id: MONTONIO_PAYMENT_METHOD_ID, title: "Pay with your bank", description: "", icon: null },
       { id: "wc_montonio_card", title: "Card Payment", description: "", icon: null },
     ];
+    const cardOption: MontonioPaymentOption = {
+      kind: "card",
+      code: "cardPayments",
+      systemName: "cardPayments",
+      name: "Card",
+      logoUrl: null,
+    };
 
     const live = resolveVisiblePaymentGateways(
       gateways,
-      bankOptions,
+      [...bankOptions, cardOption],
       "en",
       true,
       "DE",
     );
 
-    expect(live.map((gateway) => gateway.id)).toEqual(["ppcp-gateway"]);
+    expect(live.map((gateway) => gateway.id)).toEqual(
+      expect.arrayContaining(["ppcp-gateway", "wc_montonio_card"]),
+    );
+    expect(live).toHaveLength(2);
   });
 });

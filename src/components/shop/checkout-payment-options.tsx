@@ -8,6 +8,7 @@ import {
   MONTONIO_PAYMENT_METHOD_ID,
   type PaymentGateway,
 } from "@/lib/graphql/checkout";
+import { MONTONIO_CARD_PAYMENT_METHOD_ID } from "@/lib/checkout/montonio-checkout";
 import { isLiveCheckoutEnabled } from "@/lib/checkout-mode";
 import type { Locale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/get-dictionary";
@@ -27,6 +28,10 @@ import { CheckoutSupportNotice } from "@/components/shop/checkout-support-notice
 
 function isMontonioGateway(gateway: PaymentGateway) {
   return gateway.id.toLowerCase().includes("montonio");
+}
+
+export function isMontonioCardGateway(gateway: PaymentGateway) {
+  return gateway.id === MONTONIO_CARD_PAYMENT_METHOD_ID;
 }
 
 export function isBankMontonioGateway(gateway: PaymentGateway) {
@@ -238,7 +243,7 @@ export function ensureLiveBankPaymentGateway(
   ];
 }
 
-/** Hide Montonio gateways outside supported checkout countries. */
+/** Hide regional Montonio gateways outside supported countries; card stays global. */
 export function filterMontonioGatewaysByCountry(
   gateways: PaymentGateway[],
   country: string | null | undefined,
@@ -247,7 +252,20 @@ export function filterMontonioGatewaysByCountry(
     return gateways;
   }
 
-  return gateways.filter((gateway) => !isMontonioGateway(gateway));
+  return gateways.filter(
+    (gateway) => !isMontonioGateway(gateway) || isMontonioCardGateway(gateway),
+  );
+}
+
+function filterMontonioOptionsByCountry(
+  options: MontonioPaymentOption[],
+  country: string | null | undefined,
+) {
+  if (isMontonioPaymentCountry(country)) {
+    return options;
+  }
+
+  return options.filter((option) => option.kind === "card");
 }
 
 /**
@@ -265,7 +283,7 @@ export function resolveVisiblePaymentGateways(
   const scopedGateways = montonioAllowed
     ? gateways
     : filterMontonioGatewaysByCountry(gateways, country);
-  const scopedOptions = montonioAllowed ? montonioOptions : [];
+  const scopedOptions = filterMontonioOptionsByCountry(montonioOptions, country);
 
   const wooGatewayIds = new Set(scopedGateways.map((gateway) => gateway.id));
   const base = liveCheckout

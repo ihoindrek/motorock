@@ -1,4 +1,4 @@
-/** ISO 3166-1 alpha-2 — countries where Montonio checkout is offered. */
+/** ISO 3166-1 alpha-2 — countries where regional Montonio methods are offered. */
 export const MONTONIO_PAYMENT_COUNTRY_CODES = [
   "EE",
   "LV",
