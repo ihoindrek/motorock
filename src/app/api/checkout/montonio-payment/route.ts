@@ -74,8 +74,8 @@ export async function POST(request: Request) {
       billing: {
         firstName: billing.firstName,
         lastName: billing.lastName,
-        email: billing.email,
-        phone: billing.phone,
+        email: billing.email ?? "",
+        phone: billing.phone ?? "",
         address1: billing.address1,
         city: billing.city,
         postcode: billing.postcode,
@@ -84,8 +84,8 @@ export async function POST(request: Request) {
       shipping: {
         firstName: shipping.firstName,
         lastName: shipping.lastName,
-        email: shipping.email ?? billing.email,
-        phone: shipping.phone ?? billing.phone,
+        email: shipping.email ?? billing.email ?? "",
+        phone: shipping.phone ?? billing.phone ?? "",
         address1: shipping.address1,
         city: shipping.city,
         postcode: shipping.postcode,
