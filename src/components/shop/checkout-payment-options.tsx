@@ -23,8 +23,10 @@ import {
   montonioOptionLabel,
 } from "@/types/montonio-payment";
 import { isMontonioPaymentCountry } from "@/lib/montonio/payment-countries";
+import { WOO_PAYMENTS_GATEWAY_ID } from "@/lib/checkout/woo-payments";
 import { cn } from "@/lib/utils";
 import { CheckoutSupportNotice } from "@/components/shop/checkout-support-notice";
+import { CheckoutCardBrandIcons } from "@/components/shop/checkout-card-brand-icons";
 
 function isMontonioGateway(gateway: PaymentGateway) {
   return gateway.id.toLowerCase().includes("montonio");
@@ -268,6 +270,25 @@ function filterMontonioOptionsByCountry(
   return options.filter((option) => option.kind === "card");
 }
 
+/** Prefer WooPayments for EU buyers outside Montonio bank-link markets. */
+export function sortPaymentGatewaysForCountry(
+  gateways: PaymentGateway[],
+  country?: string | null,
+) {
+  if (isMontonioPaymentCountry(country)) {
+    return gateways;
+  }
+
+  const wooPayments = gateways.filter(
+    (gateway) => gateway.id === WOO_PAYMENTS_GATEWAY_ID,
+  );
+  const rest = gateways.filter(
+    (gateway) => gateway.id !== WOO_PAYMENTS_GATEWAY_ID,
+  );
+
+  return [...wooPayments, ...rest];
+}
+
 /**
  * Live checkout exposes Woo-enabled Montonio gateways plus any Montonio API
  * providers missing from Woo (e.g. bank link when Vercel only gets card).
@@ -290,11 +311,14 @@ export function resolveVisiblePaymentGateways(
     ? ensureLiveBankPaymentGateway(scopedGateways, scopedOptions, locale)
     : scopedGateways;
 
-  return filterGatewaysWithMontonioOptions(
-    expandMontonioPaymentGateways(base, scopedOptions, locale),
-    scopedOptions,
-    wooGatewayIds,
-  ).map((gateway) => localizePaymentGateway(gateway, locale));
+  return sortPaymentGatewaysForCountry(
+    filterGatewaysWithMontonioOptions(
+      expandMontonioPaymentGateways(base, scopedOptions, locale),
+      scopedOptions,
+      wooGatewayIds,
+    ).map((gateway) => localizePaymentGateway(gateway, locale)),
+    country,
+  );
 }
 
 const CARD_PAYMENT_LOGO_SIZES = {
@@ -318,6 +342,21 @@ function PaymentMethodIcon({
   );
   const [logoFailed, setLogoFailed] = useState(false);
   const isCardLayout = visual.kind === "logo" && visual.layout === "card";
+
+  if (visual.kind === "card-brands") {
+    return (
+      <span
+        aria-hidden="true"
+        className={cn(
+          "flex shrink-0 items-center overflow-hidden",
+          CARD_PAYMENT_LOGO_SIZES.container,
+          "w-[8.5rem] sm:w-[11rem]",
+        )}
+      >
+        <CheckoutCardBrandIcons size="sm" scrollable />
+      </span>
+    );
+  }
 
   if (visual.kind === "logo" && !logoFailed) {
     return (
@@ -765,6 +804,10 @@ export function CheckoutPaymentOptions({
   loading,
   error,
   locale,
+  wooPaymentsPanel,
+  wooPaymentsLoading,
+  wooPaymentsError,
+  wooPaymentsFormError,
 }: {
   gateways: PaymentGateway[];
   selectedId: string | null;
@@ -778,6 +821,10 @@ export function CheckoutPaymentOptions({
   loading: boolean;
   error: string | null;
   locale: Locale;
+  wooPaymentsPanel?: ReactNode;
+  wooPaymentsLoading?: boolean;
+  wooPaymentsError?: string | null;
+  wooPaymentsFormError?: string | null;
 }) {
   const copy = getDictionary(locale).checkout;
   const localizedGateways = useMemo(
@@ -818,6 +865,8 @@ export function CheckoutPaymentOptions({
               selected &&
               isMontonioGateway(gateway) &&
               gatewayNeedsMontonioSubselection(gateway, montonioOptions);
+            const showWooPaymentsPanel =
+              selected && gateway.id === WOO_PAYMENTS_GATEWAY_ID;
 
             return (
               <li key={gateway.id}>
@@ -831,6 +880,24 @@ export function CheckoutPaymentOptions({
                     }
                   }}
                 />
+                {showWooPaymentsPanel ? (
+                  <div className="space-y-2 border border-t-0 border-ink/10 bg-paper/40 px-3 py-4 sm:px-4">
+                    {wooPaymentsLoading ? (
+                      <p className="text-xs text-ink/55">{copy.paymentLoading}</p>
+                    ) : null}
+                    {wooPaymentsError ? (
+                      <p className="text-sm text-accent" role="alert">
+                        {wooPaymentsError}
+                      </p>
+                    ) : null}
+                    {wooPaymentsPanel}
+                    {wooPaymentsFormError ? (
+                      <p className="text-sm text-accent" role="alert">
+                        {wooPaymentsFormError}
+                      </p>
+                    ) : null}
+                  </div>
+                ) : null}
                 {showMontonioProviders ? (
                   <MontonioProviderList
                     gateway={gateway}

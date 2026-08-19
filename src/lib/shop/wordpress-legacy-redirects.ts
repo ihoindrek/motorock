@@ -228,7 +228,9 @@ export function inferLocaleFromLegacyPath(pathname: string): Locale | null {
     normalized.startsWith("/pood/") ||
     normalized === "/seadmed" ||
     normalized === "/blogi" ||
-    normalized.startsWith("/blogi/")
+    normalized.startsWith("/blogi/") ||
+    normalized === "/ostukorv" ||
+    normalized === "/kassa"
   ) {
     return "et";
   }
@@ -313,6 +315,14 @@ export function resolveWordPressLegacyRedirect(
 
   if (normalized === "/pood/mootorrattad") {
     return "/shop/motorcycles";
+  }
+
+  if (
+    normalized === "/ostukorv" ||
+    normalized === "/kassa" ||
+    normalized === "/checkout"
+  ) {
+    return "/cart";
   }
 
   const productCategoryTarget = resolveProductCategoryRedirect(

@@ -16,6 +16,8 @@ export type CheckoutOrchestrateInput = {
   locale: "en" | "et";
   displayTotal: number;
   displayShipping: number;
+  wooPaymentsStripePaymentMethodId?: string;
+  wooPaymentsFraudPreventionToken?: string | null;
 };
 
 export type CheckoutOrchestrateSuccess = {

@@ -1,5 +1,6 @@
 import { DEFAULT_WOO_STORE_URL } from "@/lib/storefront/url";
 import { MONTONIO_CARD_PAYMENT_METHOD_ID } from "@/lib/checkout/montonio-checkout";
+import { WOO_PAYMENTS_GATEWAY_ID } from "@/lib/checkout/woo-payments";
 
 const MONTONIO_ASSETS =
   `${DEFAULT_WOO_STORE_URL}/wp-content/plugins/montonio-for-woocommerce/assets/images`;
@@ -10,6 +11,7 @@ const MONTONIO_CARD_PAYMENTS_LOGO =
 
 export type PaymentMethodVisual =
   | { kind: "logo"; src: string; alt: string; layout?: "default" | "card" }
+  | { kind: "card-brands"; alt: string }
   | { kind: "initials"; label: string };
 
 export function resolvePaymentMethodVisual(
@@ -25,6 +27,13 @@ export function resolvePaymentMethodVisual(
       src: MONTONIO_CARD_PAYMENTS_LOGO,
       alt: title,
       layout: "card",
+    };
+  }
+
+  if (id === WOO_PAYMENTS_GATEWAY_ID) {
+    return {
+      kind: "card-brands",
+      alt: title,
     };
   }
 

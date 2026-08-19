@@ -85,6 +85,10 @@ export function localizePaymentGateway(
       title: dict.paymentMethodsPaypal,
       description: dict.paymentMethodsPaypalDesc,
     },
+    woocommerce_payments: {
+      title: dict.paymentMethodsWooPayments,
+      description: dict.paymentMethodsWooPaymentsDesc,
+    },
   };
 
   const localized = byId[gateway.id];

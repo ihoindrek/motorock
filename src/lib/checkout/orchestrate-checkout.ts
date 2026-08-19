@@ -4,6 +4,10 @@ import {
   isMontonioPaymentGateway,
   shouldRunMontonioPaymentRemint,
 } from "@/lib/checkout/montonio-checkout";
+import {
+  buildWooPaymentsCheckoutMetaData,
+  isWooPaymentsGateway,
+} from "@/lib/checkout/woo-payments";
 import { runCheckoutPreflight } from "@/lib/checkout/preflight-checkout";
 import type {
   CheckoutOrchestrateInput,
@@ -211,13 +215,23 @@ export async function orchestrateCheckout(
 
   activeSession = preflight.sessionToken;
 
-  const checkoutMetaData = buildMontonioCheckoutMetaData({
-    pickupPoint: input.pickupPoint,
-    montonioOption: input.montonioOption,
-    country: input.customer.country,
-    paymentGatewayId: input.paymentMethodId,
-    locale: input.locale,
-  });
+  const checkoutMetaData = [
+    ...buildMontonioCheckoutMetaData({
+      pickupPoint: input.pickupPoint,
+      montonioOption: input.montonioOption,
+      country: input.customer.country,
+      paymentGatewayId: input.paymentMethodId,
+      locale: input.locale,
+    }),
+    ...(isWooPaymentsGateway(input.paymentMethodId) &&
+    input.wooPaymentsStripePaymentMethodId
+      ? buildWooPaymentsCheckoutMetaData({
+          stripePaymentMethodId: input.wooPaymentsStripePaymentMethodId,
+          fraudPreventionToken: input.wooPaymentsFraudPreventionToken,
+          locale: input.locale,
+        })
+      : []),
+  ];
 
   let result;
 

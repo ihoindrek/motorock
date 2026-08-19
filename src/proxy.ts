@@ -18,6 +18,14 @@ import {
   normalizeUrlPath,
 } from "@/lib/seo/normalize-url-path";
 
+/** Routes that live outside /[locale] and must not get a locale prefix. */
+export function isLocaleBypassPath(pathname: string) {
+  return (
+    pathname === "/order/payment-return" ||
+    pathname.startsWith("/order/payment-return/")
+  );
+}
+
 function applyLocalePathRedirects(
   request: NextRequest,
   locale: Locale,
@@ -107,6 +115,7 @@ export function proxy(request: NextRequest) {
     pathname === "/robots.txt" ||
     pathname === "/sitemap.xml" ||
     pathname === "/favicon.ico" ||
+    isLocaleBypassPath(pathname) ||
     /\.[\w]+$/.test(pathname)
   ) {
     return NextResponse.next();
@@ -123,6 +132,13 @@ export function proxy(request: NextRequest) {
   if (isLocale(segment)) {
     const basePath =
       pathname.slice(segment.length + 1) || "/";
+
+    if (isLocaleBypassPath(basePath)) {
+      const redirectUrl = request.nextUrl.clone();
+      redirectUrl.pathname = basePath;
+      return NextResponse.redirect(redirectUrl, 308);
+    }
+
     const redirectResponse = applyLocalePathRedirects(request, segment, basePath);
 
     if (redirectResponse) {

@@ -36,10 +36,18 @@ import { useMontonioPaymentOptions } from "@/hooks/use-montonio-payment-options"
 import { isLiveCheckoutEnabled } from "@/lib/checkout-mode";
 import { orchestrateCheckout } from "@/lib/checkout/orchestrate-checkout";
 import {
+  isWooPaymentsGateway,
+} from "@/lib/checkout/woo-payments";
+import {
   isMontonioPaymentGateway,
   pickupPointReadyForCheckout,
 } from "@/lib/checkout/montonio-checkout";
 import { resetCheckoutSyncState } from "@/lib/graphql/checkout";
+import {
+  CheckoutWooPaymentsPanel,
+  type CheckoutWooPaymentsHandle,
+} from "@/components/shop/checkout-woo-payments-panel";
+import { useWooPaymentsConfig } from "@/hooks/use-woo-payments-config";
 import { readWooSessionToken, writeWooSessionToken } from "@/lib/graphql/checkout-client";
 import { reportClientError } from "@/lib/monitoring/observability-client";
 import {
@@ -646,6 +654,11 @@ export function CartCheckoutView() {
   const [selectedMontonioOption, setSelectedMontonioOption] =
     useState<MontonioPaymentOption | null>(null);
   const paymentGatewayTouchedRef = useRef(false);
+  const wooPaymentsPanelRef = useRef<CheckoutWooPaymentsHandle>(null);
+  const [wooPaymentsFormError, setWooPaymentsFormError] = useState<string | null>(
+    null,
+  );
+  const [wooPaymentsReady, setWooPaymentsReady] = useState(false);
   const checkoutAnalyticsRef = useRef({
     viewCart: false,
     beginCheckout: false,
@@ -676,6 +689,11 @@ export function CartCheckoutView() {
   const montonioPreviewCountry = shipping.country;
   const paymentRefreshKey = `${shipping.wooSessionKey}:${shipping.country}:${shipping.selectedRateId ?? ""}:${shipping.rates.map((rate) => rate.id).join("|")}`;
   const payment = useCheckoutPayment(paymentCatalogReady, paymentRefreshKey);
+  const wooPaymentsSelected = isWooPaymentsGateway(payment.selectedId);
+  const wooPayments = useWooPaymentsConfig(
+    payment.selectedId,
+    paymentCatalogReady && isLiveCheckoutEnabled(),
+  );
   const montonio = useMontonioPaymentOptions(
     montonioPreviewCountry,
     paymentCatalogReady && isLiveCheckoutEnabled(),
@@ -1182,6 +1200,11 @@ export function CartCheckoutView() {
     !shipping.loading &&
     !shipping.syncing &&
     (!needsMontonioProvider || Boolean(selectedMontonioOption)) &&
+    (!wooPaymentsSelected ||
+      (Boolean(wooPayments.config?.publishableKey) &&
+        !wooPayments.loading &&
+        !wooPayments.error &&
+        wooPaymentsReady)) &&
     pickupValid;
 
   const submitBlockReason = resolveSubmitBlockReason({
@@ -1356,6 +1379,182 @@ export function CartCheckoutView() {
     };
   }, [setCheckoutStep]);
 
+  const handleExpressWooPayment = useCallback(
+    async (paymentMethodId: string) => {
+      if (!revealDeliveryIssues()) {
+        throw new Error(
+          submitBlockReason ??
+            (locale === "et"
+              ? "Täida kohaletoimetamise andmed enne maksmist."
+              : "Complete delivery details before paying."),
+        );
+      }
+
+      if (!termsAccepted) {
+        throw new Error(dict.checkout.submitBlockTerms);
+      }
+
+      if (!deliveryReady || !shipping.selectedRateId || !payment.selectedId) {
+        throw new Error(
+          submitBlockReason ??
+            (locale === "et"
+              ? "Vali tarne ja makseviis enne maksmist."
+              : "Choose delivery and payment before paying."),
+        );
+      }
+
+      if (!pickupValid) {
+        throw new Error(dict.checkout.submitBlockPickup);
+      }
+
+      if (payment.loading || payment.error) {
+        throw new Error(dict.checkout.submitBlockPayment);
+      }
+
+      setSubmitError(null);
+
+      const checkoutLinesKey = lines
+        .map(
+          (line) =>
+            `${line.slug}:${line.size ?? ""}:${line.quantity}:${line.variationId ?? ""}`,
+        )
+        .join("|");
+
+      const fallbackLocation = defaultLocationForCountry(shipping.country);
+      const checkoutCustomer = {
+        email,
+        firstName,
+        lastName,
+        phone: formatPhoneWithCountryCode(phoneCountry, phone),
+        country: shipping.country,
+        postcode: shipping.needsAddress
+          ? postcode
+          : pickupPoint?.postcode || fallbackLocation.postcode,
+        city: shipping.needsAddress
+          ? city
+          : pickupPoint?.city || fallbackLocation.city,
+        address1: shipping.needsAddress
+          ? address1
+          : pickupPoint?.name || fallbackLocation.city,
+      };
+
+      const checkoutResult = await orchestrateCheckout({
+        sessionToken: readWooSessionToken(),
+        lines,
+        linesKey: checkoutLinesKey,
+        customer: checkoutCustomer,
+        selectedShippingRateId: shipping.selectedRateId,
+        paymentMethodId: payment.selectedId ?? "",
+        montonioOption: selectedMontonioOption,
+        needsMontonioProvider,
+        pickupPoint,
+        locale,
+        displayTotal,
+        displayShipping,
+        wooPaymentsStripePaymentMethodId: paymentMethodId,
+        wooPaymentsFraudPreventionToken:
+          wooPayments.config?.fraudPreventionToken ?? null,
+      });
+
+      if (!checkoutResult.ok) {
+        throw new Error(
+          checkoutResult.errors[0] ??
+            (locale === "et"
+              ? "Makse käivitamine ebaõnnestus. Proovi uuesti."
+              : "Could not start payment. Please try again."),
+        );
+      }
+
+      if (checkoutResult.sessionToken) {
+        writeWooSessionToken(checkoutResult.sessionToken);
+      }
+
+      const redirectUrl = checkoutResult.redirect;
+
+      if (redirectUrl) {
+        resetCheckoutSyncState();
+        persistCheckoutDraft();
+        markCheckoutPaymentRedirect();
+        trackCheckoutPaymentReturn({ outcome: "redirect" });
+        window.location.assign(redirectUrl);
+        return;
+      }
+
+      setOrderId(
+        checkoutResult.orderNumber ?? `MR-${Date.now().toString(36).toUpperCase()}`,
+      );
+      clearCheckoutDraft();
+      clearCheckoutPaymentRedirect();
+      setPaymentReturnBanner(null);
+      clearCart();
+    },
+    [
+      clearCart,
+      deliveryReady,
+      displayShipping,
+      displayTotal,
+      firstName,
+      lastName,
+      email,
+      phone,
+      phoneCountry,
+      address1,
+      city,
+      postcode,
+      lines,
+      locale,
+      needsMontonioProvider,
+      payment.error,
+      payment.loading,
+      payment.selectedId,
+      persistCheckoutDraft,
+      pickupPoint,
+      pickupValid,
+      revealDeliveryIssues,
+      selectedMontonioOption,
+      shipping.country,
+      shipping.needsAddress,
+      shipping.selectedRateId,
+      submitBlockReason,
+      termsAccepted,
+      wooPayments.config?.fraudPreventionToken,
+    ],
+  );
+
+  const wooPaymentsBilling = useMemo(() => {
+    const fallbackLocation = defaultLocationForCountry(shipping.country);
+
+    return {
+      name: `${firstName} ${lastName}`.trim(),
+      email,
+      phone: formatPhoneWithCountryCode(phoneCountry, phone),
+      address: {
+        line1: shipping.needsAddress
+          ? address1
+          : pickupPoint?.name || fallbackLocation.city,
+        city: shipping.needsAddress
+          ? city
+          : pickupPoint?.city || fallbackLocation.city,
+        postal_code: shipping.needsAddress
+          ? postcode
+          : pickupPoint?.postcode || fallbackLocation.postcode,
+        country: shipping.country,
+      },
+    };
+  }, [
+    address1,
+    city,
+    email,
+    firstName,
+    lastName,
+    phone,
+    phoneCountry,
+    pickupPoint,
+    postcode,
+    shipping.country,
+    shipping.needsAddress,
+  ]);
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
@@ -1429,6 +1628,31 @@ export function CartCheckoutView() {
           : pickupPoint?.name || fallbackLocation.city,
       };
 
+      let wooPaymentsStripePaymentMethodId: string | undefined;
+
+      if (wooPaymentsSelected) {
+        if (!wooPaymentsPanelRef.current?.isReady()) {
+          throw new Error(
+            locale === "et"
+              ? "Oota, kuni kaardivorm laadib."
+              : "Wait for the card form to load.",
+          );
+        }
+
+        wooPaymentsStripePaymentMethodId =
+          await wooPaymentsPanelRef.current.createPaymentMethod({
+            name: `${firstName} ${lastName}`.trim(),
+            email,
+            phone: formatPhoneWithCountryCode(phoneCountry, phone),
+            address: {
+              line1: checkoutCustomer.address1,
+              city: checkoutCustomer.city,
+              postal_code: checkoutCustomer.postcode,
+              country: checkoutCustomer.country,
+            },
+          });
+      }
+
       const checkoutResult = await orchestrateCheckout({
         sessionToken: readWooSessionToken(),
         lines,
@@ -1442,6 +1666,9 @@ export function CartCheckoutView() {
         locale,
         displayTotal,
         displayShipping,
+        wooPaymentsStripePaymentMethodId,
+        wooPaymentsFraudPreventionToken:
+          wooPayments.config?.fraudPreventionToken ?? null,
       });
 
       if (!checkoutResult.ok) {
@@ -2117,6 +2344,47 @@ export function CartCheckoutView() {
                         loading={paymentLoading}
                         error={payment.error}
                         locale={locale}
+                        wooPaymentsLoading={wooPayments.loading}
+                        wooPaymentsError={wooPayments.error}
+                        wooPaymentsFormError={wooPaymentsFormError}
+                        wooPaymentsPanel={
+                          wooPaymentsSelected &&
+                          wooPayments.config?.publishableKey ? (
+                            <CheckoutWooPaymentsPanel
+                              ref={wooPaymentsPanelRef}
+                              publishableKey={wooPayments.config.publishableKey}
+                              amountCents={Math.max(
+                                0,
+                                Math.round(displayTotal * 100),
+                              )}
+                              locale={locale}
+                              billing={wooPaymentsBilling}
+                              orCardLabel={dict.checkout.paymentWooPaymentsOrCard}
+                              className="border-0 bg-transparent p-0"
+                              onReadyChange={setWooPaymentsReady}
+                              onError={setWooPaymentsFormError}
+                              onExpressPaymentMethod={async (paymentMethodId) => {
+                                setSubmitting(true);
+                                try {
+                                  await handleExpressWooPayment(paymentMethodId);
+                                } catch (cause) {
+                                  if (cause instanceof Error) {
+                                    setSubmitError(
+                                      friendlyCheckoutError(
+                                        cause.message,
+                                        dict.checkout.paymentError,
+                                        locale,
+                                      ) ?? cause.message,
+                                    );
+                                  }
+                                  throw cause;
+                                } finally {
+                                  setSubmitting(false);
+                                }
+                              }}
+                            />
+                          ) : null
+                        }
                       />
                     )}
                   </div>

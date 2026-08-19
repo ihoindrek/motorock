@@ -223,6 +223,9 @@ export type Dictionary = {
     paymentMethodsBlikDesc: string;
     paymentMethodsPaypal: string;
     paymentMethodsPaypalDesc: string;
+    paymentMethodsWooPayments: string;
+    paymentMethodsWooPaymentsDesc: string;
+    paymentWooPaymentsOrCard: string;
     paymentChooseBank: string;
     paymentFinancing: string;
     paymentLoading: string;
@@ -877,6 +880,10 @@ export const en: Dictionary = {
     paymentMethodsBlikDesc: "Pay with BLIK via Montonio.",
     paymentMethodsPaypal: "PayPal",
     paymentMethodsPaypalDesc: "Pay with your PayPal account.",
+    paymentMethodsWooPayments: "Card & digital wallets",
+    paymentMethodsWooPaymentsDesc:
+      "Visa, Mastercard, Apple Pay, Google Pay and more — depending on country and device.",
+    paymentWooPaymentsOrCard: "or pay with card",
     paymentChooseBank: "Bank link",
     paymentFinancing: "Pay later & hire purchase",
     paymentLoading: "Loading payment methods…",

@@ -4,7 +4,16 @@ const displayNames =
     : null;
 
 export function countryLabel(code: string) {
-  return displayNames?.of(code) ?? code;
+  const normalized = code.trim().toUpperCase();
+  if (!/^[A-Z]{2}$/.test(normalized)) {
+    return code.trim();
+  }
+
+  try {
+    return displayNames?.of(normalized) ?? normalized;
+  } catch {
+    return normalized;
+  }
 }
 
 export function sortCountryCodes(codes: readonly string[], preferred = "EE") {
@@ -54,10 +63,15 @@ export const DEFAULT_LOCATION_BY_COUNTRY: Record<
 };
 
 export function defaultLocationForCountry(country: string) {
+  const normalized = country.trim().toUpperCase();
+  if (!/^[A-Z]{2}$/.test(normalized)) {
+    return DEFAULT_LOCATION_BY_COUNTRY.EE;
+  }
+
   return (
-    DEFAULT_LOCATION_BY_COUNTRY[country] ?? {
+    DEFAULT_LOCATION_BY_COUNTRY[normalized] ?? {
       postcode: "00000",
-      city: countryLabel(country),
+      city: countryLabel(normalized),
     }
   );
 }

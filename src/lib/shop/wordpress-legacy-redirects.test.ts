@@ -59,6 +59,9 @@ describe("resolveWordPressLegacyRedirect", () => {
     expect(resolveWordPressLegacyRedirect("/pood/mootorrattad", "et")).toBe(
       "/shop/motorcycles",
     );
+    expect(resolveWordPressLegacyRedirect("/ostukorv", "et")).toBe("/cart");
+    expect(resolveWordPressLegacyRedirect("/kassa", "et")).toBe("/cart");
+    expect(resolveWordPressLegacyRedirect("/checkout", "en")).toBe("/cart");
   });
   it("maps Estonian static page slugs to canonical routes", () => {
     expect(resolveWordPressLegacyRedirect("/kontakt", "et")).toBe("/contact");
@@ -76,6 +79,8 @@ describe("inferLocaleFromLegacyPath", () => {
     expect(inferLocaleFromLegacyPath("/toode/brixton-crossfire-125")).toBe("et");
     expect(inferLocaleFromLegacyPath("/tootekategooria/mootorrattad")).toBe("et");
     expect(inferLocaleFromLegacyPath("/kontakt")).toBe("et");
+    expect(inferLocaleFromLegacyPath("/ostukorv")).toBe("et");
+    expect(inferLocaleFromLegacyPath("/kassa")).toBe("et");
     expect(inferLocaleFromLegacyPath("/blogi/post-slug")).toBe("et");
   });
 

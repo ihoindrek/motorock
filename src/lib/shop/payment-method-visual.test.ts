@@ -17,6 +17,19 @@ describe("resolvePaymentMethodVisual", () => {
     });
   });
 
+  it("uses card brand icons for WooPayments gateway", () => {
+    const visual = resolvePaymentMethodVisual(
+      "woocommerce_payments",
+      "Card & digital wallets",
+      null,
+    );
+
+    expect(visual).toEqual({
+      kind: "card-brands",
+      alt: "Card & digital wallets",
+    });
+  });
+
   it("keeps the Montonio mark for other Montonio gateways", () => {
     const visual = resolvePaymentMethodVisual(
       "wc_montonio_payments",

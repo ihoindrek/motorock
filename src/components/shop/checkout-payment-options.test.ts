@@ -4,6 +4,7 @@ import {
   filterMontonioOptionsForGateway,
   isBankMontonioGateway,
   resolveVisiblePaymentGateways,
+  sortPaymentGatewaysForCountry,
 } from "@/components/shop/checkout-payment-options";
 import {
   filterSupportedPaymentGateways,
@@ -301,5 +302,30 @@ describe("resolveVisiblePaymentGateways", () => {
       expect.arrayContaining(["ppcp-gateway", "wc_montonio_card"]),
     );
     expect(live).toHaveLength(2);
+  });
+});
+
+describe("sortPaymentGatewaysForCountry", () => {
+  it("puts WooPayments first outside Montonio bank-link countries", () => {
+    const gateways = [
+      { id: "ppcp-gateway", title: "PayPal", description: "", icon: null },
+      { id: "woocommerce_payments", title: "Card", description: "", icon: null },
+      { id: "wc_montonio_card", title: "Montonio Card", description: "", icon: null },
+    ];
+
+    expect(
+      sortPaymentGatewaysForCountry(gateways, "DE").map((gateway) => gateway.id),
+    ).toEqual(["woocommerce_payments", "ppcp-gateway", "wc_montonio_card"]);
+  });
+
+  it("keeps gateway order inside Montonio countries", () => {
+    const gateways = [
+      { id: "wc_montonio_payments", title: "Bank", description: "", icon: null },
+      { id: "woocommerce_payments", title: "Card", description: "", icon: null },
+    ];
+
+    expect(
+      sortPaymentGatewaysForCountry(gateways, "EE").map((gateway) => gateway.id),
+    ).toEqual(["wc_montonio_payments", "woocommerce_payments"]);
   });
 });
