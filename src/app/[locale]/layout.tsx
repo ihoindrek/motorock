@@ -7,6 +7,7 @@ import { ConsentProvider } from "@/context/consent-context";
 import { LocaleAlternatesProvider } from "@/context/locale-alternates-context";
 import { LocaleProvider } from "@/context/locale-context";
 import { ScrollToTopOnNavigate } from "@/components/navigation/scroll-to-top-on-navigate";
+import { SiteAnnouncementBar } from "@/components/site-announcement-bar";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { MainContent } from "@/components/layout/main-content";
@@ -58,6 +59,7 @@ export default async function LocaleLayout({
               {dictionary.common.skipToContent}
             </a>
 
+            <SiteAnnouncementBar locale={localeParam} />
             <SiteHeader />
 
             <ScrollToTopOnNavigate />
