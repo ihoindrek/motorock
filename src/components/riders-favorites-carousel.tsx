@@ -9,7 +9,10 @@ import { Swiper, SwiperSlide } from "swiper/react";
 
 import { CarouselArrow } from "@/components/ui/carousel-arrow";
 import { BrandLogo } from "@/components/shop/brand-logo";
+import { InStoreNowBadge } from "@/components/shop/in-store-now-badge";
+import { MotorcyclePrice } from "@/components/shop/motorcycle-price";
 import { Price } from "@/components/shop/price";
+import type { ProductType } from "@/types/catalog-product";
 import { useDictionary, useLocale } from "@/context/locale-context";
 import { localizedProductHref } from "@/lib/shop/product-url";
 import {
@@ -25,6 +28,10 @@ export type FavoriteProduct = {
   name: string;
   brand: string;
   price: number;
+  regularPrice?: number;
+  type?: ProductType;
+  inStock?: boolean;
+  showroomAvailable?: boolean;
   image: string;
 };
 
@@ -44,6 +51,10 @@ type FavoriteProductCardProps = {
   name: string;
   brand: string;
   price: number;
+  regularPrice?: number;
+  type?: ProductType;
+  inStock?: boolean;
+  showroomAvailable?: boolean;
   image: string;
   theme?: CarouselTheme;
   imageMultiply?: boolean;
@@ -57,6 +68,10 @@ export function FavoriteProductCard({
   name,
   brand,
   price,
+  regularPrice,
+  type,
+  inStock,
+  showroomAvailable,
   image,
   theme = "dark",
   imageMultiply = false,
@@ -87,6 +102,9 @@ export function FavoriteProductCard({
             className={`relative aspect-[4/3] w-full overflow-hidden ${figureBg}`}
           >
             <div className="moto-catalog-glow" aria-hidden="true" />
+            {type === "motorcycle" && showroomAvailable && inStock ? (
+              <InStoreNowBadge variant="overlay" />
+            ) : null}
             <Image
               src={image}
               alt={name}
@@ -139,16 +157,30 @@ export function FavoriteProductCard({
           >
             {name}
           </h3>
-          <Price
-            value={price}
-            as="p"
-            variant={prominentMeta ? "md" : compact ? "sm" : "md"}
-            className={cn(
-              "mt-auto transition-colors duration-200 group-hover:text-accent",
-              compact ? "pt-1" : "pt-2",
-              !prominentMeta && theme !== "light" && "text-paper",
-            )}
-          />
+          {type === "motorcycle" ? (
+            <MotorcyclePrice
+              price={price}
+              regularPrice={regularPrice}
+              showDiscountBadge
+              variant={prominentMeta ? "md" : compact ? "sm" : "md"}
+              as="p"
+              className={cn(
+                "mt-auto transition-colors duration-200 group-hover:text-accent",
+                compact ? "pt-1" : "pt-2",
+              )}
+            />
+          ) : (
+            <Price
+              value={price}
+              as="p"
+              variant={prominentMeta ? "md" : compact ? "sm" : "md"}
+              className={cn(
+                "mt-auto transition-colors duration-200 group-hover:text-accent",
+                compact ? "pt-1" : "pt-2",
+                !prominentMeta && theme !== "light" && "text-paper",
+              )}
+            />
+          )}
         </div>
       </Link>
     </article>

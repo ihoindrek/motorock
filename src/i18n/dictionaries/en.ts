@@ -101,6 +101,8 @@ export type Dictionary = {
     equipment: string;
     shopMotorcycles: string;
     browseProducts: string;
+    motorcycleSaleUntil: string;
+    motorcycleSaleAria: string;
   };
   search: {
     open: string;
@@ -740,6 +742,8 @@ export const en: Dictionary = {
     equipment: "Driving\nequipment",
     shopMotorcycles: "Shop motorcycles",
     browseProducts: "Browse products",
+    motorcycleSaleUntil: "Until end of August",
+    motorcycleSaleAria: "10% off all motorcycles until end of August",
   },
   search: {
     open: "Open search",

@@ -105,6 +105,8 @@ export const et: Dictionary = {
     equipment: "Sõiduvarustus",
     shopMotorcycles: "Vaata mootorrattaid",
     browseProducts: "Sirvi tooteid",
+    motorcycleSaleUntil: "Augusti lõpuni",
+    motorcycleSaleAria: "Kõik mootorrattad 10% soodsamad augusti lõpuni",
   },
   search: {
     open: "Ava otsing",

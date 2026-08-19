@@ -275,6 +275,10 @@ export function catalogToFavoriteProduct(
     name: product.name,
     brand: product.brand,
     price: product.price,
+    regularPrice: product.regularPrice,
+    type: product.type,
+    inStock: product.inStock,
+    showroomAvailable: product.showroomAvailable,
     image: product.image,
   };
 }
