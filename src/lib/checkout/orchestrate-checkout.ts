@@ -180,6 +180,18 @@ export async function orchestrateCheckout(
   );
   activeSession = shippingSelection.sessionToken ?? activeSession;
 
+  if (!activeSession) {
+    return {
+      ok: false,
+      code: "CHECKOUT_FAILED",
+      errors: [
+        input.locale === "et"
+          ? "Checkout sessioon puudub. Värskenda lehte ja proovi uuesti."
+          : "Checkout session is missing. Refresh the page and try again.",
+      ],
+    };
+  }
+
   const preflight = await runCheckoutPreflight({
     sessionToken: activeSession,
     selectedPaymentMethodId: input.paymentMethodId,

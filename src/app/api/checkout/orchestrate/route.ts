@@ -1,7 +1,17 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { orchestrateCheckout } from "@/lib/checkout/orchestrate-checkout";
+import type { CheckoutOrchestrateInput } from "@/lib/checkout/orchestrate-checkout.types";
 import { remintMontonioCheckoutPayment } from "@/lib/checkout/remint-montonio-checkout";
+
+const pickupCarrierSchema = z.enum([
+  "omniva",
+  "smartposti",
+  "dpd",
+  "gls",
+  "alzabox",
+  "novapost",
+]);
 
 const cartLineSchema = z.object({
   slug: z.string().min(1),
@@ -84,7 +94,7 @@ const fullBodySchema = z.object({
       address: z.string(),
       city: z.string(),
       postcode: z.string(),
-      carrier: z.string(),
+      carrier: pickupCarrierSchema,
       montonioItemId: z.string().optional(),
       carrierAssignedId: z.string().optional(),
     })
@@ -170,10 +180,13 @@ export async function POST(request: Request) {
     );
   }
 
-  const result = await orchestrateCheckout({
-    ...parsed.data,
+  const { phase: _phase, ...checkoutBody } = parsed.data;
+  const checkoutInput: CheckoutOrchestrateInput = {
+    ...checkoutBody,
     sessionToken: readSessionToken(request, parsed.data.sessionToken),
-  });
+  };
+
+  const result = await orchestrateCheckout(checkoutInput);
 
   return NextResponse.json(result, { status: result.ok ? 200 : 422 });
 }
