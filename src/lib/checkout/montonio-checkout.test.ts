@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   buildMontonioCheckoutMetaData,
+  filterHeadlessDisabledMontonioFinancingGateways,
+  filterHeadlessDisabledMontonioFinancingOptions,
   inferMontonioOptionFromGateway,
   needsMontonioPaymentRemint,
   pickupPointReadyForCheckout,
@@ -187,5 +189,50 @@ describe("pickupPointReadyForCheckout", () => {
         carrier: "omniva",
       }),
     ).toBe(false);
+  });
+});
+
+describe("filterHeadlessDisabledMontonioFinancing", () => {
+  it("removes hire purchase and BNPL gateways and options", () => {
+    const gateways = [
+      { id: "wc_montonio_payments" },
+      { id: "wc_montonio_hire_purchase" },
+      { id: "wc_montonio_bnpl" },
+      { id: "ppcp-gateway" },
+    ];
+    const options: MontonioPaymentOption[] = [
+      {
+        kind: "bank",
+        code: "LHVBEE22",
+        systemName: "paymentInitiation",
+        name: "LHV",
+        logoUrl: null,
+      },
+      {
+        kind: "hirePurchase",
+        code: "hirePurchase",
+        systemName: "hirePurchase",
+        name: "Hire purchase",
+        logoUrl: null,
+      },
+      {
+        kind: "bnpl",
+        code: "bnpl",
+        systemName: "bnpl",
+        name: "BNPL",
+        logoUrl: null,
+      },
+    ];
+
+    expect(
+      filterHeadlessDisabledMontonioFinancingGateways(gateways).map(
+        (gateway) => gateway.id,
+      ),
+    ).toEqual(["wc_montonio_payments", "ppcp-gateway"]);
+    expect(
+      filterHeadlessDisabledMontonioFinancingOptions(options).map(
+        (option) => option.kind,
+      ),
+    ).toEqual(["bank"]);
   });
 });

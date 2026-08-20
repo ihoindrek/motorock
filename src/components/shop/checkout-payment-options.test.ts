@@ -226,10 +226,22 @@ describe("resolveVisiblePaymentGateways", () => {
     ]);
   });
 
-  it("shows Montonio financing rows in live checkout when API supports them", () => {
+  it("hides Montonio financing gateways in live checkout until headless support ships", () => {
     const gateways: PaymentGateway[] = [
       { id: "ppcp-gateway", title: "PayPal", description: "", icon: null },
       { id: MONTONIO_PAYMENT_METHOD_ID, title: "Pay with your bank", description: "", icon: null },
+      {
+        id: "wc_montonio_bnpl",
+        title: "Pay later",
+        description: "",
+        icon: null,
+      },
+      {
+        id: "wc_montonio_hire_purchase",
+        title: "Hire purchase",
+        description: "",
+        icon: null,
+      },
     ];
     const options: MontonioPaymentOption[] = [
       ...bankOptions,
@@ -250,14 +262,10 @@ describe("resolveVisiblePaymentGateways", () => {
     ];
 
     const live = resolveVisiblePaymentGateways(gateways, options, "et", true, "EE");
-    expect(live.map((gateway) => gateway.id)).toEqual(
-      expect.arrayContaining([
-        "ppcp-gateway",
-        MONTONIO_PAYMENT_METHOD_ID,
-        "wc_montonio_bnpl",
-        "wc_montonio_hire_purchase",
-      ]),
-    );
+    expect(live.map((gateway) => gateway.id)).toEqual([
+      MONTONIO_PAYMENT_METHOD_ID,
+      "ppcp-gateway",
+    ]);
   });
 
   it("injects bank link in live checkout when Woo only returns card", () => {

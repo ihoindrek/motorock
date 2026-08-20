@@ -8,7 +8,11 @@ import {
   MONTONIO_PAYMENT_METHOD_ID,
   type PaymentGateway,
 } from "@/lib/graphql/checkout";
-import { MONTONIO_CARD_PAYMENT_METHOD_ID } from "@/lib/checkout/montonio-checkout";
+import {
+  filterHeadlessDisabledMontonioFinancingGateways,
+  filterHeadlessDisabledMontonioFinancingOptions,
+  MONTONIO_CARD_PAYMENT_METHOD_ID,
+} from "@/lib/checkout/montonio-checkout";
 import { isLiveCheckoutEnabled } from "@/lib/checkout-mode";
 import type { Locale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/get-dictionary";
@@ -301,10 +305,14 @@ export function resolveVisiblePaymentGateways(
   country?: string | null,
 ) {
   const montonioAllowed = isMontonioPaymentCountry(country);
-  const scopedGateways = montonioAllowed
-    ? gateways
-    : filterMontonioGatewaysByCountry(gateways, country);
-  const scopedOptions = filterMontonioOptionsByCountry(montonioOptions, country);
+  const scopedGateways = filterHeadlessDisabledMontonioFinancingGateways(
+    montonioAllowed
+      ? gateways
+      : filterMontonioGatewaysByCountry(gateways, country),
+  );
+  const scopedOptions = filterHeadlessDisabledMontonioFinancingOptions(
+    filterMontonioOptionsByCountry(montonioOptions, country),
+  );
 
   const wooGatewayIds = new Set(scopedGateways.map((gateway) => gateway.id));
   const base = liveCheckout
@@ -312,11 +320,13 @@ export function resolveVisiblePaymentGateways(
     : scopedGateways;
 
   return sortPaymentGatewaysForCountry(
-    filterGatewaysWithMontonioOptions(
-      expandMontonioPaymentGateways(base, scopedOptions, locale),
-      scopedOptions,
-      wooGatewayIds,
-    ).map((gateway) => localizePaymentGateway(gateway, locale)),
+    filterHeadlessDisabledMontonioFinancingGateways(
+      filterGatewaysWithMontonioOptions(
+        expandMontonioPaymentGateways(base, scopedOptions, locale),
+        scopedOptions,
+        wooGatewayIds,
+      ).map((gateway) => localizePaymentGateway(gateway, locale)),
+    ),
     country,
   );
 }

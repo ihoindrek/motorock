@@ -62,6 +62,38 @@ const MONTONIO_PROVIDER_TO_KIND: Record<string, MontonioPaymentOption["kind"]> =
     hirePurchase: "hirePurchase",
   };
 
+/** Hidden in headless checkout until native Woo hire/BNPL gateways are wired. */
+export const HEADLESS_DISABLED_MONTONIO_FINANCING_GATEWAY_IDS = new Set([
+  "wc_montonio_hire_purchase",
+  "wc_montonio_bnpl",
+]);
+
+const HEADLESS_DISABLED_MONTONIO_OPTION_KINDS = new Set<
+  MontonioPaymentOption["kind"]
+>(["hirePurchase", "bnpl"]);
+
+export function isHeadlessDisabledMontonioFinancingGateway(
+  gatewayId: string,
+) {
+  return HEADLESS_DISABLED_MONTONIO_FINANCING_GATEWAY_IDS.has(gatewayId);
+}
+
+export function filterHeadlessDisabledMontonioFinancingGateways<
+  T extends { id: string },
+>(gateways: T[]) {
+  return gateways.filter(
+    (gateway) => !isHeadlessDisabledMontonioFinancingGateway(gateway.id),
+  );
+}
+
+export function filterHeadlessDisabledMontonioFinancingOptions(
+  options: MontonioPaymentOption[],
+) {
+  return options.filter(
+    (option) => !HEADLESS_DISABLED_MONTONIO_OPTION_KINDS.has(option.kind),
+  );
+}
+
 export function inferMontonioOptionFromGateway(
   paymentGatewayId: string | null | undefined,
 ): MontonioPaymentOption | null {
