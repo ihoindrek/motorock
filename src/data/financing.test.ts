@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isFinancingAvailable } from "@/data/financing";
+import { isFinancingAvailable, isFinancingPdpEnabled } from "@/data/financing";
 
 describe("isFinancingAvailable", () => {
   it("allows hire purchase calculator for Estonia", () => {
@@ -17,5 +17,12 @@ describe("isFinancingAvailable", () => {
     expect(isFinancingAvailable(null)).toBe(false);
     expect(isFinancingAvailable(undefined)).toBe(false);
     expect(isFinancingAvailable("")).toBe(false);
+  });
+});
+
+describe("isFinancingPdpEnabled", () => {
+  it("allows calculator on motorcycles only", () => {
+    expect(isFinancingPdpEnabled("motorcycle")).toBe(true);
+    expect(isFinancingPdpEnabled("equipment")).toBe(false);
   });
 });

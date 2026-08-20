@@ -1,7 +1,11 @@
 "use client";
 
 import { useDictionary } from "@/context/locale-context";
-import { isFinancingAvailable } from "@/data/financing";
+import {
+  type FinancingPdpProductKind,
+  isFinancingAvailable,
+  isFinancingPdpEnabled,
+} from "@/data/financing";
 import { useVisitorCountry } from "@/hooks/use-visitor-country";
 import {
   getInbankCalculatorConfig,
@@ -15,6 +19,7 @@ import type { ComponentProps } from "react";
 type FinancingPriceTeaserProps = {
   price: number;
   regularPrice?: number;
+  productKind: FinancingPdpProductKind;
   variant?: "hero" | "compact";
   priceVariant?: ComponentProps<typeof Price>["variant"];
   className?: string;
@@ -25,6 +30,7 @@ type FinancingPriceTeaserProps = {
 export function FinancingPriceTeaser({
   price,
   regularPrice,
+  productKind,
   variant = "hero",
   priceVariant,
   className,
@@ -37,6 +43,7 @@ export function FinancingPriceTeaser({
   const resolvedCountry = countryCode ?? visitorCountry;
   const geoReady = countryCode !== undefined || !geoLoading;
   const showCalculator =
+    isFinancingPdpEnabled(productKind) &&
     geoReady &&
     config.enabled &&
     isFinancingAvailable(resolvedCountry) &&
@@ -84,34 +91,24 @@ export function FinancingPriceTeaser({
 
   return (
     <div className={className}>
-      <div className="flex flex-wrap items-start gap-x-2 gap-y-1 sm:flex-nowrap">
-        <div className="shrink-0">
-          <p className="font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/45">
-            {dict.financing.retail}
-          </p>
-          <p className="mt-0.5">
-            {regularPrice ? (
-              <MotorcyclePrice
-                price={price}
-                regularPrice={regularPrice}
-                variant={resolvedPriceVariant}
-                showDiscountBadge
-              />
-            ) : (
-              <Price value={price} variant={resolvedPriceVariant} />
-            )}
-          </p>
-        </div>
-        {financing ? (
-          <>
-            <div
-              className="hidden h-5 w-px shrink-0 bg-ink/10 sm:block"
-              aria-hidden="true"
+      <div>
+        <p className="font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/45">
+          {dict.financing.retail}
+        </p>
+        <p className="mt-0.5">
+          {regularPrice ? (
+            <MotorcyclePrice
+              price={price}
+              regularPrice={regularPrice}
+              variant={resolvedPriceVariant}
+              showDiscountBadge
             />
-            <div className="min-w-0 shrink">{financing}</div>
-          </>
-        ) : null}
+          ) : (
+            <Price value={price} variant={resolvedPriceVariant} />
+          )}
+        </p>
       </div>
+      {financing ? <div className="mt-4 min-w-0">{financing}</div> : null}
     </div>
   );
 }

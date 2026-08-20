@@ -247,6 +247,7 @@ function RichMotorcycleProductView({
               <FinancingPriceTeaser
                 price={activePrice}
                 regularPrice={activeRegularPrice}
+                productKind="motorcycle"
                 variant="hero"
                 className="mt-8"
               />
