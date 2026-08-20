@@ -44,6 +44,68 @@ const WOO_MONTONIO_GATEWAY_IDS = [
   "wc_montonio_hire_purchase",
 ] as const;
 
+/** Default Montonio provider when the UI gateway has a single implicit option. */
+const MONTONIO_GATEWAY_DEFAULT_PROVIDER: Record<string, string> = {
+  [MONTONIO_CARD_PAYMENT_METHOD_ID]: "cardPayments",
+  "wc_montonio_mobilepay": "mobilePay",
+  "wc_montonio_blik": "blik",
+  "wc_montonio_bnpl": "bnpl",
+  "wc_montonio_hire_purchase": "hirePurchase",
+};
+
+const MONTONIO_PROVIDER_TO_KIND: Record<string, MontonioPaymentOption["kind"]> =
+  {
+    cardPayments: "card",
+    mobilePay: "mobilePay",
+    blik: "blik",
+    bnpl: "bnpl",
+    hirePurchase: "hirePurchase",
+  };
+
+export function inferMontonioOptionFromGateway(
+  paymentGatewayId: string | null | undefined,
+): MontonioPaymentOption | null {
+  if (!paymentGatewayId) {
+    return null;
+  }
+
+  const provider = MONTONIO_GATEWAY_DEFAULT_PROVIDER[paymentGatewayId];
+  if (!provider) {
+    return null;
+  }
+
+  const kind = MONTONIO_PROVIDER_TO_KIND[provider];
+  if (!kind) {
+    return null;
+  }
+
+  return {
+    code: provider,
+    name: provider,
+    logoUrl: null,
+    systemName: provider,
+    kind,
+  };
+}
+
+function appendDefaultProviderMetaForGateway(
+  meta: CheckoutMetaDataInput[],
+  paymentGatewayId: string | null | undefined,
+) {
+  const provider = paymentGatewayId
+    ? MONTONIO_GATEWAY_DEFAULT_PROVIDER[paymentGatewayId]
+    : undefined;
+
+  if (!provider) {
+    return;
+  }
+
+  meta.push({
+    key: "montonio_preferred_provider",
+    value: provider,
+  });
+}
+
 /**
  * Map UI / synthetic Montonio gateway ids to a gateway WooGraphQL checkout accepts.
  * Synthetic rows (e.g. card when Woo only exposes bank link) must fall back to an
@@ -115,12 +177,7 @@ export function buildMontonioCheckoutMetaData(input: {
     return meta;
   }
 
-  if (input.paymentGatewayId === MONTONIO_CARD_PAYMENT_METHOD_ID) {
-    meta.push({
-      key: "montonio_preferred_provider",
-      value: "cardPayments",
-    });
-  }
+  appendDefaultProviderMetaForGateway(meta, input.paymentGatewayId);
 
   return meta;
 }

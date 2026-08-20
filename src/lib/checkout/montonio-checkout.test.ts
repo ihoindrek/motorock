@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   buildMontonioCheckoutMetaData,
+  inferMontonioOptionFromGateway,
   needsMontonioPaymentRemint,
   pickupPointReadyForCheckout,
   resolveMontonioCheckoutGatewayId,
@@ -123,6 +124,30 @@ describe("buildMontonioCheckoutMetaData", () => {
     expect(meta).toEqual([
       { key: "montonio_preferred_provider", value: "cardPayments" },
     ]);
+  });
+
+  it("writes hire-purchase provider meta for hire gateway fallback", () => {
+    const meta = buildMontonioCheckoutMetaData({
+      paymentGatewayId: "wc_montonio_hire_purchase",
+      locale: "en",
+    });
+
+    expect(meta).toEqual(
+      expect.arrayContaining([
+        { key: "checkout_locale", value: "en" },
+        { key: "montonio_preferred_provider", value: "hirePurchase" },
+      ]),
+    );
+  });
+
+  it("infers Montonio option from synthetic gateway id", () => {
+    expect(inferMontonioOptionFromGateway("wc_montonio_bnpl")).toEqual({
+      code: "bnpl",
+      name: "bnpl",
+      logoUrl: null,
+      systemName: "bnpl",
+      kind: "bnpl",
+    });
   });
 
   it("ignores Montonio option meta when payment gateway is PayPal", () => {

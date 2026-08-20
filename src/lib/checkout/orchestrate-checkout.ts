@@ -1,6 +1,7 @@
 import type { CartLine } from "@/context/cart-context";
 import {
   buildMontonioCheckoutMetaData,
+  inferMontonioOptionFromGateway,
   isMontonioPaymentGateway,
   shouldRunMontonioPaymentRemint,
 } from "@/lib/checkout/montonio-checkout";
@@ -263,10 +264,17 @@ export async function orchestrateCheckout(
   activeSession = result.sessionToken ?? activeSession;
   let redirectUrl = result.redirect;
 
+  const montonioOptionForRemint =
+    input.montonioOption ??
+    inferMontonioOptionFromGateway(input.paymentMethodId);
+
   if (
-    shouldRunMontonioPaymentRemint(input.paymentMethodId, input.montonioOption) &&
+    shouldRunMontonioPaymentRemint(
+      input.paymentMethodId,
+      montonioOptionForRemint,
+    ) &&
     result.orderDatabaseId &&
-    input.montonioOption
+    montonioOptionForRemint
   ) {
     const remintPayload = buildRemintPayload({
       result,
@@ -296,7 +304,7 @@ export async function orchestrateCheckout(
       displayShipping: input.displayShipping,
       locale: input.locale,
       country: input.customer.country,
-      montonioOption: input.montonioOption,
+      montonioOption: montonioOptionForRemint,
     });
 
     if (!remintPayload) {

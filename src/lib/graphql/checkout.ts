@@ -33,6 +33,7 @@ import {
 } from "@/lib/woocommerce/store-api-product";
 import {
   type CheckoutMetaDataInput,
+  isMontonioPaymentGateway,
   MONTONIO_PAYMENT_METHOD_ID,
   resolveMontonioCheckoutGatewayId,
 } from "@/lib/checkout/montonio-checkout";
@@ -757,9 +758,16 @@ export async function submitCheckout(
 
   const checkout = data.checkout;
   if (!checkout || checkout.result !== "success") {
+    const paymentHint =
+      paymentMethod === MONTONIO_PAYMENT_METHOD_ID
+        ? "Choose your bank under Pay with your bank and try again."
+        : isMontonioPaymentGateway(paymentMethod)
+          ? "Try bank link or PayPal, or refresh and choose the payment method again."
+          : "Choose bank link or PayPal and try again.";
+
     throw new Error(
       checkout?.result === "failure"
-        ? "Checkout payment could not be started. Choose bank link or PayPal and try again."
+        ? `Checkout payment could not be started. ${paymentHint}`
         : "Checkout could not be completed. Please verify delivery and payment details, then try again.",
     );
   }
