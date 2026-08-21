@@ -11,20 +11,29 @@ export function isWooPaymentsGateway(gatewayId: string | null | undefined) {
 }
 
 export function buildWooPaymentsCheckoutMetaData(input: {
-  stripePaymentMethodId: string;
+  stripePaymentMethodId?: string;
+  stripeConfirmationToken?: string;
   fraudPreventionToken?: string | null;
   locale: "en" | "et";
 }): CheckoutMetaDataInput[] {
   const meta: CheckoutMetaDataInput[] = [
     {
-      key: "wcpay_payment_method",
-      value: input.stripePaymentMethodId,
-    },
-    {
       key: "checkout_locale",
       value: input.locale,
     },
   ];
+
+  if (input.stripeConfirmationToken) {
+    meta.unshift({
+      key: "wcpay_confirmation_token",
+      value: input.stripeConfirmationToken,
+    });
+  } else if (input.stripePaymentMethodId) {
+    meta.unshift({
+      key: "wcpay_payment_method",
+      value: input.stripePaymentMethodId,
+    });
+  }
 
   if (input.fraudPreventionToken) {
     meta.push({
@@ -252,10 +261,29 @@ export async function createWooPaymentsStripePaymentMethod(input: {
     throw new Error(submitResult.error.message ?? "Card validation failed.");
   }
 
+  const billingDetails = toStripePaymentMethodBillingDetails(input.billing);
+
+  if (typeof input.stripe.createConfirmationToken === "function") {
+    const { confirmationToken, error } = await input.stripe.createConfirmationToken({
+      elements: input.elements,
+      params: {
+        payment_method_data: {
+          billing_details: billingDetails,
+        },
+      },
+    });
+
+    if (error || !confirmationToken) {
+      throw new Error(error?.message ?? "Could not create payment token.");
+    }
+
+    return confirmationToken.id;
+  }
+
   const { paymentMethod, error } = await input.stripe.createPaymentMethod({
     elements: input.elements,
     params: {
-      billing_details: toStripePaymentMethodBillingDetails(input.billing),
+      billing_details: billingDetails,
     },
   });
 

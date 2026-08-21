@@ -22,17 +22,29 @@ describe("WOO_PAYMENTS_EXCLUDED_STRIPE_PAYMENT_METHODS", () => {
 });
 
 describe("buildWooPaymentsCheckoutMetaData", () => {
-  it("maps Stripe payment method and locale for GraphQL checkout", () => {
+  it("maps Stripe confirmation token and locale for GraphQL checkout", () => {
     expect(
       buildWooPaymentsCheckoutMetaData({
-        stripePaymentMethodId: "pm_123",
+        stripeConfirmationToken: "ctoken_123",
         fraudPreventionToken: "abc",
         locale: "et",
       }),
     ).toEqual([
-      { key: "wcpay_payment_method", value: "pm_123" },
+      { key: "wcpay_confirmation_token", value: "ctoken_123" },
       { key: "checkout_locale", value: "et" },
       { key: "wcpay_fraud_prevention_token", value: "abc" },
+    ]);
+  });
+
+  it("maps Stripe payment method for express checkout", () => {
+    expect(
+      buildWooPaymentsCheckoutMetaData({
+        stripePaymentMethodId: "pm_123",
+        locale: "en",
+      }),
+    ).toEqual([
+      { key: "wcpay_payment_method", value: "pm_123" },
+      { key: "checkout_locale", value: "en" },
     ]);
   });
 });

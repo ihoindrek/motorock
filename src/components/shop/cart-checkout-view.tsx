@@ -35,6 +35,7 @@ import { useCheckoutPayment } from "@/hooks/use-checkout-payment";
 import { useMontonioPaymentOptions } from "@/hooks/use-montonio-payment-options";
 import { isLiveCheckoutEnabled } from "@/lib/checkout-mode";
 import { orchestrateCheckout } from "@/lib/checkout/orchestrate-checkout";
+import { prepareWooPaymentsChargeAmount } from "@/lib/checkout/prepare-woo-payments-checkout";
 import {
   completeWooPaymentsCheckoutRedirect,
   isWooPaymentsGateway,
@@ -1454,8 +1455,19 @@ export function CartCheckoutView() {
           : pickupPoint?.name || fallbackLocation.city,
       };
 
-      const checkoutResult = await orchestrateCheckout({
+      const prepared = await prepareWooPaymentsChargeAmount({
+        lines,
+        linesKey: checkoutLinesKey,
         sessionToken: readWooSessionToken(),
+        selectedShippingRateId: shipping.selectedRateId,
+        customer: checkoutCustomer,
+        expectedAmountCents: Math.round(wooPaymentsChargeTotal * 100),
+        locale,
+      });
+      writeWooSessionToken(prepared.sessionToken);
+
+      const checkoutResult = await orchestrateCheckout({
+        sessionToken: prepared.sessionToken,
         lines,
         linesKey: checkoutLinesKey,
         customer: checkoutCustomer,
@@ -1658,8 +1670,21 @@ export function CartCheckoutView() {
       };
 
       let wooPaymentsStripePaymentMethodId: string | undefined;
+      let preparedSessionToken = readWooSessionToken();
 
       if (wooPaymentsSelected) {
+        const prepared = await prepareWooPaymentsChargeAmount({
+          lines,
+          linesKey: checkoutLinesKey,
+          sessionToken: readWooSessionToken(),
+          selectedShippingRateId: shipping.selectedRateId,
+          customer: checkoutCustomer,
+          expectedAmountCents: Math.round(wooPaymentsChargeTotal * 100),
+          locale,
+        });
+        preparedSessionToken = prepared.sessionToken;
+        writeWooSessionToken(preparedSessionToken);
+
         if (!wooPaymentsPanelRef.current?.isReady()) {
           throw new Error(
             locale === "et"
@@ -1683,7 +1708,7 @@ export function CartCheckoutView() {
       }
 
       const checkoutResult = await orchestrateCheckout({
-        sessionToken: readWooSessionToken(),
+        sessionToken: preparedSessionToken,
         lines,
         linesKey: checkoutLinesKey,
         customer: checkoutCustomer,

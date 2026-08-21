@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Motorock Headless WooPayments
  * Description: Bridges headless GraphQL checkout to WooCommerce Payments (Stripe) on the storefront.
- * Version: 1.3.2
+ * Version: 1.3.3
  *
  * Install: copy to wp-content/mu-plugins/motorock-headless-woo-payments.php
  */
@@ -139,9 +139,12 @@ function motorock_wcpay_prepare_checkout_request( array $input, WC_Order $order 
 			motorock_wcpay_hydrate_post_from_order( $order );
 		}
 
-		if ( empty( $_POST['wcpay-payment-method'] ) ) {
+		if (
+			empty( $_POST['wcpay-payment-method'] )
+			&& empty( $_POST['wcpay-confirmation-token'] )
+		) {
 			throw new Exception(
-				'Stripe payment method is missing. Please re-enter your card details and try again.'
+				'Stripe payment credentials are missing. Please re-enter your card details and try again.'
 			);
 		}
 	}
@@ -241,6 +244,9 @@ function motorock_wcpay_hydrate_post_from_meta_input( array $input ) {
 			case 'wcpay_payment_method':
 				$_POST['wcpay-payment-method'] = $value;
 				break;
+			case 'wcpay_confirmation_token':
+				$_POST['wcpay-confirmation-token'] = $value;
+				break;
 			case 'wcpay_fraud_prevention_token':
 				$_POST['wcpay-fraud-prevention-token'] = $value;
 				break;
@@ -263,6 +269,11 @@ function motorock_wcpay_hydrate_post_from_order( WC_Order $order ) {
 	$payment_method_id = (string) $order->get_meta( 'wcpay_payment_method' );
 	if ( $payment_method_id !== '' ) {
 		$_POST['wcpay-payment-method'] = $payment_method_id;
+	}
+
+	$confirmation_token = (string) $order->get_meta( 'wcpay_confirmation_token' );
+	if ( $confirmation_token !== '' ) {
+		$_POST['wcpay-confirmation-token'] = $confirmation_token;
 	}
 
 	$fraud_token = (string) $order->get_meta( 'wcpay_fraud_prevention_token' );
@@ -301,6 +312,10 @@ function motorock_wcpay_map_graphql_meta_to_post( $data, $input ) {
 			case 'wcpay_payment_method':
 				$_POST['wcpay-payment-method'] = $value;
 				$data['wcpay-payment-method'] = $value;
+				break;
+			case 'wcpay_confirmation_token':
+				$_POST['wcpay-confirmation-token'] = $value;
+				$data['wcpay-confirmation-token'] = $value;
 				break;
 			case 'wcpay_fraud_prevention_token':
 				$_POST['wcpay-fraud-prevention-token'] = $value;
@@ -365,6 +380,10 @@ add_action(
 						array(
 							'key'   => 'wcpay_payment_method',
 							'value' => (string) $order->get_meta( 'wcpay_payment_method' ),
+						),
+						array(
+							'key'   => 'wcpay_confirmation_token',
+							'value' => (string) $order->get_meta( 'wcpay_confirmation_token' ),
 						),
 						array(
 							'key'   => 'wcpay_fraud_prevention_token',

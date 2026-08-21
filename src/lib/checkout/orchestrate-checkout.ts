@@ -256,7 +256,13 @@ export async function orchestrateCheckout(
     ...(isWooPaymentsGateway(input.paymentMethodId) &&
     input.wooPaymentsStripePaymentMethodId
       ? buildWooPaymentsCheckoutMetaData({
-          stripePaymentMethodId: input.wooPaymentsStripePaymentMethodId,
+          ...(input.wooPaymentsStripePaymentMethodId.startsWith("ctoken_")
+            ? {
+                stripeConfirmationToken: input.wooPaymentsStripePaymentMethodId,
+              }
+            : {
+                stripePaymentMethodId: input.wooPaymentsStripePaymentMethodId,
+              }),
           fraudPreventionToken: wooPaymentsFraudPreventionToken,
           locale: input.locale,
         })
