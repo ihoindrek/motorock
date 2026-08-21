@@ -12,7 +12,7 @@ import { groupShippingRatesForCheckout } from "@/lib/shop/shipping-rate-priority
 import { formatCheckoutPrice } from "@/lib/shop/category";
 import { ShippingMethodIcon } from "@/components/shop/shipping-method-icon";
 import { CheckoutSelectionCheck } from "@/components/shop/checkout-selection-check";
-import { MorphLoading } from "@/components/ui/morph-loading";
+import { MorphingSquare } from "@/components/ui/morphing-square";
 import { cn } from "@/lib/utils";
 
 function formatRatePriceLabel(
@@ -156,9 +156,8 @@ function CheckoutShippingLoadingState({
   size?: "sm" | "md" | "lg";
 }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-4 border border-ink/10 bg-white px-6 py-10 sm:py-12">
-      <MorphLoading size={size} />
-      <p className="max-w-xs text-center text-xs font-medium text-ink/50">{message}</p>
+    <div className="flex flex-col items-center justify-center py-8 sm:py-10">
+      <MorphingSquare message={message} size={size} />
     </div>
   );
 }
@@ -240,10 +239,7 @@ export function CheckoutShippingOptions({
           aria-live="polite"
           aria-busy="true"
         >
-          <div className="flex flex-col items-center gap-3 rounded-sm border border-ink/10 bg-white px-8 py-6 shadow-[0_8px_32px_rgb(11_11_11/0.08)]">
-            <MorphLoading size="sm" />
-            <p className="text-xs font-medium text-ink/55">{t.updating}</p>
-          </div>
+          <MorphingSquare message={t.updating} size="sm" />
         </div>
       ) : null}
 

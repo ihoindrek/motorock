@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, type ReactNode } from "react";
-import { MorphLoading } from "@/components/ui/morph-loading";
+import { MorphingSquare } from "@/components/ui/morphing-square";
 import { CheckoutSelectionCheck } from "@/components/shop/checkout-selection-check";
 import { resolvePaymentMethodVisual } from "@/lib/shop/payment-method-visual";
 import {
@@ -542,9 +542,8 @@ function MontonioProviderList({
             <BankLinksSkeleton />
           </>
         ) : (
-          <div className="flex flex-col items-center gap-3 py-4">
-            <MorphLoading size="sm" />
-            <p className="text-xs font-medium text-ink/50">{copy.paymentLoading}</p>
+          <div className="flex flex-col items-center py-4">
+            <MorphingSquare message={copy.paymentLoading} size="sm" />
           </div>
         )}
       </div>
@@ -794,9 +793,8 @@ export function CheckoutPaymentOptionsSkeleton({
   message: string;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-4 border border-ink/10 bg-white px-6 py-8">
-      <MorphLoading size="sm" />
-      <p className="text-center text-xs font-medium text-ink/50">{message}</p>
+    <div className="flex flex-col items-center justify-center py-6">
+      <MorphingSquare message={message} size="sm" />
     </div>
   );
 }

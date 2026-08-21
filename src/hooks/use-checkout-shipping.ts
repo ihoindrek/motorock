@@ -55,7 +55,6 @@ type CheckoutShippingState = {
   error: string | null;
   countries: string[];
   country: string;
-  suggestedCountry: string | null;
   rates: ShippingRate[];
   selectedRateId: string | null;
   selectedRate: ShippingRate | null;
@@ -111,12 +110,11 @@ export function useCheckoutShipping(
   const [wcTotal, setWcTotal] = useState<number | null>(null);
   const [bootstrapNonce, setBootstrapNonce] = useState(0);
   const [countriesLoading, setCountriesLoading] = useState(true);
-  const [suggestedCountry, setSuggestedCountry] = useState<string | null>(null);
   const [wooSessionKey, setWooSessionKey] = useState("");
   const sessionRef = useRef<string | null>(null);
   const bootstrapReadyRef = useRef(false);
   const syncedLinesKeyRef = useRef("");
-  /** Empty until the buyer picks a country (or geo fills a valid one). */
+  /** Empty until the buyer picks a country from the dropdown. */
   const countryRef = useRef("");
   const linesRef = useRef(lines);
   const customerRef = useRef(customer);
@@ -284,7 +282,6 @@ export function useCheckoutShipping(
       setSelectedRateIdState(null);
       setRates([]);
       setError(null);
-      setSuggestedCountry(null);
 
       if (!nextCountry) {
         setSyncing(false);
@@ -541,14 +538,7 @@ export function useCheckoutShipping(
 
         setPhase(forceResync ? "recovering_session" : "syncing_cart");
 
-        const [session, geoPayload] = await Promise.all([
-          syncLocalCartToWoo(currentLines, { linesKey }),
-          fetch("/api/geo")
-            .then(async (response) =>
-              response.ok ? ((await response.json()) as { country?: string }) : null,
-            )
-            .catch(() => null),
-        ]);
+        const session = await syncLocalCartToWoo(currentLines, { linesKey });
 
         if (cancelled) {
           return;
@@ -557,19 +547,12 @@ export function useCheckoutShipping(
         rememberSession(session);
 
         // Keep an already chosen country across cart edits. Never auto-select
-        // a delivery country — the buyer must confirm it explicitly.
+        // a delivery country — the buyer must pick it from the dropdown.
         let shipCountry = "";
         if (bootstrapReadyRef.current && countryRef.current) {
           shipCountry = sorted.includes(countryRef.current)
             ? countryRef.current
             : "";
-        }
-
-        const detected = geoPayload?.country?.trim().toUpperCase() ?? "";
-        if (!shipCountry && detected && sorted.includes(detected)) {
-          setSuggestedCountry(detected);
-        } else {
-          setSuggestedCountry(null);
         }
 
         countryRef.current = shipCountry;
@@ -712,7 +695,6 @@ export function useCheckoutShipping(
     error,
     countries,
     country,
-    suggestedCountry,
     rates,
     selectedRateId,
     selectedRate,

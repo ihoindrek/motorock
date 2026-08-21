@@ -4,7 +4,7 @@ import { ChevronDown, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { PickupPoint } from "@/types/pickup-point";
 import type { ShippingRate } from "@/lib/shop/shipping-method";
-import { MorphLoading } from "@/components/ui/morph-loading";
+import { MorphingSquare } from "@/components/ui/morphing-square";
 import { useLocale } from "@/context/locale-context";
 import { getDictionary } from "@/i18n/get-dictionary";
 import { cn } from "@/lib/utils";
@@ -19,9 +19,9 @@ type CheckoutPickupPointSelectorProps = {
 
 function PickupPointsSkeleton() {
   return (
-    <div className="flex flex-col items-center gap-3 px-4 py-8" aria-hidden="true">
-      <MorphLoading size="sm" />
-      <div className="w-full space-y-3">
+    <div className="px-4 py-8" aria-hidden="true">
+      <MorphingSquare size="sm" className="mx-auto" />
+      <div className="mt-6 w-full space-y-3">
         {Array.from({ length: 3 }).map((_, index) => (
           <div key={index} className="space-y-2">
             <div className="h-3.5 w-2/3 animate-pulse rounded bg-ink/10" />
@@ -197,10 +197,12 @@ export function CheckoutPickupPointSelector({
           ) : null}
         </label>
         {isLoading && !isOpen ? (
-          <span className="inline-flex items-center gap-2 text-[11px] text-ink/45">
-            <MorphLoading size="sm" className="!size-8" />
-            {t.pickupPointLoading}
-          </span>
+          <MorphingSquare
+            size="sm"
+            message={t.pickupPointLoading}
+            messagePlacement="right"
+            className="!size-6"
+          />
         ) : null}
       </div>
 
@@ -223,7 +225,7 @@ export function CheckoutPickupPointSelector({
           "mt-2 flex w-full items-center gap-3 border px-4 py-3 text-left text-sm transition-colors",
           isOpen || selectedPoint
             ? "border-accent bg-white shadow-sm"
-            : "border-ink/15 bg-paper hover:border-ink/30 hover:bg-white",
+            : "border-ink/15 bg-white hover:border-ink/30",
           prefetching && "cursor-wait",
         )}
       >
@@ -243,7 +245,7 @@ export function CheckoutPickupPointSelector({
           )}
         </span>
         {prefetching ? (
-          <MorphLoading size="sm" className="!size-8 shrink-0" />
+          <MorphingSquare size="sm" className="!size-6 shrink-0" />
         ) : (
           <ChevronDown
             className={cn(

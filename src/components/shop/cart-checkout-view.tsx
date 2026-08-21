@@ -120,7 +120,7 @@ import { montonioOptionKey, montonioOptionLabel } from "@/types/montonio-payment
 const FORM_ID = "checkout-form";
 
 const inputClassName =
-  "mt-2 w-full border border-ink/15 bg-paper px-4 py-3 text-base focus:border-accent focus:outline-none";
+  "mt-2 w-full border border-ink/15 bg-white px-4 py-3 text-base focus:border-accent focus:outline-none";
 
 function inputWithErrorClass(hasError: boolean) {
   return cn(inputClassName, hasError && "border-accent");
@@ -2031,26 +2031,6 @@ export function CartCheckoutView() {
                       {showDeliveryFieldError("country")}
                     </p>
                   ) : null}
-                  {!shipping.country && shipping.suggestedCountry ? (
-                    <div className="mt-3 flex flex-wrap items-center gap-3 rounded-md border border-ink/10 bg-ink/[0.03] px-3 py-2">
-                      <p className="text-sm text-ink/70">
-                        {dict.checkout.suggestedCountryHint.replace(
-                          "{country}",
-                          countryLabel(shipping.suggestedCountry),
-                        )}
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => shipping.setCountry(shipping.suggestedCountry!)}
-                        className="border border-ink/20 px-3 py-1.5 font-body text-[11px] font-bold uppercase tracking-aggressive text-ink transition-colors hover:border-accent hover:text-accent"
-                      >
-                        {dict.checkout.useSuggestedCountry.replace(
-                          "{country}",
-                          countryLabel(shipping.suggestedCountry),
-                        )}
-                      </button>
-                    </div>
-                  ) : null}
                   {shippingError ? (
                     <p className="mt-2 text-sm text-accent">{shippingError}</p>
                   ) : null}
@@ -2070,16 +2050,12 @@ export function CartCheckoutView() {
                     {t.deliveryMethod}
                   </DeliveryFieldLabel>
                   <div className="mt-2">
-                    {shipping.statusMessage &&
-                    (shipping.loading || shipping.syncing) &&
-                    shipping.rates.length === 0 &&
-                    !shippingError ? (
-                      <p className="mb-2 text-sm text-ink/70">{shipping.statusMessage}</p>
-                    ) : null}
                     {(shipping.loading || shipping.syncing) &&
                     shipping.rates.length === 0 &&
                     !shippingError ? (
-                      <CheckoutShippingOptionsSkeleton />
+                      <CheckoutShippingOptionsSkeleton
+                        message={shipping.statusMessage ?? undefined}
+                      />
                     ) : shippingError ? (
                       <div className="space-y-3">
                         <p className="text-sm text-accent">{shippingError}</p>

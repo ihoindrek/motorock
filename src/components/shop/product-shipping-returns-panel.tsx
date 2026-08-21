@@ -9,7 +9,7 @@ import { formatCheckoutPrice } from "@/lib/shop/category";
 import { countryLabel, sortCountryCodes } from "@/lib/shop/countries";
 import type { ProductShippingEstimate } from "@/lib/shop/estimate-product-shipping";
 import { localizeShippingRateLabel } from "@/lib/shop/localize-shipping-label";
-import { MorphLoading } from "@/components/ui/morph-loading";
+import { MorphingSquare } from "@/components/ui/morphing-square";
 import { cn } from "@/lib/utils";
 
 type ProductShippingReturnsPanelProps = {
@@ -143,10 +143,7 @@ export function ProductShippingReturnsPanel({
             aria-live="polite"
             aria-busy="true"
           >
-            <div className="flex flex-col items-center gap-3 rounded-sm border border-ink/10 bg-white px-8 py-6 shadow-[0_8px_32px_rgb(11_11_11/0.08)]">
-              <MorphLoading size="sm" />
-              <p className="text-xs font-medium text-ink/55">{dict.pdp.shippingLoading}</p>
-            </div>
+            <MorphingSquare message={dict.pdp.shippingLoading} size="sm" />
           </div>
         ) : null}
 
@@ -160,7 +157,7 @@ export function ProductShippingReturnsPanel({
             <select
               value={countries.includes(country) ? country : countries[0]}
               onChange={(event) => setCountry(event.target.value.toUpperCase())}
-              className="border border-ink/15 bg-paper px-2 py-1.5 text-sm text-ink outline-none hover:border-ink/30"
+              className="border border-ink/15 bg-white px-2 py-1.5 text-sm text-ink outline-none hover:border-ink/30"
               aria-label={dict.pdp.shippingCountry}
             >
               {countries.map((code) => (
@@ -173,9 +170,8 @@ export function ProductShippingReturnsPanel({
         </div>
 
         {loading && !estimate ? (
-          <div className="flex min-h-28 flex-col items-center justify-center gap-3">
-            <MorphLoading size="sm" />
-            <p className="text-xs font-medium text-ink/55">{dict.pdp.shippingLoading}</p>
+          <div className="flex min-h-28 flex-col items-center justify-center py-6">
+            <MorphingSquare message={dict.pdp.shippingLoading} size="sm" />
           </div>
         ) : failed || !estimate || estimate.rates.length === 0 ? (
           <p className="text-sm leading-relaxed text-ink/65">

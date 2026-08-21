@@ -175,8 +175,6 @@ export type Dictionary = {
     submitBlockPickup: string;
     completeDeliveryForPayment: string;
     chooseCountryForPayment: string;
-    suggestedCountryHint: string;
-    useSuggestedCountry: string;
     deliverySectionIncomplete: string;
     trustFreeReturns: string;
     pricesIncludeVat: string;
@@ -822,8 +820,6 @@ export const en: Dictionary = {
       "Complete delivery details above to choose a payment method.",
     chooseCountryForPayment:
       "Choose your delivery country first to see available payment methods.",
-    suggestedCountryHint: "It looks like you're in {country}.",
-    useSuggestedCountry: "Use {country}",
     deliverySectionIncomplete: "Delivery details incomplete",
     trustFreeReturns: "14-day free returns",
     pricesIncludeVat: "Prices include VAT",

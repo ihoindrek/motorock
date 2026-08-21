@@ -131,10 +131,8 @@ export function CheckoutPhoneField({
           aria-controls={listId}
           onClick={() => setOpen((current) => !current)}
           className={cn(
-            "flex h-full min-h-[3.25rem] items-center gap-2 border border-r-0 border-ink/15 bg-ink/[0.04] px-2.5 py-3 transition-colors sm:gap-2.5 sm:px-3",
-            open
-              ? "border-accent bg-white"
-              : "hover:border-ink/30 hover:bg-white",
+            "flex h-full min-h-[3.25rem] items-center gap-2 border border-r-0 border-ink/15 bg-white px-2.5 py-3 transition-colors sm:gap-2.5 sm:px-3",
+            open ? "border-accent" : "hover:border-ink/30",
           )}
         >
           <span
