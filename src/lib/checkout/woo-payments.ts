@@ -264,23 +264,6 @@ export async function createWooPaymentsStripePaymentMethod(input: {
 
   const billingDetails = toStripePaymentMethodBillingDetails(input.billing);
 
-  if (typeof input.stripe.createConfirmationToken === "function") {
-    const { confirmationToken, error } = await input.stripe.createConfirmationToken({
-      elements: input.elements,
-      params: {
-        payment_method_data: {
-          billing_details: billingDetails,
-        },
-      },
-    });
-
-    if (error || !confirmationToken) {
-      throw new Error(error?.message ?? "Could not create payment token.");
-    }
-
-    return confirmationToken.id;
-  }
-
   const { paymentMethod, error } = await input.stripe.createPaymentMethod({
     elements: input.elements,
     params: {
