@@ -122,6 +122,8 @@ describe("validateCheckoutPreflight", () => {
     });
 
     expect(result.ok).toBe(true);
-    expect(result.resolvedPaymentMethodId).toBe(MONTONIO_PAYMENT_METHOD_ID);
+    expect(result.resolvedPaymentMethodId).toBe(
+      MOTOROCK_HEADLESS_PENDING_GATEWAY_ID,
+    );
   });
 });

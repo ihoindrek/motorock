@@ -167,11 +167,11 @@ export function resolveMontonioCheckoutGatewayId(
   // Card/BLIK/etc. cannot use Woo embedded card checkout in headless (needs session UUID).
   // Create the order via the internal pending gateway, then remint on the storefront.
   if (MONTONIO_REMINT_SUBMIT_GATEWAY_IDS.has(selectedGatewayId)) {
-    if (enabled.includes(MOTOROCK_HEADLESS_PENDING_GATEWAY_ID)) {
+    if (
+      enabled.includes(MOTOROCK_HEADLESS_PENDING_GATEWAY_ID) ||
+      enabled.some((id) => isMontonioPaymentGateway(id))
+    ) {
       return MOTOROCK_HEADLESS_PENDING_GATEWAY_ID;
-    }
-    if (enabled.includes(MONTONIO_PAYMENT_METHOD_ID)) {
-      return MONTONIO_PAYMENT_METHOD_ID;
     }
   }
 

@@ -37,16 +37,16 @@ describe("resolveMontonioCheckoutGatewayId", () => {
     ).toBe(MOTOROCK_HEADLESS_PENDING_GATEWAY_ID);
   });
 
-  it("maps remint gateways to bank link when pending gateway is unavailable", () => {
+  it("maps remint gateways to pending when any Montonio gateway is enabled", () => {
     expect(
       resolveMontonioCheckoutGatewayId("wc_montonio_card", [
         MONTONIO_PAYMENT_METHOD_ID,
         "wc_montonio_bnpl",
       ]),
-    ).toBe(MONTONIO_PAYMENT_METHOD_ID);
+    ).toBe(MOTOROCK_HEADLESS_PENDING_GATEWAY_ID);
     expect(
       resolveMontonioCheckoutGatewayId("wc_montonio_card", ["wc_montonio_bnpl"]),
-    ).toBe("wc_montonio_bnpl");
+    ).toBe(MOTOROCK_HEADLESS_PENDING_GATEWAY_ID);
   });
 
   it("maps bank link to an enabled Montonio gateway when synthetic id is missing from Woo", () => {

@@ -1,4 +1,5 @@
 import {
+  MOTOROCK_HEADLESS_PENDING_GATEWAY_ID,
   MONTONIO_PAYMENT_METHOD_ID,
   resolveMontonioCheckoutGatewayId,
 } from "@/lib/checkout/montonio-checkout";
@@ -104,6 +105,7 @@ export function validateCheckoutPreflight(
     );
   } else if (
     input.selectedPaymentMethodId &&
+    resolved !== MOTOROCK_HEADLESS_PENDING_GATEWAY_ID &&
     !input.wooPaymentGatewayIds.includes(resolved)
   ) {
     errors.push(

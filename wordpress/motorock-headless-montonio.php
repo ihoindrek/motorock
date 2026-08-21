@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Motorock Headless Checkout
  * Description: Bridges headless GraphQL checkout to Montonio for WooCommerce (pickup points + payment methods).
- * Version: 1.3.1
+ * Version: 1.3.2
  *
  * Install: copy to wp-content/mu-plugins/motorock-headless-montonio.php
  */
@@ -42,6 +42,7 @@ add_action(
 				$this->id                 = 'motorock_headless_pending';
 				$this->method_title       = 'Motorock headless pending';
 				$this->method_description = 'Internal — defers Montonio payment to the storefront remint API.';
+				$this->title              = 'Motorock headless pending';
 				$this->has_fields         = false;
 				$this->enabled            = 'yes';
 			}
@@ -70,6 +71,37 @@ add_action(
 	},
 	11
 );
+
+/**
+ * Internal gateway is for checkout submit only — hide from payment method picker queries.
+ */
+add_filter(
+	'woocommerce_available_payment_gateways',
+	function ( $gateways ) {
+		if ( ! motorock_is_graphql_request() ) {
+			return $gateways;
+		}
+
+		if ( motorock_is_graphql_checkout_mutation_request() ) {
+			return $gateways;
+		}
+
+		unset( $gateways['motorock_headless_pending'] );
+
+		return $gateways;
+	},
+	999
+);
+
+function motorock_is_graphql_checkout_mutation_request() {
+	if ( empty( $_SERVER['REQUEST_METHOD'] ) || 'POST' !== $_SERVER['REQUEST_METHOD'] ) {
+		return false;
+	}
+
+	$raw = file_get_contents( 'php://input' );
+
+	return is_string( $raw ) && false !== stripos( $raw, 'checkout(' );
+}
 
 add_action(
 	'woocommerce_checkout_order_processed',
