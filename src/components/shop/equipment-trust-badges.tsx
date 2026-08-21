@@ -6,6 +6,7 @@ import { useDictionary } from "@/context/locale-context";
 import {
   EQUIPMENT_TRUST_SECURE_PAYMENT_BRANDS,
   cardPaymentBrandAriaLabel,
+  type CardPaymentBrand,
 } from "@/lib/shop/card-payment-brands";
 import { cn } from "@/lib/utils";
 
@@ -16,7 +17,13 @@ type EquipmentTrustBadgesProps = {
 export function EquipmentTrustBadges({ className }: EquipmentTrustBadgesProps) {
   const dict = useDictionary();
 
-  const items = [
+  const items: Array<{
+    id: string;
+    Icon: typeof ShieldCheck;
+    title: string;
+    subtext: string;
+    paymentBrands?: readonly CardPaymentBrand[];
+  }> = [
     {
       id: "original",
       Icon: ShieldCheck,
@@ -36,7 +43,7 @@ export function EquipmentTrustBadges({ className }: EquipmentTrustBadgesProps) {
       subtext: dict.pdp.trustSecureSubtext,
       paymentBrands: EQUIPMENT_TRUST_SECURE_PAYMENT_BRANDS,
     },
-  ] as const;
+  ];
 
   return (
     <ul
