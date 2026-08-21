@@ -21,11 +21,9 @@ import {
   type WooPaymentsBillingDetails,
 } from "@/lib/checkout/woo-payments";
 import { buildStripeCheckoutAppearance } from "@/lib/checkout/stripe-appearance";
-import { CheckoutCardBrandIcons } from "@/components/shop/checkout-card-brand-icons";
+import { useDictionary } from "@/context/locale-context";
+import { MorphingSquare } from "@/components/ui/morphing-square";
 import { cn } from "@/lib/utils";
-
-const paymentFieldShellClassName =
-  "rounded-sm border border-ink/15 bg-white px-4 py-4 sm:px-5 sm:py-5";
 
 export type CheckoutWooPaymentsHandle = {
   createPaymentMethod: (billing: WooPaymentsBillingDetails) => Promise<string>;
@@ -59,6 +57,7 @@ function CheckoutWooPaymentsForm({
   onError?: (message: string | null) => void;
   onExpressPaymentMethod?: (paymentMethodId: string) => Promise<void>;
 }) {
+  const dict = useDictionary();
   const stripe = useStripe();
   const elements = useElements();
   const [ready, setReady] = useState(false);
@@ -86,11 +85,10 @@ function CheckoutWooPaymentsForm({
   );
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {onExpressPaymentMethod ? (
         <div
           className={cn(
-            expressAvailability === "available" && paymentFieldShellClassName,
             expressAvailability === "pending" && "h-0 overflow-hidden opacity-0",
             expressAvailability === "none" && "hidden",
           )}
@@ -169,7 +167,7 @@ function CheckoutWooPaymentsForm({
       ) : null}
 
       {expressAvailability === "available" ? (
-        <div className="flex items-center gap-3 px-1">
+        <div className="flex items-center gap-3">
           <span className="h-px flex-1 bg-ink/10" aria-hidden="true" />
           <span className="font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/40">
             {orCardLabel}
@@ -178,73 +176,70 @@ function CheckoutWooPaymentsForm({
         </div>
       ) : null}
 
-      <div className={cn(paymentFieldShellClassName, "relative")}>
-        <CheckoutCardBrandIcons
-          size="md"
-          className="mb-4 w-full border-b border-ink/8 pb-4"
-        />
+      <div className="space-y-3">
+        <div className="flex flex-wrap items-end justify-between gap-2">
+          <p className="font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/45">
+            {dict.checkout.paymentWooPaymentsFormTitle}
+          </p>
+          <p className="text-[11px] text-ink/40">{dict.checkout.securePayment}</p>
+        </div>
 
-        {!ready ? (
-          <div
-            className="pointer-events-none absolute inset-4 space-y-3 sm:inset-5"
-            aria-hidden="true"
-          >
-            <div className="h-2.5 w-28 animate-pulse rounded-sm bg-ink/8" />
-            <div className="h-12 animate-pulse rounded-sm bg-ink/[0.06]" />
-            <div className="grid grid-cols-2 gap-3">
-              <div className="h-12 animate-pulse rounded-sm bg-ink/[0.06]" />
-              <div className="h-12 animate-pulse rounded-sm bg-ink/[0.06]" />
+        <div className="relative min-h-[8.5rem]">
+          {!ready ? (
+            <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/85">
+              <MorphingSquare size="sm" />
             </div>
-          </div>
-        ) : null}
+          ) : null}
 
-        <PaymentElement
-          key={billing.address.country || "no-country"}
-          onReady={() => {
-            setReady(true);
-            onReadyChange?.(true);
-          }}
-          onLoadError={(event) => {
-            setReady(false);
-            onReadyChange?.(false);
-            onError?.(event.error.message ?? "Payment form failed to load.");
-          }}
-          onChange={() => {
-            onError?.(null);
-          }}
-          options={{
-            layout: {
-              type: "tabs",
-              defaultCollapsed: false,
-            },
-            fields: {
-              billingDetails: {
-                name: "never",
-                email: "never",
-                phone: "never",
-                address: "never",
+          <PaymentElement
+            key={billing.address.country || "no-country"}
+            onReady={() => {
+              setReady(true);
+              onReadyChange?.(true);
+            }}
+            onLoadError={(event) => {
+              setReady(false);
+              onReadyChange?.(false);
+              onError?.(event.error.message ?? "Payment form failed to load.");
+            }}
+            onChange={() => {
+              onError?.(null);
+            }}
+            options={{
+              layout: {
+                type: "accordion",
+                defaultCollapsed: false,
+                spacedAccordionItems: true,
               },
-            },
-            wallets: {
-              applePay: "never",
-              googlePay: "never",
-              link: "never",
-            },
-            defaultValues: {
-              billingDetails: {
-                name: billing.name || undefined,
-                email: billing.email || undefined,
-                phone: billing.phone || undefined,
-                address: {
-                  line1: billing.address.line1 || undefined,
-                  city: billing.address.city || undefined,
-                  postal_code: billing.address.postal_code || undefined,
-                  country: billing.address.country || undefined,
+              fields: {
+                billingDetails: {
+                  name: "never",
+                  email: "never",
+                  phone: "never",
+                  address: "never",
                 },
               },
-            },
-          }}
-        />
+              wallets: {
+                applePay: "never",
+                googlePay: "never",
+                link: "never",
+              },
+              defaultValues: {
+                billingDetails: {
+                  name: billing.name || undefined,
+                  email: billing.email || undefined,
+                  phone: billing.phone || undefined,
+                  address: {
+                    line1: billing.address.line1 || undefined,
+                    city: billing.address.city || undefined,
+                    postal_code: billing.address.postal_code || undefined,
+                    country: billing.address.country || undefined,
+                  },
+                },
+              },
+            }}
+          />
+        </div>
       </div>
     </div>
   );

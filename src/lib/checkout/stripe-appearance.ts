@@ -1,7 +1,6 @@
 import type { Appearance } from "@stripe/stripe-js";
 
 const INK = "#0b0b0b";
-const PAPER = "#faf8f6";
 const ACCENT = "#ff6813";
 const INK_15 = "rgb(11 11 11 / 0.15)";
 const INK_25 = "rgb(11 11 11 / 0.25)";
@@ -31,7 +30,7 @@ export function buildStripeCheckoutAppearance(): Appearance {
     rules: {
       ".Input": {
         border: `1px solid ${INK_15}`,
-        backgroundColor: PAPER,
+        backgroundColor: "#ffffff",
         padding: "12px 16px",
         boxShadow: "none",
         transition: "border-color 150ms ease",
@@ -57,7 +56,7 @@ export function buildStripeCheckoutAppearance(): Appearance {
       },
       ".Tab": {
         border: `1px solid ${INK_15}`,
-        backgroundColor: PAPER,
+        backgroundColor: "#ffffff",
         boxShadow: "none",
         padding: "10px 16px",
       },
@@ -90,7 +89,7 @@ export function buildStripeCheckoutAppearance(): Appearance {
       },
       ".PickerItem": {
         border: `1px solid ${INK_15}`,
-        backgroundColor: PAPER,
+        backgroundColor: "#ffffff",
       },
       ".PickerItem--selected": {
         borderColor: ACCENT,

@@ -546,7 +546,7 @@ type PaymentGatewaysResponse = {
 
 export type PaymentGateway = {
   id: string;
-  title: string;
+  title: string | null;
   description?: string | null;
   icon?: string | null;
 };

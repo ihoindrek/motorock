@@ -56,6 +56,7 @@ export function localizePaymentGateway(
   locale: Locale,
 ): PaymentGateway {
   const dict = getDictionary(locale).checkout;
+  const fallbackTitle = gateway.title?.trim() || gateway.id;
   const byId: Record<string, { title: string; description: string }> = {
     [GATEWAY_IDS.bank]: {
       title: dict.paymentMethodsBank,
@@ -100,7 +101,10 @@ export function localizePaymentGateway(
     };
   }
 
-  return gateway;
+  return {
+    ...gateway,
+    title: fallbackTitle,
+  };
 }
 
 /** Shorten Montonio bank names for ET display where API returns English labels. */

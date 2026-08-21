@@ -16,16 +16,17 @@ export type PaymentMethodVisual =
 
 export function resolvePaymentMethodVisual(
   gatewayId: string,
-  title: string,
+  title: string | null | undefined,
   icon?: string | null,
 ): PaymentMethodVisual {
+  const safeTitle = title?.trim() || gatewayId;
   const id = gatewayId.toLowerCase();
 
   if (id === MONTONIO_CARD_PAYMENT_METHOD_ID) {
     return {
       kind: "logo",
       src: MONTONIO_CARD_PAYMENTS_LOGO,
-      alt: title,
+      alt: safeTitle,
       layout: "card",
     };
   }
@@ -33,7 +34,7 @@ export function resolvePaymentMethodVisual(
   if (id === WOO_PAYMENTS_GATEWAY_ID) {
     return {
       kind: "card-brands",
-      alt: title,
+      alt: safeTitle,
     };
   }
 
@@ -41,7 +42,7 @@ export function resolvePaymentMethodVisual(
     return {
       kind: "logo",
       src: icon,
-      alt: title,
+      alt: safeTitle,
     };
   }
 
@@ -69,7 +70,7 @@ export function resolvePaymentMethodVisual(
     return { kind: "initials", label: "COD" };
   }
 
-  const initials = title
+  const initials = safeTitle
     .split(/\s+/)
     .slice(0, 2)
     .map((word) => word[0]?.toUpperCase() ?? "")
