@@ -16,8 +16,8 @@ export function EquipmentPaymentMethods({ className }: EquipmentPaymentMethodsPr
   const dict = useDictionary();
 
   return (
-    <div className={cn("space-y-2", className)}>
-      <p className="font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/40">
+    <div className={cn("flex flex-wrap items-center gap-x-3 gap-y-2", className)}>
+      <p className="shrink-0 font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/40">
         {dict.pdp.paymentMethods}
       </p>
       <CheckoutCardBrandIcons
