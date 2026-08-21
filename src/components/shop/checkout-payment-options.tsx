@@ -29,6 +29,7 @@ import {
 import { isMontonioPaymentCountry } from "@/lib/montonio/payment-countries";
 import {
   isWooPaymentsGateway,
+  wooPaymentsWalletForGatewayId,
   WOO_PAYMENTS_APPLE_PAY_GATEWAY_ID,
   WOO_PAYMENTS_CARD_GATEWAY_ID,
   WOO_PAYMENTS_GATEWAY_ID,
@@ -880,6 +881,9 @@ export function CheckoutPaymentOptions({
             const isWooPaymentsCardRow =
               gateway.id === WOO_PAYMENTS_CARD_GATEWAY_ID ||
               gateway.id === WOO_PAYMENTS_GATEWAY_ID;
+            const isWooPaymentsWalletRow = Boolean(
+              wooPaymentsWalletForGatewayId(gateway.id),
+            );
             const wooPaymentsInlineError = isWooPaymentsCardRow
               ? wooPaymentsFormError
               : wooPaymentsExpressError;
@@ -897,7 +901,14 @@ export function CheckoutPaymentOptions({
                   }}
                 />
                 {showWooPaymentsPanel ? (
-                  <div className="relative border border-t-0 border-accent bg-white px-4 py-5 sm:px-5 sm:py-6">
+                  <div
+                    className={cn(
+                      "relative border border-t-0 border-accent bg-white",
+                      isWooPaymentsWalletRow
+                        ? "px-4 py-3 sm:px-5"
+                        : "px-4 py-5 sm:px-5 sm:py-6",
+                    )}
+                  >
                     {expandedPanel ? (
                       <div
                         className={cn(

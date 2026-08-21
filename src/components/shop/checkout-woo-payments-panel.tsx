@@ -62,6 +62,8 @@ type WooPaymentsSharedProps = {
 type CheckoutWooPaymentsExpressPanelProps = WooPaymentsSharedProps & {
   onExpressPaymentMethod: (paymentMethodId: string) => Promise<void>;
   wallet?: WooPaymentsWalletKind;
+  /** Inline inside a selected payment row — no extra box around the Stripe button. */
+  embedded?: boolean;
 };
 
 type CheckoutWooPaymentsWalletProbeProps = Pick<
@@ -183,6 +185,21 @@ function buildExpressPaymentMethodOptions(wallet?: WooPaymentsWalletKind) {
   } as const;
 }
 
+function buildEmbeddedExpressCheckoutOptions(wallet?: WooPaymentsWalletKind) {
+  return {
+    paymentMethods: buildExpressPaymentMethodOptions(wallet),
+    layout: {
+      maxColumns: 1,
+      maxRows: 1,
+    },
+    buttonTheme: {
+      applePay: "white-outline",
+      googlePay: "white",
+    },
+    buttonHeight: 48,
+  } as const;
+}
+
 function CheckoutWooPaymentsExpressCheckout({
   forwardedRef,
   billing,
@@ -191,6 +208,7 @@ function CheckoutWooPaymentsExpressCheckout({
   onAvailabilityChange,
   onWalletAvailabilityChange,
   wallet,
+  embedded = false,
 }: {
   forwardedRef?: Ref<CheckoutWooPaymentsExpressHandle>;
   billing: WooPaymentsBillingDetails;
@@ -199,6 +217,7 @@ function CheckoutWooPaymentsExpressCheckout({
   onAvailabilityChange?: (available: boolean) => void;
   onWalletAvailabilityChange?: (availability: WooPaymentsWalletAvailability) => void;
   wallet?: WooPaymentsWalletKind;
+  embedded?: boolean;
 }) {
   const stripe = useStripe();
   const elements = useElements();
@@ -280,13 +299,17 @@ function CheckoutWooPaymentsExpressCheckout({
           });
         }
       }}
-      options={{
-        paymentMethods: buildExpressPaymentMethodOptions(wallet),
-        layout: {
-          maxColumns: 1,
-          maxRows: 1,
-        },
-      }}
+      options={
+        embedded
+          ? buildEmbeddedExpressCheckoutOptions(wallet)
+          : {
+              paymentMethods: buildExpressPaymentMethodOptions(wallet),
+              layout: {
+                maxColumns: 1,
+                maxRows: 1,
+              },
+            }
+      }
     />
   );
 }
@@ -305,6 +328,7 @@ export const CheckoutWooPaymentsExpressPanel = forwardRef<
     onError,
     onExpressPaymentMethod,
     wallet,
+    embedded = false,
   },
   ref,
 ) {
@@ -343,18 +367,32 @@ export const CheckoutWooPaymentsExpressPanel = forwardRef<
           stripe={stripePromise}
           options={expressElementsOptions}
         >
-          <div className="rounded-sm border border-ink/10 bg-ink/[0.015] p-3 sm:p-4">
+          {embedded ? (
             <CheckoutWooPaymentsExpressCheckout
               forwardedRef={ref}
               billing={billing}
               wallet={wallet}
+              embedded
               onError={onError}
               onExpressPaymentMethod={onExpressPaymentMethod}
               onAvailabilityChange={(available) => {
                 setAvailability(available ? "available" : "unavailable");
               }}
             />
-          </div>
+          ) : (
+            <div className="rounded-sm border border-ink/10 bg-ink/[0.015] p-3 sm:p-4">
+              <CheckoutWooPaymentsExpressCheckout
+                forwardedRef={ref}
+                billing={billing}
+                wallet={wallet}
+                onError={onError}
+                onExpressPaymentMethod={onExpressPaymentMethod}
+                onAvailabilityChange={(available) => {
+                  setAvailability(available ? "available" : "unavailable");
+                }}
+              />
+            </div>
+          )}
         </Elements>
       </div>
     </WooPaymentsErrorBoundary>

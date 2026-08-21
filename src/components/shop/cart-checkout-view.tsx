@@ -2504,6 +2504,7 @@ export function CartCheckoutView() {
                                 ref={wooPaymentsExpressRef}
                                 {...sharedProps}
                                 wallet={wallet}
+                                embedded
                                 className="border-0 bg-transparent p-0"
                                 onError={setWooPaymentsExpressError}
                                 onExpressPaymentMethod={async (paymentMethodId) => {
