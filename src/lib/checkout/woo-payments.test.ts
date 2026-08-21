@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildWooPaymentsCheckoutMetaData,
   isWooPaymentsGateway,
+  toStripePaymentMethodBillingDetails,
   WOO_PAYMENTS_EXCLUDED_STRIPE_PAYMENT_METHODS,
   WOO_PAYMENTS_GATEWAY_ID,
 } from "@/lib/checkout/woo-payments";
@@ -32,5 +33,43 @@ describe("buildWooPaymentsCheckoutMetaData", () => {
       { key: "checkout_locale", value: "et" },
       { key: "wcpay_fraud_prevention_token", value: "abc" },
     ]);
+  });
+});
+
+describe("toStripePaymentMethodBillingDetails", () => {
+  it("includes empty state for EU countries", () => {
+    expect(
+      toStripePaymentMethodBillingDetails({
+        name: "Test User",
+        email: "test@example.com",
+        address: {
+          line1: "Test 1",
+          city: "Tallinn",
+          postal_code: "10111",
+          country: "EE",
+        },
+      }).address,
+    ).toEqual({
+      line1: "Test 1",
+      city: "Tallinn",
+      postal_code: "10111",
+      country: "EE",
+      state: "",
+    });
+  });
+
+  it("falls back to city for countries that require state", () => {
+    expect(
+      toStripePaymentMethodBillingDetails({
+        name: "Test User",
+        email: "test@example.com",
+        address: {
+          line1: "123 Main St",
+          city: "Anytown",
+          postal_code: "12345",
+          country: "US",
+        },
+      }).address?.state,
+    ).toBe("Anytown");
   });
 });

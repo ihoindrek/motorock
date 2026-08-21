@@ -81,8 +81,44 @@ export type WooPaymentsBillingDetails = {
     city: string;
     postal_code: string;
     country: string;
+    state?: string;
   };
 };
+
+const STRIPE_STATE_REQUIRED_COUNTRIES = new Set([
+  "AU",
+  "BR",
+  "CA",
+  "IN",
+  "MX",
+  "MY",
+  "US",
+]);
+
+/** Stripe requires full address (incl. state) when Payment Element skips billing fields. */
+export function toStripePaymentMethodBillingDetails(
+  billing: WooPaymentsBillingDetails,
+): import("@stripe/stripe-js").PaymentMethodCreateParams.BillingDetails {
+  const country = billing.address.country.trim().toUpperCase();
+  const state =
+    billing.address.state?.trim() ||
+    (STRIPE_STATE_REQUIRED_COUNTRIES.has(country)
+      ? billing.address.city.trim()
+      : "");
+
+  return {
+    name: billing.name || undefined,
+    email: billing.email || undefined,
+    phone: billing.phone || undefined,
+    address: {
+      line1: billing.address.line1 || undefined,
+      city: billing.address.city || undefined,
+      postal_code: billing.address.postal_code || undefined,
+      country: country || undefined,
+      state,
+    },
+  };
+}
 
 export async function createWooPaymentsStripePaymentMethod(input: {
   stripe: import("@stripe/stripe-js").Stripe;
@@ -98,7 +134,7 @@ export async function createWooPaymentsStripePaymentMethod(input: {
   const { paymentMethod, error } = await input.stripe.createPaymentMethod({
     elements: input.elements,
     params: {
-      billing_details: input.billing,
+      billing_details: toStripePaymentMethodBillingDetails(input.billing),
     },
   });
 

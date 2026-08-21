@@ -20,6 +20,7 @@ import {
 import { loadStripe, type Stripe, type StripeElements } from "@stripe/stripe-js";
 import {
   createWooPaymentsStripePaymentMethod,
+  toStripePaymentMethodBillingDetails,
   WOO_PAYMENTS_EXCLUDED_STRIPE_PAYMENT_METHODS,
   type WooPaymentsBillingDetails,
 } from "@/lib/checkout/woo-payments";
@@ -163,7 +164,7 @@ function CheckoutWooPaymentsForm({
                   {
                     elements,
                     params: {
-                      billing_details: billing,
+                      billing_details: toStripePaymentMethodBillingDetails(billing),
                     },
                   },
                 );
@@ -272,6 +273,9 @@ function CheckoutWooPaymentsForm({
                     city: billing.address.city || undefined,
                     postal_code: billing.address.postal_code || undefined,
                     country: billing.address.country || undefined,
+                    state:
+                      toStripePaymentMethodBillingDetails(billing).address
+                        ?.state || undefined,
                   },
                 },
               },
