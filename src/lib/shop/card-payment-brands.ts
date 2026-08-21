@@ -7,8 +7,8 @@ const WOO_PAYMENTS_METHODS_BASE =
 
 /** Local checkout payment brand icons (public/payment-brands). */
 export const PAYMENT_BRAND_ICON_PATHS = {
-  visa: "/payment-brands/visa.svg?v=2",
-  mastercard: "/payment-brands/mastercard.svg?v=2",
+  visa: "/payment-brands/visa.svg?v=3",
+  mastercard: "/payment-brands/mastercard.svg?v=3",
   amex: "/payment-brands/amex.svg?v=2",
   paypal: "/payment-brands/paypal.svg?v=2",
   applePay: "/payment-brands/apple-pay.svg?v=1",
