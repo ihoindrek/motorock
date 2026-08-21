@@ -886,9 +886,9 @@ export const en: Dictionary = {
     paymentMethodsBlikDesc: "Pay with BLIK via Montonio.",
     paymentMethodsPaypal: "PayPal",
     paymentMethodsPaypalDesc: "Pay with your PayPal account.",
-    paymentMethodsWooPayments: "Card & digital wallets",
+    paymentMethodsWooPayments: "Card payment",
     paymentMethodsWooPaymentsDesc:
-      "Visa, Mastercard, Apple Pay, Google Pay and more — depending on country and device.",
+      "Visa, Mastercard and other cards.",
     paymentMethodsApplePay: "Apple Pay",
     paymentMethodsApplePayDesc: "Pay with Apple Pay on supported devices.",
     paymentMethodsGooglePay: "Google Pay",

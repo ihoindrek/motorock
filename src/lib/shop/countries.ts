@@ -16,14 +16,21 @@ export function countryLabel(code: string) {
   }
 }
 
-export function sortCountryCodes(codes: readonly string[], preferred = "EE") {
+/** EE first on Estonian checkout; otherwise strict alphabetical order. */
+export function preferredCheckoutCountry(locale?: string) {
+  return locale === "et" ? "EE" : undefined;
+}
+
+export function sortCountryCodes(codes: readonly string[], preferred?: string | null) {
   const unique = [...new Set(codes)];
   unique.sort((left, right) => {
-    if (left === preferred) {
-      return -1;
-    }
-    if (right === preferred) {
-      return 1;
+    if (preferred) {
+      if (left === preferred) {
+        return -1;
+      }
+      if (right === preferred) {
+        return 1;
+      }
     }
     return countryLabel(left).localeCompare(countryLabel(right), "en");
   });

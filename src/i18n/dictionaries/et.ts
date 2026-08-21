@@ -242,9 +242,9 @@ export const et: Dictionary = {
     paymentMethodsBlikDesc: "Maksa BLIK-iga Montonio kaudu.",
     paymentMethodsPaypal: "PayPal",
     paymentMethodsPaypalDesc: "Maksa oma PayPali kontoga.",
-    paymentMethodsWooPayments: "Kaart ja digi-wallet",
+    paymentMethodsWooPayments: "Kaardimakse",
     paymentMethodsWooPaymentsDesc:
-      "Visa, Mastercard, Apple Pay, Google Pay jm — olenevalt riigist ja seadmest.",
+      "Visa, Mastercard ja teised kaardid.",
     paymentMethodsApplePay: "Apple Pay",
     paymentMethodsApplePayDesc: "Maksa Apple Payga toetatud seadmetes.",
     paymentMethodsGooglePay: "Google Pay",

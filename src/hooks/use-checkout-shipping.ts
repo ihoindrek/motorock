@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useDictionary } from "@/context/locale-context";
+import { useDictionary, useLocale } from "@/context/locale-context";
 import type { CartLine } from "@/context/cart-context";
 import {
   trackCheckoutCountrySelected,
@@ -27,6 +27,7 @@ import {
   countryLabel,
   defaultLocationForCountry,
   isDeliveryAddressReady,
+  preferredCheckoutCountry,
   sortCountryCodes,
 } from "@/lib/shop/countries";
 import { formatPhoneWithCountryCode } from "@/lib/shop/phone";
@@ -91,6 +92,12 @@ export function useCheckoutShipping(
   cartHydrated = true,
 ): CheckoutShippingState {
   const dict = useDictionary();
+  const locale = useLocale();
+  const sortedCheckoutCountries = useCallback(
+    (codes: readonly string[]) =>
+      sortCountryCodes(codes, preferredCheckoutCountry(locale)),
+    [locale],
+  );
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [phase, setPhase] = useState<CheckoutShippingPhase>("idle");
@@ -251,7 +258,7 @@ export function useCheckoutShipping(
     void fetchAllowedCountries()
       .then((allowedCountries) => {
         if (!cancelled) {
-          setCountries(sortCountryCodes(allowedCountries));
+          setCountries(sortedCheckoutCountries(allowedCountries));
         }
       })
       .catch((cause) => {
@@ -272,7 +279,13 @@ export function useCheckoutShipping(
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [sortedCheckoutCountries]);
+
+  useEffect(() => {
+    setCountries((current) =>
+      current.length > 0 ? sortedCheckoutCountries(current) : current,
+    );
+  }, [sortedCheckoutCountries]);
 
   const setCountry = useCallback(
     (nextCountry: string) => {
@@ -526,7 +539,7 @@ export function useCheckoutShipping(
         const sorted =
           countriesRef.current.length > 0
             ? countriesRef.current
-            : sortCountryCodes(await fetchAllowedCountries());
+            : sortedCheckoutCountries(await fetchAllowedCountries());
 
         if (cancelled) {
           return;
@@ -636,7 +649,7 @@ export function useCheckoutShipping(
     return () => {
       cancelled = true;
     };
-  }, [linesKey, bootstrapNonce, cartHydrated]);
+  }, [cartHydrated, dict.checkout.shippingErrorSessionRestore, linesKey, bootstrapNonce, sortedCheckoutCountries]);
 
   /** Re-run the full cart sync after a transient failure (e.g. network). */
   const retryBootstrap = useCallback(() => {

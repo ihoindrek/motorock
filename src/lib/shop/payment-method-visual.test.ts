@@ -20,13 +20,13 @@ describe("resolvePaymentMethodVisual", () => {
   it("uses card brand icons for WooPayments gateway", () => {
     const visual = resolvePaymentMethodVisual(
       "woocommerce_payments",
-      "Card & digital wallets",
+      "Card payment",
       null,
     );
 
     expect(visual).toEqual({
       kind: "card-brands",
-      alt: "Card & digital wallets",
+      alt: "Card payment",
     });
   });
 
