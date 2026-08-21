@@ -15,11 +15,13 @@ export function CheckoutCardBrandIcons({
   brands = WOO_PAYMENTS_CHECKOUT_LOGOS,
   variant = "compact",
   className,
+  logoClassName: logoClassNameProp,
   "aria-label": ariaLabel = cardPaymentBrandAriaLabel(brands),
 }: {
   brands?: readonly CardPaymentBrand[];
   variant?: "compact" | "row";
   className?: string;
+  logoClassName?: string;
   "aria-label"?: string;
 }) {
   const [failedIds, setFailedIds] = useState<ReadonlySet<string>>(() => new Set());

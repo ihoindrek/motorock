@@ -40,7 +40,6 @@ export function EquipmentTrustBadges({ className }: EquipmentTrustBadgesProps) {
       id: "secure",
       Icon: Lock,
       title: dict.pdp.trustSecureTitle,
-      subtext: dict.pdp.trustSecureSubtext,
       paymentBrands: EQUIPMENT_TRUST_SECURE_PAYMENT_BRANDS,
     },
   ];
@@ -48,10 +47,7 @@ export function EquipmentTrustBadges({ className }: EquipmentTrustBadgesProps) {
   return (
     <ul
       aria-label={dict.pdp.trustBadgesAriaLabel}
-      className={cn(
-        "space-y-3 rounded-sm border border-ink/8 bg-ink/[0.025] px-3.5 py-3.5 sm:px-4",
-        className,
-      )}
+      className={cn("space-y-3", className)}
     >
       {items.map(({ id, Icon, title, subtext, paymentBrands }) => (
         <li key={id} className="flex gap-3">
@@ -62,12 +58,15 @@ export function EquipmentTrustBadges({ className }: EquipmentTrustBadgesProps) {
           />
           <div className="min-w-0 space-y-1.5">
             <p className="text-xs font-semibold leading-snug text-ink">{title}</p>
-            <p className="text-[11px] leading-relaxed text-ink/55">{subtext}</p>
+            {subtext ? (
+              <p className="text-[11px] leading-relaxed text-ink/55">{subtext}</p>
+            ) : null}
             {paymentBrands ? (
               <CheckoutCardBrandIcons
                 brands={paymentBrands}
-                variant="compact"
-                className="min-w-0 flex-wrap gap-1 sm:gap-1.5"
+                variant="row"
+                className="min-w-0 flex-wrap gap-1.5 sm:gap-2"
+                logoClassName="h-8 w-auto sm:h-9"
                 aria-label={cardPaymentBrandAriaLabel(paymentBrands)}
               />
             ) : null}
