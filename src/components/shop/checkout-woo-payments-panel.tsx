@@ -258,7 +258,7 @@ function CheckoutWooPaymentsExpressCheckout({
   billing: WooPaymentsBillingDetails;
   onError?: (message: string | null) => void;
   onExpressPaymentMethod: (paymentMethodId: string) => Promise<void>;
-  onAvailabilityChange: (available: boolean) => void;
+  onAvailabilityChange?: (available: boolean) => void;
 }) {
   const stripe = useStripe();
   const elements = useElements();
@@ -272,7 +272,7 @@ function CheckoutWooPaymentsExpressCheckout({
               availablePaymentMethods.googlePay ||
               availablePaymentMethods.link),
         );
-        onAvailabilityChange(available);
+        onAvailabilityChange?.(available);
       }}
       onConfirm={async (event) => {
         if (!stripe || !elements) {
@@ -371,8 +371,6 @@ export const CheckoutWooPaymentsPanel = forwardRef<
     () => buildCardElementsOptions({ locale, amountCents }),
     [amountCents, locale],
   );
-  const [expressAvailable, setExpressAvailable] = useState(false);
-  const [expressPending, setExpressPending] = useState(Boolean(onExpressPaymentMethod));
 
   useEffect(() => {
     onReadyChange?.(false);
@@ -396,34 +394,24 @@ export const CheckoutWooPaymentsPanel = forwardRef<
     >
       <div className={cn("relative space-y-5", className)}>
         {onExpressPaymentMethod ? (
-          <div
-            className={cn(
-              !expressPending && !expressAvailable && "hidden",
-              expressPending && "min-h-11",
-            )}
-            aria-hidden={!expressPending && !expressAvailable}
-          >
+          <div className="min-h-12">
             <Elements
               key={`express-${elementsInstanceKey}`}
               stripe={stripePromise}
               options={expressElementsOptions}
             >
-              <div className="overflow-hidden rounded-sm border border-ink/10 bg-ink/[0.015] p-3 sm:p-4">
+              <div className="rounded-sm border border-ink/10 bg-ink/[0.015] p-3 sm:p-4">
                 <CheckoutWooPaymentsExpressCheckout
                   billing={billing}
                   onError={onError}
                   onExpressPaymentMethod={onExpressPaymentMethod}
-                  onAvailabilityChange={(available) => {
-                    setExpressPending(false);
-                    setExpressAvailable(available);
-                  }}
                 />
               </div>
             </Elements>
           </div>
         ) : null}
 
-        {expressAvailable ? (
+        {onExpressPaymentMethod ? (
           <div className="flex items-center gap-3">
             <span className="h-px flex-1 bg-ink/10" aria-hidden="true" />
             <span className="font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/40">
