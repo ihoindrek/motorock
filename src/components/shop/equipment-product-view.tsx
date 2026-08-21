@@ -466,21 +466,22 @@ export function EquipmentProductView({
 
         </div>
 
-        <div className="order-2 w-full lg:order-none lg:col-span-6 lg:col-start-7 lg:row-start-1 xl:col-span-7 xl:col-start-6 lg:max-w-2xl xl:max-w-3xl lg:ml-auto lg:w-full">
-          <ProductImageGallery
-            images={galleryImages}
-            alt={product.name}
-            variant="scene"
-            theme="light"
-            layout="craft"
-            imageBackground="white"
-            productVideo={product.productVideo}
-            videoTitle={product.name}
-            fullBleedMobile
-          />
-        </div>
+        <div className="contents lg:col-span-6 lg:col-start-7 xl:col-span-7 xl:col-start-6 lg:flex lg:flex-col lg:gap-8 lg:max-w-2xl xl:max-w-3xl lg:ml-auto lg:w-full">
+          <div className="order-2 w-full lg:order-none">
+            <ProductImageGallery
+              images={galleryImages}
+              alt={product.name}
+              variant="scene"
+              theme="light"
+              layout="craft"
+              imageBackground="white"
+              productVideo={product.productVideo}
+              videoTitle={product.name}
+              fullBleedMobile
+            />
+          </div>
 
-        <div className="order-4 w-full max-w-md space-y-8 sm:max-w-lg lg:order-none lg:col-span-6 lg:col-start-7 lg:row-start-2 xl:col-span-7 xl:col-start-6 lg:ml-auto lg:w-full lg:max-w-xl xl:max-w-2xl">
+          <div className="order-4 w-full max-w-md space-y-8 sm:max-w-lg lg:order-none lg:max-w-xl xl:max-w-2xl">
           {isVideoSrc(product.lifestyleImage) ? (
             <figure className="relative aspect-[16/9] overflow-hidden bg-white">
               <video
@@ -596,6 +597,7 @@ export function EquipmentProductView({
                 active={activeAccordion === "shipping"}
               />
             </CraftAccordion>
+          </div>
           </div>
         </div>
       </div>
