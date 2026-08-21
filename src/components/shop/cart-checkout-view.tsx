@@ -38,6 +38,7 @@ import { orchestrateCheckout } from "@/lib/checkout/orchestrate-checkout";
 import {
   completeWooPaymentsCheckoutRedirect,
   isWooPaymentsGateway,
+  WOO_PAYMENTS_GATEWAY_ID,
 } from "@/lib/checkout/woo-payments";
 import {
   isMontonioPaymentGateway,
@@ -45,7 +46,9 @@ import {
 } from "@/lib/checkout/montonio-checkout";
 import { resetCheckoutSyncState } from "@/lib/graphql/checkout";
 import {
+  CheckoutWooPaymentsExpressPanel,
   CheckoutWooPaymentsPanel,
+  type CheckoutWooPaymentsExpressHandle,
   type CheckoutWooPaymentsHandle,
 } from "@/components/shop/checkout-woo-payments-panel";
 import { useWooPaymentsConfig } from "@/hooks/use-woo-payments-config";
@@ -667,7 +670,11 @@ export function CartCheckoutView() {
   const [selectedMontonioOption, setSelectedMontonioOption] =
     useState<MontonioPaymentOption | null>(null);
   const paymentGatewayTouchedRef = useRef(false);
+  const wooPaymentsExpressRef = useRef<CheckoutWooPaymentsExpressHandle>(null);
   const wooPaymentsPanelRef = useRef<CheckoutWooPaymentsHandle>(null);
+  const [wooPaymentsExpressError, setWooPaymentsExpressError] = useState<string | null>(
+    null,
+  );
   const [wooPaymentsFormError, setWooPaymentsFormError] = useState<string | null>(
     null,
   );
@@ -703,10 +710,6 @@ export function CartCheckoutView() {
   const paymentRefreshKey = `${shipping.wooSessionKey}:${shipping.country}:${shipping.selectedRateId ?? ""}:${shipping.rates.map((rate) => rate.id).join("|")}`;
   const payment = useCheckoutPayment(paymentCatalogReady, paymentRefreshKey);
   const wooPaymentsSelected = isWooPaymentsGateway(payment.selectedId);
-  const wooPayments = useWooPaymentsConfig(
-    payment.selectedId,
-    paymentCatalogReady && isLiveCheckoutEnabled(),
-  );
   const montonio = useMontonioPaymentOptions(
     montonioPreviewCountry,
     paymentCatalogReady && isLiveCheckoutEnabled(),
@@ -734,6 +737,17 @@ export function CartCheckoutView() {
     montonioPreviewCountry,
     payment.gateways,
   ]);
+  const wooPaymentsAvailable = useMemo(
+    () =>
+      visiblePaymentGateways.some(
+        (gateway) => gateway.id === WOO_PAYMENTS_GATEWAY_ID,
+      ),
+    [visiblePaymentGateways],
+  );
+  const wooPayments = useWooPaymentsConfig(
+    wooPaymentsAvailable,
+    paymentCatalogReady && isLiveCheckoutEnabled(),
+  );
   const selectedPaymentGateway = useMemo(
     () =>
       visiblePaymentGateways.find((gateway) => gateway.id === payment.selectedId) ??
@@ -1395,6 +1409,27 @@ export function CartCheckoutView() {
     };
   }, [setCheckoutStep]);
 
+  const confirmWooPaymentsPaymentIntent = useCallback(
+    async (clientSecret: string) => {
+      if (wooPaymentsExpressRef.current?.isReady()) {
+        await wooPaymentsExpressRef.current.confirmPaymentIntent(clientSecret);
+        return;
+      }
+
+      if (wooPaymentsPanelRef.current?.isReady()) {
+        await wooPaymentsPanelRef.current.confirmPaymentIntent(clientSecret);
+        return;
+      }
+
+      throw new Error(
+        locale === "et"
+          ? "Oota, kuni maksevorm laadib."
+          : "Wait for the payment form to load.",
+      );
+    },
+    [locale],
+  );
+
   const handleExpressWooPayment = useCallback(
     async (paymentMethodId: string) => {
       if (!revealDeliveryIssues()) {
@@ -1410,12 +1445,12 @@ export function CartCheckoutView() {
         throw new Error(dict.checkout.submitBlockTerms);
       }
 
-      if (!deliveryReady || !shipping.selectedRateId || !payment.selectedId) {
+      if (!deliveryReady || !shipping.selectedRateId) {
         throw new Error(
           submitBlockReason ??
             (locale === "et"
-              ? "Vali tarne ja makseviis enne maksmist."
-              : "Choose delivery and payment before paying."),
+              ? "Vali tarne enne maksmist."
+              : "Choose delivery before paying."),
         );
       }
 
@@ -1427,7 +1462,9 @@ export function CartCheckoutView() {
         throw new Error(dict.checkout.submitBlockPayment);
       }
 
+      selectPaymentId(WOO_PAYMENTS_GATEWAY_ID);
       setSubmitError(null);
+      setWooPaymentsExpressError(null);
 
       const checkoutLinesKey = lines
         .map(
@@ -1461,7 +1498,7 @@ export function CartCheckoutView() {
           linesKey: checkoutLinesKey,
           customer: checkoutCustomer,
           selectedShippingRateId: shipping.selectedRateId,
-          paymentMethodId: payment.selectedId ?? "",
+          paymentMethodId: WOO_PAYMENTS_GATEWAY_ID,
           montonioOption: selectedMontonioOption,
           needsMontonioProvider,
           pickupPoint,
@@ -1490,17 +1527,7 @@ export function CartCheckoutView() {
 
       const redirectUrl = await completeWooPaymentsCheckoutRedirect({
         redirectUrl: checkoutResult.redirect,
-        confirmPaymentIntent: async (clientSecret) => {
-          if (!wooPaymentsPanelRef.current?.isReady()) {
-            throw new Error(
-              locale === "et"
-                ? "Oota, kuni kaardivorm laadib."
-                : "Wait for the card form to load.",
-            );
-          }
-
-          await wooPaymentsPanelRef.current.confirmPaymentIntent(clientSecret);
-        },
+        confirmPaymentIntent: confirmWooPaymentsPaymentIntent,
       });
 
       if (redirectUrl) {
@@ -1538,18 +1565,20 @@ export function CartCheckoutView() {
       needsMontonioProvider,
       payment.error,
       payment.loading,
-      payment.selectedId,
       persistCheckoutDraft,
       pickupPoint,
       pickupValid,
       revealDeliveryIssues,
+      selectPaymentId,
       selectedMontonioOption,
       shipping.country,
       shipping.needsAddress,
       shipping.selectedRateId,
       submitBlockReason,
       termsAccepted,
+      confirmWooPaymentsPaymentIntent,
       wooPayments.config?.fraudPreventionToken,
+      wooPaymentsChargeTotal,
     ],
   );
 
@@ -1747,17 +1776,7 @@ export function CartCheckoutView() {
 
       const redirectUrl = await completeWooPaymentsCheckoutRedirect({
         redirectUrl: checkoutResult.redirect,
-        confirmPaymentIntent: async (clientSecret) => {
-          if (!wooPaymentsPanelRef.current?.isReady()) {
-            throw new Error(
-              locale === "et"
-                ? "Oota, kuni kaardivorm laadib."
-                : "Wait for the card form to load.",
-            );
-          }
-
-          await wooPaymentsPanelRef.current.confirmPaymentIntent(clientSecret);
-        },
+        confirmPaymentIntent: confirmWooPaymentsPaymentIntent,
       });
 
       if (redirectUrl) {
@@ -2390,7 +2409,44 @@ export function CartCheckoutView() {
                         locale={locale}
                         wooPaymentsLoading={wooPayments.loading}
                         wooPaymentsError={wooPayments.error}
+                        wooPaymentsExpressError={wooPaymentsExpressError}
                         wooPaymentsFormError={wooPaymentsFormError}
+                        wooPaymentsExpressPanel={
+                          wooPayments.config?.publishableKey ? (
+                            <CheckoutWooPaymentsExpressPanel
+                              ref={wooPaymentsExpressRef}
+                              publishableKey={wooPayments.config.publishableKey}
+                              stripeAccountId={wooPayments.config.stripeAccountId}
+                              amountCents={Math.max(
+                                0,
+                                Math.round(wooPaymentsChargeTotal * 100),
+                              )}
+                              locale={locale}
+                              billing={wooPaymentsBilling}
+                              onError={setWooPaymentsExpressError}
+                              onExpressPaymentMethod={async (paymentMethodId) => {
+                                setSubmitting(true);
+                                try {
+                                  await handleExpressWooPayment(paymentMethodId);
+                                } catch (cause) {
+                                  if (cause instanceof Error) {
+                                    const message =
+                                      friendlyCheckoutError(
+                                        cause.message,
+                                        dict.checkout.paymentError,
+                                        locale,
+                                      ) ?? cause.message;
+                                    setWooPaymentsExpressError(message);
+                                    setSubmitError(message);
+                                  }
+                                  throw cause;
+                                } finally {
+                                  setSubmitting(false);
+                                }
+                              }}
+                            />
+                          ) : null
+                        }
                         wooPaymentsPanel={
                           wooPaymentsSelected &&
                           wooPayments.config?.publishableKey ? (
@@ -2404,29 +2460,9 @@ export function CartCheckoutView() {
                               )}
                               locale={locale}
                               billing={wooPaymentsBilling}
-                              orCardLabel={dict.checkout.paymentWooPaymentsOrCard}
                               className="border-0 bg-transparent p-0"
                               onReadyChange={setWooPaymentsReady}
                               onError={setWooPaymentsFormError}
-                              onExpressPaymentMethod={async (paymentMethodId) => {
-                                setSubmitting(true);
-                                try {
-                                  await handleExpressWooPayment(paymentMethodId);
-                                } catch (cause) {
-                                  if (cause instanceof Error) {
-                                    setSubmitError(
-                                      friendlyCheckoutError(
-                                        cause.message,
-                                        dict.checkout.paymentError,
-                                        locale,
-                                      ) ?? cause.message,
-                                    );
-                                  }
-                                  throw cause;
-                                } finally {
-                                  setSubmitting(false);
-                                }
-                              }}
                             />
                           ) : null
                         }

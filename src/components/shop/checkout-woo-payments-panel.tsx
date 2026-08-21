@@ -42,17 +42,27 @@ export type CheckoutWooPaymentsHandle = {
   isReady: () => boolean;
 };
 
-type CheckoutWooPaymentsPanelProps = {
+export type CheckoutWooPaymentsExpressHandle = {
+  confirmPaymentIntent: (clientSecret: string) => Promise<void>;
+  isReady: () => boolean;
+};
+
+type WooPaymentsSharedProps = {
   publishableKey: string;
   stripeAccountId?: string;
   amountCents: number;
   locale: "en" | "et";
   billing: WooPaymentsBillingDetails;
-  orCardLabel: string;
   className?: string;
-  onReadyChange?: (ready: boolean) => void;
   onError?: (message: string | null) => void;
-  onExpressPaymentMethod?: (paymentMethodId: string) => Promise<void>;
+};
+
+type CheckoutWooPaymentsExpressPanelProps = WooPaymentsSharedProps & {
+  onExpressPaymentMethod: (paymentMethodId: string) => Promise<void>;
+};
+
+type CheckoutWooPaymentsPanelProps = WooPaymentsSharedProps & {
+  onReadyChange?: (ready: boolean) => void;
 };
 
 type WooPaymentsErrorBoundaryProps = {
@@ -118,6 +128,208 @@ function buildCardElementsOptions(input: {
   };
 }
 
+function useWooPaymentsStripe(publishableKey: string, stripeAccountId?: string) {
+  return useMemo(
+    () =>
+      loadStripe(
+        publishableKey,
+        stripeAccountId ? { stripeAccount: stripeAccountId } : undefined,
+      ),
+    [publishableKey, stripeAccountId],
+  );
+}
+
+async function confirmStripeCardPayment(
+  stripe: Stripe | null,
+  clientSecret: string,
+) {
+  if (!stripe) {
+    throw new Error("Payment form is still loading.");
+  }
+
+  const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret);
+
+  if (error) {
+    throw new Error(error.message ?? "Payment authentication failed.");
+  }
+
+  if (
+    paymentIntent?.status !== "succeeded" &&
+    paymentIntent?.status !== "processing" &&
+    paymentIntent?.status !== "requires_capture"
+  ) {
+    throw new Error("Payment was not completed.");
+  }
+}
+
+function CheckoutWooPaymentsExpressCheckout({
+  forwardedRef,
+  billing,
+  onError,
+  onExpressPaymentMethod,
+  onAvailabilityChange,
+}: {
+  forwardedRef: Ref<CheckoutWooPaymentsExpressHandle>;
+  billing: WooPaymentsBillingDetails;
+  onError?: (message: string | null) => void;
+  onExpressPaymentMethod: (paymentMethodId: string) => Promise<void>;
+  onAvailabilityChange?: (available: boolean) => void;
+}) {
+  const stripe = useStripe();
+  const elements = useElements();
+  const [ready, setReady] = useState(false);
+
+  useImperativeHandle(
+    forwardedRef,
+    () => ({
+      isReady: () => Boolean(stripe && ready),
+      confirmPaymentIntent: (clientSecret) =>
+        confirmStripeCardPayment(stripe, clientSecret),
+    }),
+    [ready, stripe],
+  );
+
+  return (
+    <ExpressCheckoutElement
+      onReady={({ availablePaymentMethods }) => {
+        const available = Boolean(
+          availablePaymentMethods &&
+            (availablePaymentMethods.applePay ||
+              availablePaymentMethods.googlePay ||
+              availablePaymentMethods.link),
+        );
+        setReady(available);
+        onAvailabilityChange?.(available);
+      }}
+      onConfirm={async (event) => {
+        if (!stripe || !elements) {
+          event.paymentFailed({
+            reason: "fail",
+            message: "Payment form is still loading.",
+          });
+          return;
+        }
+
+        onError?.(null);
+
+        try {
+          const submitResult = await elements.submit();
+          if (submitResult.error) {
+            throw new Error(
+              submitResult.error.message ?? "Payment validation failed.",
+            );
+          }
+
+          const { paymentMethod, error } = await stripe.createPaymentMethod({
+            elements,
+            params: {
+              billing_details: toStripePaymentMethodBillingDetails(billing),
+            },
+          });
+
+          if (error || !paymentMethod) {
+            throw new Error(error?.message ?? "Could not create payment method.");
+          }
+
+          await onExpressPaymentMethod(paymentMethod.id);
+        } catch (cause) {
+          const message =
+            cause instanceof Error
+              ? cause.message
+              : "Payment could not be completed.";
+          onError?.(message);
+          event.paymentFailed({
+            reason: "fail",
+            message,
+          });
+        }
+      }}
+      options={{
+        paymentMethods: {
+          applePay: "always",
+          googlePay: "always",
+          link: "auto",
+          paypal: "never",
+          amazonPay: "never",
+          klarna: "never",
+        },
+        layout: {
+          maxColumns: 1,
+          maxRows: 2,
+        },
+      }}
+    />
+  );
+}
+
+export const CheckoutWooPaymentsExpressPanel = forwardRef<
+  CheckoutWooPaymentsExpressHandle,
+  CheckoutWooPaymentsExpressPanelProps
+>(function CheckoutWooPaymentsExpressPanel(
+  {
+    publishableKey,
+    stripeAccountId,
+    amountCents,
+    locale,
+    billing,
+    className,
+    onError,
+    onExpressPaymentMethod,
+  },
+  ref,
+) {
+  const dict = useDictionary();
+  const stripePromise = useWooPaymentsStripe(publishableKey, stripeAccountId);
+  const elementsInstanceKey = `${billing.address.country || "xx"}:${amountCents}`;
+  const expressElementsOptions = useMemo(
+    () => buildExpressElementsOptions({ locale, amountCents }),
+    [amountCents, locale],
+  );
+  const [availability, setAvailability] = useState<
+    "pending" | "available" | "unavailable"
+  >("pending");
+
+  if (!publishableKey || amountCents <= 0 || availability === "unavailable") {
+    return null;
+  }
+
+  return (
+    <WooPaymentsErrorBoundary
+      onError={(error) => onError?.(error.message)}
+      fallback={
+        <p className="text-sm text-accent" role="alert">
+          {dict.checkout.paymentError}
+        </p>
+      }
+    >
+      <div
+        className={cn(
+          availability === "pending" && "min-h-12",
+          className,
+        )}
+      >
+        <Elements
+          key={`express-${elementsInstanceKey}`}
+          stripe={stripePromise}
+          options={expressElementsOptions}
+        >
+          <div className="rounded-sm border border-ink/10 bg-ink/[0.015] p-3 sm:p-4">
+            <CheckoutWooPaymentsExpressCheckout
+              forwardedRef={ref}
+              billing={billing}
+              onError={onError}
+              onExpressPaymentMethod={onExpressPaymentMethod}
+              onAvailabilityChange={(available) => {
+                setAvailability(available ? "available" : "unavailable");
+              }}
+            />
+          </div>
+        </Elements>
+      </div>
+    </WooPaymentsErrorBoundary>
+  );
+});
+
 function CheckoutWooPaymentsCardForm({
   forwardedRef,
   billing,
@@ -149,27 +361,8 @@ function CheckoutWooPaymentsCardForm({
           billing: billingDetails,
         });
       },
-      confirmPaymentIntent: async (clientSecret) => {
-        if (!stripe) {
-          throw new Error("Payment form is still loading.");
-        }
-
-        const { error, paymentIntent } = await stripe.confirmCardPayment(
-          clientSecret,
-        );
-
-        if (error) {
-          throw new Error(error.message ?? "Payment authentication failed.");
-        }
-
-        if (
-          paymentIntent?.status !== "succeeded" &&
-          paymentIntent?.status !== "processing" &&
-          paymentIntent?.status !== "requires_capture"
-        ) {
-          throw new Error("Payment was not completed.");
-        }
-      },
+      confirmPaymentIntent: (clientSecret) =>
+        confirmStripeCardPayment(stripe, clientSecret),
     }),
     [elements, ready, stripe],
   );
@@ -245,92 +438,6 @@ function CheckoutWooPaymentsCardForm({
   );
 }
 
-function CheckoutWooPaymentsExpressCheckout({
-  billing,
-  onError,
-  onExpressPaymentMethod,
-  onAvailabilityChange,
-}: {
-  billing: WooPaymentsBillingDetails;
-  onError?: (message: string | null) => void;
-  onExpressPaymentMethod: (paymentMethodId: string) => Promise<void>;
-  onAvailabilityChange?: (available: boolean) => void;
-}) {
-  const stripe = useStripe();
-  const elements = useElements();
-
-  return (
-    <ExpressCheckoutElement
-      onReady={({ availablePaymentMethods }) => {
-        const available = Boolean(
-          availablePaymentMethods &&
-            (availablePaymentMethods.applePay ||
-              availablePaymentMethods.googlePay ||
-              availablePaymentMethods.link),
-        );
-        onAvailabilityChange?.(available);
-      }}
-      onConfirm={async (event) => {
-        if (!stripe || !elements) {
-          event.paymentFailed({
-            reason: "fail",
-            message: "Payment form is still loading.",
-          });
-          return;
-        }
-
-        onError?.(null);
-
-        try {
-          const submitResult = await elements.submit();
-          if (submitResult.error) {
-            throw new Error(
-              submitResult.error.message ?? "Payment validation failed.",
-            );
-          }
-
-          const { paymentMethod, error } = await stripe.createPaymentMethod({
-            elements,
-            params: {
-              billing_details: toStripePaymentMethodBillingDetails(billing),
-            },
-          });
-
-          if (error || !paymentMethod) {
-            throw new Error(error?.message ?? "Could not create payment method.");
-          }
-
-          await onExpressPaymentMethod(paymentMethod.id);
-        } catch (cause) {
-          const message =
-            cause instanceof Error
-              ? cause.message
-              : "Payment could not be completed.";
-          onError?.(message);
-          event.paymentFailed({
-            reason: "fail",
-            message,
-          });
-        }
-      }}
-      options={{
-        paymentMethods: {
-          applePay: "always",
-          googlePay: "always",
-          link: "auto",
-          paypal: "never",
-          amazonPay: "never",
-          klarna: "never",
-        },
-        layout: {
-          maxColumns: 1,
-          maxRows: 2,
-        },
-      }}
-    />
-  );
-}
-
 export const CheckoutWooPaymentsPanel = forwardRef<
   CheckoutWooPaymentsHandle,
   CheckoutWooPaymentsPanelProps
@@ -341,28 +448,15 @@ export const CheckoutWooPaymentsPanel = forwardRef<
     amountCents,
     locale,
     billing,
-    orCardLabel,
     className,
     onReadyChange,
     onError,
-    onExpressPaymentMethod,
   },
   ref,
 ) {
   const dict = useDictionary();
-  const stripePromise = useMemo(
-    () =>
-      loadStripe(
-        publishableKey,
-        stripeAccountId ? { stripeAccount: stripeAccountId } : undefined,
-      ),
-    [publishableKey, stripeAccountId],
-  );
+  const stripePromise = useWooPaymentsStripe(publishableKey, stripeAccountId);
   const elementsInstanceKey = `${billing.address.country || "xx"}:${amountCents}`;
-  const expressElementsOptions = useMemo(
-    () => buildExpressElementsOptions({ locale, amountCents }),
-    [amountCents, locale],
-  );
   const cardElementsOptions = useMemo(
     () => buildCardElementsOptions({ locale, amountCents }),
     [amountCents, locale],
@@ -388,35 +482,7 @@ export const CheckoutWooPaymentsPanel = forwardRef<
         </p>
       }
     >
-      <div className={cn("relative space-y-5", className)}>
-        {onExpressPaymentMethod ? (
-          <div className="min-h-12">
-            <Elements
-              key={`express-${elementsInstanceKey}`}
-              stripe={stripePromise}
-              options={expressElementsOptions}
-            >
-              <div className="rounded-sm border border-ink/10 bg-ink/[0.015] p-3 sm:p-4">
-                <CheckoutWooPaymentsExpressCheckout
-                  billing={billing}
-                  onError={onError}
-                  onExpressPaymentMethod={onExpressPaymentMethod}
-                />
-              </div>
-            </Elements>
-          </div>
-        ) : null}
-
-        {onExpressPaymentMethod ? (
-          <div className="flex items-center gap-3">
-            <span className="h-px flex-1 bg-ink/10" aria-hidden="true" />
-            <span className="font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/40">
-              {orCardLabel}
-            </span>
-            <span className="h-px flex-1 bg-ink/10" aria-hidden="true" />
-          </div>
-        ) : null}
-
+      <div className={cn("relative", className)}>
         <Elements
           key={`card-${elementsInstanceKey}`}
           stripe={stripePromise}

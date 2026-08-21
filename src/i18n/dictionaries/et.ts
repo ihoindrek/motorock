@@ -246,6 +246,7 @@ export const et: Dictionary = {
     paymentMethodsWooPaymentsDesc:
       "Visa, Mastercard, Apple Pay, Google Pay jm — olenevalt riigist ja seadmest.",
     paymentWooPaymentsOrCard: "või kaardiga",
+    paymentOtherMethods: "või vali muu makseviis",
     paymentWooPaymentsFormTitle: "Kaardiandmed",
     paymentChooseBank: "Pangalink",
     paymentFinancing: "Järelmaks ja maksa hiljem",

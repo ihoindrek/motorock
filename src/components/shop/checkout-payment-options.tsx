@@ -803,6 +803,8 @@ export function CheckoutPaymentOptions({
   loading,
   error,
   locale,
+  wooPaymentsExpressPanel,
+  wooPaymentsExpressError,
   wooPaymentsPanel,
   wooPaymentsLoading,
   wooPaymentsError,
@@ -820,6 +822,8 @@ export function CheckoutPaymentOptions({
   loading: boolean;
   error: string | null;
   locale: Locale;
+  wooPaymentsExpressPanel?: ReactNode;
+  wooPaymentsExpressError?: string | null;
   wooPaymentsPanel?: ReactNode;
   wooPaymentsLoading?: boolean;
   wooPaymentsError?: string | null;
@@ -857,7 +861,39 @@ export function CheckoutPaymentOptions({
           <CheckoutSupportNotice locale={locale} />
         </div>
       ) : (
-        <ul className="grid gap-2">
+        <>
+          {wooPaymentsExpressPanel ? (
+            <div className="space-y-3">
+              <div
+                className={cn(
+                  "relative border border-ink/15 bg-white px-4 py-4 sm:px-5",
+                  (wooPaymentsLoading || wooPaymentsError) &&
+                    "pointer-events-none opacity-40",
+                )}
+              >
+                {wooPaymentsExpressPanel}
+                {wooPaymentsLoading ? (
+                  <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/80">
+                    <MorphingSquare message={copy.paymentLoading} size="sm" />
+                  </div>
+                ) : null}
+              </div>
+              {wooPaymentsExpressError ? (
+                <p className="text-sm text-accent" role="alert">
+                  {wooPaymentsExpressError}
+                </p>
+              ) : null}
+              <div className="flex items-center gap-3">
+                <span className="h-px flex-1 bg-ink/10" aria-hidden="true" />
+                <span className="font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/40">
+                  {copy.paymentOtherMethods}
+                </span>
+                <span className="h-px flex-1 bg-ink/10" aria-hidden="true" />
+              </div>
+            </div>
+          ) : null}
+
+          <ul className="grid gap-2">
           {localizedGateways.map((gateway) => {
             const selected = selectedId === gateway.id;
             const showMontonioProviders =
@@ -925,7 +961,8 @@ export function CheckoutPaymentOptions({
               </li>
             );
           })}
-        </ul>
+          </ul>
+        </>
       )}
     </div>
   );

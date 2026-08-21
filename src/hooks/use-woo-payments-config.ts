@@ -3,13 +3,12 @@
 import { useEffect, useState } from "react";
 import {
   fetchWooPaymentsConfig,
-  isWooPaymentsGateway,
   type WooPaymentsConfig,
 } from "@/lib/checkout/woo-payments";
 import { readWooSessionToken } from "@/lib/graphql/checkout-client";
 
 export function useWooPaymentsConfig(
-  selectedPaymentId: string | null,
+  wooPaymentsAvailable: boolean,
   enabled: boolean,
 ) {
   const [config, setConfig] = useState<WooPaymentsConfig | null>(null);
@@ -17,7 +16,7 @@ export function useWooPaymentsConfig(
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!enabled || !isWooPaymentsGateway(selectedPaymentId)) {
+    if (!enabled || !wooPaymentsAvailable) {
       setConfig(null);
       setError(null);
       setLoading(false);
@@ -56,7 +55,7 @@ export function useWooPaymentsConfig(
     return () => {
       cancelled = true;
     };
-  }, [enabled, selectedPaymentId]);
+  }, [enabled, wooPaymentsAvailable]);
 
   return { config, loading, error };
 }
