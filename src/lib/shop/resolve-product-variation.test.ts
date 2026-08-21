@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  resolveActiveProductInStock,
   resolveActiveProductPrice,
   resolveActiveProductVariation,
 } from "@/lib/shop/resolve-product-variation";
@@ -14,8 +15,8 @@ const kingsCanyonLike = {
     "4X-Large": 18204,
   },
   variations: [
-    { databaseId: 18210, sku: "s", color: "—", price: 243.97 },
-    { databaseId: 18204, sku: "4xl", color: "—", price: 262.27 },
+    { databaseId: 18210, sku: "s", color: "—", price: 243.97, inStock: true },
+    { databaseId: 18204, sku: "4xl", color: "—", price: 262.27, inStock: false },
   ],
 } as const;
 
@@ -35,5 +36,12 @@ describe("resolveActiveProductPrice", () => {
 
   it("falls back to the product price when no variation matches", () => {
     expect(resolveActiveProductPrice({ price: 99, sizes: ["M"] }, "M")).toBe(99);
+  });
+});
+
+describe("resolveActiveProductInStock", () => {
+  it("uses the selected variation stock status", () => {
+    expect(resolveActiveProductInStock(kingsCanyonLike, "SMALL")).toBe(true);
+    expect(resolveActiveProductInStock(kingsCanyonLike, "4X-Large")).toBe(false);
   });
 });

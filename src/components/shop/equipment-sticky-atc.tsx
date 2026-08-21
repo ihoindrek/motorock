@@ -7,7 +7,6 @@ import { cn } from "@/lib/utils";
 type EquipmentStickyAtcProps = {
   name: string;
   price: number;
-  inStock: boolean;
   added: boolean;
   visible: boolean;
   onAdd: () => void;
@@ -16,16 +15,11 @@ type EquipmentStickyAtcProps = {
 export function EquipmentStickyAtc({
   name,
   price,
-  inStock,
   added,
   visible,
   onAdd,
 }: EquipmentStickyAtcProps) {
   const dict = useDictionary();
-
-  if (!inStock) {
-    return null;
-  }
 
   return (
     <div

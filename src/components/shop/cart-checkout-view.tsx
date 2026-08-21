@@ -49,6 +49,12 @@ import {
 } from "@/components/shop/checkout-woo-payments-panel";
 import { useWooPaymentsConfig } from "@/hooks/use-woo-payments-config";
 import { readWooSessionToken, writeWooSessionToken } from "@/lib/graphql/checkout-client";
+import {
+  formatCheckoutStockError,
+  isCheckoutStockError,
+  normalizeCheckoutErrorMessage,
+  shouldReportCheckoutError,
+} from "@/lib/checkout/checkout-user-errors";
 import { reportClientError } from "@/lib/monitoring/observability-client";
 import {
   CheckoutOrderSummary,
@@ -130,6 +136,12 @@ function friendlyCheckoutError(
 ) {
   if (!message) {
     return null;
+  }
+
+  const normalizedMessage = normalizeCheckoutErrorMessage(message);
+
+  if (isCheckoutStockError(normalizedMessage)) {
+    return formatCheckoutStockError(normalizedMessage, locale);
   }
 
   // Browser-level network failures (offline, backend briefly unreachable).
@@ -1722,13 +1734,15 @@ export function CartCheckoutView() {
       }
 
       if (cause instanceof Error) {
-        void reportClientError(cause, {
-          source: "checkout",
-          step: "submit",
-          paymentMethod: payment.selectedId,
-          shippingRate: shipping.selectedRateId,
-          country: shipping.country,
-        });
+        if (shouldReportCheckoutError(cause.message)) {
+          void reportClientError(cause, {
+            source: "checkout",
+            step: "submit",
+            paymentMethod: payment.selectedId,
+            shippingRate: shipping.selectedRateId,
+            country: shipping.country,
+          });
+        }
       }
 
       setSubmitError(

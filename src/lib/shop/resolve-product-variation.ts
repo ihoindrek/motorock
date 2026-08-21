@@ -30,3 +30,17 @@ export function resolveActiveProductPrice(
 
   return product.price;
 }
+
+export function resolveActiveProductInStock(
+  product: Pick<CatalogProduct, "inStock" | "variations" | "variationIds" | "sizes">,
+  size?: string,
+  color?: string,
+): boolean {
+  const variation = resolveActiveProductVariation(product, size, color);
+
+  if (typeof variation?.inStock === "boolean") {
+    return variation.inStock;
+  }
+
+  return product.inStock;
+}

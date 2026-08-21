@@ -70,9 +70,7 @@ class Motorock_Catalog_Importer_Product_Writer {
             $product->set_price($data['regular_price']);
         }
 
-        $product->set_manage_stock(true);
-        $product->set_stock_quantity((int) $data['stock_quantity']);
-        $product->set_stock_status($data['stock_status']);
+        $this->apply_orderable_stock($product, (int) $data['stock_quantity']);
         $product->save();
         $this->set_meta($product_id, isset($data['meta']) ? $data['meta'] : array());
 
@@ -89,9 +87,7 @@ class Motorock_Catalog_Importer_Product_Writer {
         $product->set_short_description(isset($data['short_description']) ? $data['short_description'] : '');
         $product->set_status('publish');
         $product->set_catalog_visibility('visible');
-        $product->set_manage_stock(true);
-        $product->set_stock_quantity((int) $data['stock_quantity']);
-        $product->set_stock_status($data['stock_status']);
+        $this->apply_orderable_stock($product, (int) $data['stock_quantity']);
 
         $product_id = $product->save();
         if (!$product_id) {
@@ -184,9 +180,10 @@ class Motorock_Catalog_Importer_Product_Writer {
         }
         $variation->set_regular_price($variation_data['regular_price']);
         $variation->set_price($variation_data['regular_price']);
-        $variation->set_manage_stock(true);
-        $variation->set_stock_quantity((int) $variation_data['stock_quantity']);
-        $variation->set_stock_status($variation_data['stock_status']);
+        $this->apply_orderable_stock(
+            $variation,
+            (int) $variation_data['stock_quantity']
+        );
 
         $variation_id = $variation->save();
         if ($variation_id) {
@@ -209,9 +206,10 @@ class Motorock_Catalog_Importer_Product_Writer {
 
         $variation->set_regular_price($variation_data['regular_price']);
         $variation->set_price($variation_data['regular_price']);
-        $variation->set_manage_stock(true);
-        $variation->set_stock_quantity((int) $variation_data['stock_quantity']);
-        $variation->set_stock_status($variation_data['stock_status']);
+        $this->apply_orderable_stock(
+            $variation,
+            (int) $variation_data['stock_quantity']
+        );
         $variation->save();
         $this->set_meta($variation_id, isset($variation_data['meta']) ? $variation_data['meta'] : array());
         $this->apply_shipping_dimensions($variation);
@@ -229,9 +227,7 @@ class Motorock_Catalog_Importer_Product_Writer {
         if ($product->is_type('simple')) {
             $product->set_regular_price($data['regular_price']);
             $product->set_price($data['regular_price']);
-            $product->set_manage_stock(true);
-            $product->set_stock_quantity((int) $data['stock_quantity']);
-            $product->set_stock_status($data['stock_status']);
+            $this->apply_orderable_stock($product, (int) $data['stock_quantity']);
             $product->save();
             $this->set_meta($product_id, isset($data['meta']) ? $data['meta'] : array());
         } elseif ($product->is_type('variable')) {
@@ -292,6 +288,18 @@ class Motorock_Catalog_Importer_Product_Writer {
         update_post_meta($product_id, '_catalog_feed_id', $this->feed['id']);
         update_post_meta($product_id, '_catalog_adapter', $this->feed['adapter']);
         update_post_meta($product_id, '_catalog_import_date', current_time('mysql'));
+    }
+
+    /**
+     * Supplier qty is informational — checkout must stay open at 0 stock.
+     *
+     * @param WC_Product|WC_Product_Variation $product
+     */
+    private function apply_orderable_stock($product, $quantity) {
+        $product->set_manage_stock(true);
+        $product->set_stock_quantity(max(0, (int) $quantity));
+        $product->set_backorders('yes');
+        $product->set_stock_status('instock');
     }
 
     private function ensure_attribute_taxonomy($label, $taxonomy) {

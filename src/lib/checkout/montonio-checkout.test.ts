@@ -4,6 +4,7 @@ import {
   filterHeadlessDisabledMontonioFinancingGateways,
   filterHeadlessDisabledMontonioFinancingOptions,
   inferMontonioOptionFromGateway,
+  MOTOROCK_HEADLESS_PENDING_GATEWAY_ID,
   needsMontonioPaymentRemint,
   pickupPointReadyForCheckout,
   resolveMontonioCheckoutGatewayId,
@@ -13,18 +14,30 @@ import { MONTONIO_PAYMENT_METHOD_ID } from "@/lib/graphql/checkout";
 import type { MontonioPaymentOption } from "@/types/montonio-payment";
 
 describe("resolveMontonioCheckoutGatewayId", () => {
-  it("keeps enabled Montonio gateway ids", () => {
+  it("keeps bank link when selected", () => {
     const enabled = [MONTONIO_PAYMENT_METHOD_ID, "wc_montonio_bnpl"];
 
     expect(
       resolveMontonioCheckoutGatewayId(MONTONIO_PAYMENT_METHOD_ID, enabled),
     ).toBe(MONTONIO_PAYMENT_METHOD_ID);
-    expect(
-      resolveMontonioCheckoutGatewayId("wc_montonio_bnpl", enabled),
-    ).toBe("wc_montonio_bnpl");
   });
 
-  it("maps synthetic Montonio gateways to the first enabled Woo gateway", () => {
+  it("routes remint gateways through the internal pending gateway when available", () => {
+    const enabled = [
+      MOTOROCK_HEADLESS_PENDING_GATEWAY_ID,
+      MONTONIO_PAYMENT_METHOD_ID,
+      "wc_montonio_card",
+    ];
+
+    expect(
+      resolveMontonioCheckoutGatewayId("wc_montonio_card", enabled),
+    ).toBe(MOTOROCK_HEADLESS_PENDING_GATEWAY_ID);
+    expect(
+      resolveMontonioCheckoutGatewayId("wc_montonio_bnpl", enabled),
+    ).toBe(MOTOROCK_HEADLESS_PENDING_GATEWAY_ID);
+  });
+
+  it("maps remint gateways to bank link when pending gateway is unavailable", () => {
     expect(
       resolveMontonioCheckoutGatewayId("wc_montonio_card", [
         MONTONIO_PAYMENT_METHOD_ID,
@@ -125,6 +138,28 @@ describe("buildMontonioCheckoutMetaData", () => {
 
     expect(meta).toEqual([
       { key: "montonio_preferred_provider", value: "cardPayments" },
+    ]);
+  });
+
+  it("defers Woo Montonio payment when storefront remint will run", () => {
+    const meta = buildMontonioCheckoutMetaData({
+      locale: "en",
+      paymentGatewayId: "wc_montonio_card",
+      deferMontonioPayment: true,
+      montonioOption: {
+        kind: "card",
+        code: "card",
+        systemName: "cardPayments",
+      } as MontonioPaymentOption,
+    });
+
+    expect(meta).toEqual([
+      { key: "checkout_locale", value: "en" },
+      { key: "motorock_headless_defer_montonio_payment", value: "1" },
+      {
+        key: "motorock_headless_intended_payment_gateway",
+        value: "wc_montonio_card",
+      },
     ]);
   });
 

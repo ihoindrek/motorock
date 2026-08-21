@@ -216,6 +216,15 @@ export async function orchestrateCheckout(
 
   activeSession = preflight.sessionToken;
 
+  const montonioOptionForRemint =
+    input.montonioOption ??
+    inferMontonioOptionFromGateway(input.paymentMethodId);
+
+  const deferMontonioPayment = shouldRunMontonioPaymentRemint(
+    input.paymentMethodId,
+    montonioOptionForRemint,
+  );
+
   const checkoutMetaData = [
     ...buildMontonioCheckoutMetaData({
       pickupPoint: input.pickupPoint,
@@ -223,6 +232,7 @@ export async function orchestrateCheckout(
       country: input.customer.country,
       paymentGatewayId: input.paymentMethodId,
       locale: input.locale,
+      deferMontonioPayment,
     }),
     ...(isWooPaymentsGateway(input.paymentMethodId) &&
     input.wooPaymentsStripePaymentMethodId
@@ -264,15 +274,8 @@ export async function orchestrateCheckout(
   activeSession = result.sessionToken ?? activeSession;
   let redirectUrl = result.redirect;
 
-  const montonioOptionForRemint =
-    input.montonioOption ??
-    inferMontonioOptionFromGateway(input.paymentMethodId);
-
   if (
-    shouldRunMontonioPaymentRemint(
-      input.paymentMethodId,
-      montonioOptionForRemint,
-    ) &&
+    deferMontonioPayment &&
     result.orderDatabaseId &&
     montonioOptionForRemint
   ) {

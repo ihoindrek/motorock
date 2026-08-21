@@ -3,6 +3,17 @@ import type { PickupPoint } from "@/types/pickup-point";
 
 export const MONTONIO_PAYMENT_METHOD_ID = "wc_montonio_payments";
 export const MONTONIO_CARD_PAYMENT_METHOD_ID = "wc_montonio_card";
+/** Woo-only gateway: creates a pending order without calling Montonio (GraphQL checkout). */
+export const MOTOROCK_HEADLESS_PENDING_GATEWAY_ID = "motorock_headless_pending";
+
+/** Montonio gateways that must not run Woo process_payment — storefront remint handles payment. */
+const MONTONIO_REMINT_SUBMIT_GATEWAY_IDS = new Set([
+  MONTONIO_CARD_PAYMENT_METHOD_ID,
+  "wc_montonio_mobilepay",
+  "wc_montonio_blik",
+  "wc_montonio_hire_purchase",
+  "wc_montonio_bnpl",
+]);
 
 export type CheckoutMetaDataInput = {
   key: string;
@@ -152,6 +163,18 @@ export function resolveMontonioCheckoutGatewayId(
   }
 
   const enabled = enabledGatewayIds ?? [];
+
+  // Card/BLIK/etc. cannot use Woo embedded card checkout in headless (needs session UUID).
+  // Create the order via the internal pending gateway, then remint on the storefront.
+  if (MONTONIO_REMINT_SUBMIT_GATEWAY_IDS.has(selectedGatewayId)) {
+    if (enabled.includes(MOTOROCK_HEADLESS_PENDING_GATEWAY_ID)) {
+      return MOTOROCK_HEADLESS_PENDING_GATEWAY_ID;
+    }
+    if (enabled.includes(MONTONIO_PAYMENT_METHOD_ID)) {
+      return MONTONIO_PAYMENT_METHOD_ID;
+    }
+  }
+
   if (enabled.includes(selectedGatewayId)) {
     return selectedGatewayId;
   }
@@ -170,6 +193,8 @@ export function buildMontonioCheckoutMetaData(input: {
   country?: string;
   paymentGatewayId?: string | null;
   locale?: "en" | "et";
+  /** Skip Woo Montonio provider meta; payment is created via storefront remint. */
+  deferMontonioPayment?: boolean;
 }): CheckoutMetaDataInput[] {
   const meta: CheckoutMetaDataInput[] = [];
 
@@ -195,6 +220,17 @@ export function buildMontonioCheckoutMetaData(input: {
         value: input.pickupPoint.carrierAssignedId,
       });
     }
+  }
+
+  if (input.deferMontonioPayment) {
+    meta.push({ key: "motorock_headless_defer_montonio_payment", value: "1" });
+    if (input.paymentGatewayId) {
+      meta.push({
+        key: "motorock_headless_intended_payment_gateway",
+        value: input.paymentGatewayId,
+      });
+    }
+    return meta;
   }
 
   const montonioOption =

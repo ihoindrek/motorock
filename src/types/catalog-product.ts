@@ -50,6 +50,7 @@ export type ProductVariation = {
   regularPrice?: number;
   image?: string;
   hex?: string;
+  inStock?: boolean;
 };
 
 export type CatalogProduct = {

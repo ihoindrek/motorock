@@ -181,7 +181,7 @@ export function EquipmentProductView({
 
   useEffect(() => {
     setSize(formatSizeLabel(sizes[0] ?? dict.pdp.oneSize));
-  }, [product.slug, sizes]);
+  }, [product.slug, sizes, dict.pdp.oneSize]);
 
   useEffect(() => {
     setColor(selectableColors[0] ?? "");
@@ -433,25 +433,18 @@ export function EquipmentProductView({
           <div className="space-y-3 pt-2" ref={atcSentinelRef}>
             <button
               type="button"
-              disabled={!product.inStock}
               onClick={handleAdd}
-              className="flex min-h-12 w-full items-center justify-center bg-ink px-6 font-body text-[11px] font-bold uppercase tracking-aggressive text-paper transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-40"
+              className="flex min-h-12 w-full items-center justify-center bg-ink px-6 font-body text-[11px] font-bold uppercase tracking-aggressive text-paper transition-colors hover:bg-accent"
             >
-              {product.inStock
-                ? added
-                  ? dict.pdp.addedToCart
-                  : dict.pdp.addToCart
-                : dict.search.soldOut}
+              {added ? dict.pdp.addedToCart : dict.pdp.addToCart}
             </button>
-            {product.inStock ? (
-              <button
-                type="button"
-                onClick={handleBuyNow}
-                className="flex min-h-11 w-full items-center justify-center border border-ink/20 text-xs text-ink/70 transition-colors hover:border-ink hover:text-ink"
-              >
-                {dict.pdp.buyNow}
-              </button>
-            ) : null}
+            <button
+              type="button"
+              onClick={handleBuyNow}
+              className="flex min-h-11 w-full items-center justify-center border border-ink/20 text-xs text-ink/70 transition-colors hover:border-ink hover:text-ink"
+            >
+              {dict.pdp.buyNow}
+            </button>
             <div className="flex items-center gap-6">
               <WishlistButton
                 variant="text"
@@ -625,7 +618,6 @@ export function EquipmentProductView({
     <EquipmentStickyAtc
       name={product.name}
       price={activePrice}
-      inStock={product.inStock}
       added={added}
       visible={stickyAtcVisible}
       onAdd={handleAdd}

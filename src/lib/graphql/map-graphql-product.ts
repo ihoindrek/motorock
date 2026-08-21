@@ -341,6 +341,7 @@ function mapVariations(product: GraphQLVariableProduct) {
       price: pricing.price,
       regularPrice: pricing.regularPrice,
       image: normalizeWordPressMediaUrlOptional(variation.image?.sourceUrl),
+      inStock: variation.stockStatus === "IN_STOCK",
     };
   });
 }

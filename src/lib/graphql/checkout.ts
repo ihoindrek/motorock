@@ -34,6 +34,7 @@ import {
 import {
   type CheckoutMetaDataInput,
   isMontonioPaymentGateway,
+  MOTOROCK_HEADLESS_PENDING_GATEWAY_ID,
   MONTONIO_PAYMENT_METHOD_ID,
   resolveMontonioCheckoutGatewayId,
 } from "@/lib/checkout/montonio-checkout";
@@ -578,6 +579,10 @@ const UNSUPPORTED_GATEWAY_IDS = new Set([
 /** Gateways Woo accepts but headless checkout cannot complete (payment stays pending). */
 const HEADLESS_CHECKOUT_FAILURE_GATEWAY_IDS = new Set<string>();
 
+const INTERNAL_CHECKOUT_GATEWAY_IDS = new Set([
+  MOTOROCK_HEADLESS_PENDING_GATEWAY_ID,
+]);
+
 function ensureHeadlessMontonioBankGateway(
   gateways: PaymentGateway[],
   sourceGateways: PaymentGateway[],
@@ -624,7 +629,8 @@ export function filterSupportedPaymentGateways(gateways: PaymentGateway[]) {
   const filtered = gateways.filter(
     (gateway) =>
       !UNSUPPORTED_GATEWAY_IDS.has(gateway.id) &&
-      !HEADLESS_CHECKOUT_FAILURE_GATEWAY_IDS.has(gateway.id),
+      !HEADLESS_CHECKOUT_FAILURE_GATEWAY_IDS.has(gateway.id) &&
+      !INTERNAL_CHECKOUT_GATEWAY_IDS.has(gateway.id),
   );
 
   return ensureHeadlessMontonioBankGateway(filtered, gateways);

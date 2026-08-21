@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { validateCheckoutPreflight } from "@/lib/checkout/preflight-checkout";
+import { MOTOROCK_HEADLESS_PENDING_GATEWAY_ID } from "@/lib/checkout/montonio-checkout";
 import { MONTONIO_PAYMENT_METHOD_ID } from "@/lib/graphql/checkout";
 
 describe("validateCheckoutPreflight", () => {
@@ -81,7 +82,32 @@ describe("validateCheckoutPreflight", () => {
     expect(result.ok).toBe(true);
   });
 
-  it("resolves synthetic Montonio card gateway to enabled Woo gateway", () => {
+  it("resolves Montonio card to pending gateway for remint checkout", () => {
+    const result = validateCheckoutPreflight({
+      ...baseInput,
+      selectedPaymentMethodId: "wc_montonio_card",
+      wooPaymentGatewayIds: [
+        "ppcp-gateway",
+        MOTOROCK_HEADLESS_PENDING_GATEWAY_ID,
+        MONTONIO_PAYMENT_METHOD_ID,
+        "wc_montonio_card",
+      ],
+      montonioOption: {
+        kind: "card",
+        code: "card",
+        name: "Card",
+        logoUrl: null,
+        systemName: "cardPayments",
+      },
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.resolvedPaymentMethodId).toBe(
+      MOTOROCK_HEADLESS_PENDING_GATEWAY_ID,
+    );
+  });
+
+  it("falls back to bank gateway for card when pending gateway is missing", () => {
     const result = validateCheckoutPreflight({
       ...baseInput,
       selectedPaymentMethodId: "wc_montonio_card",
