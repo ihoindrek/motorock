@@ -89,6 +89,27 @@ export const EQUIPMENT_PDP_PAYMENT_BRANDS: readonly CardPaymentBrand[] = [
   WOO_PAYMENTS_CARD_BRANDS[1],
 ] as const;
 
+/** Payment brands shown on the equipment PDP secure checkout trust badge. */
+export const EQUIPMENT_TRUST_SECURE_PAYMENT_BRANDS: readonly CardPaymentBrand[] = [
+  {
+    id: "applePay",
+    label: "Apple Pay",
+    src: PAYMENT_BRAND_ICON_PATHS.applePay,
+  },
+  {
+    id: "googlePay",
+    label: "Google Pay",
+    src: PAYMENT_BRAND_ICON_PATHS.googlePay,
+  },
+  {
+    id: "paypal",
+    label: "PayPal",
+    src: PAYMENT_BRAND_ICON_PATHS.paypal,
+  },
+  WOO_PAYMENTS_CARD_BRANDS[0],
+  WOO_PAYMENTS_CARD_BRANDS[1],
+] as const;
+
 export function cardPaymentBrandAriaLabel(
   brands: readonly CardPaymentBrand[] = WOO_PAYMENTS_CARD_BRANDS,
 ) {
