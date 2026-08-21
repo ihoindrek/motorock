@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Motorock Headless WooPayments
  * Description: Bridges headless GraphQL checkout to WooCommerce Payments (Stripe) on the storefront.
- * Version: 1.1.0
+ * Version: 1.2.0
  *
  * Install: copy to wp-content/mu-plugins/motorock-headless-woo-payments.php
  */
@@ -109,10 +109,70 @@ function motorock_wcpay_ensure_storefront_domain_registered() {
 	}
 }
 
+function motorock_wcpay_hydrate_post_from_meta_input( array $input ) {
+	if ( empty( $input['metaData'] ) || ! is_array( $input['metaData'] ) ) {
+		return;
+	}
+
+	foreach ( $input['metaData'] as $meta ) {
+		if ( ! is_array( $meta ) || empty( $meta['key'] ) || ! isset( $meta['value'] ) ) {
+			continue;
+		}
+
+		$key   = (string) $meta['key'];
+		$value = sanitize_text_field( (string) $meta['value'] );
+
+		if ( $value === '' ) {
+			continue;
+		}
+
+		switch ( $key ) {
+			case 'wcpay_payment_method':
+				$_POST['wcpay-payment-method'] = $value;
+				break;
+			case 'wcpay_fraud_prevention_token':
+				$_POST['wcpay-fraud-prevention-token'] = $value;
+				break;
+			case 'checkout_locale':
+				$_POST['checkout_locale'] = $value;
+				break;
+		}
+	}
+
+	if ( ! empty( $input['paymentMethod'] ) && $input['paymentMethod'] === 'woocommerce_payments' ) {
+		$_POST['payment_method'] = 'woocommerce_payments';
+	}
+}
+
+function motorock_wcpay_hydrate_post_from_order( WC_Order $order ) {
+	if ( $order->get_payment_method() !== 'woocommerce_payments' ) {
+		return;
+	}
+
+	$payment_method_id = (string) $order->get_meta( 'wcpay_payment_method' );
+	if ( $payment_method_id !== '' ) {
+		$_POST['wcpay-payment-method'] = $payment_method_id;
+	}
+
+	$fraud_token = (string) $order->get_meta( 'wcpay_fraud_prevention_token' );
+	if ( $fraud_token !== '' ) {
+		$_POST['wcpay-fraud-prevention-token'] = $fraud_token;
+	}
+
+	$_POST['payment_method'] = 'woocommerce_payments';
+}
+
 function motorock_wcpay_map_graphql_meta_to_post( $data, $input ) {
 	if ( empty( $input['metaData'] ) || ! is_array( $input['metaData'] ) ) {
+		if ( ! empty( $input['paymentMethod'] ) && $input['paymentMethod'] === 'woocommerce_payments' ) {
+			$_POST['payment_method'] = 'woocommerce_payments';
+			$data['payment_method']  = 'woocommerce_payments';
+		}
+
 		return $data;
 	}
+
+	motorock_wcpay_hydrate_post_from_meta_input( is_array( $input ) ? $input : array() );
 
 	foreach ( $input['metaData'] as $meta ) {
 		if ( ! is_array( $meta ) || empty( $meta['key'] ) || ! isset( $meta['value'] ) ) {
@@ -159,6 +219,32 @@ add_filter(
 	},
 	6,
 	4
+);
+
+add_action(
+	'graphql_woocommerce_before_checkout',
+	function ( $args, $input ) {
+		unset( $args );
+
+		motorock_wcpay_hydrate_post_from_meta_input( is_array( $input ) ? $input : array() );
+	},
+	10,
+	2
+);
+
+add_action(
+	'woocommerce_checkout_order_processed',
+	function ( $order_id, $data, $order ) {
+		unset( $order_id, $data );
+
+		if ( ! $order instanceof WC_Order ) {
+			return;
+		}
+
+		motorock_wcpay_hydrate_post_from_order( $order );
+	},
+	5,
+	3
 );
 
 add_action(

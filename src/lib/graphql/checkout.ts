@@ -38,6 +38,7 @@ import {
   MONTONIO_PAYMENT_METHOD_ID,
   resolveMontonioCheckoutGatewayId,
 } from "@/lib/checkout/montonio-checkout";
+import { isWooPaymentsGateway } from "@/lib/checkout/woo-payments";
 import { getMontonioConfig } from "@/lib/montonio/config";
 import { parseGraphqlPrice } from "@/lib/shop/parse-graphql-price";
 import { filterShippingRatesForCountry } from "@/lib/shop/shipping-showroom-pickup";
@@ -718,6 +719,36 @@ export function buildCheckoutInputAddresses(customer: CheckoutCustomerDetails): 
   };
 }
 
+export function isCheckoutPaymentFailure(result: string | null | undefined) {
+  if (!result) {
+    return false;
+  }
+
+  const normalized = result.toLowerCase();
+  return (
+    normalized === "failure" ||
+    normalized === "fail" ||
+    normalized === "failed" ||
+    normalized === "error"
+  );
+}
+
+function resolveCheckoutPaymentHint(paymentMethod: string) {
+  if (paymentMethod === MONTONIO_PAYMENT_METHOD_ID) {
+    return "Choose your bank under Pay with your bank and try again.";
+  }
+
+  if (isMontonioPaymentGateway(paymentMethod)) {
+    return "Try bank link or PayPal, or refresh and choose the payment method again.";
+  }
+
+  if (isWooPaymentsGateway(paymentMethod)) {
+    return "Check your card details and try again.";
+  }
+
+  return "Choose bank link or PayPal and try again.";
+}
+
 export async function submitCheckout(
   input: {
     paymentMethod?: string;
@@ -764,17 +795,14 @@ export async function submitCheckout(
 
   const checkout = data.checkout;
   if (!checkout || checkout.result !== "success") {
-    const paymentHint =
-      paymentMethod === MONTONIO_PAYMENT_METHOD_ID
-        ? "Choose your bank under Pay with your bank and try again."
-        : isMontonioPaymentGateway(paymentMethod)
-          ? "Try bank link or PayPal, or refresh and choose the payment method again."
-          : "Choose bank link or PayPal and try again.";
+    const paymentHint = resolveCheckoutPaymentHint(paymentMethod);
 
     throw new Error(
-      checkout?.result === "failure"
-        ? `Checkout payment could not be started. ${paymentHint}`
-        : "Checkout could not be completed. Please verify delivery and payment details, then try again.",
+      !checkout
+        ? "Checkout could not be completed. Please verify delivery and payment details, then try again."
+        : isCheckoutPaymentFailure(checkout.result)
+          ? `Checkout payment could not be started. ${paymentHint}`
+          : "Checkout could not be completed. Please verify delivery and payment details, then try again.",
     );
   }
 
