@@ -1,11 +1,11 @@
 import type { Locale } from "@/i18n/config";
 
 /** Europe/Tallinn calendar date (YYYY-MM-DD) until which the banner is shown. */
-const VISIBLE_THROUGH = "2026-08-20";
+const VISIBLE_THROUGH = "2026-08-31";
 
 const copy = {
-  et: "20. augustil on showroom suletud — veebist tellida saab",
-  en: "Showroom closed on 20 August — online orders still welcome",
+  et: "10% soodsam koodiga AUGUST10 — kehtib augusti lõpuni",
+  en: "10% off with code AUGUST10 — valid until end of August",
 } as const;
 
 function todayInTallinn(now = new Date()) {
