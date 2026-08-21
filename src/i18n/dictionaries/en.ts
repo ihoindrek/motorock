@@ -49,6 +49,7 @@ export type Dictionary = {
     tagline: string;
     mensGear: string;
     womensGear: string;
+    helmets: string;
     accessories: string;
     search: string;
     brands: string;
@@ -692,6 +693,7 @@ export const en: Dictionary = {
       "Premium motorcycles, riding gear, and tools — curated for riders who refuse to blend in. Built in Europe, shipped EU-wide.",
     mensGear: "Men's gear",
     womensGear: "Women's gear",
+    helmets: "Helmets",
     accessories: "Accessories",
     search: "Search",
     brands: "Brands",

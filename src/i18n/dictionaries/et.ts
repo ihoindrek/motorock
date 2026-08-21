@@ -53,6 +53,7 @@ export const et: Dictionary = {
       "Premium mootorrattad, sõiduriided ja tööriistad — valitud sõitjatele, kes ei taha sulanduda. Euroopas loodud, tarnime üle EL-i.",
     mensGear: "Meeste varustus",
     womensGear: "Naiste varustus",
+    helmets: "Kiivrid",
     accessories: "Aksessuaarid",
     search: "Otsi",
     brands: "Brändid",

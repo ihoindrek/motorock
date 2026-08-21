@@ -79,6 +79,16 @@ export function buildEquipmentMegaMenuFromTree(
 
   const accessoriesLinks: NavLink[] = [];
 
+  if (tree.helmets && categoryHasProducts(tree.helmets)) {
+    accessoriesLinks.push({
+      href: localizedHref(
+        locale,
+        buildEquipmentRootCategoryHref(tree.helmets, "helmets", locale),
+      ),
+      label: getLocalizedCategoryName(tree.helmets, locale),
+    });
+  }
+
   if (tree.accessories?.children?.nodes.length) {
     for (const link of buildCategoryColumnLinks(
       locale,
@@ -359,6 +369,17 @@ export function getFooterShopLinks(
       ),
       label: dict.footer.womensGear,
     },
+    ...(tree?.helmets && categoryHasProducts(tree.helmets)
+      ? [
+          {
+            href: localizedHref(
+              locale,
+              buildEquipmentRootCategoryHref(tree.helmets, "helmets", locale),
+            ),
+            label: dict.footer.helmets,
+          },
+        ]
+      : []),
     {
       href: localizedHref(
         locale,
