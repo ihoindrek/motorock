@@ -6,7 +6,10 @@ import {
   getLocalizedCategoryName,
 } from "@/lib/graphql/categories";
 import type { CategoryRoute } from "@/lib/shop/category";
-import { buildEquipmentCategoryHrefFromNodes } from "@/lib/shop/equipment-route";
+import {
+  buildEquipmentCategoryHrefFromNodes,
+  buildEquipmentRootCategoryHref,
+} from "@/lib/shop/equipment-route";
 import { HELMET_WC_SLUGS } from "@/lib/shop/wc-categories";
 
 const EQUIPMENT_BRANCH_ROOTS = new Set(["for-men", "for-women", "accessories"]);
@@ -43,6 +46,41 @@ function sortSubcategories(left: WcCategoryEntry, right: WcCategoryEntry) {
   return left.name.localeCompare(right.name);
 }
 
+function mapChildSubcategory(
+  root: WcCategoryEntry,
+  child: WcCategoryEntry,
+  locale: Locale,
+): EquipmentSubcategory {
+  const title = getLocalizedCategoryName(child, locale);
+  const { url, alt } = getCategoryImage(child, DEFAULT_SUBCATEGORY_IMAGE);
+
+  return {
+    wcSlug: child.slug,
+    title,
+    href: buildEquipmentCategoryHrefFromNodes([root, child], locale),
+    image: url,
+    imageAlt: alt,
+    productCount: child.count ?? 0,
+  };
+}
+
+function mapHelmetsRootSubcategory(
+  helmets: WcCategoryEntry,
+  locale: Locale,
+): EquipmentSubcategory {
+  const title = getLocalizedCategoryName(helmets, locale);
+  const { url, alt } = getCategoryImage(helmets, DEFAULT_SUBCATEGORY_IMAGE);
+
+  return {
+    wcSlug: helmets.slug,
+    title,
+    href: buildEquipmentRootCategoryHref(helmets, "helmets", locale),
+    image: url,
+    imageAlt: alt,
+    productCount: helmets.count ?? 0,
+  };
+}
+
 export function buildEquipmentSubcategories(
   route: CategoryRoute,
   index: EquipmentCategoryIndex,
@@ -60,22 +98,27 @@ export function buildEquipmentSubcategories(
     return [];
   }
 
-  return [...index.nodes.values()]
+  const subcategories = [...index.nodes.values()]
     .filter((node) => node.parentSlug === rootSlug)
     .filter((node) => rootSlug !== "accessories" || !HELMET_WC_SLUGS.has(node.slug))
     .filter(categoryHasProducts)
     .sort(sortSubcategories)
-    .map((child) => {
-      const title = getLocalizedCategoryName(child, locale);
-      const { url, alt } = getCategoryImage(child, DEFAULT_SUBCATEGORY_IMAGE);
+    .map((child) => mapChildSubcategory(root, child, locale));
 
-      return {
-        wcSlug: child.slug,
-        title,
-        href: buildEquipmentCategoryHrefFromNodes([root, child], locale),
-        image: url,
-        imageAlt: alt,
-        productCount: child.count ?? 0,
-      };
-    });
+  if (rootSlug !== "accessories") {
+    return subcategories;
+  }
+
+  const helmets = index.nodes.get("helmets");
+
+  if (!helmets || !categoryHasProducts(helmets)) {
+    return subcategories;
+  }
+
+  const helmetSubcategory = mapHelmetsRootSubcategory(helmets, locale);
+
+  return [
+    helmetSubcategory,
+    ...subcategories.filter((subcategory) => subcategory.wcSlug !== helmets.slug),
+  ];
 }
