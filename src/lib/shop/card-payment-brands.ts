@@ -48,9 +48,16 @@ export const WOO_PAYMENTS_CARD_BRANDS: readonly CardPaymentBrand[] = [
   },
 ] as const;
 
+/** Primary networks shown in checkout UI (EU storefront). */
+export const WOO_PAYMENTS_PRIMARY_CARD_BRANDS: readonly CardPaymentBrand[] = [
+  WOO_PAYMENTS_CARD_BRANDS[0],
+  WOO_PAYMENTS_CARD_BRANDS[1],
+  WOO_PAYMENTS_CARD_BRANDS[2],
+] as const;
+
 /** Logos shown for WooPayments in checkout (card networks). */
 export const WOO_PAYMENTS_CHECKOUT_LOGOS: readonly CardPaymentBrand[] =
-  WOO_PAYMENTS_CARD_BRANDS;
+  WOO_PAYMENTS_PRIMARY_CARD_BRANDS;
 
 export function cardPaymentBrandAriaLabel(
   brands: readonly CardPaymentBrand[] = WOO_PAYMENTS_CARD_BRANDS,

@@ -356,12 +356,11 @@ function PaymentMethodIcon({
       <span
         aria-hidden="true"
         className={cn(
-          "flex shrink-0 items-center overflow-hidden",
-          CARD_PAYMENT_LOGO_SIZES.container,
-          "w-[8.5rem] sm:w-[11rem]",
+          "flex shrink-0 items-center",
+          "w-[4.75rem] sm:w-[5.25rem]",
         )}
       >
-        <CheckoutCardBrandIcons size="sm" scrollable />
+        <CheckoutCardBrandIcons variant="compact" size="sm" className="w-full" />
       </span>
     );
   }

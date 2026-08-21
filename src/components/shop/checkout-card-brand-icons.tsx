@@ -8,22 +8,22 @@ import {
 } from "@/lib/shop/card-payment-brands";
 import { cn } from "@/lib/utils";
 
-const sizeClassName = {
-  sm: "h-5 w-auto shrink-0 sm:h-[1.35rem]",
-  md: "h-6 w-auto shrink-0 sm:h-7",
+const imageSizeClassName = {
+  sm: "max-h-[0.85rem] max-w-full",
+  md: "max-h-[1rem] max-w-full",
 } as const;
 
 export function CheckoutCardBrandIcons({
   brands = WOO_PAYMENTS_CHECKOUT_LOGOS,
   size = "md",
+  variant = "compact",
   className,
-  scrollable = false,
   "aria-label": ariaLabel = cardPaymentBrandAriaLabel(brands),
 }: {
   brands?: readonly CardPaymentBrand[];
-  size?: keyof typeof sizeClassName;
+  size?: keyof typeof imageSizeClassName;
+  variant?: "compact" | "row";
   className?: string;
-  scrollable?: boolean;
   "aria-label"?: string;
 }) {
   const [failedIds, setFailedIds] = useState<ReadonlySet<string>>(() => new Set());
@@ -33,35 +33,64 @@ export function CheckoutCardBrandIcons({
     return null;
   }
 
+  const handleError = (brandId: string) => {
+    setFailedIds((current) => {
+      if (current.has(brandId)) {
+        return current;
+      }
+
+      return new Set([...current, brandId]);
+    });
+  };
+
+  if (variant === "row") {
+    return (
+      <ul
+        className={cn(
+          "m-0 flex list-none flex-wrap items-center gap-1.5 p-0",
+          className,
+        )}
+        aria-label={ariaLabel}
+      >
+        {visibleBrands.map((brand) => (
+          <li key={brand.id}>
+            <span className="flex h-7 min-w-[2.75rem] items-center justify-center rounded-sm border border-ink/10 bg-ink/[0.02] px-2">
+              <img
+                src={brand.src}
+                alt=""
+                width={40}
+                height={24}
+                loading="lazy"
+                decoding="async"
+                className={cn("block w-auto object-contain", imageSizeClassName[size])}
+                onError={() => handleError(brand.id)}
+              />
+            </span>
+          </li>
+        ))}
+      </ul>
+    );
+  }
+
   return (
     <ul
-      className={cn(
-        "m-0 flex list-none flex-row flex-nowrap items-center gap-1.5 p-0 sm:gap-2",
-        scrollable && "overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
-        className,
-      )}
+      className={cn("m-0 grid list-none grid-cols-3 gap-1 p-0", className)}
       aria-label={ariaLabel}
     >
       {visibleBrands.map((brand) => (
-        <li key={brand.id} className="shrink-0">
-          <img
-            src={brand.src}
-            alt=""
-            width={64}
-            height={40}
-            loading="lazy"
-            decoding="async"
-            className={cn("block object-contain", sizeClassName[size])}
-            onError={() => {
-              setFailedIds((current) => {
-                if (current.has(brand.id)) {
-                  return current;
-                }
-
-                return new Set([...current, brand.id]);
-              });
-            }}
-          />
+        <li key={brand.id}>
+          <span className="flex h-7 items-center justify-center rounded-sm border border-ink/10 bg-ink/[0.02] px-1.5">
+            <img
+              src={brand.src}
+              alt=""
+              width={40}
+              height={24}
+              loading="lazy"
+              decoding="async"
+              className={cn("block w-auto object-contain", imageSizeClassName[size])}
+              onError={() => handleError(brand.id)}
+            />
+          </span>
         </li>
       ))}
     </ul>

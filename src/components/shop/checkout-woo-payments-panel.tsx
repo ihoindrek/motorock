@@ -33,6 +33,7 @@ import {
 import { buildStripeCheckoutAppearance } from "@/lib/checkout/stripe-appearance";
 import { useDictionary } from "@/context/locale-context";
 import { MorphingSquare } from "@/components/ui/morphing-square";
+import { CheckoutCardBrandIcons } from "@/components/shop/checkout-card-brand-icons";
 import { cn } from "@/lib/utils";
 
 export type CheckoutWooPaymentsHandle = {
@@ -174,15 +175,24 @@ function CheckoutWooPaymentsCardForm({
   );
 
   return (
-    <div className="space-y-3">
-      <div className="flex flex-wrap items-end justify-between gap-2">
-        <p className="font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/45">
-          {dict.checkout.paymentWooPaymentsFormTitle}
+    <div className="space-y-4">
+      <div className="flex items-start justify-between gap-3 border-b border-ink/10 pb-3">
+        <div className="space-y-2">
+          <p className="font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/45">
+            {dict.checkout.paymentWooPaymentsFormTitle}
+          </p>
+          <CheckoutCardBrandIcons
+            variant="row"
+            size="sm"
+            className="max-w-[11rem]"
+          />
+        </div>
+        <p className="shrink-0 pt-0.5 text-[11px] text-ink/40">
+          {dict.checkout.securePayment}
         </p>
-        <p className="text-[11px] text-ink/40">{dict.checkout.securePayment}</p>
       </div>
 
-      <div className="relative min-h-[8.5rem]">
+      <div className="relative min-h-[7.5rem]">
         {!ready ? (
           <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/85">
             <MorphingSquare size="sm" />
@@ -203,11 +213,6 @@ function CheckoutWooPaymentsCardForm({
             onError?.(null);
           }}
           options={{
-            layout: {
-              type: "accordion",
-              defaultCollapsed: false,
-              spacedAccordionItems: true,
-            },
             fields: {
               billingDetails: {
                 name: "never",
@@ -403,15 +408,17 @@ export const CheckoutWooPaymentsPanel = forwardRef<
               stripe={stripePromise}
               options={expressElementsOptions}
             >
-              <CheckoutWooPaymentsExpressCheckout
-                billing={billing}
-                onError={onError}
-                onExpressPaymentMethod={onExpressPaymentMethod}
-                onAvailabilityChange={(available) => {
-                  setExpressPending(false);
-                  setExpressAvailable(available);
-                }}
-              />
+              <div className="overflow-hidden rounded-sm border border-ink/10 bg-ink/[0.015] p-3 sm:p-4">
+                <CheckoutWooPaymentsExpressCheckout
+                  billing={billing}
+                  onError={onError}
+                  onExpressPaymentMethod={onExpressPaymentMethod}
+                  onAvailabilityChange={(available) => {
+                    setExpressPending(false);
+                    setExpressAvailable(available);
+                  }}
+                />
+              </div>
             </Elements>
           </div>
         ) : null}

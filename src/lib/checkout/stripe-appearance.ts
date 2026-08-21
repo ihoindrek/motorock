@@ -70,10 +70,14 @@ export function buildStripeCheckoutAppearance(): Appearance {
         boxShadow: "none",
       },
       ".TabIcon": {
-        fill: INK,
+        display: "none",
       },
       ".TabIcon--selected": {
-        fill: ACCENT,
+        display: "none",
+      },
+      ".TabLabel": {
+        fontSize: "12px",
+        fontWeight: "600",
       },
       ".Block": {
         backgroundColor: "transparent",
