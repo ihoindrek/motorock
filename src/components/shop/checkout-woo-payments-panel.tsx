@@ -37,6 +37,7 @@ export type CheckoutWooPaymentsHandle = {
 
 type CheckoutWooPaymentsPanelProps = {
   publishableKey: string;
+  stripeAccountId?: string;
   amountCents: number;
   locale: "en" | "et";
   billing: WooPaymentsBillingDetails;
@@ -315,6 +316,7 @@ export const CheckoutWooPaymentsPanel = forwardRef<
 >(function CheckoutWooPaymentsPanel(
   {
     publishableKey,
+    stripeAccountId,
     amountCents,
     locale,
     billing,
@@ -328,8 +330,12 @@ export const CheckoutWooPaymentsPanel = forwardRef<
 ) {
   const dict = useDictionary();
   const stripePromise = useMemo(
-    () => loadStripe(publishableKey),
-    [publishableKey],
+    () =>
+      loadStripe(
+        publishableKey,
+        stripeAccountId ? { stripeAccount: stripeAccountId } : undefined,
+      ),
+    [publishableKey, stripeAccountId],
   );
   const elementsInstanceKey = `${billing.address.country || "xx"}:${amountCents}`;
 

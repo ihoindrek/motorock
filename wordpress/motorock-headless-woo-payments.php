@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Motorock Headless WooPayments
  * Description: Bridges headless GraphQL checkout to WooCommerce Payments (Stripe) on the storefront.
- * Version: 1.3.3
+ * Version: 1.3.4
  *
  * Install: copy to wp-content/mu-plugins/motorock-headless-woo-payments.php
  */
@@ -39,6 +39,19 @@ function motorock_wcpay_publishable_key() {
 	}
 
 	return (string) $account_service->get_publishable_key( WC_Payments::mode()->is_test() );
+}
+
+function motorock_wcpay_stripe_account_id() {
+	if ( ! motorock_wcpay_is_available() ) {
+		return '';
+	}
+
+	$account_service = WC_Payments::get_account_service();
+	if ( ! $account_service || ! method_exists( $account_service, 'get_stripe_account_id' ) ) {
+		return '';
+	}
+
+	return (string) $account_service->get_stripe_account_id();
 }
 
 function motorock_wcpay_bootstrap_session() {
@@ -116,18 +129,24 @@ function motorock_wcpay_take_last_payment_error() {
 	return $message;
 }
 
-function motorock_wcpay_record_payment_error( $order, $message ) {
-	$message = wp_strip_all_tags( (string) $message );
-	if ( $message === '' ) {
+function motorock_wcpay_record_payment_error( $order, $raw_message, $display_message = '' ) {
+	$raw_message = wp_strip_all_tags( (string) $raw_message );
+	if ( $raw_message === '' ) {
 		return;
 	}
 
+	$display_message = wp_strip_all_tags( (string) $display_message );
+	if ( $display_message === '' ) {
+		$display_message = $raw_message;
+	}
+
 	if ( $order instanceof WC_Order ) {
-		$order->update_meta_data( '_motorock_payment_error', $message );
+		$order->update_meta_data( '_motorock_payment_error', $display_message );
+		$order->update_meta_data( '_motorock_payment_error_raw', $raw_message );
 		$order->save();
 	}
 
-	motorock_wcpay_store_last_payment_error( $message );
+	motorock_wcpay_store_last_payment_error( $display_message );
 }
 
 function motorock_wcpay_prepare_checkout_request( array $input, WC_Order $order = null ) {
@@ -409,11 +428,12 @@ add_action(
 			return;
 		}
 
-		$message = class_exists( 'WC_Payments_Utils' )
+		$raw_message     = wp_strip_all_tags( (string) $exception->getMessage() );
+		$display_message = class_exists( 'WC_Payments_Utils' )
 			? WC_Payments_Utils::get_filtered_error_message( $exception )
-			: $exception->getMessage();
+			: $raw_message;
 
-		motorock_wcpay_record_payment_error( $order, $message );
+		motorock_wcpay_record_payment_error( $order, $raw_message, $display_message );
 	},
 	10,
 	2
@@ -426,11 +446,12 @@ add_action(
 			return;
 		}
 
-		$message = class_exists( 'WC_Payments_Utils' )
+		$raw_message     = wp_strip_all_tags( (string) $exception->getMessage() );
+		$display_message = class_exists( 'WC_Payments_Utils' )
 			? WC_Payments_Utils::get_filtered_error_message( $exception )
-			: $exception->getMessage();
+			: $raw_message;
 
-		motorock_wcpay_record_payment_error( $order, $message );
+		motorock_wcpay_record_payment_error( $order, $raw_message, $display_message );
 	},
 	10,
 	2
@@ -581,6 +602,7 @@ function motorock_rest_wcpay_config( WP_REST_Request $request ) {
 		return rest_ensure_response(
 			array(
 				'publishableKey'         => motorock_wcpay_publishable_key(),
+				'stripeAccountId'        => motorock_wcpay_stripe_account_id(),
 				'testMode'               => WC_Payments::mode()->is_test(),
 				'gatewayEnabled'         => $gateway instanceof WC_Payment_Gateway && $gateway->enabled === 'yes',
 				'fraudPreventionEnabled' => $fraud_prevention_enabled,

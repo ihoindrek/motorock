@@ -47,6 +47,7 @@ export function buildWooPaymentsCheckoutMetaData(input: {
 
 export type WooPaymentsConfig = {
   publishableKey: string;
+  stripeAccountId?: string;
   testMode: boolean;
   gatewayEnabled: boolean;
   fraudPreventionEnabled?: boolean;

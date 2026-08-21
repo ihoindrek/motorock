@@ -2397,6 +2397,7 @@ export function CartCheckoutView() {
                             <CheckoutWooPaymentsPanel
                               ref={wooPaymentsPanelRef}
                               publishableKey={wooPayments.config.publishableKey}
+                              stripeAccountId={wooPayments.config.stripeAccountId}
                               amountCents={Math.max(
                                 0,
                                 Math.round(wooPaymentsChargeTotal * 100),
