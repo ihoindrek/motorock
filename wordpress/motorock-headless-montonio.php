@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Motorock Headless Checkout
  * Description: Bridges headless GraphQL checkout to Montonio for WooCommerce (pickup points + payment methods).
- * Version: 1.3.0
+ * Version: 1.3.1
  *
  * Install: copy to wp-content/mu-plugins/motorock-headless-montonio.php
  */
@@ -22,35 +22,53 @@ if ( ! function_exists( 'motorock_is_graphql_request' ) ) {
 /**
  * Internal Woo gateway for headless checkout: creates a pending order without
  * calling Montonio. The Next.js storefront remints payment via Montonio API.
+ *
+ * Must register after WooCommerce loads — mu-plugins run before WC_Payment_Gateway exists.
  */
-class Motorock_Headless_Pending_Gateway extends WC_Payment_Gateway {
+add_action(
+	'plugins_loaded',
+	function () {
+		if ( ! class_exists( 'WC_Payment_Gateway' ) ) {
+			return;
+		}
 
-	public function __construct() {
-		$this->id                 = 'motorock_headless_pending';
-		$this->method_title       = 'Motorock headless pending';
-		$this->method_description = 'Internal — defers Montonio payment to the storefront remint API.';
-		$this->has_fields         = false;
-		$this->enabled            = 'yes';
-	}
+		if ( class_exists( 'Motorock_Headless_Pending_Gateway', false ) ) {
+			return;
+		}
 
-	public function is_available() {
-		return motorock_is_graphql_request();
-	}
+		class Motorock_Headless_Pending_Gateway extends WC_Payment_Gateway {
 
-	public function process_payment( $order_id ) {
-		return array(
-			'result'   => 'success',
-			'redirect' => '',
+			public function __construct() {
+				$this->id                 = 'motorock_headless_pending';
+				$this->method_title       = 'Motorock headless pending';
+				$this->method_description = 'Internal — defers Montonio payment to the storefront remint API.';
+				$this->has_fields         = false;
+				$this->enabled            = 'yes';
+			}
+
+			public function is_available() {
+				return motorock_is_graphql_request();
+			}
+
+			public function process_payment( $order_id ) {
+				unset( $order_id );
+
+				return array(
+					'result'   => 'success',
+					'redirect' => '',
+				);
+			}
+		}
+
+		add_filter(
+			'woocommerce_payment_gateways',
+			function ( $gateways ) {
+				$gateways[] = 'Motorock_Headless_Pending_Gateway';
+				return $gateways;
+			}
 		);
-	}
-}
-
-add_filter(
-	'woocommerce_payment_gateways',
-	function ( $gateways ) {
-		$gateways[] = 'Motorock_Headless_Pending_Gateway';
-		return $gateways;
-	}
+	},
+	11
 );
 
 add_action(
