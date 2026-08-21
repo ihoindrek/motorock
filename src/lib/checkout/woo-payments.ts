@@ -40,6 +40,8 @@ export type WooPaymentsConfig = {
   testMode: boolean;
   gatewayEnabled: boolean;
   fraudPreventionToken: string;
+  storefrontDomain?: string;
+  storefrontDomainStatus?: Record<string, unknown> | null;
 };
 
 export async function fetchWooPaymentsConfig(

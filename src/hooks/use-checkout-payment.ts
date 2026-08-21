@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   fetchPaymentGateways,
   type PaymentGateway,
@@ -22,6 +22,8 @@ export function useCheckoutPayment(
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const gatewaysRef = useRef(gateways);
+  gatewaysRef.current = gateways;
 
   useEffect(() => {
     if (!ready) {
@@ -35,7 +37,8 @@ export function useCheckoutPayment(
     let cancelled = false;
 
     (async () => {
-      setLoading(true);
+      // Keep the current gateway list mounted while refreshing after country/shipping changes.
+      setLoading(gatewaysRef.current.length === 0);
       setError(null);
 
       try {

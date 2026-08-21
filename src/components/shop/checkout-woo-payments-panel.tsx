@@ -1,10 +1,13 @@
 "use client";
 
 import {
+  Component,
   forwardRef,
+  useEffect,
   useImperativeHandle,
   useMemo,
   useState,
+  type ReactNode,
   type Ref,
 } from "react";
 import {
@@ -41,6 +44,39 @@ type CheckoutWooPaymentsPanelProps = {
   onError?: (message: string | null) => void;
   onExpressPaymentMethod?: (paymentMethodId: string) => Promise<void>;
 };
+
+type WooPaymentsErrorBoundaryProps = {
+  children: ReactNode;
+  fallback: ReactNode;
+  onError?: (error: Error) => void;
+};
+
+type WooPaymentsErrorBoundaryState = {
+  error: Error | null;
+};
+
+class WooPaymentsErrorBoundary extends Component<
+  WooPaymentsErrorBoundaryProps,
+  WooPaymentsErrorBoundaryState
+> {
+  state: WooPaymentsErrorBoundaryState = { error: null };
+
+  static getDerivedStateFromError(error: Error) {
+    return { error };
+  }
+
+  componentDidCatch(error: Error) {
+    this.props.onError?.(error);
+  }
+
+  render() {
+    if (this.state.error) {
+      return this.props.fallback;
+    }
+
+    return this.props.children;
+  }
+}
 
 function CheckoutWooPaymentsForm({
   forwardedRef,
@@ -85,19 +121,22 @@ function CheckoutWooPaymentsForm({
   );
 
   return (
-    <div className="space-y-5">
+    <div className="relative space-y-5">
       {onExpressPaymentMethod ? (
         <div
           className={cn(
-            expressAvailability === "pending" && "h-0 overflow-hidden opacity-0",
             expressAvailability === "none" && "hidden",
+            expressAvailability === "pending" && "min-h-11",
           )}
+          aria-hidden={expressAvailability === "none"}
         >
           <ExpressCheckoutElement
             onReady={({ availablePaymentMethods }) => {
               const available = Boolean(
                 availablePaymentMethods &&
-                  Object.values(availablePaymentMethods).some(Boolean),
+                  (availablePaymentMethods.applePay ||
+                    availablePaymentMethods.googlePay ||
+                    availablePaymentMethods.link),
               );
               setExpressAvailability(available ? "available" : "none");
             }}
@@ -192,7 +231,6 @@ function CheckoutWooPaymentsForm({
           ) : null}
 
           <PaymentElement
-            key={billing.address.country || "no-country"}
             onReady={() => {
               setReady(true);
               onReadyChange?.(true);
@@ -262,38 +300,60 @@ export const CheckoutWooPaymentsPanel = forwardRef<
   },
   ref,
 ) {
+  const dict = useDictionary();
   const stripePromise = useMemo(
     () => loadStripe(publishableKey),
     [publishableKey],
   );
+  const elementsInstanceKey = `${billing.address.country || "xx"}:${amountCents}`;
+
+  useEffect(() => {
+    onReadyChange?.(false);
+  }, [elementsInstanceKey, onReadyChange]);
 
   if (!publishableKey || amountCents <= 0) {
     return null;
   }
 
   return (
-    <div className={cn(className)}>
-      <Elements
-        stripe={stripePromise}
-        options={{
-          locale,
-          mode: "payment",
-          amount: amountCents,
-          currency: "eur",
-          excludedPaymentMethodTypes: [...WOO_PAYMENTS_EXCLUDED_STRIPE_PAYMENT_METHODS],
-          appearance: buildStripeCheckoutAppearance(),
-        }}
-      >
-        <CheckoutWooPaymentsForm
-          forwardedRef={ref}
-          billing={billing}
-          orCardLabel={orCardLabel}
-          onReadyChange={onReadyChange}
-          onError={onError}
-          onExpressPaymentMethod={onExpressPaymentMethod}
-        />
-      </Elements>
-    </div>
+    <WooPaymentsErrorBoundary
+      onError={(error) => {
+        onReadyChange?.(false);
+        onError?.(error.message);
+      }}
+      fallback={
+        <p className="text-sm text-accent" role="alert">
+          {dict.checkout.paymentError}
+        </p>
+      }
+    >
+      <div className={cn(className)}>
+        <Elements
+          key={elementsInstanceKey}
+          stripe={stripePromise}
+          options={{
+            locale,
+            mode: "payment",
+            amount: amountCents,
+            currency: "eur",
+            paymentMethodCreation: "manual",
+            excludedPaymentMethodTypes: [
+              ...WOO_PAYMENTS_EXCLUDED_STRIPE_PAYMENT_METHODS,
+            ],
+            appearance: buildStripeCheckoutAppearance(),
+          }}
+        >
+          <CheckoutWooPaymentsForm
+            forwardedRef={ref}
+            billing={billing}
+            orCardLabel={orCardLabel}
+            onReadyChange={onReadyChange}
+            onError={onError}
+            onExpressPaymentMethod={onExpressPaymentMethod}
+          />
+        </Elements>
+      </div>
+    </WooPaymentsErrorBoundary>
   );
 });
 

@@ -21,7 +21,7 @@ if [[ "${1:-}" == "--upload" ]]; then
   UPLOAD=true
 fi
 
-for f in motorock-headless-montonio.php motorock-headless-backorders.php; do
+for f in motorock-headless-montonio.php motorock-headless-backorders.php motorock-headless-woo-payments.php; do
   if [[ ! -f "$WP_DIR/$f" ]]; then
     echo "Missing: $WP_DIR/$f" >&2
     exit 1
@@ -31,6 +31,7 @@ done
 echo "Files to install in wp-content/mu-plugins/:"
 echo "  - motorock-headless-montonio.php (v1.3+ — Montonio card remint pending gateway)"
 echo "  - motorock-headless-backorders.php (allow checkout at zero supplier stock)"
+echo "  - motorock-headless-woo-payments.php (WooPayments config + storefront domain registration)"
 echo
 echo "Catalog importer (if not already deployed): class-product-writer.php backorder on import"
 
@@ -55,6 +56,7 @@ MU_PLUGINS="${WP_DEPLOY_PATH%/}/mu-plugins"
 rsync -avz -e "ssh -p $PORT" \
   "$WP_DIR/motorock-headless-montonio.php" \
   "$WP_DIR/motorock-headless-backorders.php" \
+  "$WP_DIR/motorock-headless-woo-payments.php" \
   "$WP_DEPLOY_USER@$WP_DEPLOY_HOST:$MU_PLUGINS/"
 
 echo "Uploaded checkout mu-plugins to $WP_DEPLOY_HOST:$MU_PLUGINS/"

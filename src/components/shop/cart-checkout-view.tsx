@@ -751,8 +751,10 @@ export function CartCheckoutView() {
   }, [montonio.options, selectedPaymentGateway]);
   const paymentLoading =
     paymentCatalogReady &&
-    (payment.loading ||
-      (isLiveCheckoutEnabled() && montonio.loading));
+    ((payment.loading && payment.gateways.length === 0) ||
+      (isLiveCheckoutEnabled() &&
+        montonio.loading &&
+        montonio.options.length === 0));
   const montonioSelected = Boolean(
     selectedPaymentGateway?.id?.toLowerCase().includes("montonio"),
   );

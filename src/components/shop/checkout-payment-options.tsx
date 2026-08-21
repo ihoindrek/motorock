@@ -889,16 +889,29 @@ export function CheckoutPaymentOptions({
                   }}
                 />
                 {showWooPaymentsPanel ? (
-                  <div className="border border-t-0 border-accent bg-white px-4 py-5 sm:px-5 sm:py-6">
-                    {wooPaymentsLoading ? (
+                  <div className="relative border border-t-0 border-accent bg-white px-4 py-5 sm:px-5 sm:py-6">
+                    {wooPaymentsPanel ? (
+                      <div
+                        className={cn(
+                          (wooPaymentsLoading || wooPaymentsError) &&
+                            "pointer-events-none opacity-40",
+                        )}
+                      >
+                        {wooPaymentsPanel}
+                      </div>
+                    ) : wooPaymentsLoading ? (
                       <MorphingSquare message={copy.paymentLoading} size="sm" />
                     ) : null}
+                    {wooPaymentsLoading && wooPaymentsPanel ? (
+                      <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/80">
+                        <MorphingSquare message={copy.paymentLoading} size="sm" />
+                      </div>
+                    ) : null}
                     {wooPaymentsError ? (
-                      <p className="text-sm text-accent" role="alert">
+                      <p className="mt-3 text-sm text-accent" role="alert">
                         {wooPaymentsError}
                       </p>
                     ) : null}
-                    {!wooPaymentsLoading && !wooPaymentsError ? wooPaymentsPanel : null}
                     {wooPaymentsFormError ? (
                       <p className="mt-3 text-sm text-accent" role="alert">
                         {wooPaymentsFormError}
