@@ -13,12 +13,15 @@ import {
 import { runCheckoutPreflight } from "@/lib/checkout/preflight-checkout";
 import type {
   CheckoutOrchestrateInput,
+  CheckoutOrchestrateOptions,
   CheckoutOrchestrateResult,
   CheckoutRemintInput,
 } from "@/lib/checkout/orchestrate-checkout.types";
 import { remintMontonioCheckoutPayment } from "@/lib/checkout/remint-montonio-checkout";
 import {
   buildCheckoutInputAddresses,
+  fetchCartShipping,
+  parseCartMoney,
   prepareCheckoutSession,
   selectShippingRate,
   submitCheckout,
@@ -130,11 +133,15 @@ async function remintMontonioCheckoutPaymentViaApi(input: CheckoutRemintInput) {
  * Runs the full headless checkout pipeline. GraphQL calls use the browser Woo
  * endpoint when executed client-side (required for Montonio bank link).
  */
+function wooPaymentsAmountMismatchMessage(locale: "en" | "et") {
+  return locale === "et"
+    ? "Tellimuse summa muutus. Oota, kuni kaardivorm värskendub, ja proovi uuesti."
+    : "The order total changed. Wait for the card form to refresh and try again.";
+}
+
 export async function orchestrateCheckout(
   input: CheckoutOrchestrateInput,
-  options?: {
-    remintHandler?: RemintHandler;
-  },
+  options?: CheckoutOrchestrateOptions,
 ): Promise<CheckoutOrchestrateResult> {
   if (!input.selectedShippingRateId) {
     return {
@@ -158,21 +165,24 @@ export async function orchestrateCheckout(
     };
   }
 
+  const checkoutCustomer = { ...input.customer };
+  if (isWooPaymentsGateway(input.paymentMethodId) && checkoutCustomer.phone) {
+    checkoutCustomer.phone = normalizeCheckoutPhoneForWooPayments(
+      checkoutCustomer.phone,
+    );
+  }
+
   let activeSession = await prepareCheckoutSession({
     lines: input.lines,
     linesKey: input.linesKey,
     sessionToken: input.sessionToken,
     selectedRateId: input.selectedShippingRateId,
-    customer: input.customer,
+    customer: checkoutCustomer,
   });
 
   const { billing, shipping: shippingAddress } = buildCheckoutInputAddresses(
-    input.customer,
+    checkoutCustomer,
   );
-
-  if (isWooPaymentsGateway(input.paymentMethodId) && billing.phone) {
-    billing.phone = normalizeCheckoutPhoneForWooPayments(billing.phone);
-  }
 
   const pickupNote = buildCheckoutPickupNote({
     pickupPoint: input.pickupPoint,
@@ -181,7 +191,7 @@ export async function orchestrateCheckout(
   });
 
   const { sessionToken: customerSession } = await updateCheckoutCustomerShipping(
-    input.customer,
+    checkoutCustomer,
     activeSession,
   );
   activeSession = customerSession ?? activeSession;
@@ -233,6 +243,8 @@ export async function orchestrateCheckout(
   );
 
   let wooPaymentsFraudPreventionToken = input.wooPaymentsFraudPreventionToken;
+  let wooPaymentsStripePaymentMethodId = input.wooPaymentsStripePaymentMethodId;
+
   if (isWooPaymentsGateway(input.paymentMethodId)) {
     try {
       const freshConfig = await fetchWooPaymentsConfig(activeSession);
@@ -241,6 +253,53 @@ export async function orchestrateCheckout(
       }
     } catch {
       // Server-side checkout also refreshes the token when fraud prevention is enabled.
+    }
+
+    const cart = await fetchCartShipping(activeSession);
+    const amountCents = Math.max(0, Math.round(parseCartMoney(cart.cart.total) * 100));
+    activeSession = cart.sessionToken ?? activeSession;
+
+    if (
+      input.expectedWooPaymentsAmountCents !== undefined &&
+      input.expectedWooPaymentsAmountCents !== amountCents
+    ) {
+      return {
+        ok: false,
+        code: "CHECKOUT_FAILED",
+        errors: [wooPaymentsAmountMismatchMessage(input.locale)],
+      };
+    }
+
+    if (options?.createWooPaymentsCredential) {
+      try {
+        wooPaymentsStripePaymentMethodId =
+          await options.createWooPaymentsCredential({
+            amountCents,
+            sessionToken: activeSession,
+          });
+      } catch (cause) {
+        return {
+          ok: false,
+          code: "CHECKOUT_FAILED",
+          errors: [
+            cause instanceof Error
+              ? cause.message
+              : input.locale === "et"
+                ? "Makse käivitamine ebaõnnestus."
+                : "Could not start payment.",
+          ],
+        };
+      }
+    } else if (!wooPaymentsStripePaymentMethodId) {
+      return {
+        ok: false,
+        code: "VALIDATION",
+        errors: [
+          input.locale === "et"
+            ? "Kaardiandmed puuduvad. Proovi uuesti."
+            : "Card details are missing. Please try again.",
+        ],
+      };
     }
   }
 
@@ -254,14 +313,14 @@ export async function orchestrateCheckout(
       deferMontonioPayment,
     }),
     ...(isWooPaymentsGateway(input.paymentMethodId) &&
-    input.wooPaymentsStripePaymentMethodId
+    wooPaymentsStripePaymentMethodId
       ? buildWooPaymentsCheckoutMetaData({
-          ...(input.wooPaymentsStripePaymentMethodId.startsWith("ctoken_")
+          ...(wooPaymentsStripePaymentMethodId.startsWith("ctoken_")
             ? {
-                stripeConfirmationToken: input.wooPaymentsStripePaymentMethodId,
+                stripeConfirmationToken: wooPaymentsStripePaymentMethodId,
               }
             : {
-                stripePaymentMethodId: input.wooPaymentsStripePaymentMethodId,
+                stripePaymentMethodId: wooPaymentsStripePaymentMethodId,
               }),
           fraudPreventionToken: wooPaymentsFraudPreventionToken,
           locale: input.locale,

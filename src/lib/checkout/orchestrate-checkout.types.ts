@@ -16,8 +16,25 @@ export type CheckoutOrchestrateInput = {
   locale: "en" | "et";
   displayTotal: number;
   displayShipping: number;
+  /** Stripe Elements amount in cents — validated against Woo cart before charging. */
+  expectedWooPaymentsAmountCents?: number;
   wooPaymentsStripePaymentMethodId?: string;
   wooPaymentsFraudPreventionToken?: string | null;
+};
+
+export type WooPaymentsCredentialContext = {
+  amountCents: number;
+  sessionToken: string;
+};
+
+export type CheckoutOrchestrateOptions = {
+  remintHandler?: (
+    input: CheckoutRemintInput,
+  ) => Promise<{ redirect: string }>;
+  /** Card Payment Element — create ctoken/pm immediately before GraphQL checkout. */
+  createWooPaymentsCredential?: (
+    context: WooPaymentsCredentialContext,
+  ) => Promise<string>;
 };
 
 export type CheckoutOrchestrateSuccess = {
