@@ -1,11 +1,6 @@
 import type { Locale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/get-dictionary";
 import {
-  WOO_PAYMENTS_APPLE_PAY_GATEWAY_ID,
-  WOO_PAYMENTS_CARD_GATEWAY_ID,
-  WOO_PAYMENTS_GOOGLE_PAY_GATEWAY_ID,
-} from "@/lib/checkout/woo-payments";
-import {
   MONTONIO_PAYMENT_METHOD_ID,
   type PaymentGateway,
 } from "@/lib/graphql/checkout";
@@ -94,18 +89,6 @@ export function localizePaymentGateway(
     woocommerce_payments: {
       title: dict.paymentMethodsWooPayments,
       description: dict.paymentMethodsWooPaymentsDesc,
-    },
-    [WOO_PAYMENTS_APPLE_PAY_GATEWAY_ID]: {
-      title: dict.paymentMethodsApplePay,
-      description: dict.paymentMethodsApplePayDesc,
-    },
-    [WOO_PAYMENTS_GOOGLE_PAY_GATEWAY_ID]: {
-      title: dict.paymentMethodsGooglePay,
-      description: dict.paymentMethodsGooglePayDesc,
-    },
-    [WOO_PAYMENTS_CARD_GATEWAY_ID]: {
-      title: dict.paymentMethodsWooPaymentsCard,
-      description: dict.paymentMethodsWooPaymentsCardDesc,
     },
   };
 

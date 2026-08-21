@@ -27,14 +27,7 @@ import {
   montonioOptionLabel,
 } from "@/types/montonio-payment";
 import { isMontonioPaymentCountry } from "@/lib/montonio/payment-countries";
-import {
-  isWooPaymentsGateway,
-  wooPaymentsWalletForGatewayId,
-  WOO_PAYMENTS_APPLE_PAY_GATEWAY_ID,
-  WOO_PAYMENTS_CARD_GATEWAY_ID,
-  WOO_PAYMENTS_GATEWAY_ID,
-  WOO_PAYMENTS_GOOGLE_PAY_GATEWAY_ID,
-} from "@/lib/checkout/woo-payments";
+import { WOO_PAYMENTS_GATEWAY_ID } from "@/lib/checkout/woo-payments";
 import { cn } from "@/lib/utils";
 import { CheckoutSupportNotice } from "@/components/shop/checkout-support-notice";
 import { CheckoutCardBrandIcons } from "@/components/shop/checkout-card-brand-icons";
@@ -288,11 +281,11 @@ export function sortPaymentGatewaysForCountry(
     return gateways;
   }
 
-  const wooPayments = gateways.filter((gateway) =>
-    isWooPaymentsGateway(gateway.id),
+  const wooPayments = gateways.filter(
+    (gateway) => gateway.id === WOO_PAYMENTS_GATEWAY_ID,
   );
   const rest = gateways.filter(
-    (gateway) => !isWooPaymentsGateway(gateway.id),
+    (gateway) => gateway.id !== WOO_PAYMENTS_GATEWAY_ID,
   );
 
   return [...wooPayments, ...rest];
@@ -810,11 +803,12 @@ export function CheckoutPaymentOptions({
   loading,
   error,
   locale,
-  renderWooPaymentsExpandedPanel,
+  wooPaymentsExpressPanel,
+  wooPaymentsExpressError,
+  wooPaymentsPanel,
   wooPaymentsLoading,
   wooPaymentsError,
   wooPaymentsFormError,
-  wooPaymentsExpressError,
 }: {
   gateways: PaymentGateway[];
   selectedId: string | null;
@@ -828,11 +822,12 @@ export function CheckoutPaymentOptions({
   loading: boolean;
   error: string | null;
   locale: Locale;
-  renderWooPaymentsExpandedPanel?: (gatewayId: string) => ReactNode | null;
+  wooPaymentsExpressPanel?: ReactNode;
+  wooPaymentsExpressError?: string | null;
+  wooPaymentsPanel?: ReactNode;
   wooPaymentsLoading?: boolean;
   wooPaymentsError?: string | null;
   wooPaymentsFormError?: string | null;
-  wooPaymentsExpressError?: string | null;
 }) {
   const copy = getDictionary(locale).checkout;
   const localizedGateways = useMemo(
@@ -866,7 +861,39 @@ export function CheckoutPaymentOptions({
           <CheckoutSupportNotice locale={locale} />
         </div>
       ) : (
-        <ul className="grid gap-2">
+        <>
+          {wooPaymentsExpressPanel ? (
+            <div className="space-y-3">
+              <div
+                className={cn(
+                  "relative border border-ink/15 bg-white px-4 py-4 sm:px-5",
+                  (wooPaymentsLoading || wooPaymentsError) &&
+                    "pointer-events-none opacity-40",
+                )}
+              >
+                {wooPaymentsExpressPanel}
+                {wooPaymentsLoading ? (
+                  <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/80">
+                    <MorphingSquare message={copy.paymentLoading} size="sm" />
+                  </div>
+                ) : null}
+              </div>
+              {wooPaymentsExpressError ? (
+                <p className="text-sm text-accent" role="alert">
+                  {wooPaymentsExpressError}
+                </p>
+              ) : null}
+              <div className="flex items-center gap-3">
+                <span className="h-px flex-1 bg-ink/10" aria-hidden="true" />
+                <span className="font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/40">
+                  {copy.paymentOtherMethods}
+                </span>
+                <span className="h-px flex-1 bg-ink/10" aria-hidden="true" />
+              </div>
+            </div>
+          ) : null}
+
+          <ul className="grid gap-2">
           {localizedGateways.map((gateway) => {
             const selected = selectedId === gateway.id;
             const showMontonioProviders =
@@ -874,19 +901,7 @@ export function CheckoutPaymentOptions({
               isMontonioGateway(gateway) &&
               gatewayNeedsMontonioSubselection(gateway, montonioOptions);
             const showWooPaymentsPanel =
-              selected && isWooPaymentsGateway(gateway.id);
-            const expandedPanel = showWooPaymentsPanel
-              ? renderWooPaymentsExpandedPanel?.(gateway.id)
-              : null;
-            const isWooPaymentsCardRow =
-              gateway.id === WOO_PAYMENTS_CARD_GATEWAY_ID ||
-              gateway.id === WOO_PAYMENTS_GATEWAY_ID;
-            const isWooPaymentsWalletRow = Boolean(
-              wooPaymentsWalletForGatewayId(gateway.id),
-            );
-            const wooPaymentsInlineError = isWooPaymentsCardRow
-              ? wooPaymentsFormError
-              : wooPaymentsExpressError;
+              selected && gateway.id === WOO_PAYMENTS_GATEWAY_ID;
 
             return (
               <li key={gateway.id}>
@@ -901,27 +916,20 @@ export function CheckoutPaymentOptions({
                   }}
                 />
                 {showWooPaymentsPanel ? (
-                  <div
-                    className={cn(
-                      "relative border border-t-0 border-accent bg-white",
-                      isWooPaymentsWalletRow
-                        ? "px-4 py-3 sm:px-5"
-                        : "px-4 py-5 sm:px-5 sm:py-6",
-                    )}
-                  >
-                    {expandedPanel ? (
+                  <div className="relative border border-t-0 border-accent bg-white px-4 py-5 sm:px-5 sm:py-6">
+                    {wooPaymentsPanel ? (
                       <div
                         className={cn(
                           (wooPaymentsLoading || wooPaymentsError) &&
                             "pointer-events-none opacity-40",
                         )}
                       >
-                        {expandedPanel}
+                        {wooPaymentsPanel}
                       </div>
                     ) : wooPaymentsLoading ? (
                       <MorphingSquare message={copy.paymentLoading} size="sm" />
                     ) : null}
-                    {wooPaymentsLoading && expandedPanel ? (
+                    {wooPaymentsLoading && wooPaymentsPanel ? (
                       <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/80">
                         <MorphingSquare message={copy.paymentLoading} size="sm" />
                       </div>
@@ -931,9 +939,9 @@ export function CheckoutPaymentOptions({
                         {wooPaymentsError}
                       </p>
                     ) : null}
-                    {wooPaymentsInlineError ? (
+                    {wooPaymentsFormError ? (
                       <p className="mt-3 text-sm text-accent" role="alert">
-                        {wooPaymentsInlineError}
+                        {wooPaymentsFormError}
                       </p>
                     ) : null}
                   </div>
@@ -953,7 +961,8 @@ export function CheckoutPaymentOptions({
               </li>
             );
           })}
-        </ul>
+          </ul>
+        </>
       )}
     </div>
   );

@@ -37,14 +37,8 @@ import { isLiveCheckoutEnabled } from "@/lib/checkout-mode";
 import { orchestrateCheckout } from "@/lib/checkout/orchestrate-checkout";
 import {
   completeWooPaymentsCheckoutRedirect,
-  expandWooPaymentsPaymentGateways,
-  isWooPaymentsCardGateway,
   isWooPaymentsGateway,
-  resolveWooPaymentsCheckoutGatewayId,
-  wooPaymentsWalletForGatewayId,
-  WOO_PAYMENTS_CARD_GATEWAY_ID,
   WOO_PAYMENTS_GATEWAY_ID,
-  type WooPaymentsWalletAvailability,
 } from "@/lib/checkout/woo-payments";
 import {
   isMontonioPaymentGateway,
@@ -54,7 +48,6 @@ import { resetCheckoutSyncState } from "@/lib/graphql/checkout";
 import {
   CheckoutWooPaymentsExpressPanel,
   CheckoutWooPaymentsPanel,
-  CheckoutWooPaymentsWalletProbe,
   type CheckoutWooPaymentsExpressHandle,
   type CheckoutWooPaymentsHandle,
 } from "@/components/shop/checkout-woo-payments-panel";
@@ -682,8 +675,6 @@ export function CartCheckoutView() {
   const [wooPaymentsExpressError, setWooPaymentsExpressError] = useState<string | null>(
     null,
   );
-  const [wooPaymentsWalletAvailability, setWooPaymentsWalletAvailability] =
-    useState<WooPaymentsWalletAvailability | null>(null);
   const [wooPaymentsFormError, setWooPaymentsFormError] = useState<string | null>(
     null,
   );
@@ -719,7 +710,6 @@ export function CartCheckoutView() {
   const paymentRefreshKey = `${shipping.wooSessionKey}:${shipping.country}:${shipping.selectedRateId ?? ""}:${shipping.rates.map((rate) => rate.id).join("|")}`;
   const payment = useCheckoutPayment(paymentCatalogReady, paymentRefreshKey);
   const wooPaymentsSelected = isWooPaymentsGateway(payment.selectedId);
-  const wooPaymentsCardSelected = isWooPaymentsCardGateway(payment.selectedId);
   const montonio = useMontonioPaymentOptions(
     montonioPreviewCountry,
     paymentCatalogReady && isLiveCheckoutEnabled(),
@@ -747,14 +737,6 @@ export function CartCheckoutView() {
     montonioPreviewCountry,
     payment.gateways,
   ]);
-  const checkoutPaymentGateways = useMemo(
-    () =>
-      expandWooPaymentsPaymentGateways(
-        visiblePaymentGateways,
-        wooPaymentsWalletAvailability,
-      ),
-    [visiblePaymentGateways, wooPaymentsWalletAvailability],
-  );
   const wooPaymentsAvailable = useMemo(
     () =>
       visiblePaymentGateways.some(
@@ -768,9 +750,9 @@ export function CartCheckoutView() {
   );
   const selectedPaymentGateway = useMemo(
     () =>
-      checkoutPaymentGateways.find((gateway) => gateway.id === payment.selectedId) ??
+      visiblePaymentGateways.find((gateway) => gateway.id === payment.selectedId) ??
       payment.selectedGateway,
-    [payment.selectedGateway, payment.selectedId, checkoutPaymentGateways],
+    [payment.selectedGateway, payment.selectedId, visiblePaymentGateways],
   );
   const montonioOptionsForGateway = useMemo(() => {
     if (!selectedPaymentGateway) {
@@ -1249,8 +1231,7 @@ export function CartCheckoutView() {
     !shipping.syncing &&
     (!needsMontonioProvider || Boolean(selectedMontonioOption)) &&
     (!wooPaymentsSelected ||
-      (wooPaymentsCardSelected &&
-        Boolean(wooPayments.config?.publishableKey) &&
+      (Boolean(wooPayments.config?.publishableKey) &&
         !wooPayments.loading &&
         !wooPayments.error &&
         wooPaymentsReady)) &&
@@ -1338,7 +1319,7 @@ export function CartCheckoutView() {
       return;
     }
 
-    if (checkoutPaymentGateways.some((gateway) => gateway.id === payment.selectedId)) {
+    if (visiblePaymentGateways.some((gateway) => gateway.id === payment.selectedId)) {
       return;
     }
 
@@ -1348,24 +1329,7 @@ export function CartCheckoutView() {
     montonio.loading,
     payment.selectedId,
     payment.setSelectedId,
-    checkoutPaymentGateways,
-  ]);
-
-  useEffect(() => {
-    if (payment.selectedId !== WOO_PAYMENTS_GATEWAY_ID) {
-      return;
-    }
-
-    selectPaymentId(WOO_PAYMENTS_CARD_GATEWAY_ID);
-  }, [payment.selectedId, selectPaymentId]);
-
-  useEffect(() => {
-    setWooPaymentsWalletAvailability(null);
-  }, [
-    shipping.country,
-    shipping.selectedRateId,
-    wooPayments.config?.publishableKey,
-    wooPaymentsChargeTotal,
+    visiblePaymentGateways,
   ]);
 
   useEffect(() => {
@@ -1498,9 +1462,7 @@ export function CartCheckoutView() {
         throw new Error(dict.checkout.submitBlockPayment);
       }
 
-      if (!isWooPaymentsGateway(payment.selectedId)) {
-        selectPaymentId(WOO_PAYMENTS_CARD_GATEWAY_ID);
-      }
+      selectPaymentId(WOO_PAYMENTS_GATEWAY_ID);
       setSubmitError(null);
       setWooPaymentsExpressError(null);
 
@@ -1730,15 +1692,14 @@ export function CartCheckoutView() {
       let preparedSessionToken = readWooSessionToken();
 
       const checkoutResult = await orchestrateCheckout(
-        wooPaymentsCardSelected
+        wooPaymentsSelected
           ? {
               sessionToken: preparedSessionToken,
               lines,
               linesKey: checkoutLinesKey,
               customer: checkoutCustomer,
               selectedShippingRateId: shipping.selectedRateId,
-              paymentMethodId:
-                resolveWooPaymentsCheckoutGatewayId(payment.selectedId) ?? "",
+              paymentMethodId: payment.selectedId ?? "",
               montonioOption: selectedMontonioOption,
               needsMontonioProvider,
               pickupPoint,
@@ -1757,8 +1718,7 @@ export function CartCheckoutView() {
               linesKey: checkoutLinesKey,
               customer: checkoutCustomer,
               selectedShippingRateId: shipping.selectedRateId,
-              paymentMethodId:
-                resolveWooPaymentsCheckoutGatewayId(payment.selectedId) ?? "",
+              paymentMethodId: payment.selectedId ?? "",
               montonioOption: selectedMontonioOption,
               needsMontonioProvider,
               pickupPoint,
@@ -1766,7 +1726,7 @@ export function CartCheckoutView() {
               displayTotal,
               displayShipping,
             },
-        wooPaymentsCardSelected
+        wooPaymentsSelected
           ? {
               createWooPaymentsCredential: async () => {
                 if (!wooPaymentsPanelRef.current?.isReady()) {
@@ -2430,108 +2390,83 @@ export function CartCheckoutView() {
                         {dict.checkout.chooseCountryForPayment}
                       </p>
                     ) : (
-                      <div className="relative">
-                        {wooPaymentsAvailable &&
-                        wooPayments.config?.publishableKey ? (
-                          <CheckoutWooPaymentsWalletProbe
-                            publishableKey={wooPayments.config.publishableKey}
-                            stripeAccountId={wooPayments.config.stripeAccountId}
-                            amountCents={Math.max(
-                              0,
-                              Math.round(wooPaymentsChargeTotal * 100),
-                            )}
-                            locale={locale}
-                            onAvailabilityChange={setWooPaymentsWalletAvailability}
-                          />
-                        ) : null}
-                        <CheckoutPaymentOptions
-                          gateways={checkoutPaymentGateways}
-                          selectedId={payment.selectedId}
-                          onSelect={selectPaymentId}
-                          montonioOptions={montonio.options}
-                          montonioLoading={montonio.loading}
-                          montonioError={montonio.error}
-                          montonioConfigured={montonio.configured}
-                          selectedMontonioKey={
-                            selectedMontonioOption
-                              ? montonioOptionKey(selectedMontonioOption)
-                              : null
-                          }
-                          onSelectMontonioOption={selectMontonioOption}
-                          loading={paymentLoading}
-                          error={payment.error}
-                          locale={locale}
-                          wooPaymentsLoading={wooPayments.loading}
-                          wooPaymentsError={wooPayments.error}
-                          wooPaymentsExpressError={wooPaymentsExpressError}
-                          wooPaymentsFormError={wooPaymentsFormError}
-                          renderWooPaymentsExpandedPanel={(gatewayId) => {
-                            if (!wooPayments.config?.publishableKey) {
-                              return null;
-                            }
-
-                            const amountCents = Math.max(
-                              0,
-                              Math.round(wooPaymentsChargeTotal * 100),
-                            );
-                            const sharedProps = {
-                              publishableKey: wooPayments.config.publishableKey,
-                              stripeAccountId: wooPayments.config.stripeAccountId,
-                              amountCents,
-                              locale,
-                              billing: wooPaymentsBilling,
-                            };
-
-                            if (isWooPaymentsCardGateway(gatewayId)) {
-                              return (
-                                <CheckoutWooPaymentsPanel
-                                  ref={wooPaymentsPanelRef}
-                                  {...sharedProps}
-                                  className="border-0 bg-transparent p-0"
-                                  onReadyChange={setWooPaymentsReady}
-                                  onError={setWooPaymentsFormError}
-                                />
-                              );
-                            }
-
-                            const wallet = wooPaymentsWalletForGatewayId(gatewayId);
-                            if (!wallet) {
-                              return null;
-                            }
-
-                            return (
-                              <CheckoutWooPaymentsExpressPanel
-                                ref={wooPaymentsExpressRef}
-                                {...sharedProps}
-                                wallet={wallet}
-                                embedded
-                                className="border-0 bg-transparent p-0"
-                                onError={setWooPaymentsExpressError}
-                                onExpressPaymentMethod={async (paymentMethodId) => {
-                                  setSubmitting(true);
-                                  try {
-                                    await handleExpressWooPayment(paymentMethodId);
-                                  } catch (cause) {
-                                    if (cause instanceof Error) {
-                                      const message =
-                                        friendlyCheckoutError(
-                                          cause.message,
-                                          dict.checkout.paymentError,
-                                          locale,
-                                        ) ?? cause.message;
-                                      setWooPaymentsExpressError(message);
-                                      setSubmitError(message);
-                                    }
-                                    throw cause;
-                                  } finally {
-                                    setSubmitting(false);
+                      <CheckoutPaymentOptions
+                        gateways={visiblePaymentGateways}
+                        selectedId={payment.selectedId}
+                        onSelect={selectPaymentId}
+                        montonioOptions={montonio.options}
+                        montonioLoading={montonio.loading}
+                        montonioError={montonio.error}
+                        montonioConfigured={montonio.configured}
+                        selectedMontonioKey={
+                          selectedMontonioOption
+                            ? montonioOptionKey(selectedMontonioOption)
+                            : null
+                        }
+                        onSelectMontonioOption={selectMontonioOption}
+                        loading={paymentLoading}
+                        error={payment.error}
+                        locale={locale}
+                        wooPaymentsLoading={wooPayments.loading}
+                        wooPaymentsError={wooPayments.error}
+                        wooPaymentsExpressError={wooPaymentsExpressError}
+                        wooPaymentsFormError={wooPaymentsFormError}
+                        wooPaymentsExpressPanel={
+                          wooPayments.config?.publishableKey ? (
+                            <CheckoutWooPaymentsExpressPanel
+                              ref={wooPaymentsExpressRef}
+                              publishableKey={wooPayments.config.publishableKey}
+                              stripeAccountId={wooPayments.config.stripeAccountId}
+                              amountCents={Math.max(
+                                0,
+                                Math.round(wooPaymentsChargeTotal * 100),
+                              )}
+                              locale={locale}
+                              billing={wooPaymentsBilling}
+                              onError={setWooPaymentsExpressError}
+                              onExpressPaymentMethod={async (paymentMethodId) => {
+                                setSubmitting(true);
+                                try {
+                                  await handleExpressWooPayment(paymentMethodId);
+                                } catch (cause) {
+                                  if (cause instanceof Error) {
+                                    const message =
+                                      friendlyCheckoutError(
+                                        cause.message,
+                                        dict.checkout.paymentError,
+                                        locale,
+                                      ) ?? cause.message;
+                                    setWooPaymentsExpressError(message);
+                                    setSubmitError(message);
                                   }
-                                }}
-                              />
-                            );
-                          }}
-                        />
-                      </div>
+                                  throw cause;
+                                } finally {
+                                  setSubmitting(false);
+                                }
+                              }}
+                            />
+                          ) : null
+                        }
+                        wooPaymentsPanel={
+                          wooPaymentsSelected &&
+                          wooPayments.config?.publishableKey ? (
+                            <CheckoutWooPaymentsPanel
+                              ref={wooPaymentsPanelRef}
+                              publishableKey={wooPayments.config.publishableKey}
+                              stripeAccountId={wooPayments.config.stripeAccountId}
+                              amountCents={Math.max(
+                                0,
+                                Math.round(wooPaymentsChargeTotal * 100),
+                              )}
+                              locale={locale}
+                              billing={wooPaymentsBilling}
+                              className="border-0 bg-transparent p-0"
+                              onReadyChange={setWooPaymentsReady}
+                              onError={setWooPaymentsFormError}
+                            />
+                          ) : null
+                        }
+                      />
                     )}
                   </div>
                 </div>

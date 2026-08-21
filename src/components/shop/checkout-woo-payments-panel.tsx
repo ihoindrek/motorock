@@ -29,8 +29,6 @@ import {
   toStripePaymentMethodBillingDetails,
   WOO_PAYMENTS_EXCLUDED_STRIPE_PAYMENT_METHODS,
   type WooPaymentsBillingDetails,
-  type WooPaymentsWalletAvailability,
-  type WooPaymentsWalletKind,
 } from "@/lib/checkout/woo-payments";
 import { buildStripeCheckoutAppearance } from "@/lib/checkout/stripe-appearance";
 import { useDictionary } from "@/context/locale-context";
@@ -61,16 +59,6 @@ type WooPaymentsSharedProps = {
 
 type CheckoutWooPaymentsExpressPanelProps = WooPaymentsSharedProps & {
   onExpressPaymentMethod: (paymentMethodId: string) => Promise<void>;
-  wallet?: WooPaymentsWalletKind;
-  /** Inline inside a selected payment row — no extra box around the Stripe button. */
-  embedded?: boolean;
-};
-
-type CheckoutWooPaymentsWalletProbeProps = Pick<
-  WooPaymentsSharedProps,
-  "publishableKey" | "stripeAccountId" | "amountCents" | "locale"
-> & {
-  onAvailabilityChange: (availability: WooPaymentsWalletAvailability) => void;
 };
 
 type CheckoutWooPaymentsPanelProps = WooPaymentsSharedProps & {
@@ -174,50 +162,18 @@ async function confirmStripeCardPayment(
   }
 }
 
-function buildExpressPaymentMethodOptions(wallet?: WooPaymentsWalletKind) {
-  return {
-    applePay: wallet === "googlePay" ? "never" : "always",
-    googlePay: wallet === "applePay" ? "never" : "always",
-    link: wallet ? "never" : "auto",
-    paypal: "never",
-    amazonPay: "never",
-    klarna: "never",
-  } as const;
-}
-
-function buildEmbeddedExpressCheckoutOptions(wallet?: WooPaymentsWalletKind) {
-  return {
-    paymentMethods: buildExpressPaymentMethodOptions(wallet),
-    layout: {
-      maxColumns: 1,
-      maxRows: 1,
-    },
-    buttonTheme: {
-      applePay: "white-outline",
-      googlePay: "white",
-    },
-    buttonHeight: 48,
-  } as const;
-}
-
 function CheckoutWooPaymentsExpressCheckout({
   forwardedRef,
   billing,
   onError,
   onExpressPaymentMethod,
   onAvailabilityChange,
-  onWalletAvailabilityChange,
-  wallet,
-  embedded = false,
 }: {
-  forwardedRef?: Ref<CheckoutWooPaymentsExpressHandle>;
+  forwardedRef: Ref<CheckoutWooPaymentsExpressHandle>;
   billing: WooPaymentsBillingDetails;
   onError?: (message: string | null) => void;
-  onExpressPaymentMethod?: (paymentMethodId: string) => Promise<void>;
+  onExpressPaymentMethod: (paymentMethodId: string) => Promise<void>;
   onAvailabilityChange?: (available: boolean) => void;
-  onWalletAvailabilityChange?: (availability: WooPaymentsWalletAvailability) => void;
-  wallet?: WooPaymentsWalletKind;
-  embedded?: boolean;
 }) {
   const stripe = useStripe();
   const elements = useElements();
@@ -236,28 +192,17 @@ function CheckoutWooPaymentsExpressCheckout({
   return (
     <ExpressCheckoutElement
       onReady={({ availablePaymentMethods }) => {
-        const walletAvailability: WooPaymentsWalletAvailability = {
-          applePay: Boolean(availablePaymentMethods?.applePay),
-          googlePay: Boolean(availablePaymentMethods?.googlePay),
-        };
-
-        onWalletAvailabilityChange?.(walletAvailability);
-
-        const available = wallet
-          ? wallet === "applePay"
-            ? walletAvailability.applePay
-            : walletAvailability.googlePay
-          : Boolean(
-              walletAvailability.applePay ||
-                walletAvailability.googlePay ||
-                availablePaymentMethods?.link,
-            );
-
+        const available = Boolean(
+          availablePaymentMethods &&
+            (availablePaymentMethods.applePay ||
+              availablePaymentMethods.googlePay ||
+              availablePaymentMethods.link),
+        );
         setReady(available);
         onAvailabilityChange?.(available);
       }}
       onConfirm={async (event) => {
-        if (!stripe || !elements || !onExpressPaymentMethod) {
+        if (!stripe || !elements) {
           event.paymentFailed({
             reason: "fail",
             message: "Payment form is still loading.",
@@ -299,17 +244,20 @@ function CheckoutWooPaymentsExpressCheckout({
           });
         }
       }}
-      options={
-        embedded
-          ? buildEmbeddedExpressCheckoutOptions(wallet)
-          : {
-              paymentMethods: buildExpressPaymentMethodOptions(wallet),
-              layout: {
-                maxColumns: 1,
-                maxRows: 1,
-              },
-            }
-      }
+      options={{
+        paymentMethods: {
+          applePay: "always",
+          googlePay: "always",
+          link: "auto",
+          paypal: "never",
+          amazonPay: "never",
+          klarna: "never",
+        },
+        layout: {
+          maxColumns: 1,
+          maxRows: 2,
+        },
+      }}
     />
   );
 }
@@ -327,14 +275,12 @@ export const CheckoutWooPaymentsExpressPanel = forwardRef<
     className,
     onError,
     onExpressPaymentMethod,
-    wallet,
-    embedded = false,
   },
   ref,
 ) {
   const dict = useDictionary();
   const stripePromise = useWooPaymentsStripe(publishableKey, stripeAccountId);
-  const elementsInstanceKey = `${billing.address.country || "xx"}:${amountCents}:${wallet ?? "all"}`;
+  const elementsInstanceKey = `${billing.address.country || "xx"}:${amountCents}`;
   const expressElementsOptions = useMemo(
     () => buildExpressElementsOptions({ locale, amountCents }),
     [amountCents, locale],
@@ -367,79 +313,22 @@ export const CheckoutWooPaymentsExpressPanel = forwardRef<
           stripe={stripePromise}
           options={expressElementsOptions}
         >
-          {embedded ? (
+          <div className="rounded-sm border border-ink/10 bg-ink/[0.015] p-3 sm:p-4">
             <CheckoutWooPaymentsExpressCheckout
               forwardedRef={ref}
               billing={billing}
-              wallet={wallet}
-              embedded
               onError={onError}
               onExpressPaymentMethod={onExpressPaymentMethod}
               onAvailabilityChange={(available) => {
                 setAvailability(available ? "available" : "unavailable");
               }}
             />
-          ) : (
-            <div className="rounded-sm border border-ink/10 bg-ink/[0.015] p-3 sm:p-4">
-              <CheckoutWooPaymentsExpressCheckout
-                forwardedRef={ref}
-                billing={billing}
-                wallet={wallet}
-                onError={onError}
-                onExpressPaymentMethod={onExpressPaymentMethod}
-                onAvailabilityChange={(available) => {
-                  setAvailability(available ? "available" : "unavailable");
-                }}
-              />
-            </div>
-          )}
+          </div>
         </Elements>
       </div>
     </WooPaymentsErrorBoundary>
   );
 });
-
-export function CheckoutWooPaymentsWalletProbe({
-  publishableKey,
-  stripeAccountId,
-  amountCents,
-  locale,
-  onAvailabilityChange,
-}: CheckoutWooPaymentsWalletProbeProps) {
-  const stripePromise = useWooPaymentsStripe(publishableKey, stripeAccountId);
-  const expressElementsOptions = useMemo(
-    () => buildExpressElementsOptions({ locale, amountCents }),
-    [amountCents, locale],
-  );
-
-  if (!publishableKey || amountCents <= 0) {
-    return null;
-  }
-
-  return (
-    <div
-      aria-hidden="true"
-      className="pointer-events-none fixed left-0 top-0 z-[-1] h-11 w-64 opacity-0"
-    >
-      <Elements stripe={stripePromise} options={expressElementsOptions}>
-        <CheckoutWooPaymentsExpressCheckout
-          billing={{
-            name: "",
-            email: "",
-            address: {
-              line1: "",
-              city: "",
-              postal_code: "",
-              country: "EE",
-            },
-          }}
-          onWalletAvailabilityChange={onAvailabilityChange}
-          onAvailabilityChange={() => {}}
-        />
-      </Elements>
-    </div>
-  );
-}
 
 function CheckoutWooPaymentsCardForm({
   forwardedRef,

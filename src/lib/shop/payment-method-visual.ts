@@ -1,11 +1,6 @@
 import { DEFAULT_WOO_STORE_URL } from "@/lib/storefront/url";
 import { MONTONIO_CARD_PAYMENT_METHOD_ID } from "@/lib/checkout/montonio-checkout";
-import {
-  WOO_PAYMENTS_APPLE_PAY_GATEWAY_ID,
-  WOO_PAYMENTS_CARD_GATEWAY_ID,
-  WOO_PAYMENTS_GATEWAY_ID,
-  WOO_PAYMENTS_GOOGLE_PAY_GATEWAY_ID,
-} from "@/lib/checkout/woo-payments";
+import { WOO_PAYMENTS_GATEWAY_ID } from "@/lib/checkout/woo-payments";
 import { PAYMENT_BRAND_ICON_PATHS } from "@/lib/shop/card-payment-brands";
 
 const MONTONIO_ASSETS =
@@ -37,31 +32,10 @@ export function resolvePaymentMethodVisual(
     };
   }
 
-  if (
-    id === WOO_PAYMENTS_GATEWAY_ID ||
-    id === WOO_PAYMENTS_CARD_GATEWAY_ID
-  ) {
+  if (id === WOO_PAYMENTS_GATEWAY_ID) {
     return {
       kind: "card-brands",
       alt: safeTitle,
-    };
-  }
-
-  if (id === WOO_PAYMENTS_APPLE_PAY_GATEWAY_ID) {
-    return {
-      kind: "logo",
-      src: PAYMENT_BRAND_ICON_PATHS.applePay,
-      alt: "Apple Pay",
-      layout: "card",
-    };
-  }
-
-  if (id === WOO_PAYMENTS_GOOGLE_PAY_GATEWAY_ID) {
-    return {
-      kind: "logo",
-      src: PAYMENT_BRAND_ICON_PATHS.googlePay,
-      alt: "Google Pay",
-      layout: "card",
     };
   }
 
