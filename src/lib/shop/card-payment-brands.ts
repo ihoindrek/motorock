@@ -73,6 +73,22 @@ export const WOO_PAYMENTS_PRIMARY_CARD_BRANDS: readonly CardPaymentBrand[] = [
 export const WOO_PAYMENTS_CHECKOUT_LOGOS: readonly CardPaymentBrand[] =
   WOO_PAYMENTS_PRIMARY_CARD_BRANDS;
 
+/** Primary payment options promoted on equipment product pages. */
+export const EQUIPMENT_PDP_PAYMENT_BRANDS: readonly CardPaymentBrand[] = [
+  {
+    id: "applePay",
+    label: "Apple Pay",
+    src: PAYMENT_BRAND_ICON_PATHS.applePay,
+  },
+  {
+    id: "googlePay",
+    label: "Google Pay",
+    src: PAYMENT_BRAND_ICON_PATHS.googlePay,
+  },
+  WOO_PAYMENTS_CARD_BRANDS[0],
+  WOO_PAYMENTS_CARD_BRANDS[1],
+] as const;
+
 export function cardPaymentBrandAriaLabel(
   brands: readonly CardPaymentBrand[] = WOO_PAYMENTS_CARD_BRANDS,
 ) {

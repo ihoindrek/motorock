@@ -299,6 +299,7 @@ export type Dictionary = {
     shippingInfoLink: string;
     motorcycleShippingNote: string;
     shippingMethodsHeading: string;
+    paymentMethods: string;
   };
   catalog: {
     sort: string;
@@ -973,6 +974,7 @@ export const en: Dictionary = {
     shippingInfoLink: "Shipping info",
     motorcycleShippingNote: "Motorcycle transport by agreement.",
     shippingMethodsHeading: "Delivery options",
+    paymentMethods: "Pay at checkout with",
   },
   catalog: {
     sort: "Sort",
