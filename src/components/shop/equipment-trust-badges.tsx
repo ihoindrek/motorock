@@ -21,7 +21,7 @@ export function EquipmentTrustBadges({ className }: EquipmentTrustBadgesProps) {
     id: string;
     Icon: typeof ShieldCheck;
     title: string;
-    subtext: string;
+    subtext?: string;
     paymentBrands?: readonly CardPaymentBrand[];
   }> = [
     {
