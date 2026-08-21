@@ -87,7 +87,7 @@ class WooPaymentsErrorBoundary extends Component<
   }
 }
 
-function buildSharedElementsOptions(input: {
+function buildExpressElementsOptions(input: {
   locale: StripeElementLocale;
   amountCents: number;
 }): StripeElementsOptions {
@@ -98,6 +98,22 @@ function buildSharedElementsOptions(input: {
     currency: "eur",
     paymentMethodCreation: "manual",
     appearance: buildStripeCheckoutAppearance(),
+    excludedPaymentMethodTypes: [...WOO_PAYMENTS_EXCLUDED_STRIPE_PAYMENT_METHODS],
+  };
+}
+
+function buildCardElementsOptions(input: {
+  locale: StripeElementLocale;
+  amountCents: number;
+}): StripeElementsOptions {
+  return {
+    locale: input.locale,
+    mode: "payment",
+    amount: input.amountCents,
+    currency: "eur",
+    paymentMethodCreation: "manual",
+    appearance: buildStripeCheckoutAppearance(),
+    paymentMethodTypes: ["card"],
   };
 }
 
@@ -342,8 +358,12 @@ export const CheckoutWooPaymentsPanel = forwardRef<
     [publishableKey, stripeAccountId],
   );
   const elementsInstanceKey = `${billing.address.country || "xx"}:${amountCents}`;
-  const sharedElementsOptions = useMemo(
-    () => buildSharedElementsOptions({ locale, amountCents }),
+  const expressElementsOptions = useMemo(
+    () => buildExpressElementsOptions({ locale, amountCents }),
+    [amountCents, locale],
+  );
+  const cardElementsOptions = useMemo(
+    () => buildCardElementsOptions({ locale, amountCents }),
     [amountCents, locale],
   );
   const [expressAvailable, setExpressAvailable] = useState(false);
@@ -381,12 +401,7 @@ export const CheckoutWooPaymentsPanel = forwardRef<
             <Elements
               key={`express-${elementsInstanceKey}`}
               stripe={stripePromise}
-              options={{
-                ...sharedElementsOptions,
-                excludedPaymentMethodTypes: [
-                  ...WOO_PAYMENTS_EXCLUDED_STRIPE_PAYMENT_METHODS,
-                ],
-              }}
+              options={expressElementsOptions}
             >
               <CheckoutWooPaymentsExpressCheckout
                 billing={billing}
@@ -414,10 +429,7 @@ export const CheckoutWooPaymentsPanel = forwardRef<
         <Elements
           key={`card-${elementsInstanceKey}`}
           stripe={stripePromise}
-          options={{
-            ...sharedElementsOptions,
-            paymentMethodTypes: ["card"],
-          }}
+          options={cardElementsOptions}
         >
           <CheckoutWooPaymentsCardForm
             forwardedRef={ref}
