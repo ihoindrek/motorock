@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildWooPaymentsCheckoutMetaData,
   isWooPaymentsGateway,
+  parseWooPaymentsConfirmRedirect,
   toStripePaymentMethodBillingDetails,
   WOO_PAYMENTS_EXCLUDED_STRIPE_PAYMENT_METHODS,
   WOO_PAYMENTS_GATEWAY_ID,
@@ -33,6 +34,22 @@ describe("buildWooPaymentsCheckoutMetaData", () => {
       { key: "checkout_locale", value: "et" },
       { key: "wcpay_fraud_prevention_token", value: "abc" },
     ]);
+  });
+});
+
+describe("parseWooPaymentsConfirmRedirect", () => {
+  it("parses WooPayments 3DS redirect hashes", () => {
+    expect(
+      parseWooPaymentsConfirmRedirect(
+        "#wcpay-confirm-pi:123:pi_abc_secret_xyz:nonce123",
+      ),
+    ).toEqual({
+      kind: "pi",
+      orderId: "123",
+      clientSecret: "pi_abc_secret_xyz",
+      nonce: "nonce123",
+      intentId: "pi_abc",
+    });
   });
 });
 

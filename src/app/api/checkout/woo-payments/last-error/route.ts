@@ -20,19 +20,17 @@ export async function GET(request: Request) {
     headers["woocommerce-session"] = `Session ${sessionToken}`;
   }
 
-  const response = await fetch(`${getWooStoreUrl()}/wp-json/motorock/v1/woo-payments/config`, {
-    headers,
-    cache: "no-store",
-  });
+  const response = await fetch(
+    `${getWooStoreUrl()}/wp-json/motorock/v1/woo-payments/last-error`,
+    {
+      headers,
+      cache: "no-store",
+    },
+  );
 
-  const body = await readJsonResponse<Record<string, unknown>>(response);
-
-  if (!body) {
-    return NextResponse.json(
-      { error: "WooPayments configuration response was empty or invalid." },
-      { status: 502 },
-    );
-  }
+  const body = (await readJsonResponse<{ message?: string | null }>(response)) ?? {
+    message: "",
+  };
 
   return NextResponse.json(body, { status: response.status });
 }

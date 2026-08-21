@@ -89,6 +89,16 @@ export function formatPhoneWithCountryCode(country: string, nationalValue: strin
   return `+${dialCode}${digits}`;
 }
 
+/** WooPayments rejects billing phones longer than 20 characters. */
+export function normalizeCheckoutPhoneForWooPayments(phone: string) {
+  const trimmed = phone.trim();
+  if (trimmed.length <= 20) {
+    return trimmed;
+  }
+
+  return trimmed.slice(0, 20);
+}
+
 export function isValidCheckoutPhone(country: string, nationalValue: string) {
   const digits = nationalValue.replace(/\D/g, "");
   if (!digits) {

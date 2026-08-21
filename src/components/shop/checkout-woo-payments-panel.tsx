@@ -31,6 +31,7 @@ import { cn } from "@/lib/utils";
 
 export type CheckoutWooPaymentsHandle = {
   createPaymentMethod: (billing: WooPaymentsBillingDetails) => Promise<string>;
+  confirmPaymentIntent: (clientSecret: string) => Promise<void>;
   isReady: () => boolean;
 };
 
@@ -116,6 +117,27 @@ function CheckoutWooPaymentsForm({
           elements,
           billing: billingDetails,
         });
+      },
+      confirmPaymentIntent: async (clientSecret) => {
+        if (!stripe) {
+          throw new Error("Payment form is still loading.");
+        }
+
+        const { error, paymentIntent } = await stripe.confirmCardPayment(
+          clientSecret,
+        );
+
+        if (error) {
+          throw new Error(error.message ?? "Payment authentication failed.");
+        }
+
+        if (
+          paymentIntent?.status !== "succeeded" &&
+          paymentIntent?.status !== "processing" &&
+          paymentIntent?.status !== "requires_capture"
+        ) {
+          throw new Error("Payment was not completed.");
+        }
       },
     }),
     [elements, ready, stripe],

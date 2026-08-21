@@ -36,6 +36,7 @@ import { useMontonioPaymentOptions } from "@/hooks/use-montonio-payment-options"
 import { isLiveCheckoutEnabled } from "@/lib/checkout-mode";
 import { orchestrateCheckout } from "@/lib/checkout/orchestrate-checkout";
 import {
+  completeWooPaymentsCheckoutRedirect,
   isWooPaymentsGateway,
 } from "@/lib/checkout/woo-payments";
 import {
@@ -792,6 +793,7 @@ export function CartCheckoutView() {
     discountTotal: displayDiscount,
     wcTotal: shipping.wcTotal,
   });
+  const wooPaymentsChargeTotal = shipping.wcTotal ?? displayTotal;
 
   useEffect(() => {
     if (itemCount === 0) {
@@ -1483,7 +1485,20 @@ export function CartCheckoutView() {
         writeWooSessionToken(checkoutResult.sessionToken);
       }
 
-      const redirectUrl = checkoutResult.redirect;
+      const redirectUrl = await completeWooPaymentsCheckoutRedirect({
+        redirectUrl: checkoutResult.redirect,
+        confirmPaymentIntent: async (clientSecret) => {
+          if (!wooPaymentsPanelRef.current?.isReady()) {
+            throw new Error(
+              locale === "et"
+                ? "Oota, kuni kaardivorm laadib."
+                : "Wait for the card form to load.",
+            );
+          }
+
+          await wooPaymentsPanelRef.current.confirmPaymentIntent(clientSecret);
+        },
+      });
 
       if (redirectUrl) {
         resetCheckoutSyncState();
@@ -1706,7 +1721,20 @@ export function CartCheckoutView() {
         writeWooSessionToken(checkoutResult.sessionToken);
       }
 
-      const redirectUrl = checkoutResult.redirect;
+      const redirectUrl = await completeWooPaymentsCheckoutRedirect({
+        redirectUrl: checkoutResult.redirect,
+        confirmPaymentIntent: async (clientSecret) => {
+          if (!wooPaymentsPanelRef.current?.isReady()) {
+            throw new Error(
+              locale === "et"
+                ? "Oota, kuni kaardivorm laadib."
+                : "Wait for the card form to load.",
+            );
+          }
+
+          await wooPaymentsPanelRef.current.confirmPaymentIntent(clientSecret);
+        },
+      });
 
       if (redirectUrl) {
         // Keep the local cart intact for the external payment page — if the
@@ -2347,7 +2375,7 @@ export function CartCheckoutView() {
                               publishableKey={wooPayments.config.publishableKey}
                               amountCents={Math.max(
                                 0,
-                                Math.round(displayTotal * 100),
+                                Math.round(wooPaymentsChargeTotal * 100),
                               )}
                               locale={locale}
                               billing={wooPaymentsBilling}

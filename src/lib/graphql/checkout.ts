@@ -38,7 +38,7 @@ import {
   MONTONIO_PAYMENT_METHOD_ID,
   resolveMontonioCheckoutGatewayId,
 } from "@/lib/checkout/montonio-checkout";
-import { isWooPaymentsGateway } from "@/lib/checkout/woo-payments";
+import { isWooPaymentsGateway, fetchWooPaymentsLastError, fetchWooPaymentsOrderError } from "@/lib/checkout/woo-payments";
 import { getMontonioConfig } from "@/lib/montonio/config";
 import { parseGraphqlPrice } from "@/lib/shop/parse-graphql-price";
 import { filterShippingRatesForCountry } from "@/lib/shop/shipping-showroom-pickup";
@@ -795,6 +795,20 @@ export async function submitCheckout(
 
   const checkout = data.checkout;
   if (!checkout || checkout.result !== "success") {
+    if (
+      isWooPaymentsGateway(paymentMethod) &&
+      isCheckoutPaymentFailure(checkout?.result)
+    ) {
+      const activeSession = nextSession ?? sessionToken;
+      const orderId = checkout?.order?.databaseId ?? null;
+      const detailedError = orderId
+        ? await fetchWooPaymentsOrderError(orderId, activeSession)
+        : await fetchWooPaymentsLastError(activeSession);
+      if (detailedError) {
+        throw new Error(detailedError);
+      }
+    }
+
     const paymentHint = resolveCheckoutPaymentHint(paymentMethod);
 
     throw new Error(

@@ -7,6 +7,7 @@ import {
 } from "@/lib/checkout/montonio-checkout";
 import {
   buildWooPaymentsCheckoutMetaData,
+  fetchWooPaymentsConfig,
   isWooPaymentsGateway,
 } from "@/lib/checkout/woo-payments";
 import { runCheckoutPreflight } from "@/lib/checkout/preflight-checkout";
@@ -25,6 +26,7 @@ import {
 } from "@/lib/graphql/checkout";
 import type { MontonioPaymentOption } from "@/types/montonio-payment";
 import type { PickupPoint } from "@/types/pickup-point";
+import { normalizeCheckoutPhoneForWooPayments } from "@/lib/shop/phone";
 
 export function buildCheckoutPickupNote(input: {
   pickupPoint?: PickupPoint | null;
@@ -167,6 +169,11 @@ export async function orchestrateCheckout(
   const { billing, shipping: shippingAddress } = buildCheckoutInputAddresses(
     input.customer,
   );
+
+  if (isWooPaymentsGateway(input.paymentMethodId) && billing.phone) {
+    billing.phone = normalizeCheckoutPhoneForWooPayments(billing.phone);
+  }
+
   const pickupNote = buildCheckoutPickupNote({
     pickupPoint: input.pickupPoint,
     paymentMethodId: input.paymentMethodId,
@@ -225,6 +232,18 @@ export async function orchestrateCheckout(
     montonioOptionForRemint,
   );
 
+  let wooPaymentsFraudPreventionToken = input.wooPaymentsFraudPreventionToken;
+  if (isWooPaymentsGateway(input.paymentMethodId)) {
+    try {
+      const freshConfig = await fetchWooPaymentsConfig(activeSession);
+      if (freshConfig.fraudPreventionToken) {
+        wooPaymentsFraudPreventionToken = freshConfig.fraudPreventionToken;
+      }
+    } catch {
+      // Server-side checkout also refreshes the token when fraud prevention is enabled.
+    }
+  }
+
   const checkoutMetaData = [
     ...buildMontonioCheckoutMetaData({
       pickupPoint: input.pickupPoint,
@@ -238,7 +257,7 @@ export async function orchestrateCheckout(
     input.wooPaymentsStripePaymentMethodId
       ? buildWooPaymentsCheckoutMetaData({
           stripePaymentMethodId: input.wooPaymentsStripePaymentMethodId,
-          fraudPreventionToken: input.wooPaymentsFraudPreventionToken,
+          fraudPreventionToken: wooPaymentsFraudPreventionToken,
           locale: input.locale,
         })
       : []),

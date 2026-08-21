@@ -17,6 +17,15 @@ export function normalizeCheckoutErrorMessage(message: string) {
     return trimmed.slice(0, midpoint).trim();
   }
 
+  const duplicateSentence = "Checkout payment could not be started.";
+  const duplicateIndex = trimmed.indexOf(
+    duplicateSentence,
+    duplicateSentence.length,
+  );
+  if (duplicateIndex > 0) {
+    return trimmed.slice(0, duplicateIndex).trim();
+  }
+
   return trimmed;
 }
 
