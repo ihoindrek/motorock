@@ -10,8 +10,6 @@ import { PAYMENT_BRAND_ICON_PATHS } from "@/lib/shop/card-payment-brands";
 
 const MONTONIO_ASSETS =
   `${DEFAULT_WOO_STORE_URL}/wp-content/plugins/montonio-for-woocommerce/assets/images`;
-const WOO_PAYMENTS_METHODS_BASE =
-  `${DEFAULT_WOO_STORE_URL}/wp-content/plugins/woocommerce-payments/assets/images/payment-methods`;
 
 /** Visa / MC / Apple Pay / Google Pay strip from Montonio API docs. */
 const MONTONIO_CARD_PAYMENTS_LOGO =
@@ -52,7 +50,7 @@ export function resolvePaymentMethodVisual(
   if (id === WOO_PAYMENTS_APPLE_PAY_GATEWAY_ID) {
     return {
       kind: "logo",
-      src: `${WOO_PAYMENTS_METHODS_BASE}/apple-pay.svg`,
+      src: PAYMENT_BRAND_ICON_PATHS.applePay,
       alt: "Apple Pay",
       layout: "card",
     };
@@ -61,7 +59,7 @@ export function resolvePaymentMethodVisual(
   if (id === WOO_PAYMENTS_GOOGLE_PAY_GATEWAY_ID) {
     return {
       kind: "logo",
-      src: `${WOO_PAYMENTS_METHODS_BASE}/google-pay.svg`,
+      src: PAYMENT_BRAND_ICON_PATHS.googlePay,
       alt: "Google Pay",
       layout: "card",
     };

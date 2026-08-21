@@ -11,6 +11,8 @@ export const PAYMENT_BRAND_ICON_PATHS = {
   mastercard: "/payment-brands/mastercard.svg?v=2",
   amex: "/payment-brands/amex.svg?v=2",
   paypal: "/payment-brands/paypal.svg?v=2",
+  applePay: "/payment-brands/apple-pay.svg?v=1",
+  googlePay: "/payment-brands/google-pay.svg?v=1",
 } as const;
 
 export type CardPaymentBrand = {
