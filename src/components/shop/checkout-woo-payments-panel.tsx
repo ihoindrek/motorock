@@ -33,7 +33,6 @@ import {
 import { buildStripeCheckoutAppearance } from "@/lib/checkout/stripe-appearance";
 import { useDictionary } from "@/context/locale-context";
 import { MorphingSquare } from "@/components/ui/morphing-square";
-import { CheckoutCardBrandIcons } from "@/components/shop/checkout-card-brand-icons";
 import { cn } from "@/lib/utils";
 
 export type CheckoutWooPaymentsHandle = {
@@ -370,12 +369,9 @@ function CheckoutWooPaymentsCardForm({
   return (
     <div className="space-y-4">
       <div className="flex items-start justify-between gap-3 border-b border-ink/10 pb-3">
-        <div className="space-y-2">
-          <p className="font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/45">
-            {dict.checkout.paymentWooPaymentsFormTitle}
-          </p>
-          <CheckoutCardBrandIcons variant="row" />
-        </div>
+        <p className="font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/45">
+          {dict.checkout.paymentWooPaymentsFormTitle}
+        </p>
         <p className="shrink-0 pt-0.5 text-[11px] text-ink/40">
           {dict.checkout.securePayment}
         </p>
