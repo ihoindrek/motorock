@@ -330,6 +330,13 @@ export const et: Dictionary = {
     motorcycleShippingNote: "Mootorratta transport kokkuleppel.",
     shippingMethodsHeading: "Tarneviisid",
     paymentMethods: "Checkoutis saad maksta",
+    trustBadgesAriaLabel: "Miks osta kindlusega",
+    trustOriginalTitle: "100% originaalvarustus",
+    trustOriginalSubtext: "Ametlik brändipartner ja sertifitseeritud tooted",
+    trustExchangeTitle: "Lihtne suuruse vahetus",
+    trustExchangeSubtext: "Probleemivaba 14-päevane tagastus- ja vahetusõigus",
+    trustSecureTitle: "Turvaline checkout",
+    trustSecureSubtext: "Apple Pay, Google Pay, PayPal ja kaardid",
   },
   catalog: {
     sort: "Sorteeri",

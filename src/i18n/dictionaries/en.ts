@@ -300,6 +300,13 @@ export type Dictionary = {
     motorcycleShippingNote: string;
     shippingMethodsHeading: string;
     paymentMethods: string;
+    trustBadgesAriaLabel: string;
+    trustOriginalTitle: string;
+    trustOriginalSubtext: string;
+    trustExchangeTitle: string;
+    trustExchangeSubtext: string;
+    trustSecureTitle: string;
+    trustSecureSubtext: string;
   };
   catalog: {
     sort: string;
@@ -975,6 +982,13 @@ export const en: Dictionary = {
     motorcycleShippingNote: "Motorcycle transport by agreement.",
     shippingMethodsHeading: "Delivery options",
     paymentMethods: "Pay at checkout with",
+    trustBadgesAriaLabel: "Why shop with confidence",
+    trustOriginalTitle: "100% Original Gear",
+    trustOriginalSubtext: "Official brand partner & certified products",
+    trustExchangeTitle: "Easy Size Exchange",
+    trustExchangeSubtext: "Hassle-free 14-day return & exchange policy",
+    trustSecureTitle: "Secure Checkout",
+    trustSecureSubtext: "Apple Pay, Google Pay, PayPal & Cards",
   },
   catalog: {
     sort: "Sort",

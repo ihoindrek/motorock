@@ -25,8 +25,7 @@ import { ProductImageGallery } from "@/components/shop/product-image-gallery";
 import { ProductSpecs } from "@/components/shop/product-specs";
 import { RecentlyViewedProducts } from "@/components/shop/recently-viewed-products";
 import { RelatedProducts } from "@/components/shop/related-products";
-import { EquipmentReturnPromise } from "@/components/shop/equipment-return-promise";
-import { EquipmentPaymentMethods } from "@/components/shop/equipment-payment-methods";
+import { EquipmentTrustBadges } from "@/components/shop/equipment-trust-badges";
 import { SizeGuideModal } from "@/components/shop/size-guide-modal";
 import { EquipmentColorPicker } from "@/components/shop/equipment-color-picker";
 import { EquipmentStickyAtc } from "@/components/shop/equipment-sticky-atc";
@@ -429,9 +428,6 @@ export function EquipmentProductView({
             </div>
           ) : null}
 
-          <EquipmentReturnPromise className="pt-1" />
-          <EquipmentPaymentMethods className="pt-3" />
-
           <div className="space-y-3 pt-2" ref={atcSentinelRef}>
             <button
               type="button"
@@ -440,6 +436,7 @@ export function EquipmentProductView({
             >
               {added ? dict.pdp.addedToCart : dict.pdp.addToCart}
             </button>
+            <EquipmentTrustBadges />
             <button
               type="button"
               onClick={handleBuyNow}
