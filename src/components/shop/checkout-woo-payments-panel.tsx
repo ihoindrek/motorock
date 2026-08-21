@@ -181,11 +181,7 @@ function CheckoutWooPaymentsCardForm({
           <p className="font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/45">
             {dict.checkout.paymentWooPaymentsFormTitle}
           </p>
-          <CheckoutCardBrandIcons
-            variant="row"
-            size="sm"
-            className="max-w-[11rem]"
-          />
+          <CheckoutCardBrandIcons variant="row" />
         </div>
         <p className="shrink-0 pt-0.5 text-[11px] text-ink/40">
           {dict.checkout.securePayment}

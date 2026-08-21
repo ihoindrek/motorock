@@ -353,14 +353,8 @@ function PaymentMethodIcon({
 
   if (visual.kind === "card-brands") {
     return (
-      <span
-        aria-hidden="true"
-        className={cn(
-          "flex shrink-0 items-center",
-          "w-[4.75rem] sm:w-[5.25rem]",
-        )}
-      >
-        <CheckoutCardBrandIcons variant="compact" size="sm" className="w-full" />
+      <span aria-hidden="true">
+        <CheckoutCardBrandIcons variant="compact" />
       </span>
     );
   }
