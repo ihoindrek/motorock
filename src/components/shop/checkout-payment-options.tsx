@@ -249,7 +249,7 @@ export function ensureLiveBankPaymentGateway(
   ];
 }
 
-/** Hide regional Montonio gateways outside supported countries; card stays global. */
+/** Hide regional Montonio gateways outside supported countries. */
 export function filterMontonioGatewaysByCountry(
   gateways: PaymentGateway[],
   country: string | null | undefined,
@@ -258,9 +258,7 @@ export function filterMontonioGatewaysByCountry(
     return gateways;
   }
 
-  return gateways.filter(
-    (gateway) => !isMontonioGateway(gateway) || isMontonioCardGateway(gateway),
-  );
+  return gateways.filter((gateway) => !isMontonioGateway(gateway));
 }
 
 function filterMontonioOptionsByCountry(
@@ -271,7 +269,7 @@ function filterMontonioOptionsByCountry(
     return options;
   }
 
-  return options.filter((option) => option.kind === "card");
+  return [];
 }
 
 /** Prefer WooPayments for EU buyers outside Montonio bank-link markets. */

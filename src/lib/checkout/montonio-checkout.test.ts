@@ -228,9 +228,10 @@ describe("pickupPointReadyForCheckout", () => {
 });
 
 describe("filterHeadlessDisabledMontonioFinancing", () => {
-  it("removes hire purchase and BNPL gateways and options", () => {
+  it("removes card, hire purchase, and BNPL gateways and options", () => {
     const gateways = [
       { id: "wc_montonio_payments" },
+      { id: "wc_montonio_card" },
       { id: "wc_montonio_hire_purchase" },
       { id: "wc_montonio_bnpl" },
       { id: "ppcp-gateway" },
@@ -241,6 +242,13 @@ describe("filterHeadlessDisabledMontonioFinancing", () => {
         code: "LHVBEE22",
         systemName: "paymentInitiation",
         name: "LHV",
+        logoUrl: null,
+      },
+      {
+        kind: "card",
+        code: "card",
+        systemName: "cardPayments",
+        name: "Card payment",
         logoUrl: null,
       },
       {

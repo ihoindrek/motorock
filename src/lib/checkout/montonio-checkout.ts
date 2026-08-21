@@ -73,15 +73,16 @@ const MONTONIO_PROVIDER_TO_KIND: Record<string, MontonioPaymentOption["kind"]> =
     hirePurchase: "hirePurchase",
   };
 
-/** Hidden in headless checkout until native Woo hire/BNPL gateways are wired. */
+/** Hidden in headless checkout — WooPayments covers cards; hire/BNPL await native wiring. */
 export const HEADLESS_DISABLED_MONTONIO_FINANCING_GATEWAY_IDS = new Set([
+  MONTONIO_CARD_PAYMENT_METHOD_ID,
   "wc_montonio_hire_purchase",
   "wc_montonio_bnpl",
 ]);
 
 const HEADLESS_DISABLED_MONTONIO_OPTION_KINDS = new Set<
   MontonioPaymentOption["kind"]
->(["hirePurchase", "bnpl"]);
+>(["card", "hirePurchase", "bnpl"]);
 
 export function isHeadlessDisabledMontonioFinancingGateway(
   gatewayId: string,

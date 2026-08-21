@@ -275,16 +275,13 @@ describe("resolveVisiblePaymentGateways", () => {
     ];
 
     const live = resolveVisiblePaymentGateways(gateways, bankOptions, "et", true, "EE");
-    expect(live.map((gateway) => gateway.id)).toEqual(
-      expect.arrayContaining([
-        MONTONIO_PAYMENT_METHOD_ID,
-        "wc_montonio_card",
-        "ppcp-gateway",
-      ]),
-    );
+    expect(live.map((gateway) => gateway.id)).toEqual([
+      MONTONIO_PAYMENT_METHOD_ID,
+      "ppcp-gateway",
+    ]);
   });
 
-  it("keeps Montonio card payments outside supported countries", () => {
+  it("hides Montonio card payments outside supported countries", () => {
     const gateways: PaymentGateway[] = [
       { id: "ppcp-gateway", title: "PayPal", description: "", icon: null },
       { id: MONTONIO_PAYMENT_METHOD_ID, title: "Pay with your bank", description: "", icon: null },
@@ -306,10 +303,35 @@ describe("resolveVisiblePaymentGateways", () => {
       "DE",
     );
 
-    expect(live.map((gateway) => gateway.id)).toEqual(
-      expect.arrayContaining(["ppcp-gateway", "wc_montonio_card"]),
+    expect(live.map((gateway) => gateway.id)).toEqual(["ppcp-gateway"]);
+  });
+
+  it("hides Montonio card payments in live checkout when WooPayments is available", () => {
+    const gateways: PaymentGateway[] = [
+      { id: "woocommerce_payments", title: "Card", description: "", icon: null },
+      { id: MONTONIO_PAYMENT_METHOD_ID, title: "Pay with your bank", description: "", icon: null },
+      { id: "wc_montonio_card", title: "Card Payment", description: "", icon: null },
+    ];
+    const cardOption: MontonioPaymentOption = {
+      kind: "card",
+      code: "cardPayments",
+      systemName: "cardPayments",
+      name: "Card",
+      logoUrl: null,
+    };
+
+    const live = resolveVisiblePaymentGateways(
+      gateways,
+      [...bankOptions, cardOption],
+      "et",
+      true,
+      "EE",
     );
-    expect(live).toHaveLength(2);
+
+    expect(live.map((gateway) => gateway.id)).toEqual([
+      MONTONIO_PAYMENT_METHOD_ID,
+      "woocommerce_payments",
+    ]);
   });
 });
 
