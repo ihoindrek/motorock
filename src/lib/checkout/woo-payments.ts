@@ -1,13 +1,107 @@
 import type { CheckoutMetaDataInput } from "@/lib/checkout/montonio-checkout";
+import type { PaymentGateway } from "@/lib/graphql/checkout";
 import { readJsonResponse } from "@/lib/http/read-json-response";
 
 export const WOO_PAYMENTS_GATEWAY_ID = "woocommerce_payments";
+export const WOO_PAYMENTS_APPLE_PAY_GATEWAY_ID = "motorock_woo_payments_apple_pay";
+export const WOO_PAYMENTS_GOOGLE_PAY_GATEWAY_ID = "motorock_woo_payments_google_pay";
+export const WOO_PAYMENTS_CARD_GATEWAY_ID = "motorock_woo_payments_card";
 
 /** Stripe account must support Klarna in EUR before enabling in checkout UI. */
 export const WOO_PAYMENTS_EXCLUDED_STRIPE_PAYMENT_METHODS = ["klarna"] as const;
 
+const WOO_PAYMENTS_UI_GATEWAY_IDS = new Set([
+  WOO_PAYMENTS_GATEWAY_ID,
+  WOO_PAYMENTS_APPLE_PAY_GATEWAY_ID,
+  WOO_PAYMENTS_GOOGLE_PAY_GATEWAY_ID,
+  WOO_PAYMENTS_CARD_GATEWAY_ID,
+]);
+
+export type WooPaymentsWalletAvailability = {
+  applePay: boolean;
+  googlePay: boolean;
+};
+
+export type WooPaymentsWalletKind = "applePay" | "googlePay";
+
 export function isWooPaymentsGateway(gatewayId: string | null | undefined) {
-  return gatewayId === WOO_PAYMENTS_GATEWAY_ID;
+  if (!gatewayId) {
+    return false;
+  }
+
+  return WOO_PAYMENTS_UI_GATEWAY_IDS.has(gatewayId);
+}
+
+export function isWooPaymentsCardGateway(gatewayId: string | null | undefined) {
+  return (
+    gatewayId === WOO_PAYMENTS_GATEWAY_ID ||
+    gatewayId === WOO_PAYMENTS_CARD_GATEWAY_ID
+  );
+}
+
+export function wooPaymentsWalletForGatewayId(
+  gatewayId: string | null | undefined,
+): WooPaymentsWalletKind | null {
+  if (gatewayId === WOO_PAYMENTS_APPLE_PAY_GATEWAY_ID) {
+    return "applePay";
+  }
+
+  if (gatewayId === WOO_PAYMENTS_GOOGLE_PAY_GATEWAY_ID) {
+    return "googlePay";
+  }
+
+  return null;
+}
+
+export function resolveWooPaymentsCheckoutGatewayId(
+  gatewayId: string | null | undefined,
+) {
+  if (isWooPaymentsGateway(gatewayId)) {
+    return WOO_PAYMENTS_GATEWAY_ID;
+  }
+
+  return gatewayId ?? null;
+}
+
+export function expandWooPaymentsPaymentGateways(
+  gateways: PaymentGateway[],
+  walletAvailability: WooPaymentsWalletAvailability | null,
+) {
+  const wooIndex = gateways.findIndex(
+    (gateway) => gateway.id === WOO_PAYMENTS_GATEWAY_ID,
+  );
+
+  if (wooIndex === -1) {
+    return gateways;
+  }
+
+  const wooGateway = gateways[wooIndex];
+  const splitGateways: PaymentGateway[] = [];
+
+  if (walletAvailability?.applePay) {
+    splitGateways.push({
+      ...wooGateway,
+      id: WOO_PAYMENTS_APPLE_PAY_GATEWAY_ID,
+    });
+  }
+
+  if (walletAvailability?.googlePay) {
+    splitGateways.push({
+      ...wooGateway,
+      id: WOO_PAYMENTS_GOOGLE_PAY_GATEWAY_ID,
+    });
+  }
+
+  splitGateways.push({
+    ...wooGateway,
+    id: WOO_PAYMENTS_CARD_GATEWAY_ID,
+  });
+
+  return [
+    ...gateways.slice(0, wooIndex),
+    ...splitGateways,
+    ...gateways.slice(wooIndex + 1),
+  ];
 }
 
 export function buildWooPaymentsCheckoutMetaData(input: {

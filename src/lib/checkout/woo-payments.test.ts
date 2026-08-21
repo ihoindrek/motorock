@@ -1,17 +1,57 @@
 import { describe, expect, it } from "vitest";
 import {
   buildWooPaymentsCheckoutMetaData,
+  expandWooPaymentsPaymentGateways,
   isWooPaymentsGateway,
   parseWooPaymentsConfirmRedirect,
+  resolveWooPaymentsCheckoutGatewayId,
   toStripePaymentMethodBillingDetails,
+  WOO_PAYMENTS_APPLE_PAY_GATEWAY_ID,
+  WOO_PAYMENTS_CARD_GATEWAY_ID,
   WOO_PAYMENTS_EXCLUDED_STRIPE_PAYMENT_METHODS,
   WOO_PAYMENTS_GATEWAY_ID,
+  WOO_PAYMENTS_GOOGLE_PAY_GATEWAY_ID,
 } from "@/lib/checkout/woo-payments";
+import type { PaymentGateway } from "@/lib/graphql/checkout";
 
 describe("isWooPaymentsGateway", () => {
-  it("matches WooCommerce Payments gateway id", () => {
+  it("matches WooCommerce Payments gateway ids", () => {
     expect(isWooPaymentsGateway(WOO_PAYMENTS_GATEWAY_ID)).toBe(true);
+    expect(isWooPaymentsGateway(WOO_PAYMENTS_APPLE_PAY_GATEWAY_ID)).toBe(true);
+    expect(isWooPaymentsGateway(WOO_PAYMENTS_GOOGLE_PAY_GATEWAY_ID)).toBe(true);
+    expect(isWooPaymentsGateway(WOO_PAYMENTS_CARD_GATEWAY_ID)).toBe(true);
     expect(isWooPaymentsGateway("wc_montonio_card")).toBe(false);
+  });
+});
+
+describe("resolveWooPaymentsCheckoutGatewayId", () => {
+  it("maps UI gateway ids to WooPayments checkout id", () => {
+    expect(resolveWooPaymentsCheckoutGatewayId(WOO_PAYMENTS_APPLE_PAY_GATEWAY_ID)).toBe(
+      WOO_PAYMENTS_GATEWAY_ID,
+    );
+    expect(resolveWooPaymentsCheckoutGatewayId("wc_montonio_card")).toBe(
+      "wc_montonio_card",
+    );
+  });
+});
+
+describe("expandWooPaymentsPaymentGateways", () => {
+  const wooGateway: PaymentGateway = {
+    id: WOO_PAYMENTS_GATEWAY_ID,
+    title: "WooPayments",
+    description: "",
+  };
+
+  it("splits WooPayments into wallet and card rows", () => {
+    expect(
+      expandWooPaymentsPaymentGateways([wooGateway], {
+        applePay: true,
+        googlePay: false,
+      }),
+    ).toEqual([
+      { ...wooGateway, id: WOO_PAYMENTS_APPLE_PAY_GATEWAY_ID },
+      { ...wooGateway, id: WOO_PAYMENTS_CARD_GATEWAY_ID },
+    ]);
   });
 });
 

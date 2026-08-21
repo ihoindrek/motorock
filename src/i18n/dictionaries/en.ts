@@ -224,6 +224,12 @@ export type Dictionary = {
     paymentMethodsPaypalDesc: string;
     paymentMethodsWooPayments: string;
     paymentMethodsWooPaymentsDesc: string;
+    paymentMethodsApplePay: string;
+    paymentMethodsApplePayDesc: string;
+    paymentMethodsGooglePay: string;
+    paymentMethodsGooglePayDesc: string;
+    paymentMethodsWooPaymentsCard: string;
+    paymentMethodsWooPaymentsCardDesc: string;
     paymentWooPaymentsOrCard: string;
     paymentOtherMethods: string;
     paymentWooPaymentsFormTitle: string;
@@ -883,6 +889,12 @@ export const en: Dictionary = {
     paymentMethodsWooPayments: "Card & digital wallets",
     paymentMethodsWooPaymentsDesc:
       "Visa, Mastercard, Apple Pay, Google Pay and more — depending on country and device.",
+    paymentMethodsApplePay: "Apple Pay",
+    paymentMethodsApplePayDesc: "Pay with Apple Pay on supported devices.",
+    paymentMethodsGooglePay: "Google Pay",
+    paymentMethodsGooglePayDesc: "Pay with Google Pay on supported devices.",
+    paymentMethodsWooPaymentsCard: "Card",
+    paymentMethodsWooPaymentsCardDesc: "Visa, Mastercard and other cards.",
     paymentWooPaymentsOrCard: "or pay with card",
     paymentOtherMethods: "or choose another method",
     paymentWooPaymentsFormTitle: "Card details",

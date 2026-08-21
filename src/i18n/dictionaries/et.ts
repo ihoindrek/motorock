@@ -245,6 +245,12 @@ export const et: Dictionary = {
     paymentMethodsWooPayments: "Kaart ja digi-wallet",
     paymentMethodsWooPaymentsDesc:
       "Visa, Mastercard, Apple Pay, Google Pay jm — olenevalt riigist ja seadmest.",
+    paymentMethodsApplePay: "Apple Pay",
+    paymentMethodsApplePayDesc: "Maksa Apple Payga toetatud seadmetes.",
+    paymentMethodsGooglePay: "Google Pay",
+    paymentMethodsGooglePayDesc: "Maksa Google Payga toetatud seadmetes.",
+    paymentMethodsWooPaymentsCard: "Kaart",
+    paymentMethodsWooPaymentsCardDesc: "Visa, Mastercard ja teised kaardid.",
     paymentWooPaymentsOrCard: "või kaardiga",
     paymentOtherMethods: "või vali muu makseviis",
     paymentWooPaymentsFormTitle: "Kaardiandmed",
