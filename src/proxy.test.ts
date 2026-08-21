@@ -10,5 +10,8 @@ describe("isLocaleBypassPath", () => {
   it("does not bypass normal storefront routes", () => {
     expect(isLocaleBypassPath("/cart")).toBe(false);
     expect(isLocaleBypassPath("/en/cart")).toBe(false);
+    expect(isLocaleBypassPath("/.well-known/apple-developer-merchantid-domain-association")).toBe(
+      false,
+    );
   });
 });

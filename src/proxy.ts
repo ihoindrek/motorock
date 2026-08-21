@@ -110,6 +110,7 @@ export function proxy(request: NextRequest) {
 
   if (
     pathname.startsWith("/api") ||
+    pathname.startsWith("/.well-known/") ||
     pathname.startsWith("/_next") ||
     pathname.startsWith("/sitemaps/") ||
     pathname === "/robots.txt" ||
