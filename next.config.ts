@@ -24,20 +24,52 @@ const nextConfig: NextConfig = {
       },
     ];
 
-    if (siteIndexable) {
-      return staticAssetHeaders;
-    }
+    // Reputation scanners (Norton SafeWeb etc.) score sites down for missing
+    // security headers. Scripts are intentionally not restricted by CSP so
+    // GTM, Stripe, and consent bootstrap keep working; the Permissions-Policy
+    // leaves `payment` at its default so Stripe wallet iframes can delegate it.
+    const securityHeaders = [
+      {
+        key: "Strict-Transport-Security",
+        value: "max-age=63072000; includeSubDomains",
+      },
+      {
+        key: "X-Content-Type-Options",
+        value: "nosniff",
+      },
+      {
+        key: "X-Frame-Options",
+        value: "SAMEORIGIN",
+      },
+      {
+        key: "Referrer-Policy",
+        value: "strict-origin-when-cross-origin",
+      },
+      {
+        key: "Permissions-Policy",
+        value: "camera=(), microphone=(), geolocation=()",
+      },
+      {
+        key: "Content-Security-Policy",
+        value: "frame-ancestors 'self'; base-uri 'self'; object-src 'none'",
+      },
+    ];
+
+    const allPathHeaders = siteIndexable
+      ? securityHeaders
+      : [
+          ...securityHeaders,
+          {
+            key: "X-Robots-Tag",
+            value: "noindex, nofollow, noarchive, nosnippet",
+          },
+        ];
 
     return [
       ...staticAssetHeaders,
       {
         source: "/:path*",
-        headers: [
-          {
-            key: "X-Robots-Tag",
-            value: "noindex, nofollow, noarchive, nosnippet",
-          },
-        ],
+        headers: allPathHeaders,
       },
     ];
   },

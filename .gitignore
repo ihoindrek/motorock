@@ -38,6 +38,9 @@ yarn-error.log*
 .env*
 !.env.example
 
+# live WordPress secrets must never be committed
+wordpress/wp-config.php
+
 # vercel
 .vercel
 
