@@ -8,8 +8,8 @@ import {
 } from "@/lib/shop/card-payment-brands";
 import { cn } from "@/lib/utils";
 
-const logoClassName =
-  "h-5 w-auto max-w-[2.125rem] flex-1 object-contain sm:h-6 sm:max-w-[2.25rem]";
+/** Card-badge SVGs are ~1.5:1; size by height and preserve full width. */
+const logoClassName = "h-6 w-auto shrink-0 object-contain sm:h-7";
 
 export function CheckoutCardBrandIcons({
   brands = WOO_PAYMENTS_CHECKOUT_LOGOS,
@@ -42,10 +42,8 @@ export function CheckoutCardBrandIcons({
   return (
     <span
       className={cn(
-        "flex shrink-0 items-center justify-center gap-1 overflow-hidden sm:gap-1.5",
-        variant === "compact"
-          ? "h-9 w-[4.75rem] sm:h-10 sm:w-20"
-          : "h-9 max-w-full sm:h-10",
+        "flex shrink-0 items-center gap-1 sm:gap-1.5",
+        variant === "compact" && "min-w-[7.25rem] sm:min-w-[8rem]",
         className,
       )}
       aria-label={ariaLabel}
@@ -56,8 +54,8 @@ export function CheckoutCardBrandIcons({
           key={brand.id}
           src={brand.src}
           alt=""
-          width={50}
-          height={33}
+          width={58}
+          height={40}
           loading="lazy"
           decoding="async"
           className={logoClassName}
