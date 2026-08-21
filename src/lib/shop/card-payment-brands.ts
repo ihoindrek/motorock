@@ -5,6 +5,14 @@ const WOO_PAYMENTS_CARDS_BASE =
 const WOO_PAYMENTS_METHODS_BASE =
   `${DEFAULT_WOO_STORE_URL}/wp-content/plugins/woocommerce-payments/assets/images/payment-methods`;
 
+/** Local checkout payment brand icons (public/payment-brands). */
+export const PAYMENT_BRAND_ICON_PATHS = {
+  visa: "/payment-brands/visa.svg",
+  mastercard: "/payment-brands/mastercard.svg",
+  amex: "/payment-brands/amex.svg",
+  paypal: "/payment-brands/paypal.svg",
+} as const;
+
 export type CardPaymentBrand = {
   id: string;
   label: string;
@@ -19,16 +27,20 @@ export const WOO_PAYMENTS_KLARNA_BRAND: CardPaymentBrand = {
 
 /** Card networks supported by WooPayments / Stripe card payments in the EU storefront. */
 export const WOO_PAYMENTS_CARD_BRANDS: readonly CardPaymentBrand[] = [
-  { id: "visa", label: "Visa", src: `${WOO_PAYMENTS_CARDS_BASE}/visa.svg` },
+  {
+    id: "visa",
+    label: "Visa",
+    src: PAYMENT_BRAND_ICON_PATHS.visa,
+  },
   {
     id: "mastercard",
     label: "Mastercard",
-    src: `${WOO_PAYMENTS_CARDS_BASE}/mastercard.svg`,
+    src: PAYMENT_BRAND_ICON_PATHS.mastercard,
   },
   {
     id: "amex",
     label: "American Express",
-    src: `${WOO_PAYMENTS_CARDS_BASE}/amex.svg`,
+    src: PAYMENT_BRAND_ICON_PATHS.amex,
   },
   {
     id: "discover",

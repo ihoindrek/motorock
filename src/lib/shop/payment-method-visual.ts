@@ -1,6 +1,7 @@
 import { DEFAULT_WOO_STORE_URL } from "@/lib/storefront/url";
 import { MONTONIO_CARD_PAYMENT_METHOD_ID } from "@/lib/checkout/montonio-checkout";
 import { WOO_PAYMENTS_GATEWAY_ID } from "@/lib/checkout/woo-payments";
+import { PAYMENT_BRAND_ICON_PATHS } from "@/lib/shop/card-payment-brands";
 
 const MONTONIO_ASSETS =
   `${DEFAULT_WOO_STORE_URL}/wp-content/plugins/montonio-for-woocommerce/assets/images`;
@@ -49,8 +50,9 @@ export function resolvePaymentMethodVisual(
   if (id.includes("ppcp") || id.includes("paypal")) {
     return {
       kind: "logo",
-      src: `${DEFAULT_WOO_STORE_URL}/wp-content/plugins/woocommerce-paypal-payments/modules/ppcp-wc-gateway/assets/images/paypal.svg`,
+      src: PAYMENT_BRAND_ICON_PATHS.paypal,
       alt: "PayPal",
+      layout: "card",
     };
   }
 
