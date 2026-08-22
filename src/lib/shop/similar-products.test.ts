@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { CatalogProduct } from "@/types/catalog-product";
-import { pickSimilarProducts } from "@/lib/shop/similar-products";
+import { pickSimilarProducts, resolveSimilarProductsCatalogWhere } from "@/lib/shop/similar-products";
 
 function product(
   overrides: Partial<CatalogProduct> & Pick<CatalogProduct, "slug" | "name">,
@@ -130,5 +130,32 @@ describe("pickSimilarProducts", () => {
     const related = pickSimilarProducts(revolver, motorcycleCatalog);
 
     expect(related.map((item) => item.slug)).toEqual(["motron-volt", "malaguti-scooter"]);
+  });
+});
+
+describe("resolveSimilarProductsCatalogWhere", () => {
+  it("scopes equipment products to their leaf Woo category", () => {
+    expect(
+      resolveSimilarProductsCatalogWhere(
+        product({
+          slug: "goggles",
+          name: "Goggles",
+          wcCategorySlugs: ["accessories", "goggles"],
+        }),
+      ),
+    ).toEqual({ category: "goggles" });
+  });
+
+  it("scopes motorcycles to the motorcycles category", () => {
+    expect(
+      resolveSimilarProductsCatalogWhere(
+        product({
+          slug: "revolver",
+          name: "Revolver",
+          type: "motorcycle",
+          category: "motorcycles",
+        }),
+      ),
+    ).toEqual({ category: "motorcycles" });
   });
 });

@@ -3,7 +3,12 @@ import { cache } from "react";
 import type { Locale } from "@/i18n/config";
 import type { CatalogProduct } from "@/types/catalog-product";
 import type { MotorcycleProduct } from "@/types/motorcycle-product";
-import { pickSimilarProducts, RELATED_PRODUCTS_LIMIT } from "@/lib/shop/similar-products";
+import {
+  pickSimilarProducts,
+  RELATED_PRODUCTS_LIMIT,
+  resolveSimilarProductsCatalogWhere,
+  similarProductsPoolLimit,
+} from "@/lib/shop/similar-products";
 import {
   type CategoryRoute,
   resolveEquipmentCatalogWhere,
@@ -399,9 +404,11 @@ function mapCatalogNodesForRoute(
 // doesn't apply to POST (GraphQL) fetches.
 export const fetchGraphqlProductBySlug = cache(async (slug: string) => {
   try {
-    const data = await graphqlRequest<ProductBySlugResponse>(PRODUCT_BY_SLUG, {
-      slug,
-    });
+    const data = await graphqlRequest<ProductBySlugResponse>(
+      PRODUCT_BY_SLUG,
+      { slug },
+      { next: { tags: [`product-${slug}`] } },
+    );
     return data.product;
   } catch {
     return null;
@@ -908,12 +915,19 @@ export async function getSimilarProducts(
   locale: Locale = "en",
 ): Promise<CatalogProduct[]> {
   try {
-    const catalog =
-      product.type === "motorcycle"
-        ? await getMotorcycleCatalog(locale)
-        : await getEquipmentCatalog(locale);
+    const where = resolveSimilarProductsCatalogWhere(product);
+    const { nodes, nodesById } = await fetchCatalogNodesLimited(
+      where,
+      locale,
+      similarProductsPoolLimit(product),
+    );
+    const showroomMetaSourcesByProductId =
+      await buildCatalogShowroomMetaSourcesMap(nodes, locale);
+    const pool = nodes.map((node) =>
+      mapCatalogCard(node, locale, nodesById, showroomMetaSourcesByProductId),
+    );
 
-    return pickSimilarProducts(product, catalog, limit);
+    return pickSimilarProducts(product, pool, limit);
   } catch (error) {
     console.error("[similar-products] GraphQL catalog fetch failed:", error);
     return [];

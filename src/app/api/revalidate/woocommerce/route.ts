@@ -1,9 +1,11 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import {
-  captureStorefrontError,
   logStorefrontEvent,
 } from "@/lib/monitoring/observability";
-import { revalidateStorefront } from "@/lib/revalidate/storefront";
+import {
+  revalidateFromManualRequest,
+  revalidateFromWooWebhook,
+} from "@/lib/revalidate/handle-woocommerce-revalidate";
 
 export const dynamic = "force-dynamic";
 
@@ -34,14 +36,18 @@ function verifyManualSecret(provided: string | null, secret: string) {
   return timingSafeEqual(expectedBuffer, actualBuffer);
 }
 
-function revalidateResponse(source: string, meta: Record<string, unknown> = {}) {
-  revalidateStorefront();
-  logStorefrontEvent("storefront.revalidate", { source, ...meta });
+function revalidateResponse(
+  source: string,
+  meta: Record<string, unknown> = {},
+) {
+  const result = revalidateFromManualRequest();
+  logStorefrontEvent("storefront.revalidate", { source, ...result, ...meta });
 
   return Response.json({
     ok: true,
     revalidated: true,
     source,
+    ...result,
     timestamp: new Date().toISOString(),
   });
 }
@@ -92,10 +98,19 @@ export async function POST(request: Request) {
 
   // WooCommerce deliver_ping on webhook save — no signature, body: webhook_id=123
   if (isWooWebhookPing(payload, signature)) {
-    return revalidateResponse("woocommerce-webhook-ping", {
+    logStorefrontEvent("storefront.webhook.ping", {
       topic,
       deliveryId,
       webhookId: payload.trim(),
+    });
+
+    return Response.json({
+      ok: true,
+      revalidated: false,
+      source: "woocommerce-webhook-ping",
+      topic,
+      deliveryId,
+      timestamp: new Date().toISOString(),
     });
   }
 
@@ -108,12 +123,21 @@ export async function POST(request: Request) {
     return Response.json({ ok: false, error: "Invalid webhook signature" }, { status: 401 });
   }
 
-  const response = revalidateResponse("woocommerce-webhook", { topic, deliveryId });
-  const body = await response.json();
-
-  return Response.json({
-    ...body,
+  const result = revalidateFromWooWebhook(topic, payload);
+  logStorefrontEvent("storefront.revalidate", {
+    source: "woocommerce-webhook",
     topic,
     deliveryId,
+    ...result,
+  });
+
+  return Response.json({
+    ok: true,
+    revalidated: true,
+    source: "woocommerce-webhook",
+    topic,
+    deliveryId,
+    ...result,
+    timestamp: new Date().toISOString(),
   });
 }

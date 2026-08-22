@@ -2,6 +2,7 @@ import { getWooGraphqlUrl } from "@/lib/storefront/url";
 
 const DEFAULT_REVALIDATE_SECONDS = 300;
 const DEFAULT_RETRY_ATTEMPTS = 3;
+const DEFAULT_GRAPHQL_TIMEOUT_MS = 20_000;
 
 type GraphQLResponse<T> = {
   data?: T;
@@ -19,6 +20,8 @@ type GraphqlRequestInit = RequestInit & {
   };
   /** Override transient network retries (default 3). Set 1 to disable. */
   retryAttempts?: number;
+  /** Abort the fetch after this many ms (default 20s). */
+  timeoutMs?: number;
 };
 
 function sleep(ms: number) {
@@ -46,7 +49,9 @@ function isTransientFetchError(error: unknown): boolean {
     haystack.includes("econnrefused") ||
     haystack.includes("etimedout") ||
     haystack.includes("socket hang up") ||
-    haystack.includes("network")
+    haystack.includes("network") ||
+    haystack.includes("aborted") ||
+    haystack.includes("timeout")
   );
 }
 
@@ -92,6 +97,7 @@ async function graphqlRequestOnce<TData, TVariables>(
       ...(init?.headers ?? {}),
     },
     body: JSON.stringify({ query, variables }),
+    signal: AbortSignal.timeout(init?.timeoutMs ?? DEFAULT_GRAPHQL_TIMEOUT_MS),
     next: {
       revalidate: nextOptions.revalidate ?? DEFAULT_REVALIDATE_SECONDS,
       tags: [...cacheTags],

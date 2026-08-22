@@ -10,7 +10,6 @@ import type { Locale } from "@/i18n/config";
 import { localizedHref } from "@/i18n/paths";
 import {
   getCatalogProductsBySlugs,
-  getMotorcycleCatalog,
   getMotorcycleProductBySlug,
   getProductBySlug,
   getProductSlugAlternates,
@@ -39,7 +38,10 @@ import {
   PRODUCT_PATH_SEGMENTS,
   PRODUCT_SLUG_PATH_TEMPLATES,
 } from "@/lib/shop/product-url";
-import { pickSimilarProducts, RELATED_PRODUCTS_LIMIT } from "@/lib/shop/similar-products";
+import {
+  buildMotorcycleSimilarAnchor,
+  RELATED_PRODUCTS_LIMIT,
+} from "@/lib/shop/similar-products";
 import { productsShareWcSubcategory } from "@/lib/shop/wc-categories";
 
 type ProductPageParams = {
@@ -196,15 +198,6 @@ export async function renderProductPage({
   }
 
   if (motorcycle) {
-    let motorcycleCatalog: Awaited<ReturnType<typeof getMotorcycleCatalog>> = [];
-
-    try {
-      motorcycleCatalog = await getMotorcycleCatalog(locale);
-    } catch (error) {
-      console.error("[motorcycle-pdp] GraphQL catalog fetch failed:", error);
-    }
-
-    const currentMotorcycle = motorcycleCatalog.find((item) => item.slug === slug);
     const dict = getDictionary(locale);
     const breadcrumbs = resolveProductBreadcrumbs(
       {
@@ -224,9 +217,11 @@ export async function renderProductPage({
           motorcycle.enrichment.relatedSlugs,
           locale,
         )
-      : currentMotorcycle
-        ? pickSimilarProducts(currentMotorcycle, motorcycleCatalog, RELATED_PRODUCTS_LIMIT)
-        : [];
+      : await getSimilarProducts(
+          buildMotorcycleSimilarAnchor(motorcycle),
+          RELATED_PRODUCTS_LIMIT,
+          locale,
+        );
 
     return (
       <>

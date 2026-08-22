@@ -10,7 +10,7 @@ const base = (process.argv[2] ?? "https://motorock.eu").replace(/\/$/, "");
 // Each page fans out into several sequential WooCommerce GraphQL calls, so
 // keep concurrency low — too many parallel cold renders overwhelm the WP
 // backend and pages start timing out.
-const CONCURRENCY = Number(process.env.WARM_CONCURRENCY ?? 4);
+const CONCURRENCY = Number(process.env.WARM_CONCURRENCY ?? 2);
 const REQUEST_TIMEOUT_MS = 45_000;
 
 async function fetchText(url) {
