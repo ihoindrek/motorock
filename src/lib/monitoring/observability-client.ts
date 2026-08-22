@@ -1,5 +1,7 @@
 "use client";
 
+import { isBenignClientError } from "@/lib/client/client-error-utils";
+
 async function reportClientErrorToMonitoring(
   error: Error & { digest?: string },
   meta: Record<string, unknown>,
@@ -29,6 +31,10 @@ export async function reportClientError(
   error: Error & { digest?: string },
   meta: Record<string, unknown> = {},
 ) {
+  if (isBenignClientError(error.message)) {
+    return;
+  }
+
   console.error(
     JSON.stringify({
       event: "storefront.client_error",

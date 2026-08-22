@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import type { ProductType } from "@/types/catalog-product";
+import { readLocalStorage, writeLocalStorage, removeLocalStorage } from "@/lib/client/storage";
 
 export type WishlistItem = {
   slug: string;
@@ -41,7 +42,7 @@ function readStoredItems(): WishlistItem[] {
   }
 
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
+    const raw = readLocalStorage(STORAGE_KEY);
     if (!raw) {
       return [];
     }
@@ -67,7 +68,7 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    writeLocalStorage(STORAGE_KEY, JSON.stringify(items));
   }, [items, hydrated]);
 
   const has = useCallback(

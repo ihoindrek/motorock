@@ -461,7 +461,11 @@ export function CategoryView({
     const nextUrl = `${window.location.pathname}${query ? `?${query}` : ""}`;
 
     if (nextUrl !== `${window.location.pathname}${window.location.search}`) {
-      window.history.replaceState(window.history.state, "", nextUrl);
+      try {
+        window.history.replaceState(window.history.state, "", nextUrl);
+      } catch {
+        // Safari private mode / restricted contexts can reject replaceState.
+      }
     }
   }, [filters, sort, priceBounds, route]);
 

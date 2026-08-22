@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import type { ProductType } from "@/types/catalog-product";
+import { readLocalStorage, writeLocalStorage, removeLocalStorage } from "@/lib/client/storage";
 import { trackAddToCart, trackRemoveFromCart } from "@/lib/analytics";
 import { formatSizeLabel, isOneSizeLabel } from "@/lib/shop/size-label";
 
@@ -71,7 +72,7 @@ function readStoredLines(): CartLine[] {
   }
 
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
+    const raw = readLocalStorage(STORAGE_KEY);
     if (!raw) {
       return [];
     }
@@ -112,7 +113,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(lines));
+    writeLocalStorage(STORAGE_KEY, JSON.stringify(lines));
   }, [lines, hydrated]);
 
   const addItem = useCallback(
@@ -230,7 +231,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     // provider's hydration effect, which would otherwise read the stored
     // lines from localStorage and restore the cart right back.
     if (typeof window !== "undefined") {
-      window.localStorage.removeItem(STORAGE_KEY);
+      removeLocalStorage(STORAGE_KEY);
     }
   }, []);
 
@@ -248,7 +249,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     // Write through synchronously for the same hydration-race reason as
     // clearCart: a restore link triggers this right after a fresh page load.
     if (typeof window !== "undefined") {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
+      writeLocalStorage(STORAGE_KEY, JSON.stringify(normalized));
     }
   }, []);
 

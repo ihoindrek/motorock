@@ -47,6 +47,14 @@ export async function POST(request: Request) {
     return Response.json({ ok: false, error: "Missing message" }, { status: 400 });
   }
 
+  const benign =
+    /failed to load chunk/i.test(message) ||
+    /the operation is insecure/i.test(message);
+
+  if (benign) {
+    return Response.json({ ok: true, ignored: true, benign: true });
+  }
+
   if (!ALERTABLE_SOURCES.has(source)) {
     return Response.json({ ok: true, ignored: true });
   }

@@ -8,6 +8,11 @@ import {
   type Locale,
 } from "@/i18n/config";
 import { getDictionary } from "@/i18n/get-dictionary";
+import {
+  isBenignClientError,
+  isChunkLoadError,
+  reloadOnceAfterChunkError,
+} from "@/lib/client/client-error-utils";
 import { reportClientError } from "@/lib/monitoring/observability-client";
 
 function readLocaleFromCookie(): Locale {
@@ -34,7 +39,14 @@ export default function GlobalError({
   const dict = getDictionary(locale);
 
   useEffect(() => {
-    void reportClientError(error, { source: "global-error" });
+    if (isChunkLoadError(error.message)) {
+      reloadOnceAfterChunkError();
+      return;
+    }
+
+    if (!isBenignClientError(error.message)) {
+      void reportClientError(error, { source: "global-error" });
+    }
   }, [error]);
 
   return (

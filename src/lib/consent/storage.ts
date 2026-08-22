@@ -1,4 +1,9 @@
 import {
+  readLocalStorage,
+  removeLocalStorage,
+  writeLocalStorage,
+} from "@/lib/client/storage";
+import {
   CONSENT_COOKIE_NAME,
   CONSENT_MAX_AGE_DAYS,
   CONSENT_STORAGE_KEY,
@@ -66,7 +71,7 @@ export function readStoredConsent(): StoredConsent | null {
     return fromCookie;
   }
 
-  return parseStoredConsent(window.localStorage.getItem(CONSENT_STORAGE_KEY));
+  return parseStoredConsent(readLocalStorage(CONSENT_STORAGE_KEY));
 }
 
 export function persistConsent(choices: ConsentChoices): StoredConsent {
@@ -86,7 +91,7 @@ export function persistConsent(choices: ConsentChoices): StoredConsent {
   const maxAgeSeconds = CONSENT_MAX_AGE_DAYS * 24 * 60 * 60;
 
   document.cookie = `${CONSENT_COOKIE_NAME}=${encodeURIComponent(serialized)}; Path=/; Max-Age=${maxAgeSeconds}; SameSite=Lax`;
-  window.localStorage.setItem(CONSENT_STORAGE_KEY, serialized);
+  writeLocalStorage(CONSENT_STORAGE_KEY, serialized);
 
   return stored;
 }
@@ -97,5 +102,5 @@ export function clearStoredConsent() {
   }
 
   document.cookie = `${CONSENT_COOKIE_NAME}=; Path=/; Max-Age=0; SameSite=Lax`;
-  window.localStorage.removeItem(CONSENT_STORAGE_KEY);
+  removeLocalStorage(CONSENT_STORAGE_KEY);
 }
