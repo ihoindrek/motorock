@@ -38,4 +38,12 @@ describe("resolveEncodedSlashEquipmentPath", () => {
       ),
     ).toBe("/tootekategooria/meestele/kapuutsid-ja-kampsunid");
   });
+
+  it("rewrites encoded accessories subcategory paths", () => {
+    expect(
+      resolveEncodedSlashEquipmentPath(
+        "/shop/equipment/accessories%2Fgoggles",
+      ),
+    ).toBe("/shop/equipment/accessories/goggles");
+  });
 });

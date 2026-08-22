@@ -26,6 +26,7 @@ import {
   isEquipmentBranchRoot,
 } from "@/lib/shop/equipment-subcategories";
 import { buildPageMetadata } from "@/lib/seo/metadata";
+import { TransientStorefrontError } from "@/lib/shop/transient-storefront-error";
 
 type EquipmentCategoryPageArgs = {
   locale: Locale;
@@ -109,7 +110,7 @@ export async function renderEquipmentCategoryPage({
   // A transient GraphQL failure must not get cached as a 404 by ISR;
   // throwing keeps the previously cached page being served instead.
   if (!index && normalizedSlug.length > 0) {
-    throw new Error("Equipment category index unavailable");
+    throw new TransientStorefrontError("Equipment category index unavailable");
   }
 
   const route = resolveEquipmentRoute(normalizedSlug, index, locale, dictionary);

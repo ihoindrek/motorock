@@ -230,6 +230,52 @@ export function getLocalizedCategoryDescription(
   return sanitizeCategoryDescriptionHtml(node.description);
 }
 
+function addNavTreeNode(
+  entries: Map<string, WcCategoryEntry>,
+  node: WcCategoryNode,
+  parentSlug: string | null,
+) {
+  if (EXCLUDED_ROOT_SLUGS.has(node.slug)) {
+    return;
+  }
+
+  entries.set(node.slug, {
+    slug: node.slug,
+    name: node.name,
+    description: node.description,
+    count: node.count,
+    languageCode: node.languageCode,
+    translations: node.translations,
+    image: node.image,
+    parentSlug,
+  });
+
+  for (const child of node.children?.nodes ?? []) {
+    addNavTreeNode(entries, child, node.slug);
+  }
+}
+
+export function buildIndexFromNavTree(
+  data: ProductCategoryNavTreeResponse,
+): EquipmentCategoryIndex {
+  const entries = new Map<string, WcCategoryEntry>();
+
+  for (const root of [
+    data.forMen.nodes[0],
+    data.forWomen.nodes[0],
+    data.accessories.nodes[0],
+    data.helmets.nodes[0],
+  ]) {
+    if (root) {
+      addNavTreeNode(entries, root, null);
+    }
+  }
+
+  const roots = EQUIPMENT_ROOT_SLUGS.filter((slug) => entries.has(slug));
+
+  return { nodes: entries, roots };
+}
+
 function buildIndex(
   nodes: EquipmentCategoryIndexResponse["productCategories"]["nodes"],
 ): EquipmentCategoryIndex {
@@ -385,11 +431,28 @@ export const fetchEquipmentCategoryIndex = cache(
     try {
       const data = await graphqlRequest<EquipmentCategoryIndexResponse>(
         EQUIPMENT_CATEGORY_INDEX,
+        undefined,
+        { retryAttempts: 5 },
       );
 
       return buildIndex(data.productCategories.nodes);
     } catch (error) {
       console.error("[categories] GraphQL category index fetch failed:", error);
+    }
+
+    try {
+      const data = await graphqlRequest<ProductCategoryNavTreeResponse>(
+        PRODUCT_CATEGORY_NAV_TREE,
+        undefined,
+        { retryAttempts: 3 },
+      );
+
+      return buildIndexFromNavTree(data);
+    } catch (error) {
+      console.error(
+        "[categories] GraphQL category index fallback fetch failed:",
+        error,
+      );
       return null;
     }
   },

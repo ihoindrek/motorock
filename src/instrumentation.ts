@@ -19,6 +19,27 @@ export async function onRequestError(
   request: { path: string; method: string },
   context: { routerKind: string; routePath: string },
 ) {
+  const { isTransientStorefrontError } = await import(
+    "@/lib/shop/transient-storefront-error"
+  );
+
+  if (isTransientStorefrontError(error)) {
+    const { logStorefrontEvent } = await import("@/lib/monitoring/observability");
+    logStorefrontEvent(
+      "storefront.transient_error",
+      {
+        source: "next.request_error",
+        path: request.path,
+        method: request.method,
+        routerKind: context.routerKind,
+        routePath: context.routePath,
+        message: error.message,
+      },
+      "warn",
+    );
+    return;
+  }
+
   const { captureStorefrontError } = await import("@/lib/monitoring/observability");
   await captureStorefrontError(error, {
     source: "next.request_error",
