@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
-import { after } from "next/server";
 import { ProductLocaleAlternates } from "@/components/locale-alternates";
 import { JsonLd } from "@/components/seo/json-ld";
 import { ProductJsonLd } from "@/components/seo/product-json-ld";
@@ -17,14 +16,12 @@ import {
 } from "@/lib/graphql/products";
 import { getDictionary } from "@/i18n/get-dictionary";
 import { buildPageMetadata } from "@/lib/seo/metadata";
-import type { ProductSchemaShipping } from "@/lib/seo/product-schema";
 import { buildBreadcrumbJsonLd } from "@/lib/seo/site-schema";
 import { fetchEquipmentCategoryIndex } from "@/lib/graphql/categories";
 import type { Breadcrumb } from "@/lib/shop/category";
 import { resolveProductBreadcrumbs } from "@/lib/shop/resolve-product-breadcrumbs";
 import { getSizeGuideRegistry } from "@/lib/shop/fetch-size-guides";
 import { resolveSizeGuide } from "@/lib/shop/resolve-size-guide";
-import { estimateProductShipping } from "@/lib/shop/estimate-product-shipping";
 import { getStorefrontUrl } from "@/lib/storefront/url";
 import type { CatalogProduct } from "@/types/catalog-product";
 import {
@@ -112,56 +109,6 @@ export async function generateProductPageMetadata({
     slugAlternates,
     buildProductSeoSnapshotFromCatalog(product, locale),
   );
-}
-
-const SCHEMA_SHIPPING_BUDGET_MS = 1200;
-
-/**
- * Cheapest EE delivery rate for JSON-LD shippingDetails. Best-effort: the
- * estimate needs a Woo cart session (several sequential GraphQL calls), so it
- * only gets a short budget on top of the render. When it can't finish in
- * time, the field is omitted and the estimate keeps running via after() so
- * its unstable_cache entry is warm for the next ISR revalidation.
- */
-async function resolveSchemaShipping(
-  product: CatalogProduct,
-): Promise<ProductSchemaShipping | undefined> {
-  if (!product.databaseId || !product.inStock) {
-    return undefined;
-  }
-
-  const variationId =
-    product.variations?.find((variation) => variation.databaseId)?.databaseId ??
-    Object.values(product.variationIds ?? {})[0];
-
-  const pending = estimateProductShipping({
-    country: "EE",
-    productId: product.databaseId,
-    variationId,
-  });
-  pending.catch(() => {});
-
-  try {
-    const estimate = await Promise.race([
-      pending,
-      new Promise<null>((resolve) =>
-        setTimeout(() => resolve(null), SCHEMA_SHIPPING_BUDGET_MS),
-      ),
-    ]);
-
-    if (!estimate) {
-      after(() => pending.catch(() => {}));
-      return undefined;
-    }
-
-    if (estimate.cost === null) {
-      return undefined;
-    }
-
-    return { cost: estimate.cost, country: estimate.country };
-  } catch {
-    return undefined;
-  }
 }
 
 function buildProductBreadcrumbJsonLd(
@@ -260,8 +207,7 @@ export async function renderProductPage({
     categoryIndex,
   );
 
-  const [schemaShipping, relatedCandidates, sizeGuideRegistry] = await Promise.all([
-    resolveSchemaShipping(product),
+  const [relatedCandidates, sizeGuideRegistry] = await Promise.all([
     product.relatedSlugs?.length
       ? getCatalogProductsBySlugs(product.relatedSlugs, locale)
       : getSimilarProducts(product, RELATED_PRODUCTS_LIMIT, locale),
@@ -278,7 +224,6 @@ export async function renderProductPage({
     <>
       <ProductJsonLd
         product={buildProductSeoSnapshotFromCatalog(product, locale)}
-        shipping={schemaShipping}
         faq={product.faq}
       />
       <JsonLd

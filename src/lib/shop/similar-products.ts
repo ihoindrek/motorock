@@ -8,8 +8,7 @@ import {
 
 const PLACEHOLDER_IMAGE = "/brixton-image.webp";
 export const RELATED_PRODUCTS_LIMIT = 6;
-export const SIMILAR_MOTORCYCLE_POOL_LIMIT = 48;
-export const SIMILAR_EQUIPMENT_POOL_LIMIT = 80;
+export const SIMILAR_PRODUCTS_POOL_LIMIT = 20;
 
 export type SimilarProductsCatalogWhere = {
   category?: string;
@@ -46,10 +45,8 @@ export function resolveSimilarProductsCatalogWhere(
   return { categoryNotIn: ["motorcycles", "tools-maintenance"] };
 }
 
-export function similarProductsPoolLimit(product: CatalogProduct) {
-  return product.type === "motorcycle"
-    ? SIMILAR_MOTORCYCLE_POOL_LIMIT
-    : SIMILAR_EQUIPMENT_POOL_LIMIT;
+export function similarProductsPoolLimit(_product: CatalogProduct) {
+  return SIMILAR_PRODUCTS_POOL_LIMIT;
 }
 
 export function buildMotorcycleSimilarAnchor(

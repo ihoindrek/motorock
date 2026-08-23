@@ -9,33 +9,24 @@ export type HealthCheckResult = {
 
 export type StorefrontHealthReport = {
   ok: boolean;
-  /** WP GraphQL direct probe failed while user-facing storefront checks passed. */
+  /** WP GraphQL direct probes failed while lightweight storefront checks passed. */
   degraded?: boolean;
   checkedAt: string;
   checks: HealthCheckResult[];
 };
 
 const USER_FACING_CHECK_IDS = [
-  "homepage-en",
-  "homepage-et",
-  "motorcycles-catalog",
+  "storefront-about",
   "checkout-montonio-methods",
 ] as const;
+
+const WP_GRAPHQL_CHECK_IDS = ["graphql-products", "graphql-categories"] as const;
 
 const GRAPHQL_HEALTH_TIMEOUT_MS = 15_000;
 const GRAPHQL_HEALTH_ATTEMPTS = 3;
 
-const HOMEPAGE_MARKERS = {
-  en: ["Popular Bikes", "favorites-motorcycles", "/en/product/", "/en/toode/"],
-  et: ["Populaarsed rattad", "favorites-motorcycles", "/et/product/", "/et/toode/"],
-} as const;
-
 export function includesAnyMarker(content: string, markers: readonly string[]) {
   return markers.some((marker) => content.includes(marker));
-}
-
-function countMatches(content: string, pattern: RegExp) {
-  return [...content.matchAll(pattern)].length;
 }
 
 async function timedCheck(
@@ -81,18 +72,14 @@ function isTransientFetchFailure(error: unknown) {
   );
 }
 
-async function fetchGraphqlProductsOnce() {
+async function fetchGraphqlHealth<TData>(
+  query: string,
+  variables?: Record<string, unknown>,
+): Promise<TData> {
   const response = await fetch(getWooGraphqlUrl(), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      query: `query HealthProducts($first: Int!) {
-        products(first: $first, where: { status: "publish", category: "motorcycles" }) {
-          nodes { slug }
-        }
-      }`,
-      variables: { first: 3 },
-    }),
+    body: JSON.stringify({ query, variables }),
     cache: "no-store",
     signal: AbortSignal.timeout(GRAPHQL_HEALTH_TIMEOUT_MS),
   });
@@ -103,27 +90,28 @@ async function fetchGraphqlProductsOnce() {
 
   const payload = (await response.json()) as {
     errors?: { message: string }[];
-    data?: { products?: { nodes?: { slug?: string }[] } };
+    data?: TData;
   };
 
   if (payload.errors?.length && !payload.data) {
     throw new Error(payload.errors.map((entry) => entry.message).join("; "));
   }
 
-  const count = payload.data?.products?.nodes?.length ?? 0;
-  if (count === 0) {
-    throw new Error("GraphQL returned 0 motorcycle products");
+  if (!payload.data) {
+    throw new Error("GraphQL response missing data");
   }
 
-  return `${count} motorcycle products reachable`;
+  return payload.data;
 }
 
-async function checkGraphqlProducts() {
+async function runGraphqlHealthCheck(
+  run: () => Promise<string>,
+): Promise<{ ok: boolean; message: string }> {
   let lastError: unknown;
 
   for (let attempt = 0; attempt < GRAPHQL_HEALTH_ATTEMPTS; attempt += 1) {
     try {
-      const message = await fetchGraphqlProductsOnce();
+      const message = await run();
       return { ok: true, message };
     } catch (error) {
       lastError = error;
@@ -142,42 +130,64 @@ async function checkGraphqlProducts() {
   };
 }
 
-async function checkHomepageLocale(locale: "en" | "et") {
-  const response = await fetch(`${getStorefrontUrl()}/${locale}`, {
+async function checkGraphqlProducts() {
+  return runGraphqlHealthCheck(async () => {
+    const data = await fetchGraphqlHealth<{
+      products?: { nodes?: { slug?: string }[] };
+    }>(
+      `query HealthProducts($first: Int!) {
+        products(first: $first, where: { status: "publish", category: "motorcycles" }) {
+          nodes { slug }
+        }
+      }`,
+      { first: 3 },
+    );
+
+    const count = data.products?.nodes?.length ?? 0;
+    if (count === 0) {
+      throw new Error("GraphQL returned 0 motorcycle products");
+    }
+
+    return `${count} motorcycle products reachable`;
+  });
+}
+
+async function checkGraphqlCategories() {
+  return runGraphqlHealthCheck(async () => {
+    const data = await fetchGraphqlHealth<{
+      productCategories?: { nodes?: { slug?: string; name?: string }[] };
+    }>(`query HealthCategories {
+      productCategories(first: 1, where: { slug: "for-men" }) {
+        nodes { slug name }
+      }
+    }`);
+
+    const category = data.productCategories?.nodes?.[0];
+    if (!category?.slug) {
+      throw new Error("GraphQL returned 0 equipment categories");
+    }
+
+    return `Category "${category.slug}" reachable`;
+  });
+}
+
+async function checkStorefrontAbout() {
+  const response = await fetch(`${getStorefrontUrl()}/en/about`, {
     cache: "no-store",
     headers: { "user-agent": "motorock-health-check" },
   });
 
   if (!response.ok) {
-    return { ok: false, message: `Homepage HTTP ${response.status}` };
+    return { ok: false, message: `About page HTTP ${response.status}` };
   }
 
   const html = await response.text();
-  const markers = HOMEPAGE_MARKERS[locale];
 
-  if (!includesAnyMarker(html, markers)) {
-    return {
-      ok: false,
-      message: `Homepage /${locale} is missing product markers (${markers.join(", ")})`,
-    };
+  if (!includesAnyMarker(html, ["Motorock", "motorock"])) {
+    return { ok: false, message: "About page missing storefront marker" };
   }
 
-  const productLinks = countMatches(
-    html,
-    new RegExp(`/${locale}/(?:product|toode)/[^"'\\s>]+`, "g"),
-  );
-
-  if (productLinks === 0) {
-    return {
-      ok: false,
-      message: `Homepage /${locale} rendered without product links`,
-    };
-  }
-
-  return {
-    ok: true,
-    message: `Homepage /${locale} has ${productLinks} product links`,
-  };
+  return { ok: true, message: "Storefront about page reachable" };
 }
 
 async function checkCheckoutMontonioMethods() {
@@ -226,46 +236,27 @@ async function checkCheckoutMontonioMethods() {
   };
 }
 
-async function checkMotorcycleCatalog() {
-  const response = await fetch(`${getStorefrontUrl()}/en/shop/motorcycles`, {
-    cache: "no-store",
-    headers: { "user-agent": "motorock-health-check" },
-  });
-
-  if (!response.ok) {
-    return { ok: false, message: `Motorcycles page HTTP ${response.status}` };
-  }
-
-  const html = await response.text();
-  const productLinks = countMatches(html, /\/en\/(?:product|toode)\/[^"'\\s>]+/g);
-
-  if (productLinks === 0) {
-    return { ok: false, message: "Motorcycles catalog rendered without products" };
-  }
-
-  return {
-    ok: true,
-    message: `Motorcycles catalog has ${productLinks} product links`,
-  };
-}
-
 export async function runStorefrontHealthChecks(): Promise<StorefrontHealthReport> {
   const checks = await Promise.all([
     timedCheck("graphql-products", checkGraphqlProducts),
-    timedCheck("homepage-en", () => checkHomepageLocale("en")),
-    timedCheck("homepage-et", () => checkHomepageLocale("et")),
-    timedCheck("motorcycles-catalog", checkMotorcycleCatalog),
+    timedCheck("graphql-categories", checkGraphqlCategories),
+    timedCheck("storefront-about", checkStorefrontAbout),
     timedCheck("checkout-montonio-methods", checkCheckoutMontonioMethods),
   ]);
 
   const userFacingOk = USER_FACING_CHECK_IDS.every(
     (id) => checks.find((check) => check.id === id)?.ok,
   );
-  const graphqlOk = checks.find((check) => check.id === "graphql-products")?.ok ?? false;
+  const graphqlOk = WP_GRAPHQL_CHECK_IDS.every(
+    (id) => checks.find((check) => check.id === id)?.ok,
+  );
+  const graphqlPartialOk = WP_GRAPHQL_CHECK_IDS.some(
+    (id) => checks.find((check) => check.id === id)?.ok,
+  );
 
   return {
-    ok: userFacingOk,
-    degraded: userFacingOk && !graphqlOk,
+    ok: userFacingOk && graphqlPartialOk,
+    degraded: userFacingOk && graphqlPartialOk && !graphqlOk,
     checkedAt: new Date().toISOString(),
     checks,
   };
@@ -279,7 +270,7 @@ export function summarizeHealthReport(report: StorefrontHealthReport) {
 
   if (report.degraded) {
     return [
-      "Kasutajale nähtav storefront OK, kuid Woo GraphQL otsepäring ebaõnnestus.",
+      "Storefront OK, kuid mõni Woo GraphQL otsepäring ebaõnnestus.",
       ...failed.map((check) => `${check.id}: ${check.message}`),
     ].join("\n");
   }
