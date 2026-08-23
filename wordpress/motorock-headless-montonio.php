@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Motorock Headless Checkout
  * Description: Bridges headless GraphQL checkout to Montonio for WooCommerce (pickup points + payment methods).
- * Version: 1.3.2
+ * Version: 1.3.3
  *
  * Install: copy to wp-content/mu-plugins/motorock-headless-montonio.php
  */
@@ -103,25 +103,157 @@ function motorock_is_graphql_checkout_mutation_request() {
 	return is_string( $raw ) && false !== stripos( $raw, 'checkout(' );
 }
 
+function motorock_headless_intended_gateway_from_meta_input( array $input ) {
+	if ( empty( $input['metaData'] ) || ! is_array( $input['metaData'] ) ) {
+		return '';
+	}
+
+	foreach ( $input['metaData'] as $meta ) {
+		if ( ! is_array( $meta ) || empty( $meta['key'] ) || ! isset( $meta['value'] ) ) {
+			continue;
+		}
+
+		if ( (string) $meta['key'] !== 'motorock_headless_intended_payment_gateway' ) {
+			continue;
+		}
+
+		$value = sanitize_text_field( (string) $meta['value'] );
+		if ( $value !== '' ) {
+			return $value;
+		}
+	}
+
+	return '';
+}
+
+function motorock_base64url_decode( $value ) {
+	$normalized = strtr( (string) $value, '-_', '+/' );
+	$padded     = str_pad( $normalized, strlen( $normalized ) + ( 4 - strlen( $normalized ) % 4 ) % 4, '=', STR_PAD_RIGHT );
+
+	return base64_decode( $padded );
+}
+
+function motorock_montonio_merchant_reference_from_token( $token ) {
+	$parts = explode( '.', (string) $token );
+	if ( count( $parts ) !== 3 ) {
+		return 0;
+	}
+
+	$payload = json_decode( motorock_base64url_decode( $parts[1] ), true );
+	if ( ! is_array( $payload ) || empty( $payload['merchantReference'] ) ) {
+		return 0;
+	}
+
+	return (int) $payload['merchantReference'];
+}
+
+/**
+ * Swap internal pending gateway to the real Montonio gateway so plugin callbacks accept the order.
+ */
+function motorock_apply_intended_montonio_payment_gateway( WC_Order $order, $intended = null ) {
+	if ( $order->get_payment_method() !== 'motorock_headless_pending' ) {
+		return false;
+	}
+
+	if ( $intended === null || $intended === '' ) {
+		$intended = (string) $order->get_meta( 'motorock_headless_intended_payment_gateway' );
+	} else {
+		$intended = sanitize_text_field( (string) $intended );
+	}
+
+	if ( $intended === '' || strpos( $intended, 'wc_montonio_' ) !== 0 ) {
+		return false;
+	}
+
+	if ( ! function_exists( 'WC' ) || ! WC()->payment_gateways() ) {
+		return false;
+	}
+
+	$gateways = WC()->payment_gateways()->payment_gateways();
+	if ( empty( $gateways[ $intended ] ) ) {
+		return false;
+	}
+
+	$gateway = $gateways[ $intended ];
+	$order->set_payment_method( $intended );
+	$order->set_payment_method_title( $gateway->get_title() );
+	$order->save();
+
+	return true;
+}
+
+function motorock_apply_intended_montonio_payment_gateway_for_order_id( $order_id, $intended = null ) {
+	$order = wc_get_order( (int) $order_id );
+	if ( ! $order instanceof WC_Order ) {
+		return false;
+	}
+
+	return motorock_apply_intended_montonio_payment_gateway( $order, $intended );
+}
+
+function motorock_sync_intended_montonio_payment_gateway( WC_Order $order ) {
+	global $motorock_headless_intended_payment_gateway;
+
+	$intended = '';
+	if ( ! empty( $motorock_headless_intended_payment_gateway ) ) {
+		$intended = sanitize_text_field( (string) $motorock_headless_intended_payment_gateway );
+	}
+
+	if ( $intended === '' ) {
+		$intended = (string) $order->get_meta( 'motorock_headless_intended_payment_gateway' );
+	}
+
+	return motorock_apply_intended_montonio_payment_gateway( $order, $intended );
+}
+
 add_action(
 	'woocommerce_checkout_order_processed',
 	function ( $order_id, $data, $order ) {
-		unset( $data );
+		unset( $order_id, $data );
 
-		if ( ! motorock_is_graphql_request() || ! $order instanceof WC_Order ) {
+		if ( ! $order instanceof WC_Order ) {
 			return;
 		}
 
-		$intended = (string) $order->get_meta( 'motorock_headless_intended_payment_gateway' );
-		if ( $intended === '' ) {
-			return;
-		}
-
-		$order->set_payment_method( $intended );
-		$order->save();
+		motorock_sync_intended_montonio_payment_gateway( $order );
 	},
-	20,
+	999,
 	3
+);
+
+add_action(
+	'woocommerce_checkout_update_order_meta',
+	function ( $order_id ) {
+		motorock_apply_intended_montonio_payment_gateway_for_order_id( $order_id );
+	},
+	999
+);
+
+/**
+ * Montonio return callbacks include order-token in the query string — apply gateway before
+ * the plugin validates payment_method (webhook uses merchantReference from the same token).
+ */
+add_action(
+	'woocommerce_api',
+	function () {
+		if ( empty( $_GET['wc-api'] ) || empty( $_GET['order-token'] ) ) {
+			return;
+		}
+
+		$api = sanitize_text_field( wp_unslash( $_GET['wc-api'] ) );
+		if ( strpos( $api, 'wc_montonio_' ) !== 0 ) {
+			return;
+		}
+
+		$order_id = motorock_montonio_merchant_reference_from_token(
+			(string) wp_unslash( $_GET['order-token'] )
+		);
+
+		if ( $order_id > 0 ) {
+			motorock_apply_intended_montonio_payment_gateway_for_order_id( $order_id );
+		}
+	},
+	1
 );
 
 function motorock_get_storefront_url() {
@@ -254,6 +386,26 @@ add_action(
 				),
 			)
 		);
+
+		register_rest_route(
+			'motorock/v1',
+			'/prepare-montonio-payment',
+			array(
+				'methods'             => 'POST',
+				'callback'            => 'motorock_rest_prepare_montonio_payment',
+				'permission_callback' => '__return_true',
+				'args'                => array(
+					'order' => array(
+						'required' => true,
+						'type'     => 'integer',
+					),
+					'gateway' => array(
+						'required' => false,
+						'type'     => 'string',
+					),
+				),
+			)
+		);
 	}
 );
 
@@ -268,6 +420,32 @@ function motorock_get_internal_secret() {
 	}
 
 	return '';
+}
+
+function motorock_rest_prepare_montonio_payment( WP_REST_Request $request ) {
+	$provided = (string) $request->get_header( 'x-motorock-internal-secret' );
+	$expected = motorock_get_internal_secret();
+
+	if ( $expected === '' || ! hash_equals( $expected, $provided ) ) {
+		return new WP_Error( 'unauthorized', 'Unauthorized', array( 'status' => 401 ) );
+	}
+
+	$order = wc_get_order( (int) $request->get_param( 'order' ) );
+	if ( ! $order ) {
+		return new WP_Error( 'invalid_order', 'Order not found', array( 'status' => 404 ) );
+	}
+
+	$gateway = sanitize_text_field( (string) $request->get_param( 'gateway' ) );
+	if ( $gateway === '' ) {
+		$gateway = null;
+	}
+
+	$updated = motorock_apply_intended_montonio_payment_gateway( $order, $gateway );
+
+	return array(
+		'updated'       => $updated,
+		'paymentMethod' => $order->get_payment_method(),
+	);
 }
 
 function motorock_rest_thank_you_key( WP_REST_Request $request ) {
@@ -363,6 +541,9 @@ add_filter(
 			}
 
 			switch ( $key ) {
+				case 'motorock_headless_intended_payment_gateway':
+					$GLOBALS['motorock_headless_intended_payment_gateway'] = $value;
+					break;
 				case 'montonio_pickup_point':
 				case '_montonio_pickup_point_uuid':
 					$_POST['montonio_pickup_point'] = $value;

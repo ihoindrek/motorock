@@ -247,6 +247,20 @@ export async function resolveCartLineIds(line: CartLine): Promise<{
   return resolved;
 }
 
+export function canReuseSyncedCheckoutCart(input: {
+  linesKey?: string;
+  syncedLinesKey: string | null;
+  cartItemCount: number;
+  lineCount: number;
+}) {
+  return (
+    Boolean(input.linesKey) &&
+    input.syncedLinesKey === input.linesKey &&
+    input.cartItemCount >= input.lineCount &&
+    input.lineCount > 0
+  );
+}
+
 export async function syncLocalCartToWoo(
   lines: CartLine[],
   options?: { linesKey?: string; sessionToken?: string | null },
@@ -256,12 +270,14 @@ export async function syncLocalCartToWoo(
 
   if (activeSession) {
     const itemCount = await fetchCartItemCount(activeSession);
-    const syncedKeyMatches =
-      !options?.sessionToken &&
-      Boolean(linesKey) &&
-      readSyncedCartLinesKey() === linesKey;
+    const syncedKeyMatches = canReuseSyncedCheckoutCart({
+      linesKey,
+      syncedLinesKey: readSyncedCartLinesKey(),
+      cartItemCount: itemCount,
+      lineCount: lines.length,
+    });
 
-    if (syncedKeyMatches && itemCount >= lines.length) {
+    if (syncedKeyMatches) {
       return activeSession;
     }
 
@@ -316,11 +332,46 @@ export async function syncLocalCartToWoo(
     );
   }
 
-  if (linesKey && !options?.sessionToken) {
+  if (linesKey) {
     writeSyncedCartLinesKey(linesKey);
   }
 
   return activeSession;
+}
+
+export async function ensureCheckoutCouponsApplied(
+  codes: readonly string[],
+  sessionToken?: string | null,
+) {
+  const uniqueCodes = [
+    ...new Set(
+      codes.map((code) => code.trim()).filter(Boolean),
+    ),
+  ];
+
+  if (uniqueCodes.length === 0) {
+    return sessionToken ?? null;
+  }
+
+  let session = sessionToken ?? null;
+  const cart = await fetchCartShipping(session);
+  session = cart.sessionToken ?? session;
+
+  const applied = new Set(
+    cart.appliedCoupons.map((coupon) => coupon.code.toLowerCase()),
+  );
+
+  for (const code of uniqueCodes) {
+    if (applied.has(code.toLowerCase())) {
+      continue;
+    }
+
+    const result = await applyCheckoutCoupon(code, session);
+    session = result.sessionToken ?? session;
+    applied.add(code.toLowerCase());
+  }
+
+  return session;
 }
 
 /** Keep explicit buyer selection when refreshing cart rates — never mirror Woo defaults. */

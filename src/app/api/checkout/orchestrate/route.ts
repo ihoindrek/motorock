@@ -103,6 +103,7 @@ const fullBodySchema = z.object({
   locale: z.enum(["en", "et"]),
   displayTotal: z.number().positive(),
   displayShipping: z.number().nonnegative(),
+  appliedCouponCodes: z.array(z.string()).optional(),
 });
 
 function readSessionToken(request: Request, bodySession?: string | null) {

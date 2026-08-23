@@ -16,6 +16,8 @@ export type CheckoutOrchestrateInput = {
   locale: "en" | "et";
   displayTotal: number;
   displayShipping: number;
+  /** Woo session coupon codes shown in checkout — re-applied if cart sync drops them. */
+  appliedCouponCodes?: string[];
   /** Stripe Elements amount in cents — validated against Woo cart before charging. */
   expectedWooPaymentsAmountCents?: number;
   wooPaymentsStripePaymentMethodId?: string;

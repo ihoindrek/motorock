@@ -1505,6 +1505,7 @@ export function CartCheckoutView() {
           locale,
           displayTotal,
           displayShipping,
+          appliedCouponCodes: shipping.appliedCoupons.map((coupon) => coupon.code),
           expectedWooPaymentsAmountCents: Math.round(wooPaymentsChargeTotal * 100),
           wooPaymentsStripePaymentMethodId: paymentMethodId,
           wooPaymentsFraudPreventionToken:
@@ -1573,6 +1574,7 @@ export function CartCheckoutView() {
       selectedMontonioOption,
       shipping.country,
       shipping.needsAddress,
+      shipping.appliedCoupons,
       shipping.selectedRateId,
       submitBlockReason,
       termsAccepted,
@@ -1706,6 +1708,7 @@ export function CartCheckoutView() {
               locale,
               displayTotal,
               displayShipping,
+              appliedCouponCodes: shipping.appliedCoupons.map((coupon) => coupon.code),
               expectedWooPaymentsAmountCents: Math.round(
                 wooPaymentsChargeTotal * 100,
               ),
@@ -1725,6 +1728,7 @@ export function CartCheckoutView() {
               locale,
               displayTotal,
               displayShipping,
+              appliedCouponCodes: shipping.appliedCoupons.map((coupon) => coupon.code),
             },
         wooPaymentsSelected
           ? {

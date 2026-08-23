@@ -20,6 +20,7 @@ import type {
 import { remintMontonioCheckoutPayment } from "@/lib/checkout/remint-montonio-checkout";
 import {
   buildCheckoutInputAddresses,
+  ensureCheckoutCouponsApplied,
   fetchCartShipping,
   parseCartMoney,
   prepareCheckoutSession,
@@ -139,6 +140,12 @@ function wooPaymentsAmountMismatchMessage(locale: "en" | "et") {
     : "The order total changed. Wait for the card form to refresh and try again.";
 }
 
+function checkoutTotalMismatchMessage(locale: "en" | "et") {
+  return locale === "et"
+    ? "Tellimuse summa muutus. Kontrolli ostukorvi ja proovi uuesti."
+    : "The order total changed. Review your cart and try again.";
+}
+
 export async function orchestrateCheckout(
   input: CheckoutOrchestrateInput,
   options?: CheckoutOrchestrateOptions,
@@ -201,6 +208,14 @@ export async function orchestrateCheckout(
     activeSession,
   );
   activeSession = shippingSelection.sessionToken ?? activeSession;
+
+  if (input.appliedCouponCodes?.length) {
+    activeSession =
+      (await ensureCheckoutCouponsApplied(
+        input.appliedCouponCodes,
+        activeSession,
+      )) ?? activeSession;
+  }
 
   if (!activeSession) {
     return {
@@ -327,6 +342,18 @@ export async function orchestrateCheckout(
         })
       : []),
   ];
+
+  const cartBeforeCheckout = await fetchCartShipping(activeSession);
+  activeSession = cartBeforeCheckout.sessionToken ?? activeSession;
+  const wooCartTotal = parseCartMoney(cartBeforeCheckout.cart.total);
+
+  if (Math.abs(wooCartTotal - input.displayTotal) > 0.02) {
+    return {
+      ok: false,
+      code: "CHECKOUT_FAILED",
+      errors: [checkoutTotalMismatchMessage(input.locale)],
+    };
+  }
 
   let result;
 
