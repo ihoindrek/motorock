@@ -9,9 +9,21 @@ export type HealthCheckResult = {
 
 export type StorefrontHealthReport = {
   ok: boolean;
+  /** WP GraphQL direct probe failed while user-facing storefront checks passed. */
+  degraded?: boolean;
   checkedAt: string;
   checks: HealthCheckResult[];
 };
+
+const USER_FACING_CHECK_IDS = [
+  "homepage-en",
+  "homepage-et",
+  "motorcycles-catalog",
+  "checkout-montonio-methods",
+] as const;
+
+const GRAPHQL_HEALTH_TIMEOUT_MS = 15_000;
+const GRAPHQL_HEALTH_ATTEMPTS = 3;
 
 const HOMEPAGE_MARKERS = {
   en: ["Popular Bikes", "favorites-motorcycles", "/en/product/", "/en/toode/"],
@@ -50,7 +62,26 @@ async function timedCheck(
   }
 }
 
-async function checkGraphqlProducts() {
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function isTransientFetchFailure(error: unknown) {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  const haystack = `${error.name} ${error.message} ${error.cause ?? ""}`.toLowerCase();
+  return (
+    haystack.includes("fetch failed") ||
+    haystack.includes("aborted") ||
+    haystack.includes("timeout") ||
+    haystack.includes("econnreset") ||
+    haystack.includes("socket")
+  );
+}
+
+async function fetchGraphqlProductsOnce() {
   const response = await fetch(getWooGraphqlUrl(), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -63,10 +94,11 @@ async function checkGraphqlProducts() {
       variables: { first: 3 },
     }),
     cache: "no-store",
+    signal: AbortSignal.timeout(GRAPHQL_HEALTH_TIMEOUT_MS),
   });
 
   if (!response.ok) {
-    return { ok: false, message: `GraphQL HTTP ${response.status}` };
+    throw new Error(`GraphQL HTTP ${response.status}`);
   }
 
   const payload = (await response.json()) as {
@@ -75,18 +107,39 @@ async function checkGraphqlProducts() {
   };
 
   if (payload.errors?.length && !payload.data) {
-    return {
-      ok: false,
-      message: payload.errors.map((entry) => entry.message).join("; "),
-    };
+    throw new Error(payload.errors.map((entry) => entry.message).join("; "));
   }
 
   const count = payload.data?.products?.nodes?.length ?? 0;
   if (count === 0) {
-    return { ok: false, message: "GraphQL returned 0 motorcycle products" };
+    throw new Error("GraphQL returned 0 motorcycle products");
   }
 
-  return { ok: true, message: `${count} motorcycle products reachable` };
+  return `${count} motorcycle products reachable`;
+}
+
+async function checkGraphqlProducts() {
+  let lastError: unknown;
+
+  for (let attempt = 0; attempt < GRAPHQL_HEALTH_ATTEMPTS; attempt += 1) {
+    try {
+      const message = await fetchGraphqlProductsOnce();
+      return { ok: true, message };
+    } catch (error) {
+      lastError = error;
+
+      if (!isTransientFetchFailure(error) || attempt === GRAPHQL_HEALTH_ATTEMPTS - 1) {
+        break;
+      }
+
+      await sleep(250 * 2 ** attempt);
+    }
+  }
+
+  return {
+    ok: false,
+    message: lastError instanceof Error ? lastError.message : String(lastError),
+  };
 }
 
 async function checkHomepageLocale(locale: "en" | "et") {
@@ -205,8 +258,14 @@ export async function runStorefrontHealthChecks(): Promise<StorefrontHealthRepor
     timedCheck("checkout-montonio-methods", checkCheckoutMontonioMethods),
   ]);
 
+  const userFacingOk = USER_FACING_CHECK_IDS.every(
+    (id) => checks.find((check) => check.id === id)?.ok,
+  );
+  const graphqlOk = checks.find((check) => check.id === "graphql-products")?.ok ?? false;
+
   return {
-    ok: checks.every((check) => check.ok),
+    ok: userFacingOk,
+    degraded: userFacingOk && !graphqlOk,
     checkedAt: new Date().toISOString(),
     checks,
   };
@@ -216,6 +275,13 @@ export function summarizeHealthReport(report: StorefrontHealthReport) {
   const failed = report.checks.filter((check) => !check.ok);
   if (failed.length === 0) {
     return "Kõik tervisekontrollid OK";
+  }
+
+  if (report.degraded) {
+    return [
+      "Kasutajale nähtav storefront OK, kuid Woo GraphQL otsepäring ebaõnnestus.",
+      ...failed.map((check) => `${check.id}: ${check.message}`),
+    ].join("\n");
   }
 
   return failed.map((check) => `${check.id}: ${check.message}`).join("\n");
