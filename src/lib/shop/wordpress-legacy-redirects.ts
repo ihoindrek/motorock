@@ -34,7 +34,7 @@ const MOTORCYCLE_BRAND_CATEGORY_SLUGS: Record<string, string> = {
 
 const SINGLE_WC_CATEGORY_REDIRECTS = buildSingleWcCategoryRedirects();
 
-/** Old WPML / WordPress ET page slugs → canonical storefront paths (no locale). */
+/** Old WPML / WordPress page slugs → canonical storefront paths (no locale). */
 const LEGACY_STATIC_PAGE_SLUGS: Record<string, string> = {
   kontakt: "/contact",
   meist: "/about",
@@ -48,6 +48,28 @@ const LEGACY_STATIC_PAGE_SLUGS: Record<string, string> = {
   abi: "/support",
   "proovisoid": "/test-ride",
   "proovisõit": "/test-ride",
+  "privacy-policy": "/privacy",
+  "terms-conditions": "/terms",
+  "terms-and-conditions": "/terms",
+  "cookie-policy-eu": "/cookies",
+  "cookie-policy": "/cookies",
+  refund_returns: "/returns",
+  "refund-returns": "/returns",
+  "refund-and-returns": "/returns",
+  "shipping-delivery": "/shipping",
+  "shipping-returns": "/shipping",
+  "about-us": "/about",
+  "contact-us": "/contact",
+  "customer-service": "/support",
+  equipment: "/shop/equipment",
+  "my-account": "/cart",
+  "minu-konto": "/cart",
+  home: "/",
+};
+
+const LEGACY_MULTI_PATH_REDIRECTS: Record<string, string> = {
+  "/shop/cart": "/cart",
+  "/shop/checkout": "/cart",
 };
 
 /**
@@ -122,6 +144,10 @@ function normalizePath(pathname: string) {
 
 function redirectUnlessSame(pathname: string, target: string) {
   return normalizePath(pathname) === normalizePath(target) ? null : target;
+}
+
+function resolveEquipmentHub(locale: Locale) {
+  return buildEquipmentHubHref(locale === "et" ? "et" : "en");
 }
 
 function buildSingleWcCategoryRedirects() {
@@ -230,7 +256,8 @@ export function inferLocaleFromLegacyPath(pathname: string): Locale | null {
     normalized === "/blogi" ||
     normalized.startsWith("/blogi/") ||
     normalized === "/ostukorv" ||
-    normalized === "/kassa"
+    normalized === "/kassa" ||
+    normalized === "/minu-konto"
   ) {
     return "et";
   }
@@ -285,6 +312,27 @@ export function resolveWordPressLegacyRedirect(
 
   if (normalized.startsWith("/blogi/")) {
     return `/blog/${normalized.slice("/blogi/".length)}`;
+  }
+
+  const multiPathTarget = LEGACY_MULTI_PATH_REDIRECTS[normalized];
+  if (multiPathTarget) {
+    return redirectUnlessSame(normalized, multiPathTarget);
+  }
+
+  if (normalized === "/product-category") {
+    return resolveEquipmentHub(locale);
+  }
+
+  if (normalized === "/brand") {
+    return resolveEquipmentHub("en");
+  }
+
+  if (normalized === "/brandid") {
+    return buildEquipmentHubHref("et");
+  }
+
+  if (normalized === "/store") {
+    return resolveEquipmentHub(locale);
   }
 
   const staticSlug = decodePathSegment(normalized.slice(1));

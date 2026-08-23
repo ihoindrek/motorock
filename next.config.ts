@@ -11,6 +11,30 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizePackageImports: ["lucide-react", "framer-motion", "swiper"],
   },
+  async redirects() {
+    return [
+      {
+        source: "/sitemap_index.xml",
+        destination: "/sitemap.xml",
+        permanent: true,
+      },
+      {
+        source: "/page-sitemap.xml",
+        destination: "/sitemap.xml",
+        permanent: true,
+      },
+      {
+        source: "/product-sitemap.xml",
+        destination: "/sitemap.xml",
+        permanent: true,
+      },
+      {
+        source: "/post-sitemap.xml",
+        destination: "/sitemap.xml",
+        permanent: true,
+      },
+    ];
+  },
   async headers() {
     const staticAssetHeaders = [
       {

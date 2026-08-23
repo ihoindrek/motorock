@@ -72,6 +72,36 @@ describe("resolveWordPressLegacyRedirect", () => {
       resolveWordPressLegacyRedirect("/blogi/my-post", "et"),
     ).toBe("/blog/my-post");
   });
+
+  it("maps legacy WordPress static page slugs to canonical routes", () => {
+    expect(resolveWordPressLegacyRedirect("/privacy-policy", "en")).toBe("/privacy");
+    expect(resolveWordPressLegacyRedirect("/terms-and-conditions", "en")).toBe(
+      "/terms",
+    );
+    expect(resolveWordPressLegacyRedirect("/cookie-policy-eu", "en")).toBe("/cookies");
+    expect(resolveWordPressLegacyRedirect("/refund-returns", "en")).toBe("/returns");
+    expect(resolveWordPressLegacyRedirect("/shipping-delivery", "en")).toBe("/shipping");
+    expect(resolveWordPressLegacyRedirect("/about-us", "en")).toBe("/about");
+    expect(resolveWordPressLegacyRedirect("/contact-us", "en")).toBe("/contact");
+    expect(resolveWordPressLegacyRedirect("/customer-service", "en")).toBe("/support");
+    expect(resolveWordPressLegacyRedirect("/my-account", "en")).toBe("/cart");
+    expect(resolveWordPressLegacyRedirect("/minu-konto", "et")).toBe("/cart");
+    expect(resolveWordPressLegacyRedirect("/home", "en")).toBe("/");
+  });
+
+  it("maps legacy Woo archive roots and nested cart paths", () => {
+    expect(resolveWordPressLegacyRedirect("/product-category", "en")).toBe(
+      "/shop/equipment",
+    );
+    expect(resolveWordPressLegacyRedirect("/product-category", "et")).toBe(
+      "/tootekategooria",
+    );
+    expect(resolveWordPressLegacyRedirect("/brand", "en")).toBe("/shop/equipment");
+    expect(resolveWordPressLegacyRedirect("/brandid", "et")).toBe("/tootekategooria");
+    expect(resolveWordPressLegacyRedirect("/shop/cart", "en")).toBe("/cart");
+    expect(resolveWordPressLegacyRedirect("/shop/checkout", "en")).toBe("/cart");
+    expect(resolveWordPressLegacyRedirect("/store", "en")).toBe("/shop/equipment");
+  });
 });
 
 describe("inferLocaleFromLegacyPath", () => {
@@ -81,6 +111,7 @@ describe("inferLocaleFromLegacyPath", () => {
     expect(inferLocaleFromLegacyPath("/kontakt")).toBe("et");
     expect(inferLocaleFromLegacyPath("/ostukorv")).toBe("et");
     expect(inferLocaleFromLegacyPath("/kassa")).toBe("et");
+    expect(inferLocaleFromLegacyPath("/minu-konto")).toBe("et");
     expect(inferLocaleFromLegacyPath("/blogi/post-slug")).toBe("et");
   });
 
