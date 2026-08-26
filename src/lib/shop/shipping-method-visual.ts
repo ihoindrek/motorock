@@ -1,6 +1,8 @@
 import type { ShippingRate } from "@/lib/shop/shipping-method";
 import { DEFAULT_WOO_STORE_URL } from "@/lib/storefront/url";
 
+type ShippingRateVisualInput = Pick<ShippingRate, "id" | "label" | "methodId">;
+
 /** Same carrier artwork as Montonio for WooCommerce checkout (`*-rect.svg`). */
 const MONTONIO_CARRIER_ICONS =
   `${DEFAULT_WOO_STORE_URL}/wp-content/plugins/montonio-for-woocommerce/assets/images`;
@@ -92,7 +94,9 @@ function carrierFromHaystack(haystack: string) {
   return null;
 }
 
-function internationalShippingVisual(rate: ShippingRate): ShippingMethodVisual | null {
+function internationalShippingVisual(
+  rate: ShippingRateVisualInput,
+): ShippingMethodVisual | null {
   const methodId = rate.methodId.toLowerCase();
   const label = rate.label.toLowerCase();
   const rateId = rate.id.toLowerCase();
@@ -117,7 +121,7 @@ function internationalShippingVisual(rate: ShippingRate): ShippingMethodVisual |
 }
 
 export function resolveShippingMethodVisual(
-  rate: ShippingRate,
+  rate: ShippingRateVisualInput,
 ): ShippingMethodVisual {
   const methodId = rate.methodId.toLowerCase();
   const label = rate.label.toLowerCase();
@@ -167,9 +171,7 @@ export function resolveShippingMethodVisual(
 }
 
 /** Dedupe key for carrier logos — same GLS locker + courier share one key. */
-export function shippingVisualDedupeKey(
-  rate: Pick<ShippingRate, "id" | "label" | "methodId">,
-): string {
+export function shippingVisualDedupeKey(rate: ShippingRateVisualInput): string {
   const visual = resolveShippingMethodVisual(rate);
 
   if (visual.kind === "logo") {
@@ -187,7 +189,7 @@ export function shippingVisualDedupeKey(
 }
 
 export function dedupeShippingRatesByVisual<
-  TRate extends Pick<ShippingRate, "id" | "label" | "methodId">,
+  TRate extends ShippingRateVisualInput,
 >(rates: readonly TRate[]): TRate[] {
   const seen = new Set<string>();
   const unique: TRate[] = [];
@@ -205,9 +207,7 @@ export function dedupeShippingRatesByVisual<
   return unique;
 }
 
-export function shippingVisualAriaLabel(
-  rate: Pick<ShippingRate, "id" | "label" | "methodId">,
-): string {
+export function shippingVisualAriaLabel(rate: ShippingRateVisualInput): string {
   const visual = resolveShippingMethodVisual(rate);
 
   if (visual.kind === "logo") {
