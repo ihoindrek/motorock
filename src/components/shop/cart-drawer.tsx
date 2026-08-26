@@ -15,6 +15,7 @@ import { Price } from "@/components/shop/price";
 import { cn } from "@/lib/utils";
 import { CampaignCartPanels } from "@/components/campaigns/campaign-cart-panels";
 import { CartDrawerSuggestions } from "@/components/shop/cart-drawer-suggestions";
+import { FreeShippingNote } from "@/components/shop/free-shipping-note";
 import { buildEquipmentHubHref } from "@/lib/shop/category-url";
 
 function CloseIcon() {
@@ -375,6 +376,11 @@ export function CartDrawer() {
             </div>
 
             <div className="shrink-0 border-t border-ink/10 bg-surface/50 px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-6">
+              <FreeShippingNote
+                subtotal={subtotal}
+                variant="progress"
+                className="mb-4"
+              />
               <dl className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <dt className="text-ink/65">{t.subtotal}</dt>

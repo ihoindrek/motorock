@@ -165,3 +165,67 @@ export function resolveShippingMethodVisual(
 
   return { kind: "icon", icon: "pickup" };
 }
+
+/** Dedupe key for carrier logos — same GLS locker + courier share one key. */
+export function shippingVisualDedupeKey(
+  rate: Pick<ShippingRate, "id" | "label" | "methodId">,
+): string {
+  const visual = resolveShippingMethodVisual(rate);
+
+  if (visual.kind === "logo") {
+    return `logo:${visual.src}`;
+  }
+
+  if (visual.kind === "logos") {
+    return `logos:${visual.items
+      .map((item) => item.src)
+      .sort()
+      .join(",")}`;
+  }
+
+  return `icon:${visual.icon}`;
+}
+
+export function dedupeShippingRatesByVisual<
+  TRate extends Pick<ShippingRate, "id" | "label" | "methodId">,
+>(rates: readonly TRate[]): TRate[] {
+  const seen = new Set<string>();
+  const unique: TRate[] = [];
+
+  for (const rate of rates) {
+    const key = shippingVisualDedupeKey(rate);
+    if (seen.has(key)) {
+      continue;
+    }
+
+    seen.add(key);
+    unique.push(rate);
+  }
+
+  return unique;
+}
+
+export function shippingVisualAriaLabel(
+  rate: Pick<ShippingRate, "id" | "label" | "methodId">,
+): string {
+  const visual = resolveShippingMethodVisual(rate);
+
+  if (visual.kind === "logo") {
+    return visual.alt;
+  }
+
+  if (visual.kind === "logos") {
+    return visual.items.map((item) => item.alt).join(", ");
+  }
+
+  switch (visual.icon) {
+    case "courier":
+      return "Courier";
+    case "store":
+      return "Store pickup";
+    case "parcel":
+      return "Parcel locker";
+    default:
+      return "Pickup point";
+  }
+}

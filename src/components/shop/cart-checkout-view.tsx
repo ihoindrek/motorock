@@ -82,6 +82,8 @@ import {
   stripCountryDialCode,
 } from "@/lib/shop/phone";
 import {
+  identifyKlaviyoProfile,
+  isKlaviyoIdentifiableEmail,
   trackAddPaymentInfo,
   trackAddShippingInfo,
   trackBeginCheckout,
@@ -685,6 +687,7 @@ export function CartCheckoutView() {
     shipping: false,
     payment: false,
   });
+  const klaviyoIdentifiedEmailRef = useRef<string | null>(null);
 
   const customer = useMemo(
     () => ({
@@ -824,6 +827,20 @@ export function CartCheckoutView() {
       trackBeginCheckout(lines, displayTotal);
     }
   }, [displayTotal, itemCount, lines]);
+
+  useEffect(() => {
+    if (!isKlaviyoIdentifiableEmail(email)) {
+      return;
+    }
+
+    const normalized = email.trim().toLowerCase();
+    if (klaviyoIdentifiedEmailRef.current === normalized) {
+      return;
+    }
+
+    identifyKlaviyoProfile(normalized);
+    klaviyoIdentifiedEmailRef.current = normalized;
+  }, [email]);
 
   useEffect(() => {
     if (

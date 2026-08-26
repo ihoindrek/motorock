@@ -1,0 +1,348 @@
+{
+  "exportFormatVersion": 2,
+  "exportTime": "2026-08-26 11:35:00",
+  "containerVersion": {
+    "path": "accounts/0/containers/0/versions/0",
+    "accountId": "0",
+    "containerId": "0",
+    "containerVersionId": "0",
+    "name": "Motorock Klaviyo (motorock.eu)",
+    "description": "Import: Merge into existing GTM container. Set CONST - Klaviyo Public API Key, configure consent (ad_storage), then Publish. Disable Klaviyo - Placed Order if WooCommerce Klaviyo plugin sends orders.",
+    "container": {
+      "path": "accounts/0/containers/0",
+      "accountId": "0",
+      "containerId": "0",
+      "name": "Motorock Web",
+      "publicId": "GTM-IMPORT",
+      "usageContext": ["WEB"],
+      "fingerprint": "0"
+    },
+    "folder": [
+      {
+        "accountId": "0",
+        "containerId": "0",
+        "folderId": "2",
+        "name": "Motorock — Klaviyo",
+        "fingerprint": "1756206900001"
+      }
+    ],
+    "variable": [
+      {
+        "accountId": "0",
+        "containerId": "0",
+        "variableId": "110",
+        "name": "CONST - Klaviyo Public API Key",
+        "type": "c",
+        "parameter": [
+          {
+            "type": "TEMPLATE",
+            "key": "value",
+            "value": "YOUR_PUBLIC_API_KEY"
+          }
+        ],
+        "fingerprint": "1756206900010",
+        "parentFolderId": "2",
+        "formatValue": {}
+      },
+      {
+        "accountId": "0",
+        "containerId": "0",
+        "variableId": "111",
+        "name": "DLV - ecommerce",
+        "type": "v",
+        "parameter": [
+          {
+            "type": "INTEGER",
+            "key": "dataLayerVersion",
+            "value": "2"
+          },
+          {
+            "type": "BOOLEAN",
+            "key": "setDefaultValue",
+            "value": "false"
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "name",
+            "value": "ecommerce"
+          }
+        ],
+        "fingerprint": "1756206900011",
+        "parentFolderId": "2",
+        "formatValue": {}
+      },
+      {
+        "accountId": "0",
+        "containerId": "0",
+        "variableId": "112",
+        "name": "CJS - klaviyo_product_payload",
+        "type": "jsm",
+        "parameter": [
+          {
+            "type": "TEMPLATE",
+            "key": "javascript",
+            "value": "function() {\n  var ecom = {{DLV - ecommerce}};\n  if (!ecom || !ecom.items || !ecom.items.length) return null;\n  var i = ecom.items[0];\n  var qty = i.quantity || 1;\n  var price = Number(i.price) || 0;\n  var payload = {\n    ProductName: String(i.item_name || ''),\n    ProductID: String(i.item_id || ''),\n    SKU: String(i.item_id || ''),\n    Price: price,\n    CompareAtPrice: price,\n    URL: window.location.href\n  };\n  if (i.item_category) payload.Categories = [String(i.item_category)];\n  if (i.item_brand) payload.Brand = String(i.item_brand);\n  return payload;\n}"
+          }
+        ],
+        "fingerprint": "1756206900012",
+        "parentFolderId": "2",
+        "formatValue": {}
+      },
+      {
+        "accountId": "0",
+        "containerId": "0",
+        "variableId": "113",
+        "name": "CJS - klaviyo_added_to_cart_payload",
+        "type": "jsm",
+        "parameter": [
+          {
+            "type": "TEMPLATE",
+            "key": "javascript",
+            "value": "function() {\n  var base = {{CJS - klaviyo_product_payload}};\n  if (!base) return null;\n  var ecom = {{DLV - ecommerce}};\n  var i = ecom.items[0];\n  var qty = i.quantity || 1;\n  var price = Number(i.price) || 0;\n  base.Quantity = qty;\n  base.RowTotal = price * qty;\n  return base;\n}"
+          }
+        ],
+        "fingerprint": "1756206900013",
+        "parentFolderId": "2",
+        "formatValue": {}
+      },
+      {
+        "accountId": "0",
+        "containerId": "0",
+        "variableId": "114",
+        "name": "CJS - klaviyo_started_checkout_payload",
+        "type": "jsm",
+        "parameter": [
+          {
+            "type": "TEMPLATE",
+            "key": "javascript",
+            "value": "function() {\n  var ecom = {{DLV - ecommerce}};\n  if (!ecom || !ecom.items || !ecom.items.length) return null;\n  var names = [];\n  var categories = [];\n  for (var j = 0; j < ecom.items.length; j++) {\n    var i = ecom.items[j];\n    if (i.item_name) names.push(String(i.item_name));\n    if (i.item_category && categories.indexOf(String(i.item_category)) === -1) {\n      categories.push(String(i.item_category));\n    }\n  }\n  return {\n    $value: Number(ecom.value) || 0,\n    ItemNames: names,\n    CheckoutURL: window.location.href,\n    Categories: categories,\n    ItemCount: ecom.items.length\n  };\n}"
+          }
+        ],
+        "fingerprint": "1756206900014",
+        "parentFolderId": "2",
+        "formatValue": {}
+      },
+      {
+        "accountId": "0",
+        "containerId": "0",
+        "variableId": "115",
+        "name": "CJS - klaviyo_placed_order_payload",
+        "type": "jsm",
+        "parameter": [
+          {
+            "type": "TEMPLATE",
+            "key": "javascript",
+            "value": "function() {\n  var ecom = {{DLV - ecommerce}};\n  if (!ecom || !ecom.items || !ecom.items.length || !ecom.transaction_id) return null;\n  var items = [];\n  for (var j = 0; j < ecom.items.length; j++) {\n    var i = ecom.items[j];\n    var qty = i.quantity || 1;\n    var price = Number(i.price) || 0;\n    items.push({\n      ProductID: String(i.item_id || ''),\n      SKU: String(i.item_id || ''),\n      ProductName: String(i.item_name || ''),\n      Quantity: qty,\n      ItemPrice: price,\n      RowTotal: price * qty\n    });\n  }\n  var orderId = String(ecom.transaction_id);\n  return {\n    $event_id: orderId,\n    $value: Number(ecom.value) || 0,\n    OrderID: orderId,\n    Items: items\n  };\n}"
+          }
+        ],
+        "fingerprint": "1756206900015",
+        "parentFolderId": "2",
+        "formatValue": {}
+      }
+    ],
+    "trigger": [
+      {
+        "accountId": "0",
+        "containerId": "0",
+        "triggerId": "120",
+        "name": "CE - klaviyo view_item",
+        "type": "CUSTOM_EVENT",
+        "customEventFilter": [
+          {
+            "type": "EQUALS",
+            "parameter": [
+              { "type": "TEMPLATE", "key": "arg0", "value": "{{_event}}" },
+              { "type": "TEMPLATE", "key": "arg1", "value": "view_item" }
+            ]
+          }
+        ],
+        "fingerprint": "1756206900020",
+        "parentFolderId": "2"
+      },
+      {
+        "accountId": "0",
+        "containerId": "0",
+        "triggerId": "121",
+        "name": "CE - klaviyo add_to_cart",
+        "type": "CUSTOM_EVENT",
+        "customEventFilter": [
+          {
+            "type": "EQUALS",
+            "parameter": [
+              { "type": "TEMPLATE", "key": "arg0", "value": "{{_event}}" },
+              { "type": "TEMPLATE", "key": "arg1", "value": "add_to_cart" }
+            ]
+          }
+        ],
+        "fingerprint": "1756206900021",
+        "parentFolderId": "2"
+      },
+      {
+        "accountId": "0",
+        "containerId": "0",
+        "triggerId": "122",
+        "name": "CE - klaviyo begin_checkout",
+        "type": "CUSTOM_EVENT",
+        "customEventFilter": [
+          {
+            "type": "EQUALS",
+            "parameter": [
+              { "type": "TEMPLATE", "key": "arg0", "value": "{{_event}}" },
+              { "type": "TEMPLATE", "key": "arg1", "value": "begin_checkout" }
+            ]
+          }
+        ],
+        "fingerprint": "1756206900022",
+        "parentFolderId": "2"
+      },
+      {
+        "accountId": "0",
+        "containerId": "0",
+        "triggerId": "123",
+        "name": "CE - klaviyo purchase",
+        "type": "CUSTOM_EVENT",
+        "customEventFilter": [
+          {
+            "type": "EQUALS",
+            "parameter": [
+              { "type": "TEMPLATE", "key": "arg0", "value": "{{_event}}" },
+              { "type": "TEMPLATE", "key": "arg1", "value": "purchase" }
+            ]
+          }
+        ],
+        "fingerprint": "1756206900023",
+        "parentFolderId": "2"
+      }
+    ],
+    "tag": [
+      {
+        "accountId": "0",
+        "containerId": "0",
+        "tagId": "130",
+        "name": "Klaviyo - Base Script",
+        "type": "html",
+        "parameter": [
+          {
+            "type": "BOOLEAN",
+            "key": "supportDocumentWrite",
+            "value": "false"
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "html",
+            "value": "<script async type=\"text/javascript\" src=\"https://static.klaviyo.com/onsite/js/{{CONST - Klaviyo Public API Key}}/klaviyo.js\"></script>"
+          }
+        ],
+        "fingerprint": "1756206900030",
+        "firingTriggerId": ["2147479553"],
+        "tagFiringOption": "ONCE_PER_LOAD",
+        "parentFolderId": "2",
+        "monitoringMetadata": { "type": "MAP" },
+        "consentSettings": { "consentStatus": "NOT_SET" }
+      },
+      {
+        "accountId": "0",
+        "containerId": "0",
+        "tagId": "131",
+        "name": "Klaviyo - Viewed Product",
+        "type": "html",
+        "parameter": [
+          {
+            "type": "BOOLEAN",
+            "key": "supportDocumentWrite",
+            "value": "false"
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "html",
+            "value": "<script>\n  (function() {\n    var payload = {{CJS - klaviyo_product_payload}};\n    if (!payload) return;\n    window._learnq = window._learnq || [];\n    window._learnq.push(['track', 'Viewed Product', payload]);\n  })();\n</script>"
+          }
+        ],
+        "fingerprint": "1756206900031",
+        "firingTriggerId": ["120"],
+        "tagFiringOption": "ONCE_PER_EVENT",
+        "parentFolderId": "2",
+        "monitoringMetadata": { "type": "MAP" },
+        "consentSettings": { "consentStatus": "NOT_SET" }
+      },
+      {
+        "accountId": "0",
+        "containerId": "0",
+        "tagId": "132",
+        "name": "Klaviyo - Added to Cart",
+        "type": "html",
+        "parameter": [
+          {
+            "type": "BOOLEAN",
+            "key": "supportDocumentWrite",
+            "value": "false"
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "html",
+            "value": "<script>\n  (function() {\n    var payload = {{CJS - klaviyo_added_to_cart_payload}};\n    if (!payload) return;\n    window._learnq = window._learnq || [];\n    window._learnq.push(['track', 'Added to Cart', payload]);\n  })();\n</script>"
+          }
+        ],
+        "fingerprint": "1756206900032",
+        "firingTriggerId": ["121"],
+        "tagFiringOption": "ONCE_PER_EVENT",
+        "parentFolderId": "2",
+        "monitoringMetadata": { "type": "MAP" },
+        "consentSettings": { "consentStatus": "NOT_SET" }
+      },
+      {
+        "accountId": "0",
+        "containerId": "0",
+        "tagId": "133",
+        "name": "Klaviyo - Started Checkout",
+        "type": "html",
+        "parameter": [
+          {
+            "type": "BOOLEAN",
+            "key": "supportDocumentWrite",
+            "value": "false"
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "html",
+            "value": "<script>\n  (function() {\n    var payload = {{CJS - klaviyo_started_checkout_payload}};\n    if (!payload) return;\n    window._learnq = window._learnq || [];\n    window._learnq.push(['track', 'Started Checkout', payload]);\n  })();\n</script>"
+          }
+        ],
+        "fingerprint": "1756206900033",
+        "firingTriggerId": ["122"],
+        "tagFiringOption": "ONCE_PER_EVENT",
+        "parentFolderId": "2",
+        "monitoringMetadata": { "type": "MAP" },
+        "consentSettings": { "consentStatus": "NOT_SET" }
+      },
+      {
+        "accountId": "0",
+        "containerId": "0",
+        "tagId": "134",
+        "name": "Klaviyo - Placed Order (backup)",
+        "type": "html",
+        "parameter": [
+          {
+            "type": "BOOLEAN",
+            "key": "supportDocumentWrite",
+            "value": "false"
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "html",
+            "value": "<script>\n  (function() {\n    var payload = {{CJS - klaviyo_placed_order_payload}};\n    if (!payload) return;\n    window._learnq = window._learnq || [];\n    window._learnq.push(['track', 'Placed Order', payload]);\n  })();\n</script>"
+          }
+        ],
+        "fingerprint": "1756206900034",
+        "firingTriggerId": ["123"],
+        "tagFiringOption": "ONCE_PER_EVENT",
+        "parentFolderId": "2",
+        "monitoringMetadata": { "type": "MAP" },
+        "consentSettings": { "consentStatus": "NOT_SET" },
+        "paused": true
+      }
+    ],
+    "builtInVariable": [],
+    "fingerprint": "1756206900999"
+  }
+}

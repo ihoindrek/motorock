@@ -60,7 +60,7 @@ export function CheckoutCardBrandIcons({
           height={40}
           loading="lazy"
           decoding="async"
-          className={logoClassName}
+          className={cn(logoClassName, logoClassNameProp)}
           onError={() => handleError(brand.id)}
         />
       ))}

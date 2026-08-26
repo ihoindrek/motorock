@@ -23,6 +23,17 @@ export const MONTONIO_PAYMENTS_URL = {
 
 export const ORDER_PROCESSING_DAYS = { en: "1–2 business days", et: "1–2 tööpäeva" };
 
+/** Matches WooCommerce free-shipping minimum order amount (EUR). */
+export const FREE_SHIPPING_THRESHOLD_EUR = 200;
+
+export function freeShippingThresholdLabel(locale: Locale): string {
+  if (locale === "et") {
+    return `Tasuta tarne alates ${FREE_SHIPPING_THRESHOLD_EUR} €`;
+  }
+
+  return `Free shipping from €${FREE_SHIPPING_THRESHOLD_EUR}`;
+}
+
 export const DELIVERY_TIMES = {
   estonia: { en: "Estonia: 3–7 working days", et: "Eesti: 3–7 tööpäeva" },
   baltics: {
@@ -287,10 +298,10 @@ export const PAYMENT_CHECKOUT_NOTE = {
 
 export function shippingCostsCheckoutText(locale: Locale) {
   if (locale === "et") {
-    return "Kohaletoimetamise kulud arvutatakse kassas vastavalt teie asukohale ja valitud tarneviisile.";
+    return `Kohaletoimetamise kulud arvutatakse kassas vastavalt teie asukohale ja valitud tarneviisile. Tellimustele alates ${FREE_SHIPPING_THRESHOLD_EUR} € kehtib tasuta tarne (v.a. erijuhtumid, nt mootorratta transport kokkuleppel).`;
   }
 
-  return "Shipping costs are calculated at checkout based on your location and selected delivery method.";
+  return `Shipping costs are calculated at checkout based on your location and selected delivery method. Orders from €${FREE_SHIPPING_THRESHOLD_EUR} qualify for free shipping (except special cases such as motorcycle transport by agreement).`;
 }
 
 export function shippingRegionIntro(locale: Locale) {

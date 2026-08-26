@@ -2,20 +2,19 @@ import { MapPin, RotateCcw, ShieldCheck, Truck } from "lucide-react";
 import Link from "next/link";
 import type { Locale } from "@/i18n/config";
 import { localizedHref } from "@/i18n/paths";
+import { freeShippingThresholdLabel } from "@/data/storefront-policies";
 import { buildEquipmentCategoryHref } from "@/lib/shop/category-url";
 import { cn } from "@/lib/utils";
 
 const copy = {
   en: {
     ariaLabel: "Why shop with Motorock",
-    shipping: "EU-Wide Shipping",
     returns: "Easy 14-Day Returns",
     protection: "CE Certified Protection",
     showroom: "Showroom in Tallinn",
   },
   et: {
     ariaLabel: "Miks osta Motorockist",
-    shipping: "Tarne üle EL-i",
     returns: "Lihtne 14-päevane tagastus",
     protection: "CE-sertifitseeritud kaitse",
     showroom: "Showroom Tallinnas",
@@ -34,7 +33,7 @@ export function HomeTrustBar({ locale }: { locale: Locale }) {
   const items: TrustItem[] = [
     {
       Icon: Truck,
-      label: t.shipping,
+      label: freeShippingThresholdLabel(locale),
       href: localizedHref(locale, "/shipping"),
     },
     {

@@ -1,0 +1,32 @@
+GTM KLAVIYO — KIIRE CHECKLIST (motorock.eu)
+============================================
+
+ENNE GTM-i
+[ ] Klaviyo konto — vali WooCommerce (mitte Custom built)
+[ ] Installi Klaviyo for WooCommerce → shop.motorock.eu
+[ ] Historical sync algas / lõppes
+[ ] Public API Key (6 tähemärki) käes
+
+IMPORT
+[ ] GTM → Admin → Import Container
+[ ] Fail: docs/gtm/motorock-klaviyo-import.json
+[ ] Merge → Rename conflicting (MITTE Overwrite)
+
+PÄRAST IMPORTI
+[ ] Variables → CONST - Klaviyo Public API Key → sinu võti
+[ ] Iga Klaviyo tag → Consent → Require ad_storage
+[ ] Klaviyo - Placed Order (backup) → jääb PAUSED (Woo plugin saadab tellimused)
+
+TEST (GTM Preview + marketing consent)
+[ ] Tooteleht → Klaviyo - Viewed Product
+[ ] Lisa korvi → Klaviyo - Added to Cart
+[ ] Checkout → Klaviyo - Started Checkout
+[ ] Klaviyo Activity feed näitab evente
+
+PUBLISH
+[ ] GTM Submit → Publish
+
+FLOW'D (Klaviyo, pärast trackingut)
+[ ] Cart abandonment: Added to Cart → no Placed Order (1–4h)
+[ ] Browse abandonment: Viewed Product → no Added to Cart (4h)
+[ ] Checkout abandonment: Started Checkout → no Placed Order (1h)

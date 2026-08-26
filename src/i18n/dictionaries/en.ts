@@ -290,6 +290,9 @@ export type Dictionary = {
     shippingReturnsBody: string;
     shippingFrom: string;
     shippingFree: string;
+    shippingFreeFromThreshold: string;
+    shippingFreeRemaining: string;
+    shippingFreeUnlocked: string;
     shippingByAgreement: string;
     shippingVia: string;
     shippingCountry: string;
@@ -303,6 +306,7 @@ export type Dictionary = {
     trustBadgesAriaLabel: string;
     trustOriginalTitle: string;
     trustOriginalSubtext: string;
+    trustFreeShippingTitle: string;
     trustExchangeTitle: string;
     trustExchangeSubtext: string;
     trustSecureTitle: string;
@@ -969,9 +973,12 @@ export const en: Dictionary = {
     faqSupportLink: "customer support team",
     oneSize: "One size",
     shippingReturnsBody:
-      "EU delivery via SmartPosti, Omniva, DPD, courier or showroom pickup. Shipping costs are shown at checkout. 14-day withdrawal — contact info@motorock.eu.",
+      "EU delivery via SmartPosti, Omniva, DPD, courier or showroom pickup. Free shipping on orders from €200. 14-day withdrawal — contact info@motorock.eu.",
     shippingFrom: "Shipping from {price}",
     shippingFree: "Free shipping",
+    shippingFreeFromThreshold: "Free shipping on orders from {amount}",
+    shippingFreeRemaining: "Add {amount} more for free shipping",
+    shippingFreeUnlocked: "You've unlocked free shipping",
     shippingByAgreement: "Shipping by agreement",
     shippingVia: "{method}",
     shippingCountry: "Delivery country",
@@ -985,6 +992,7 @@ export const en: Dictionary = {
     trustBadgesAriaLabel: "Why shop with confidence",
     trustOriginalTitle: "100% Original Gear",
     trustOriginalSubtext: "Official brand partner & certified products",
+    trustFreeShippingTitle: "Free shipping on this product!",
     trustExchangeTitle: "Easy Size Exchange",
     trustExchangeSubtext: "Hassle-free 14-day return & exchange policy",
     trustSecureTitle: "Secure Checkout",

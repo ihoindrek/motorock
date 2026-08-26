@@ -21,5 +21,13 @@ export {
   trackCheckoutShippingRatesLoaded,
   trackCheckoutSubmitBlocked,
 } from "@/lib/analytics/checkout-funnel";
+export {
+  canSendKlaviyoEvents,
+  identifyKlaviyoProfile,
+  isKlaviyoIdentifiableEmail,
+  trackKlaviyoAddedToCart,
+  trackKlaviyoStartedCheckout,
+  trackKlaviyoViewedProduct,
+} from "@/lib/analytics/klaviyo";
 export { canSendAnalyticsEvents, isAnalyticsConfigured } from "@/lib/analytics/consent";
 export { hasTrackedPurchase } from "@/lib/analytics/data-layer";

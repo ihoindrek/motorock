@@ -38,7 +38,7 @@ export function EquipmentStickyAtc({
           type="button"
           onClick={onAdd}
           tabIndex={visible ? 0 : -1}
-          className="shrink-0 bg-ink px-5 py-3 font-body text-[10px] font-bold uppercase tracking-aggressive text-paper transition-colors hover:bg-accent"
+          className="shrink-0 bg-accent px-5 py-3 font-body text-[10px] font-bold uppercase tracking-aggressive text-paper transition-colors hover:bg-accent-hover"
         >
           {added ? dict.pdp.addedToCart : dict.pdp.addToCart}
         </button>

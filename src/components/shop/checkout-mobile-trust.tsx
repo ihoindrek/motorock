@@ -1,11 +1,12 @@
 "use client";
 
-import { Lock, RotateCcw } from "lucide-react";
+import { Lock, RotateCcw, Truck } from "lucide-react";
 import { useDictionary, useLocale } from "@/context/locale-context";
-import { formatCheckoutPrice } from "@/lib/shop/category";
+import { formatCheckoutPrice, formatPrice } from "@/lib/shop/category";
 import { isShippingByAgreement } from "@/lib/shop/shipping-method";
 import type { ShippingRate } from "@/lib/shop/shipping-method";
 import { cn } from "@/lib/utils";
+import { FREE_SHIPPING_THRESHOLD_EUR } from "@/data/storefront-policies";
 
 function formatShippingLabel(
   shippingTotal: number,
@@ -111,6 +112,13 @@ export function CheckoutTrustBadges({ className }: { className?: string }) {
 
   return (
     <ul className={cn("space-y-1 text-[11px] leading-snug text-ink/55", className)}>
+      <li className="flex items-center gap-2">
+        <Truck className="size-3.5 shrink-0 text-ink/40" aria-hidden="true" />
+        {dict.pdp.shippingFreeFromThreshold.replace(
+          "{amount}",
+          formatPrice(FREE_SHIPPING_THRESHOLD_EUR, locale),
+        )}
+      </li>
       <li className="flex items-center gap-2">
         <Lock className="size-3.5 shrink-0 text-ink/40" aria-hidden="true" />
         {t.securePayment}

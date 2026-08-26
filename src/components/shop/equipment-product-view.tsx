@@ -429,21 +429,23 @@ export function EquipmentProductView({
           ) : null}
 
           <div className="space-y-3 pt-2" ref={atcSentinelRef}>
-            <button
-              type="button"
-              onClick={handleAdd}
-              className="flex min-h-12 w-full items-center justify-center bg-ink px-6 font-body text-[11px] font-bold uppercase tracking-aggressive text-paper transition-colors hover:bg-accent"
-            >
-              {added ? dict.pdp.addedToCart : dict.pdp.addToCart}
-            </button>
-            <EquipmentTrustBadges />
-            <button
-              type="button"
-              onClick={handleBuyNow}
-              className="flex min-h-11 w-full items-center justify-center border border-ink/20 text-xs text-ink/70 transition-colors hover:border-ink hover:text-ink"
-            >
-              {dict.pdp.buyNow}
-            </button>
+            <div className="flex flex-col gap-3 lg:flex-row">
+              <button
+                type="button"
+                onClick={handleAdd}
+                className="flex min-h-12 flex-1 items-center justify-center bg-accent px-6 font-body text-[11px] font-bold uppercase tracking-aggressive text-paper transition-colors hover:bg-accent-hover"
+              >
+                {added ? dict.pdp.addedToCart : dict.pdp.addToCart}
+              </button>
+              <button
+                type="button"
+                onClick={handleBuyNow}
+                className="flex min-h-12 flex-1 items-center justify-center bg-ink px-6 font-body text-[11px] font-bold uppercase tracking-aggressive text-paper transition-colors hover:bg-accent"
+              >
+                {dict.pdp.buyNow}
+              </button>
+            </div>
+            <EquipmentTrustBadges price={activePrice} />
             <div className="flex items-center gap-6">
               <WishlistButton
                 variant="text"
@@ -478,7 +480,7 @@ export function EquipmentProductView({
             />
           </div>
 
-          <div className="order-4 w-full max-w-md space-y-8 sm:max-w-lg lg:order-none lg:max-w-xl xl:max-w-2xl">
+          <div className="order-4 w-full max-w-md space-y-8 border-t border-ink/10 pt-8 sm:max-w-lg lg:order-none lg:max-w-xl lg:border-t-0 lg:pt-0 xl:max-w-2xl">
           {isVideoSrc(product.lifestyleImage) ? (
             <figure className="relative aspect-[16/9] overflow-hidden bg-white">
               <video

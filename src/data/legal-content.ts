@@ -5,6 +5,7 @@ import { localizedHref } from "@/i18n/paths";
 import { SHOWROOM, getShowroomCopy } from "@/data/showroom";
 import {
   DELIVERY_TIMES,
+  FREE_SHIPPING_THRESHOLD_EUR,
   INTERNATIONAL_CARRIERS_NOTE,
   MONTONIO_PAYMENTS_URL,
   ORDER_PROCESSING_DAYS,
@@ -521,7 +522,7 @@ function buildTermsSections(locale: Locale): readonly LegalSection[] {
         paragraphs: [
           "Müügitingimused kehtivad veebipoest kaupade ostmisel.",
           "Veebipoes müüdavate toodete hinnad on märgitud toodete kõrval. Hinnale lisandub kättetoimetamistasu. Kõik hinnad on eurodes.",
-          "Tarnetasu sõltub ostja asukohast ja valitud tarneviisist. Tarnetasu kuvatakse ostjale tellimuse vormistamise ajal.",
+          `Tarnetasu sõltub ostja asukohast ja valitud tarneviisist. Tarnetasu kuvatakse ostjale tellimuse vormistamise ajal. Tellimustele alates ${FREE_SHIPPING_THRESHOLD_EUR} € kehtib tasuta tarne (v.a. erijuhtumid, nt mootorratta transport kokkuleppel).`,
           "Tooteinfo on veebipoes toote kõrval.",
         ],
       },
@@ -672,7 +673,7 @@ function buildTermsSections(locale: Locale): readonly LegalSection[] {
       paragraphs: [
         "The terms of sale apply when purchasing goods from the Web Store.",
         "The prices of the products sold in the Web Store are indicated next to the products. A delivery fee will be added to the price. All prices are in euros.",
-        "The delivery fee depends on the buyer's location and the selected delivery method. The delivery fee is shown to the buyer during the checkout process.",
+        `The delivery fee depends on the buyer's location and the selected delivery method. The delivery fee is shown to the buyer during the checkout process. Orders from €${FREE_SHIPPING_THRESHOLD_EUR} qualify for free shipping (except special cases such as motorcycle transport by agreement).`,
         "Product information is provided next to the product in the Web Store.",
       ],
     },

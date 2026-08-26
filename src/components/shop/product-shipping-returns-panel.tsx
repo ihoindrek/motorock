@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { ShippingMethodIcon } from "@/components/shop/shipping-method-icon";
+import { FreeShippingNote } from "@/components/shop/free-shipping-note";
+import { ProductShippingCarrierIcons } from "@/components/shop/product-shipping-carrier-icons";
 import { useDictionary, useLocale } from "@/context/locale-context";
 import { localizedHref } from "@/i18n/paths";
-import { formatCheckoutPrice } from "@/lib/shop/category";
 import { countryLabel, sortCountryCodes } from "@/lib/shop/countries";
 import type { ProductShippingEstimate } from "@/lib/shop/estimate-product-shipping";
-import { localizeShippingRateLabel } from "@/lib/shop/localize-shipping-label";
+import { isShippingByAgreement } from "@/lib/shop/shipping-method";
+import { isShowroomPickupRate } from "@/lib/shop/shipping-showroom-pickup";
 import { MorphingSquare } from "@/components/ui/morphing-square";
 import { cn } from "@/lib/utils";
 
@@ -24,6 +25,32 @@ type ProductShippingReturnsPanelProps = {
 
 function firstVariationId(variationId: number | undefined) {
   return variationId && variationId > 0 ? variationId : undefined;
+}
+
+function toShippingRate(
+  rate: ProductShippingEstimate["rates"][number],
+) {
+  return {
+    id: rate.id,
+    label: rate.label,
+    methodId: rate.methodId,
+    cost: rate.cost !== null ? String(rate.cost) : null,
+    instanceId: null,
+  };
+}
+
+function carrierIconRates(estimate: ProductShippingEstimate) {
+  return estimate.rates.filter((rate) => {
+    if (rate.kind === "byAgreement") {
+      return false;
+    }
+
+    const shippingRate = toShippingRate(rate);
+    return (
+      !isShippingByAgreement(shippingRate) &&
+      !isShowroomPickupRate(shippingRate)
+    );
+  });
 }
 
 export function ProductShippingReturnsPanel({
@@ -129,10 +156,7 @@ export function ProductShippingReturnsPanel({
     return sortCountryCodes(list, country);
   }, [country, estimate?.countries]);
 
-  const priceLabels = {
-    free: dict.pdp.shippingFree,
-    byAgreement: dict.pdp.shippingByAgreement,
-  };
+  const iconRates = estimate ? carrierIconRates(estimate) : [];
 
   return (
     <div className={cn("space-y-6", className)}>
@@ -147,92 +171,54 @@ export function ProductShippingReturnsPanel({
           </div>
         ) : null}
 
-      <div className="space-y-3">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <p className="font-body text-[11px] font-bold uppercase tracking-aggressive text-ink">
-            {dict.pdp.shippingMethodsHeading}
-          </p>
-          <label className="inline-flex items-center gap-2 text-sm text-ink/60">
-            <span className="sr-only">{dict.pdp.shippingCountry}</span>
-            <select
-              value={countries.includes(country) ? country : countries[0]}
-              onChange={(event) => setCountry(event.target.value.toUpperCase())}
-              className="border border-ink/15 bg-white px-2 py-1.5 text-sm text-ink outline-none hover:border-ink/30"
-              aria-label={dict.pdp.shippingCountry}
-            >
-              {countries.map((code) => (
-                <option key={code} value={code}>
-                  {countryLabel(code)}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-
-        {loading && !estimate ? (
-          <div className="flex min-h-28 flex-col items-center justify-center py-6">
-            <MorphingSquare message={dict.pdp.shippingLoading} size="sm" />
+        <div className="space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="font-body text-[11px] font-bold uppercase tracking-aggressive text-ink">
+              {dict.pdp.shippingMethodsHeading}
+            </p>
+            <label className="inline-flex items-center gap-2 text-sm text-ink/60">
+              <span className="sr-only">{dict.pdp.shippingCountry}</span>
+              <select
+                value={countries.includes(country) ? country : countries[0]}
+                onChange={(event) =>
+                  setCountry(event.target.value.toUpperCase())
+                }
+                className="border border-ink/15 bg-white px-2 py-1.5 text-sm text-ink outline-none hover:border-ink/30"
+                aria-label={dict.pdp.shippingCountry}
+              >
+                {countries.map((code) => (
+                  <option key={code} value={code}>
+                    {countryLabel(code)}
+                  </option>
+                ))}
+              </select>
+            </label>
           </div>
-        ) : failed || !estimate || estimate.rates.length === 0 ? (
-          <p className="text-sm leading-relaxed text-ink/65">
-            {dict.pdp.shippingFallback}
+
+          {loading && !estimate ? (
+            <div className="flex min-h-16 flex-col items-center justify-center py-4">
+              <MorphingSquare message={dict.pdp.shippingLoading} size="sm" />
+            </div>
+          ) : failed || !estimate || iconRates.length === 0 ? (
+            <p className="text-sm leading-relaxed text-ink/65">
+              {dict.pdp.shippingFallback}
+            </p>
+          ) : (
+            <ProductShippingCarrierIcons rates={iconRates} />
+          )}
+
+          <FreeShippingNote />
+
+          <p className="text-xs leading-relaxed text-ink/45">
+            {dict.pdp.shippingEstimateDisclaimer}{" "}
+            <Link
+              href={localizedHref(locale, "/shipping")}
+              className="underline underline-offset-2 hover:text-ink"
+            >
+              {dict.pdp.shippingInfoLink}
+            </Link>
           </p>
-        ) : (
-          <ul>
-            {estimate.rates.map((rate) => {
-              const label = localizeShippingRateLabel(
-                {
-                  id: rate.id,
-                  methodId: rate.methodId,
-                  label: rate.label,
-                },
-                locale,
-              );
-              const price =
-                rate.kind === "byAgreement"
-                  ? priceLabels.byAgreement
-                  : rate.kind === "free" || rate.cost === 0
-                    ? priceLabels.free
-                    : formatCheckoutPrice(rate.cost ?? 0, locale);
-
-              return (
-                <li
-                  key={rate.id}
-                  className="flex items-center gap-2.5 border-b border-ink/10 py-2 last:border-b-0"
-                >
-                  <ShippingMethodIcon
-                    className="!size-8 !border-0 !bg-transparent !p-0"
-                    rate={{
-                      id: rate.id,
-                      label: rate.label,
-                      methodId: rate.methodId,
-                      cost:
-                        rate.cost !== null ? String(rate.cost) : null,
-                      instanceId: null,
-                    }}
-                  />
-                  <span className="min-w-0 flex-1 text-xs leading-snug text-ink/75">
-                    {label}
-                  </span>
-                  <span className="shrink-0 font-body text-xs font-semibold tabular-nums text-ink">
-                    {price}
-                  </span>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-
-        <p className="text-xs leading-relaxed text-ink/45">
-          {dict.pdp.shippingEstimateDisclaimer}{" "}
-          <Link
-            href={localizedHref(locale, "/shipping")}
-            className="underline underline-offset-2 hover:text-ink"
-          >
-            {dict.pdp.shippingInfoLink}
-          </Link>
-        </p>
-      </div>
+        </div>
       </div>
 
       <div className="border-t border-ink/10 pt-5">
