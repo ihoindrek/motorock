@@ -839,7 +839,7 @@ export const en: Dictionary = {
     chooseCountryForPayment:
       "Choose your delivery country first to see available payment methods.",
     deliverySectionIncomplete: "Delivery details incomplete",
-    trustFreeReturns: "14-day free returns",
+    trustFreeReturns: "14-day returns",
     pricesIncludeVat: "Prices include VAT",
     shippingCostPending: "Select delivery to see shipping cost",
     securePayment: "Secure payment",

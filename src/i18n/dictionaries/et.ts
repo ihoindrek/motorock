@@ -186,7 +186,7 @@ export const et: Dictionary = {
     chooseCountryForPayment:
       "Makseviiside nägemiseks vali esmalt tarneriik.",
     deliverySectionIncomplete: "Tarneandmed puudulikud",
-    trustFreeReturns: "14-päevane tasuta tagastus",
+    trustFreeReturns: "14-päevane tagastus",
     pricesIncludeVat: "Hinnad sisaldavad käibemaksu",
     shippingCostPending: "Vali tarne tarnekulu nägemiseks",
     securePayment: "Turvaline makse",

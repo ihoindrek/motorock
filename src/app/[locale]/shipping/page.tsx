@@ -1,5 +1,6 @@
 import { LegalDocumentView } from "@/components/legal/legal-document-view";
 import { getShippingSections } from "@/data/legal-content";
+import { POLICY_LAST_UPDATED } from "@/data/storefront-policies";
 import { isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/get-dictionary";
 import { localizedHref } from "@/i18n/paths";
@@ -39,7 +40,7 @@ export default async function ShippingPage({ params }: ShippingPageProps) {
       currentId="shipping"
       title={dict.legal.shippingTitle}
       description={dict.legal.shippingDescription}
-      updated="6 July 2026"
+      updated={POLICY_LAST_UPDATED[localeParam]}
       sections={getShippingSections(localeParam)}
       lastUpdatedLabel={dict.legal.lastUpdated}
       questionsLabel={dict.legal.questions}

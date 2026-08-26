@@ -1,5 +1,6 @@
 import { CustomerSupportView } from "@/components/legal/customer-support-view";
 import { getSupportSections } from "@/data/legal-content";
+import { POLICY_LAST_UPDATED } from "@/data/storefront-policies";
 import { isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/get-dictionary";
 import { localizedHref } from "@/i18n/paths";
@@ -41,7 +42,7 @@ export default async function SupportPage({ params }: SupportPageProps) {
       locale={localeParam}
       title={dict.legal.supportTitle}
       description={dict.legal.supportDescription}
-      updated="6 July 2026"
+      updated={POLICY_LAST_UPDATED[localeParam]}
       sections={getSupportSections(localeParam)}
       lastUpdatedLabel={dict.legal.lastUpdated}
       questionsLabel={dict.legal.questions}

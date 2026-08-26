@@ -1,18 +1,19 @@
 import type { LegalSection } from "@/components/legal/legal-document-view";
 import type { Locale } from "@/i18n/config";
+import { POLICY_LAST_UPDATED } from "@/data/storefront-policies";
 import { SHOWROOM } from "@/data/showroom";
 
-const COOKIE_POLICY_UPDATED = "18 March 2026";
-const COOKIE_POLICY_UPDATED_ET = "18.03.2026";
 const WEBSITE_URL = "https://motorock.eu";
 
 const PLACED_COOKIES = {
   en: [
     "Google reCAPTCHA — Functional",
-    "WooCommerce — Functional",
+    "WooCommerce — Functional (cart, checkout session)",
+    "WooPayments / Stripe — Functional (card and wallet payments at checkout)",
+    "Montonio — Functional (bank links and other Montonio payment flows)",
+    "Google Tag Manager — Statistics / Marketing (with consent)",
     "Google Analytics — Statistics",
     "Sourcebuster JS — Statistics",
-    "Stripe — Functional",
     "WordPress — Functional",
     "Google AdSense — Marketing",
     "WPML — Functional",
@@ -21,10 +22,12 @@ const PLACED_COOKIES = {
   ],
   et: [
     "Google reCAPTCHA — funktsionaalsed",
-    "WooCommerce — funktsionaalsed",
+    "WooCommerce — funktsionaalsed (ostukorv, checkouti sessioon)",
+    "WooPayments / Stripe — funktsionaalsed (kaardid ja rahakotid checkoutis)",
+    "Montonio — funktsionaalsed (pangalingid ja muud Montonio maksevood)",
+    "Google Tag Manager — statistika / turundus (nõusolekul)",
     "Google Analytics — statistika",
     "Sourcebuster JS — statistika",
-    "Stripe — funktsionaalsed",
     "WordPress — funktsionaalsed",
     "Google AdSense — turundus",
     "WPML — funktsionaalsed",
@@ -49,7 +52,7 @@ const CONSENT_CATEGORIES = {
 } as const;
 
 export function cookiePolicyUpdatedLabel(locale: Locale) {
-  return locale === "et" ? COOKIE_POLICY_UPDATED_ET : COOKIE_POLICY_UPDATED;
+  return POLICY_LAST_UPDATED[locale];
 }
 
 export function buildCookieSections(locale: Locale): readonly LegalSection[] {
@@ -87,7 +90,7 @@ export function buildCookieSections(locale: Locale): readonly LegalSection[] {
         id: "cookie-types",
         title: "5. Küpsised",
         paragraphs: [
-          "5.1 Tehnilised või funktsionaalsed küpsised — need tagavad, et teatud veebilehe osad toimivad korralikult ja teie kasutajaeelistused jäävad meelde. Funktsionaalsete küpsiste paigaldamisega muudame veebilehe külastamise lihtsamaks. Näiteks ei pea te külastamisel korduvalt samu andmeid sisestama ja ostukorvi tooted jäävad alles kuni makse sooritamiseni. Võime neid küpsiseid paigaldada ilma teie nõusolekuta.",
+          "5.1 Tehnilised või funktsionaalsed küpsised — need tagavad, et teatud veebilehe osad toimivad korralikult ja teie kasutajaeelistused jäävad meelde. Funktsionaalsete küpsiste paigaldamisega muudame veebilehe külastamise lihtsamaks. Näiteks ei pea te külastamisel korduvalt samu andmeid sisestama ja ostukorvi tooted jäävad alles kuni makse sooritamiseni. Checkoutis võivad makseteenuse pakkujad (WooPayments / Stripe ja Montonio) paigaldada küpsiseid makse turvalisuse ja sessiooni haldamiseks. Võime neid küpsiseid paigaldada ilma teie nõusolekuta.",
           "5.2 Statistika küpsised — kasutame statistika küpsiseid, et optimeerida kasutajakogemust. Nende abil saame ülevaate veebilehe kasutamisest. Statistika küpsiste paigaldamiseks küsime teie luba.",
           "5.3 Reklaamiküpsised — kasutame reklaamiküpsiseid, et saada ülevaadet kampaaniate tulemustest. See toimub profiili alusel, mis põhineb teie käitumisel motorock.eu lehel. Need küpsised seovad külastaja unikaalse ID-ga, kuid ei profiili teie käitumist ega huvisid isikupärastatud reklaamide jaoks.",
           "5.4 Turundus-/jälgimisküpsised — neid kasutatakse kasutajaprofiilide loomiseks reklaami kuvamiseks või kasutaja jälgimiseks sellel või mitmel veebilehel sarnastel turunduseesmärkidel. Kuna need on märgitud jälgimisküpsistena, küsime nende paigaldamiseks teie luba.",
@@ -197,7 +200,7 @@ export function buildCookieSections(locale: Locale): readonly LegalSection[] {
       id: "cookie-types",
       title: "5. Cookies",
       paragraphs: [
-        "5.1 Technical or functional cookies — Some cookies ensure that certain parts of the website work properly and that your user preferences remain known. By placing functional cookies, we make it easier for you to visit our website. This way, you do not need to repeatedly enter the same information when visiting our website and, for example, the items remain in your shopping cart until you have paid. We may place these cookies without your consent.",
+        "5.1 Technical or functional cookies — Some cookies ensure that certain parts of the website work properly and that your user preferences remain known. By placing functional cookies, we make it easier for you to visit our website. This way, you do not need to repeatedly enter the same information when visiting our website and, for example, the items remain in your shopping cart until you have paid. At checkout, payment providers (WooPayments / Stripe and Montonio) may place cookies for payment security and session handling. We may place these cookies without your consent.",
         "5.2 Statistics cookies — We use statistics cookies to optimize the website experience for our users. With these statistics cookies we get insights in the usage of our website. We ask your permission to place statistics cookies.",
         "5.3 Advertising cookies — On this website we use advertising cookies, enabling us to gain insights into the campaign results. This happens based on a profile we create based on your behavior on motorock.eu. With these cookies you, as website visitor, are linked to a unique ID but these cookies will not profile your behavior and interests to serve personalized ads.",
         "5.4 Marketing/Tracking cookies — Marketing/Tracking cookies are cookies or any other form of local storage, used to create user profiles to display advertising or to track the user on this website or across several websites for similar marketing purposes. Because these cookies are marked as tracking cookies, we ask your permission to place these.",
@@ -275,8 +278,8 @@ export function buildCookieSections(locale: Locale): readonly LegalSection[] {
 
 export function cookiePolicyScopeText(locale: Locale) {
   if (locale === "et") {
-    return `Käesolevat küpsisepoliitikat viimati uuendati ${COOKIE_POLICY_UPDATED_ET} ja see kehtib Euroopa Majanduspiirkonna ja Šveitsi kodanike ning alaliste elanike suhtes.`;
+    return `Käesolevat küpsisepoliitikat viimati uuendati ${POLICY_LAST_UPDATED.et} ja see kehtib Euroopa Majanduspiirkonna ja Šveitsi kodanike ning alaliste elanike suhtes.`;
   }
 
-  return `This Cookie Policy was last updated on ${COOKIE_POLICY_UPDATED} and applies to citizens and legal permanent residents of the European Economic Area and Switzerland.`;
+  return `This Cookie Policy was last updated on ${POLICY_LAST_UPDATED.en} and applies to citizens and legal permanent residents of the European Economic Area and Switzerland.`;
 }

@@ -1,5 +1,6 @@
 import { LegalDocumentView } from "@/components/legal/legal-document-view";
 import { getTermsSections } from "@/data/legal-content";
+import { POLICY_LAST_UPDATED } from "@/data/storefront-policies";
 import { isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/get-dictionary";
 import { localizedHref } from "@/i18n/paths";
@@ -39,7 +40,7 @@ export default async function TermsPage({ params }: TermsPageProps) {
       currentId="terms"
       title={dict.legal.termsTitle}
       description={dict.legal.termsDescription}
-      updated="6 July 2026"
+      updated={POLICY_LAST_UPDATED[localeParam]}
       sections={getTermsSections(localeParam)}
       lastUpdatedLabel={dict.legal.lastUpdated}
       questionsLabel={dict.legal.questions}

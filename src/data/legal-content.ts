@@ -6,14 +6,19 @@ import { SHOWROOM, getShowroomCopy } from "@/data/showroom";
 import {
   DELIVERY_TIMES,
   INTERNATIONAL_CARRIERS_NOTE,
+  MONTONIO_PAYMENTS_URL,
   ORDER_PROCESSING_DAYS,
   PAYMENT_CHECKOUT_NOTE,
   PAYMENT_METHODS_CHECKOUT,
   PAYMENT_REGIONS,
+  PAYMENT_PROCESSORS_PRIVACY,
   POLICY_EMAILS,
   POLICY_PHONE,
   SHIPPING_REGIONS,
+  paymentDataProcessingParagraph,
+  paymentProcessingParagraphs,
   paymentRegionIntro,
+  paymentSupportBullets,
   shippingCostsCheckoutText,
   shippingRegionIntro,
   showroomPickupLabel,
@@ -80,6 +85,7 @@ function buildPrivacySections(locale: Locale): readonly LegalSection[] {
           "Ostuajaloo andmeid (ostu kuupäev, kaup, kogus, kliendi andmed) kasutatakse ostetud kaupade ja teenuste ülevaate koostamiseks, kliendieelistuste analüüsimiseks ning tarbijavaidluste lahendamise eesmärgil.",
           "Pangakonto numbrit kasutatakse kliendile maksete tagastamiseks.",
           "Isikuandmeid nagu e-post, telefoni nr ja kliendi nimi töödeldakse selleks, et lahendada kaupade ja teenuste osutamise seonduvaid küsimusi (klienditugi). E-posti kasutatakse lisaks arvete saatmiseks ning telefoni numbrit kasutatakse pakiautomaati jõudnud kauba kohta teavituse saatmiseks kauba tellijale.",
+          paymentDataProcessingParagraph("et"),
           "Veebipoe kasutaja IP-aadressi või teisi võrguidentifikaatoreid töödeldakse veebipoe kui infoühiskonna teenuse osutamiseks ning veebikasutusstatistika tegemiseks.",
           "Veebilehe ja turunduskanalite statistikat kogutakse ja töödeldakse veebipoe kasutajakogemuse parandamiseks, tootesortimendi osas otsuste langetamise ning klientidele sobivamate pakkumiste tegemise eesmärgil.",
         ],
@@ -125,6 +131,10 @@ function buildPrivacySections(locale: Locale): readonly LegalSection[] {
           [
             externalLink("https://www.hotjar.com/legal/compliance/gdpr-commitment"),
           ],
+          "Stripe (WooPayments) privaatsuspoliitika:",
+          [externalLink("https://stripe.com/privacy")],
+          "Montonio privaatsuspoliitika:",
+          [externalLink("https://montonio.com/privacy-policy/")],
         ],
       },
       {
@@ -142,6 +152,7 @@ function buildPrivacySections(locale: Locale): readonly LegalSection[] {
         paragraphs: [
           "Isikuandmed edastatakse veebipoe klienditoele ostude ja ostuajaloo haldamiseks ja kliendiprobleemide lahendamiseks.",
           "Nimi, telefoninumber ja e-posti aadress edastatakse kliendi poolt valitud transporditeenuse pakkujale. Kui tegemist on kulleriga kohale toimetatava kaubaga, siis edastatakse lisaks kontaktandmetele ka kliendi aadress.",
+          paymentDataProcessingParagraph("et"),
           "Kui veebipoe raamatupidamine toimub teenusepakkuja poolt, siis edastatakse isikuandmed teenusepakkujale raamatupidamistoimingute tegemiseks.",
           "Isikuandmeid võidakse edastada infotehnoloogia teenuste pakkujatele, kui see on vajalik veebipoe funktsionaalsuse või andmemajutuse tagamiseks.",
         ],
@@ -165,7 +176,18 @@ function buildPrivacySections(locale: Locale): readonly LegalSection[] {
         id: "processors",
         title: "Volitatud töötlejad",
         paragraphs: [
-          "Isikuandmete edastamine veebipoe volitatud töötlejatest vastuvõtjatele (nt transporditeenuse pakkuja ja andmemajutus) toimub veebipoe ja volitatud töötlejatega sõlmitud lepingute alusel.",
+          "Isikuandmete edastamine veebipoe volitatud töötlejatest vastuvõtjatele toimub veebipoe ja volitatud töötlejatega sõlmitud lepingute alusel. Peamised volitatud töötlejad on:",
+        ],
+        bullets: [
+          ...PAYMENT_PROCESSORS_PRIVACY.et,
+          "Transporditeenuse pakkujad (SmartPosti, Omniva, DPD, GLS jt — sõltuvalt valitud tarneviisist)",
+          "Elkdata OÜ — veebipoe andmemajutus",
+        ],
+      },
+      {
+        id: "processors-gdpr",
+        title: "Volitatud töötlejate kohustused",
+        paragraphs: [
           "Volitatud töötlejaid on kohustatud tagama isikuandmete töötlemisel asjakohased kaitsemeetmed kooskõlas isikuandmete kaitse üldmääruse artikliga 28.",
         ],
       },
@@ -289,6 +311,7 @@ function buildPrivacySections(locale: Locale): readonly LegalSection[] {
         "Purchase history data (date of purchase, goods, quantity, customer details) is used to provide an overview of the goods and services purchased, to analyse customer preferences and to resolve consumer disputes.",
         "The bank account number is used to refund payments to the customer.",
         "Personal data, such as e-mail, telephone number, customer's name, are processed in order to resolve issues related to the provision of goods and services (customer support). In addition, e-mail is used to send invoices and the telephone number is used to notify the customer of the arrival of the goods at the parcel machine.",
+        paymentDataProcessingParagraph("en"),
         "A web shop user's IP address or other network identifiers are processed for the purposes of providing the web shop as an information society service and for web usage statistics.",
         "Website and marketing channel statistics are collected and processed for the purposes of improving the user experience of the online shop, making decisions about product ranges and making more appropriate offers to customers.",
       ],
@@ -328,6 +351,10 @@ function buildPrivacySections(locale: Locale): readonly LegalSection[] {
         ],
         "You can read the terms and conditions of Hotjar cookies here:",
         [externalLink("https://www.hotjar.com/legal/compliance/gdpr-commitment")],
+        "Stripe (WooPayments) privacy policy:",
+        [externalLink("https://stripe.com/privacy")],
+        "Montonio privacy policy:",
+        [externalLink("https://montonio.com/privacy-policy/")],
       ],
     },
     {
@@ -345,6 +372,7 @@ function buildPrivacySections(locale: Locale): readonly LegalSection[] {
       paragraphs: [
         "Personal data will be transferred to the online shop's customer support for the purpose of managing purchases and purchase history and resolving customer issues.",
         "The name, telephone number and e-mail address will be transmitted to the transport service provider chosen by the customer. In the case of goods to be delivered by courier, the customer's address will be transmitted in addition to the contact details.",
+        paymentDataProcessingParagraph("en"),
         "In the case of an online shop where the accounting is carried out by a service provider, the personal data will be transmitted to the service provider for the purpose of carrying out accounting operations.",
         "Personal data may be transferred to information technology service providers if this is necessary to ensure the functionality or data availability of the online shop.",
       ],
@@ -368,7 +396,18 @@ function buildPrivacySections(locale: Locale): readonly LegalSection[] {
       id: "processors",
       title: "Data processors",
       paragraphs: [
-        "Transfers of personal data from the online shop to recipients (e.g. transport service providers and data aggregators) are based on contracts between the online shop and the processors.",
+        "Transfers of personal data from the online shop to processors are based on contracts between the online shop and the processors. Main processors include:",
+      ],
+      bullets: [
+        ...PAYMENT_PROCESSORS_PRIVACY.en,
+        "Transport service providers (SmartPosti, Omniva, DPD, GLS, etc. — depending on the delivery method chosen)",
+        "Elkdata OÜ — web store hosting",
+      ],
+    },
+    {
+      id: "processors-gdpr",
+      title: "Processor obligations",
+      paragraphs: [
         "Processors are obliged to ensure appropriate safeguards for the processing of personal data in accordance with Article 28 of the GDPR.",
       ],
     },
@@ -508,17 +547,16 @@ function buildTermsSections(locale: Locale): readonly LegalSection[] {
         title: "Maksete töötlemine",
         paragraphs: [
           [
-            "Täpsemad makseviisi valikud on saadaval makseteenuse pakkuja Montonio Finance UAB veebisaidil: ",
+            "Montonio makseviiside kohta leiate lisainfo aadressil ",
             {
               type: "link",
-              label: "https://montonio.com/et/maksed/",
-              href: "https://montonio.com/et/maksed/",
+              label: MONTONIO_PAYMENTS_URL.et,
+              href: MONTONIO_PAYMENTS_URL.et,
               external: true,
             },
           ],
           "NB! Pangalingi kaudu makstes tuleb kindlasti pärast makse sooritamist panga lehel klõpsata nupul „Tagasi kaupmehe juurde“.",
-          "Makseid töötleb Montonio Finance UAB. Maksed tehakse väljaspool veebipoodi turvalises keskkonnas – pangalingi kasutamisel panga turvalises keskkonnas ja krediitkaardi kasutamisel Montonio turvalises keskkonnas. Müüjal puudub juurdepääs kliendi panga- ega krediitkaardiandmetele. Leping jõustub alates tasumisele kuuluva summa laekumisest veebipoe pangakontole.",
-          "Veebipoe omanik on isikuandmete vastutav töötleja ja edastab vajalikud isikuandmed volitatud töötleja Maksekeskus AS-ile maksete töötlemiseks.",
+          ...paymentProcessingParagraphs("et"),
           "Kui tellitud toodet ei ole võimalik tarnida selle laoseisu puudumise või muul põhjusel, teavitatakse ostjat sellest esimesel võimalusel ning tasutud summa (sh kättetoimetamiskulud) tagastatakse viivitamata, kuid mitte hiljem kui 14 päeva jooksul teate saatmisest.",
         ],
       },
@@ -660,17 +698,16 @@ function buildTermsSections(locale: Locale): readonly LegalSection[] {
       title: "Payment processing",
       paragraphs: [
         [
-          "Detailed payment method options are available on the payment service provider Montonio Finance UAB's website: ",
+          "More about Montonio payment methods: ",
           {
             type: "link",
-            label: "https://montonio.com/et/maksed/",
-            href: "https://montonio.com/et/maksed/",
+            label: MONTONIO_PAYMENTS_URL.en,
+            href: MONTONIO_PAYMENTS_URL.en,
             external: true,
           },
         ],
         "NB! When paying via bank link, be sure to click the \"Return to merchant\" button after completing the payment on the bank's page.",
-        "Payments are processed by Montonio Finance UAB. Payments are made outside the Web Store in a secure environment — in the bank's secure environment when using a bank link and in Montonio's secure environment when using a credit card. The seller does not have access to the customer's bank or credit card data. The agreement becomes effective upon the receipt of the payable amount to the Web Store's bank account.",
-        "The Web Store owner is the controller of personal data and forwards the necessary personal data to the authorized processor Maksekeskus AS for payment processing.",
+        ...paymentProcessingParagraphs("en"),
         "If it is not possible to deliver the ordered product due to it being out of stock or for any other reason, the buyer will be informed as soon as possible and the paid amount (including delivery fees) will be refunded immediately, but no later than within 14 days of sending the notice.",
       ],
     },
@@ -962,9 +999,7 @@ function buildSupportSections(locale: Locale): readonly LegalSection[] {
           ...PAYMENT_REGIONS.map(
             (region) => `${region.title.et}: ${region.methods.et.join(", ")}`,
           ),
-          "Kui makse ebaõnnestub, mine tagasi ostukorvi ja proovi uuesti või vali teine checkoutis nähtav makseviis",
-          "Pärast pangalingi makset klõpsa panga lehel „Tagasi kaupmehe juurde“",
-          "Montonio või makseprobleemide puhul lisa ühendust võttes tellimuse number",
+          ...paymentSupportBullets("et"),
         ],
       },
       {
@@ -1037,9 +1072,7 @@ function buildSupportSections(locale: Locale): readonly LegalSection[] {
         ...PAYMENT_REGIONS.map(
           (region) => `${region.title.en}: ${region.methods.en.join(", ")}`,
         ),
-        "If payment fails, return to the cart and try again or choose another method shown at checkout",
-        "After paying via bank link, click \"Return to merchant\" on your bank's page",
-        "For Montonio or payment issues, include your order number when you contact us",
+        ...paymentSupportBullets("en"),
       ],
     },
     {

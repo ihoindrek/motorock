@@ -10,6 +10,17 @@ export const POLICY_EMAILS = {
 
 export const POLICY_PHONE = SHOWROOM.phone;
 
+/** Shared "last updated" date for shipping, terms, returns, and support pages. */
+export const POLICY_LAST_UPDATED: Record<Locale, string> = {
+  en: "26 August 2026",
+  et: "26. august 2026",
+};
+
+export const MONTONIO_PAYMENTS_URL = {
+  en: "https://montonio.com/payments/",
+  et: "https://montonio.com/et/maksed/",
+} as const;
+
 export const ORDER_PROCESSING_DAYS = { en: "1–2 business days", et: "1–2 tööpäeva" };
 
 export const DELIVERY_TIMES = {
@@ -130,18 +141,18 @@ export const PAYMENT_REGIONS: readonly PaymentRegion[] = [
     title: { en: "Estonia", et: "Eesti" },
     methods: {
       en: [
-        "Estonian bank links (Swedbank, SEB, LHV, Coop Pank and others)",
-        "Visa/Mastercard",
+        "Visa, Mastercard, Apple Pay, Google Pay (WooPayments / Stripe, when shown at checkout)",
+        "Estonian bank links (Swedbank, SEB, LHV, Coop Pank and others — Montonio)",
         "Montonio Buy now, pay later (BNPL)",
         "Hire purchase via Montonio (Inbank)",
-        "PayPal",
+        "PayPal (Montonio)",
       ],
       et: [
-        "Eesti pangalingid (Swedbank, SEB, LHV, Coop Pank jt)",
-        "Visa/Mastercard",
+        "Visa, Mastercard, Apple Pay, Google Pay (WooPayments / Stripe, kui checkoutis kuvatud)",
+        "Eesti pangalingid (Swedbank, SEB, LHV, Coop Pank jt — Montonio)",
         "Montonio „Osta nüüd, maksa hiljem“ (BNPL)",
         "Järelmaks Montonio kaudu (Inbank)",
-        "PayPal",
+        "PayPal (Montonio)",
       ],
     },
   },
@@ -150,16 +161,16 @@ export const PAYMENT_REGIONS: readonly PaymentRegion[] = [
     title: { en: "Latvia & Lithuania", et: "Läti ja Leedu" },
     methods: {
       en: [
-        "Local bank links",
-        "Visa/Mastercard",
+        "Visa, Mastercard, Apple Pay, Google Pay (WooPayments / Stripe, when shown at checkout)",
+        "Local bank links (Montonio)",
         "Montonio Buy now, pay later (BNPL)",
-        "PayPal",
+        "PayPal (Montonio)",
       ],
       et: [
-        "Kohalikud pangalingid",
-        "Visa/Mastercard",
+        "Visa, Mastercard, Apple Pay, Google Pay (WooPayments / Stripe, kui checkoutis kuvatud)",
+        "Kohalikud pangalingid (Montonio)",
         "Montonio „Osta nüüd, maksa hiljem“ (BNPL)",
-        "PayPal",
+        "PayPal (Montonio)",
       ],
     },
   },
@@ -168,16 +179,16 @@ export const PAYMENT_REGIONS: readonly PaymentRegion[] = [
     title: { en: "Finland", et: "Soome" },
     methods: {
       en: [
-        "Finnish bank links",
-        "Visa/Mastercard",
-        "MobilePay",
-        "PayPal",
+        "Visa, Mastercard, Apple Pay, Google Pay (WooPayments / Stripe, when shown at checkout)",
+        "Finnish bank links (Montonio)",
+        "MobilePay (Montonio)",
+        "PayPal (Montonio)",
       ],
       et: [
-        "Soome pangalingid",
-        "Visa/Mastercard",
-        "MobilePay",
-        "PayPal",
+        "Visa, Mastercard, Apple Pay, Google Pay (WooPayments / Stripe, kui checkoutis kuvatud)",
+        "Soome pangalingid (Montonio)",
+        "MobilePay (Montonio)",
+        "PayPal (Montonio)",
       ],
     },
   },
@@ -185,8 +196,18 @@ export const PAYMENT_REGIONS: readonly PaymentRegion[] = [
     id: "poland",
     title: { en: "Poland", et: "Poola" },
     methods: {
-      en: ["Polish bank links", "Visa/Mastercard", "BLIK", "PayPal"],
-      et: ["Poola pangalingid", "Visa/Mastercard", "BLIK", "PayPal"],
+      en: [
+        "Visa, Mastercard, Apple Pay, Google Pay (WooPayments / Stripe, when shown at checkout)",
+        "Polish bank links (Montonio)",
+        "BLIK (Montonio)",
+        "PayPal (Montonio)",
+      ],
+      et: [
+        "Visa, Mastercard, Apple Pay, Google Pay (WooPayments / Stripe, kui checkoutis kuvatud)",
+        "Poola pangalingid (Montonio)",
+        "BLIK (Montonio)",
+        "PayPal (Montonio)",
+      ],
     },
   },
   {
@@ -194,14 +215,14 @@ export const PAYMENT_REGIONS: readonly PaymentRegion[] = [
     title: { en: "Other EU countries", et: "Muud ELi riigid" },
     methods: {
       en: [
-        "Local bank links (where Montonio supports your country)",
-        "Visa/Mastercard",
-        "PayPal",
+        "Visa, Mastercard, Apple Pay, Google Pay (WooPayments / Stripe, when shown at checkout)",
+        "Local bank links (Montonio, where supported)",
+        "PayPal (Montonio)",
       ],
       et: [
-        "Kohalikud pangalingid (kui Montonio toetab teie riiki)",
-        "Visa/Mastercard",
-        "PayPal",
+        "Visa, Mastercard, Apple Pay, Google Pay (WooPayments / Stripe, kui checkoutis kuvatud)",
+        "Kohalikud pangalingid (Montonio, kui toetatud)",
+        "PayPal (Montonio)",
       ],
     },
   },
@@ -240,22 +261,22 @@ export const INTERNATIONAL_CARRIERS_NOTE = {
 
 export const PAYMENT_METHODS_CHECKOUT = {
   en: [
-    "Bank links (country-specific — see payment section below)",
-    "Visa/Mastercard card payments",
-    "MobilePay (Finland)",
+    "Visa, Mastercard, Apple Pay, Google Pay (WooPayments / Stripe, when shown at checkout)",
+    "Bank links (Montonio, country-specific — see payment section below)",
+    "MobilePay (Finland, Montonio)",
     "Buy now, pay later — Montonio BNPL (Estonia, Latvia, Lithuania)",
     "Hire purchase via Montonio (Estonia)",
-    "BLIK (Poland, where available)",
-    "PayPal",
+    "BLIK (Poland, Montonio, where available)",
+    "PayPal (Montonio)",
   ],
   et: [
-    "Pangalingid (riigiti — vt maksete jaotust allpool)",
-    "Visa/Mastercardi kaardimaksed",
-    "MobilePay (Soome)",
+    "Visa, Mastercard, Apple Pay, Google Pay (WooPayments / Stripe, kui checkoutis kuvatud)",
+    "Pangalingid (Montonio, riigiti — vt maksete jaotust allpool)",
+    "MobilePay (Soome, Montonio)",
     "Osta nüüd, maksa hiljem — Montonio BNPL (Eesti, Läti, Leedu)",
     "Järelmaks Montonio kaudu (Eesti)",
-    "BLIK (Poola, kui saadaval)",
-    "PayPal",
+    "BLIK (Poola, Montonio, kui saadaval)",
+    "PayPal (Montonio)",
   ],
 } as const;
 
@@ -282,8 +303,62 @@ export function shippingRegionIntro(locale: Locale) {
 
 export function paymentRegionIntro(locale: Locale) {
   if (locale === "et") {
-    return "Makseviisid sõltuvad arveldusriigist ja tellimusest. Allpool on ülevaade riigiti; checkoutis kuvatakse alati ainult teie tellimusele saadaolevad valikud.";
+    return "Makseviisid sõltuvad arveldusriigist ja tellimusest. Kaardid ja Apple Pay / Google Pay töödeldakse WooPayments (Stripe) kaudu; pangalingid, MobilePay, BNPL, järelmaks, BLIK ja PayPal Montonio kaudu — alati ainult checkoutis kuvatud valikud.";
   }
 
-  return "Payment methods depend on your billing country and order. Below is a country-by-country overview; checkout always shows only the options available for your order.";
+  return "Payment methods depend on your billing country and order. Cards and Apple Pay / Google Pay are processed via WooPayments (Stripe); bank links, MobilePay, BNPL, hire purchase, BLIK and PayPal via Montonio — only options shown at checkout apply.";
+}
+
+export function paymentProcessingParagraphs(locale: Locale): readonly string[] {
+  if (locale === "et") {
+    return [
+      "Maksed tehakse väljaspool veebipoodi turvalises keskkonnas. Kaardimaksed ning Apple Pay ja Google Pay (kui checkoutis kuvatud) töötleb WooPayments (Stripe). Pangalingid, MobilePay, BNPL, järelmaks, BLIK ja PayPal (kui saadaval) töötleb Montonio Finance UAB — pangalingi puhul panga turvalises keskkonnas. Müüjal puudub juurdepääs kliendi panga- ega kaardiandmetele.",
+      "Leping jõustub alates tasumisele kuuluva summa laekumisest veebipoe pangakontole.",
+    ];
+  }
+
+  return [
+    "Payments are made outside the Web Store in a secure environment. Card payments and Apple Pay / Google Pay (when shown at checkout) are processed by WooPayments (Stripe). Bank links, MobilePay, BNPL, hire purchase, BLIK and PayPal (when available) are processed by Montonio Finance UAB — in the bank's secure environment for bank links. The seller does not have access to the customer's bank or card data.",
+    "The agreement becomes effective upon receipt of the payable amount to the Web Store's bank account.",
+  ];
+}
+
+export function paymentSupportBullets(locale: Locale): readonly string[] {
+  if (locale === "et") {
+    return [
+      "Kaardid ja Apple Pay / Google Pay: WooPayments (Stripe), kui checkoutis kuvatud",
+      "Pangalingid, MobilePay, BNPL, järelmaks, BLIK, PayPal: Montonio, kui checkoutis kuvatud",
+      "Kui makse ebaõnnestub, proovi uuesti või vali teine checkoutis nähtav makseviis",
+      "Pärast pangalingi makset klõpsa panga lehel „Tagasi kaupmehe juurde“",
+      "Makseprobleemide puhul lisa ühendust võttes tellimuse number",
+    ];
+  }
+
+  return [
+    "Cards and Apple Pay / Google Pay: WooPayments (Stripe), when shown at checkout",
+    "Bank links, MobilePay, BNPL, hire purchase, BLIK, PayPal: Montonio, when shown at checkout",
+    "If payment fails, try again or choose another method shown at checkout",
+    "After paying via bank link, click \"Return to merchant\" on your bank's page",
+    "For payment issues, include your order number when you contact us",
+  ];
+}
+
+/** Listed under privacy policy → authorized processors / recipients. */
+export const PAYMENT_PROCESSORS_PRIVACY: Record<Locale, readonly string[]> = {
+  et: [
+    "WooPayments (Stripe Technology Europe Ltd) — kaardimaksed, Apple Pay ja Google Pay checkoutis",
+    "Montonio Finance UAB — pangalingid, MobilePay, BNPL, järelmaks, BLIK ja PayPal",
+  ],
+  en: [
+    "WooPayments (Stripe Technology Europe Ltd) — card payments, Apple Pay and Google Pay at checkout",
+    "Montonio Finance UAB — bank links, MobilePay, BNPL, hire purchase, BLIK and PayPal",
+  ],
+};
+
+export function paymentDataProcessingParagraph(locale: Locale) {
+  if (locale === "et") {
+    return "Maksete sooritamiseks ja tagasimaksete tegemiseks edastatakse tellimuse, kliendi ja tehingu andmeid makseteenuse pakkujatele (WooPayments / Stripe ja Montonio Finance UAB) ulatuses, mis on vajalik makse töötlemiseks, pettuste ennetamiseks ja vaidluste lahendamiseks. Müüjal puudub juurdepääs täielikele kaardi- ega pangakontoandmetele.";
+  }
+
+  return "To process payments and refunds, order, customer and transaction data are shared with payment service providers (WooPayments / Stripe and Montonio Finance UAB) to the extent necessary for payment processing, fraud prevention and dispute resolution. The seller does not have access to full card or bank account details.";
 }
