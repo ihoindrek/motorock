@@ -195,6 +195,23 @@ function motorock_format_brand_label( $slug ) {
 }
 
 /**
+ * WP WYSIWYG sometimes stores literal "n" instead of newlines between tags.
+ */
+function motorock_normalize_size_guide_content_html( $html ) {
+	if ( ! is_string( $html ) || $html === '' ) {
+		return $html;
+	}
+
+	$html = str_replace( array( "\r\n", "\r" ), "\n", $html );
+	$html = preg_replace( '/(<\/?(?:p|ol|ul|li|h[34]|blockquote)[^>]*>)\s*n\s*/i', '$1', $html );
+	$html = preg_replace( '/(<br\s*\/?>)\s*n(?=\s*[A-Za-z(])/i', '$1', $html );
+	$html = preg_replace( '/>\s*n\s*(?=[A-Za-z(])/', '>', $html );
+	$html = preg_replace( '/>\s*n\s*</', '><', $html );
+
+	return $html;
+}
+
+/**
  * @return string|null
  */
 function motorock_size_guide_content_html( $post_id ) {
@@ -207,7 +224,11 @@ function motorock_size_guide_content_html( $post_id ) {
 		return null;
 	}
 
-	return wp_kses_post( $content );
+	$content = wpautop( $content );
+	$content = wp_kses_post( $content );
+	$content = motorock_normalize_size_guide_content_html( $content );
+
+	return $content !== '' ? $content : null;
 }
 
 /**
@@ -287,6 +308,12 @@ function motorock_read_size_guide_payload( $post_id ) {
 	if ( is_string( $raw ) && $raw !== '' ) {
 		$decoded = json_decode( $raw, true );
 		if ( is_array( $decoded ) && ! empty( $decoded['rows'] ) ) {
+			if ( ! empty( $decoded['contentHtml'] ) ) {
+				$decoded['contentHtml'] = motorock_normalize_size_guide_content_html(
+					(string) $decoded['contentHtml']
+				);
+			}
+
 			return $decoded;
 		}
 	}

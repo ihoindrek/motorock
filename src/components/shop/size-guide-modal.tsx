@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { useDictionary, useLocale } from "@/context/locale-context";
 import type { SizeGuide, SizeGuideFit } from "@/types/size-guide";
+import { sanitizeSizeGuideContentHtml } from "@/lib/shop/sanitize-size-guide-content";
 import { cn } from "@/lib/utils";
 
 type SizeGuideModalProps = {
@@ -118,7 +119,11 @@ export function SizeGuideModal({
   const fitLabel = guide.fit
     ? FIT_LABELS[guide.fit][locale === "et" ? "et" : "en"]
     : null;
-  const hasCustomContent = Boolean(guide.contentHtml?.trim());
+  const contentHtml = useMemo(
+    () => sanitizeSizeGuideContentHtml(guide.contentHtml),
+    [guide.contentHtml],
+  );
+  const hasCustomContent = Boolean(contentHtml?.trim());
 
   return createPortal(
     <>
@@ -247,7 +252,7 @@ export function SizeGuideModal({
           {hasCustomContent ? (
             <div
               className="size-guide-content mt-6 max-w-none border-t border-ink/10 pt-5 text-sm leading-relaxed text-ink/75 [&_li]:ml-5 [&_li]:list-item [&_ol]:my-3 [&_ol]:list-decimal [&_ol]:space-y-2 [&_ol]:pl-5 [&_p+p]:mt-3 [&_p]:leading-relaxed [&_strong]:font-semibold [&_strong]:text-ink [&_ul]:my-3 [&_ul]:list-disc [&_ul]:space-y-2 [&_ul]:pl-5"
-              dangerouslySetInnerHTML={{ __html: guide.contentHtml ?? "" }}
+              dangerouslySetInnerHTML={{ __html: contentHtml ?? "" }}
             />
           ) : (
             <div className="mt-6 border-t border-ink/10 pt-5">
