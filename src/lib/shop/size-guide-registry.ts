@@ -26,6 +26,11 @@ export function buildSizeGuideRegistry(
     bySlug[slug] = guide;
     bySlug[guide.id] = guide;
 
+    // Allow product override by ACF brand slug (e.g. johnny-reb-vests) when WP post slug is numeric.
+    if (guide.brandSlug) {
+      bySlug[guide.brandSlug] = guide;
+    }
+
     if (guide.brandSlug && guide.category && guide.gender) {
       byBrandCategoryGender[
         sizeGuideLookupKey(guide.brandSlug, guide.category, guide.gender)

@@ -93,7 +93,7 @@
       "name": "size_guide_slug",
       "aria-label": "",
       "type": "text",
-      "instructions": "Valikuline. Size guide'i slug (Product → Size guides). Üle kirjutab brändi/kategooria automaatse tabeli.",
+      "instructions": "Valikuline. Size guide'i slug (Products → Size guides — postituse slug või brand slug väljal). Üle kirjutab brändi/kategooria automaatse tabeli.",
       "required": 0,
       "conditional_logic": 0,
       "wrapper": {
@@ -103,7 +103,7 @@
       },
       "default_value": "",
       "allow_in_bindings": 0,
-      "placeholder": "pando-moto-jackets-men"
+      "placeholder": "johnny-reb-vests"
     },
     {
       "key": "field_motorock_showroom_available",

@@ -165,9 +165,14 @@ function motorock_build_size_guide_payload( $post_id ) {
 
 	$note = trim( (string) get_field( 'size_guide_note', $post_id ) );
 
+	$post_slug = $post->post_name !== '' ? $post->post_name : '';
+	if ( $post_slug === '' || preg_match( '/^\d+$/', $post_slug ) ) {
+		$post_slug = $brand_slug !== '' ? $brand_slug : 'size-guide-' . $post_id;
+	}
+
 	return array(
-		'id'        => $post->post_name !== '' ? $post->post_name : 'size-guide-' . $post_id,
-		'slug'      => $post->post_name !== '' ? $post->post_name : 'size-guide-' . $post_id,
+		'id'        => $post_slug,
+		'slug'      => $post_slug,
 		'title'     => get_the_title( $post_id ),
 		'brandSlug' => $brand_slug,
 		'category'  => $category,

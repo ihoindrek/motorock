@@ -94,4 +94,39 @@ describe("resolveSizeGuide", () => {
     expect(guide?.id).toBe("johnny-reb-pants-men");
     expect(guide?.rows.map((row) => row.size)).toEqual(["32", "34"]);
   });
+
+  it("matches size guide by brandSlug alias when WP post slug is numeric", () => {
+    const remoteRegistry = buildSizeGuideRegistry([
+      {
+        id: "44410",
+        slug: "44410",
+        title: "Johnny Reb Vests for Men",
+        brand: "Johnny Reb Vests",
+        brandSlug: "johnny-reb-vests",
+        category: "vests",
+        gender: "men",
+        columns: [{ key: "chest", label: "Chest" }],
+        rows: [
+          { size: "S", measurements: { chest: 106 } },
+          { size: "M", measurements: { chest: 112 } },
+        ],
+      },
+    ]);
+
+    const guide = resolveSizeGuide(
+      product({
+        slug: "johnny-reb-mens-longreach-suede-vest",
+        name: "Johnny Reb Men's Longreach Suede Vest",
+        brand: "Johnny Reb",
+        category: "vests",
+        gender: "men",
+        sizeGuideSlug: "johnny-reb-vests",
+        sizes: ["SMALL", "Medium", "LARGE"],
+      }),
+      remoteRegistry,
+    );
+
+    expect(guide?.brandSlug).toBe("johnny-reb-vests");
+    expect(guide?.rows).toHaveLength(2);
+  });
 });
