@@ -24,6 +24,7 @@ export type CartLine = {
   quantity: number;
   size?: string;
   color?: string;
+  legLength?: string;
   productId?: number;
   variationId?: number;
   /** EN catalog ids for Meta / GA4 (WPML ET lines keep localized Woo ids above). */
@@ -47,8 +48,14 @@ type CartContextValue = {
   addItemAndOpenCart: (
     line: Omit<CartLine, "quantity"> & { quantity?: number },
   ) => void;
-  removeItem: (slug: string, size?: string) => void;
-  updateQuantity: (slug: string, quantity: number, size?: string) => void;
+  removeItem: (slug: string, size?: string, color?: string, legLength?: string) => void;
+  updateQuantity: (
+    slug: string,
+    quantity: number,
+    size?: string,
+    color?: string,
+    legLength?: string,
+  ) => void;
   clearCart: () => void;
   /** Replace the whole cart, e.g. when restoring an abandoned order. */
   replaceCart: (lines: CartLine[]) => void;
@@ -58,12 +65,14 @@ const CartContext = createContext<CartContextValue | null>(null);
 
 const STORAGE_KEY = "motorock-cart";
 
-function lineKey(slug: string, size?: string) {
-  return `${slug}:${size ?? ""}`;
+function lineKey(slug: string, size?: string, color?: string, legLength?: string) {
+  return [slug, size ?? "", color ?? "", legLength ?? ""].join(":");
 }
 
-export function cartLineKey(line: Pick<CartLine, "slug" | "size">) {
-  return lineKey(line.slug, line.size);
+export function cartLineKey(
+  line: Pick<CartLine, "slug" | "size" | "color" | "legLength">,
+) {
+  return lineKey(line.slug, line.size, line.color, line.legLength);
 }
 
 function readStoredLines(): CartLine[] {
@@ -124,14 +133,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
           : line.size;
 
       setLines((current) => {
-        const key = lineKey(line.slug, normalizedSize);
+        const key = lineKey(line.slug, normalizedSize, line.color, line.legLength);
         const existing = current.find(
-          (item) => lineKey(item.slug, item.size) === key,
+          (item) =>
+            lineKey(item.slug, item.size, item.color, item.legLength) === key,
         );
 
         if (existing) {
           return current.map((item) =>
-            lineKey(item.slug, item.size) === key
+            lineKey(item.slug, item.size, item.color, item.legLength) === key
               ? { ...item, quantity: item.quantity + (line.quantity ?? 1) }
               : item,
           );
@@ -148,6 +158,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
             type: line.type,
             size: normalizedSize,
             color: line.color,
+            legLength: line.legLength,
             productId: line.productId,
             variationId: line.variationId,
             metaCatalogProductId: line.metaCatalogProductId,
@@ -166,6 +177,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         type: line.type,
         size: normalizedSize,
         color: line.color,
+        legLength: line.legLength,
         productId: line.productId,
         variationId: line.variationId,
         metaCatalogProductId: line.metaCatalogProductId,
@@ -183,41 +195,60 @@ export function CartProvider({ children }: { children: ReactNode }) {
           ? formatSizeLabel(line.size)
           : line.size;
 
-      setLastAddedLineKey(lineKey(line.slug, normalizedSize));
+      setLastAddedLineKey(
+        lineKey(line.slug, normalizedSize, line.color, line.legLength),
+      );
       setDrawerOpen(true);
       addItem({ ...line, size: normalizedSize });
     },
     [addItem],
   );
 
-  const removeItem = useCallback((slug: string, size?: string) => {
-    const key = lineKey(slug, size);
+  const removeItem = useCallback(
+    (slug: string, size?: string, color?: string, legLength?: string) => {
+    const key = lineKey(slug, size, color, legLength);
     setLines((current) => {
       const removed = current.find(
-        (item) => lineKey(item.slug, item.size) === key,
+        (item) =>
+          lineKey(item.slug, item.size, item.color, item.legLength) === key,
       );
       if (removed) {
         trackRemoveFromCart(removed);
       }
 
-      return current.filter((item) => lineKey(item.slug, item.size) !== key);
+      return current.filter(
+        (item) =>
+          lineKey(item.slug, item.size, item.color, item.legLength) !== key,
+      );
     });
-  }, []);
+  },
+  []);
 
   const updateQuantity = useCallback(
-    (slug: string, quantity: number, size?: string) => {
-      const key = lineKey(slug, size);
+    (
+      slug: string,
+      quantity: number,
+      size?: string,
+      color?: string,
+      legLength?: string,
+    ) => {
+      const key = lineKey(slug, size, color, legLength);
 
       if (quantity <= 0) {
         setLines((current) =>
-          current.filter((item) => lineKey(item.slug, item.size) !== key),
+          current.filter(
+            (item) =>
+              lineKey(item.slug, item.size, item.color, item.legLength) !== key,
+          ),
         );
         return;
       }
 
       setLines((current) =>
         current.map((item) =>
-          lineKey(item.slug, item.size) === key ? { ...item, quantity } : item,
+          lineKey(item.slug, item.size, item.color, item.legLength) === key
+            ? { ...item, quantity }
+            : item,
         ),
       );
     },

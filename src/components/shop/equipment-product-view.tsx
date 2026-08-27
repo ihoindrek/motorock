@@ -17,6 +17,7 @@ import { resolveMetaCatalogVariationId } from "@/lib/analytics/meta-catalog-id";
 import { resolveLineVariationId } from "@/lib/shop/resolve-cart-variation";
 import { resolveActiveProductPrice } from "@/lib/shop/resolve-product-variation";
 import { formatSizeButtonParts, formatSizeLabel, isCompoundSizeLabel, isOneSizeLabel } from "@/lib/shop/size-label";
+import { formatLegLengthLabel } from "@/lib/shop/product-variation-dimensions";
 import { sortProductSizes } from "@/lib/shop/sort-sizes";
 import { BrandLogo } from "@/components/shop/brand-logo";
 import { NewProductBadge } from "@/components/shop/new-product-badge";
@@ -155,6 +156,11 @@ export function EquipmentProductView({
     () => sizes.some((option) => isCompoundSizeLabel(option)),
     [sizes],
   );
+  const legLengths = useMemo(
+    () => product.legLengths ?? [],
+    [product.legLengths],
+  );
+  const showLegLengthPicker = legLengths.length > 1;
   const selectableColors = useMemo(
     () => getSelectableColors(product.colors),
     [product.colors],
@@ -168,6 +174,7 @@ export function EquipmentProductView({
     formatSizeLabel(sortProductSizes(product.sizes)[0] ?? dict.pdp.oneSize),
   );
   const [color, setColor] = useState(() => selectableColors[0] ?? "");
+  const [legLength, setLegLength] = useState(() => legLengths[0] ?? "");
   const [added, setAdded] = useState(false);
   const [descriptionExpanded, setDescriptionExpanded] = useState(false);
   const [sizeGuideOpen, setSizeGuideOpen] = useState(false);
@@ -186,6 +193,10 @@ export function EquipmentProductView({
   useEffect(() => {
     setColor(selectableColors[0] ?? "");
   }, [product.slug, selectableColors]);
+
+  useEffect(() => {
+    setLegLength(legLengths[0] ?? "");
+  }, [product.slug, legLengths]);
 
   useEffect(() => {
     setActiveAccordion(null);
@@ -210,6 +221,7 @@ export function EquipmentProductView({
   }, [product.slug]);
 
   const selectedColor = showColorPicker ? color : undefined;
+  const selectedLegLength = showLegLengthPicker ? legLength : undefined;
 
   const activeColorImage = useMemo(() => {
     if (!showColorPicker || !color) {
@@ -223,8 +235,8 @@ export function EquipmentProductView({
   }, [color, product.image, product.variations, showColorPicker]);
 
   const activeVariationId = useMemo(
-    () => resolveLineVariationId(product, size, selectedColor),
-    [product, selectedColor, size],
+    () => resolveLineVariationId(product, size, selectedColor, selectedLegLength),
+    [product, selectedColor, selectedLegLength, size],
   );
 
   const activeMetaVariationId = useMemo(
@@ -243,8 +255,8 @@ export function EquipmentProductView({
   );
 
   const activePrice = useMemo(
-    () => resolveActiveProductPrice(product, size, selectedColor),
-    [product, selectedColor, size],
+    () => resolveActiveProductPrice(product, size, selectedColor, selectedLegLength),
+    [product, selectedColor, selectedLegLength, size],
   );
 
   const galleryImages = useMemo(() => {
@@ -311,6 +323,7 @@ export function EquipmentProductView({
     type: product.type,
     size,
     color: selectedColor,
+    legLength: selectedLegLength,
     productId: product.databaseId,
     variationId: activeVariationId,
     metaCatalogProductId: metaCatalog?.productId ?? product.metaCatalogProductId,
@@ -372,6 +385,28 @@ export function EquipmentProductView({
               onChange={setColor}
               label={dict.pdp.color}
             />
+          ) : null}
+
+          {showLegLengthPicker ? (
+            <div>
+              <p className="text-xs font-medium text-ink">{dict.pdp.legLength}</p>
+              <div className="mt-3 grid grid-cols-3 gap-2">
+                {legLengths.map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    onClick={() => setLegLength(option)}
+                    className={`min-h-11 border px-1.5 py-2 text-center font-body text-xs font-bold uppercase tracking-aggressive transition-colors ${
+                      legLength === option
+                        ? "border-ink bg-ink text-paper"
+                        : "border-ink/20 text-ink hover:border-ink"
+                    }`}
+                  >
+                    {formatLegLengthLabel(option)}
+                  </button>
+                ))}
+              </div>
+            </div>
           ) : null}
 
           {sizes.length > 1 ||

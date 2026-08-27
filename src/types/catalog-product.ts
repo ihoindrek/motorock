@@ -82,6 +82,8 @@ export type CatalogProduct = {
   category: ProductCategory;
   sizes: readonly string[];
   colors: readonly string[];
+  /** Inseam / leg length (petite, regular, tall) when product has pa_leg-length. */
+  legLengths?: readonly string[];
   colorOptions?: readonly ProductColorOption[];
   inStock: boolean;
   isNew: boolean;

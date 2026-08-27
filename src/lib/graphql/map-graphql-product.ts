@@ -37,6 +37,11 @@ import {
   resolveSizeOptionLabel,
 } from "@/lib/shop/size-label";
 import { sortProductSizes } from "@/lib/shop/sort-sizes";
+import {
+  areAttributeOptionsLikelyColors,
+  buildVariationLookupKey,
+  parseVariationSkuDimensions,
+} from "@/lib/shop/product-variation-dimensions";
 import { resolveShowroomAvailableFromSources } from "@/lib/shop/resolve-showroom-available";
 import type { ShowroomMetaSource } from "@/lib/shop/resolve-showroom-available";
 import { resolveIsNewFromSources } from "@/lib/shop/resolve-is-new";
@@ -89,7 +94,72 @@ function isColorAttributeName(name: string) {
 
 function isSizeAttributeName(name: string) {
   const normalized = normalizeAttributeName(name);
+  if (isLegLengthAttributeName(name)) {
+    return false;
+  }
+
   return SIZE_ATTR_NAMES.has(normalized) || normalized.includes("size");
+}
+
+function isLegLengthAttributeName(name: string) {
+  const normalized = normalizeAttributeName(name);
+  return (
+    normalized === "leg-length" ||
+    normalized === "leg length" ||
+    normalized === "jala pikkus"
+  );
+}
+
+function sizeAttributeNode(product: GraphQLVariableProduct) {
+  return product.attributes?.nodes.find((attribute) =>
+    isSizeAttributeName(attribute.name),
+  );
+}
+
+function sizeAttributeStoresColor(product: GraphQLVariableProduct) {
+  const sizeAttribute = sizeAttributeNode(product);
+  return Boolean(
+    sizeAttribute?.options?.length &&
+      areAttributeOptionsLikelyColors(sizeAttribute.options),
+  );
+}
+
+function sizesFromVariationSkus(product: GraphQLVariableProduct) {
+  const sizes = new Set<string>();
+
+  for (const variation of product.variations?.nodes ?? []) {
+    const parsed = parseVariationSkuDimensions(variation.sku);
+    if (parsed?.size) {
+      sizes.add(parsed.size);
+    }
+  }
+
+  return sortProductSizes([...sizes]);
+}
+
+function legLengthsFromVariableProduct(product: GraphQLVariableProduct) {
+  const legAttribute = product.attributes?.nodes.find((attribute) =>
+    isLegLengthAttributeName(attribute.name),
+  );
+  const terms = legAttribute?.terms?.nodes ?? [];
+
+  if (legAttribute?.options?.length) {
+    return legAttribute.options
+      .map((option) => resolveSizeOptionLabel(option, terms))
+      .filter(Boolean);
+  }
+
+  const fromVariations = (product.variations?.nodes ?? [])
+    .map((variation) =>
+      variation.attributes?.nodes.find((attribute) =>
+        isLegLengthAttributeName(attribute.name),
+      ),
+    )
+    .filter(Boolean)
+    .map((attribute) => resolveSizeOptionLabel(attribute!.value, terms))
+    .filter(Boolean);
+
+  return [...new Set(fromVariations)];
 }
 
 const MOTORCYCLE_BRAND_SLUGS_SET = MOTORCYCLE_BRAND_SLUGS;
@@ -261,10 +331,25 @@ function colorsFromVariableProduct(product: GraphQLVariableProduct) {
     isColorAttributeName(attribute.name),
   );
 
+  const mislabeledSizeColors = sizeAttributeStoresColor(product)
+    ? (sizeAttributeNode(product)?.options ?? []).filter(
+        (option): option is string => Boolean(option?.trim()),
+      )
+    : [];
+
   if (colorAttribute?.options?.length) {
-    return colorAttribute.options.filter(
-      (option): option is string => Boolean(option?.trim()),
-    );
+    return [
+      ...new Set([
+        ...colorAttribute.options.filter((option): option is string =>
+          Boolean(option?.trim()),
+        ),
+        ...mislabeledSizeColors,
+      ]),
+    ];
+  }
+
+  if (mislabeledSizeColors.length > 0) {
+    return [...new Set(mislabeledSizeColors)];
   }
 
   const fromVariations = (product.variations?.nodes ?? [])
@@ -280,13 +365,25 @@ function colorsFromVariableProduct(product: GraphQLVariableProduct) {
   return [...new Set(fromVariations)];
 }
 
+export function resolveVariableProductLegLengths(product: GraphQLVariableProduct) {
+  return legLengthsFromVariableProduct(product);
+}
+
 export function resolveVariableProductSizes(product: GraphQLVariableProduct) {
-  const sizeAttribute = product.attributes?.nodes.find((attribute) =>
-    isSizeAttributeName(attribute.name),
-  );
+  if (sizeAttributeStoresColor(product)) {
+    const fromSkus = sizesFromVariationSkus(product);
+    if (fromSkus.length > 0) {
+      return fromSkus;
+    }
+  }
+
+  const sizeAttribute = sizeAttributeNode(product);
   const terms = sizeAttribute?.terms?.nodes ?? [];
 
-  if (sizeAttribute?.options?.length) {
+  if (
+    sizeAttribute?.options?.length &&
+    !areAttributeOptionsLikelyColors(sizeAttribute.options)
+  ) {
     return sortProductSizes(
       sizeAttribute.options
         .map((option) => resolveSizeOptionLabel(option, terms))
@@ -304,8 +401,16 @@ export function resolveVariableProductSizes(product: GraphQLVariableProduct) {
     .map((attribute) => resolveSizeOptionLabel(attribute!.value, terms))
     .filter(Boolean);
 
-  if (fromVariations.length > 0) {
+  if (
+    fromVariations.length > 0 &&
+    !areAttributeOptionsLikelyColors(fromVariations)
+  ) {
     return sortProductSizes([...new Set(fromVariations)]);
+  }
+
+  const fromSkus = sizesFromVariationSkus(product);
+  if (fromSkus.length > 0) {
+    return fromSkus;
   }
 
   const embedded = extractEmbeddedProductSize({
@@ -324,12 +429,20 @@ function sizesFromVariableProduct(product: GraphQLVariableProduct) {
 }
 
 function mapVariations(product: GraphQLVariableProduct) {
+  const paSizeIsColor = sizeAttributeStoresColor(product);
+
   return (product.variations?.nodes ?? []).map((variation) => {
+    const attributes = variation.attributes?.nodes ?? [];
+    const parsed = parseVariationSkuDimensions(variation.sku);
+    const sizeAttributeValue = attributes.find((attribute) =>
+      isSizeAttributeName(attribute.name),
+    )?.value;
     const color =
-      variation.attributes?.nodes.find((attribute) =>
-        isColorAttributeName(attribute.name),
-      )?.value ??
-      variation.attributes?.nodes[0]?.value ??
+      (paSizeIsColor
+        ? sizeAttributeValue ?? parsed?.color
+        : attributes.find((attribute) => isColorAttributeName(attribute.name))
+            ?.value) ??
+      parsed?.color ??
       variation.name ??
       "Default";
     const pricing = resolveGraphqlProductPrice(variation);
@@ -348,34 +461,48 @@ function mapVariations(product: GraphQLVariableProduct) {
 
 export function variationIdsFromProduct(product: GraphQLVariableProduct) {
   const variationIds: Record<string, number> = {};
-  const sizeTerms =
-    product.attributes?.nodes.find((attribute) =>
-      isSizeAttributeName(attribute.name),
-    )?.terms?.nodes ?? [];
+  const sizeTerms = sizeAttributeNode(product)?.terms?.nodes ?? [];
+  const paSizeIsColor = sizeAttributeStoresColor(product);
 
   for (const variation of product.variations?.nodes ?? []) {
     const attributes = variation.attributes?.nodes ?? [];
-    const size = attributes.find((attribute) =>
+    const parsed = parseVariationSkuDimensions(variation.sku);
+    const sizeAttribute = attributes.find((attribute) =>
       isSizeAttributeName(attribute.name),
     );
-    const color = attributes.find((attribute) =>
+    const colorAttribute = attributes.find((attribute) =>
       isColorAttributeName(attribute.name),
     );
+    const legAttribute = attributes.find((attribute) =>
+      isLegLengthAttributeName(attribute.name),
+    );
 
-    if (size) {
-      const raw = size.value?.trim();
-      if (!raw) {
-        continue;
-      }
+    const color = paSizeIsColor
+      ? sizeAttribute?.value?.trim() ?? parsed?.color
+      : colorAttribute?.value?.trim() ?? parsed?.color;
+    const size = paSizeIsColor
+      ? parsed?.size
+      : sizeAttribute?.value?.trim()
+        ? resolveSizeOptionLabel(sizeAttribute.value, sizeTerms)
+        : parsed?.size;
+    const legLength =
+      legAttribute?.value?.trim().toLowerCase() ?? parsed?.legLength;
 
-      const label = resolveSizeOptionLabel(raw, sizeTerms);
-      variationIds[raw] = variation.databaseId;
-      variationIds[formatSizeLabel(raw)] = variation.databaseId;
-      if (label) {
-        variationIds[label] = variation.databaseId;
+    if (size || color || legLength) {
+      const compositeKey = buildVariationLookupKey({ size, color, legLength });
+      variationIds[compositeKey] = variation.databaseId;
+    }
+
+    if (size && !paSizeIsColor) {
+      const raw = sizeAttribute?.value?.trim();
+      if (raw) {
+        variationIds[raw] = variation.databaseId;
+        variationIds[formatSizeLabel(raw)] = variation.databaseId;
+        variationIds[size] = variation.databaseId;
       }
-    } else if (color?.value?.trim()) {
-      variationIds[color.value.trim()] = variation.databaseId;
+    } else if (color?.trim()) {
+      variationIds[color.trim()] = variation.databaseId;
+      variationIds[color.trim().toLowerCase()] = variation.databaseId;
     }
   }
 
@@ -582,6 +709,9 @@ export function mapGraphqlToCatalogProduct(
 
   const colors = isVariable ? colorsFromVariableProduct(product) : [];
   const sizes = isVariable ? sizesFromVariableProduct(product) : ["One size"];
+  const legLengths = isVariable
+    ? legLengthsFromVariableProduct(product)
+    : undefined;
   const variations = variableProduct
     ? mapVariations(variableProduct)
     : undefined;
@@ -630,6 +760,7 @@ export function mapGraphqlToCatalogProduct(
     category: equipmentMeta.category,
     sizes: sizes.length > 0 ? sizes : ["One size"],
     colors: colors.length > 0 ? colors : ["—"],
+    legLengths: legLengths && legLengths.length > 1 ? legLengths : undefined,
     variations,
     inStock: product.stockStatus === "IN_STOCK",
     isNew: resolveMappedIsNew(product.metaData, product.date, options),

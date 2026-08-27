@@ -318,6 +318,8 @@ export function CartDrawer() {
                                 line.slug,
                                 line.quantity - 1,
                                 line.size,
+                                line.color,
+                                line.legLength,
                               )
                             }
                             className="px-2.5 py-1.5 text-ink/70 transition-colors hover:text-accent"
@@ -335,6 +337,8 @@ export function CartDrawer() {
                                 line.slug,
                                 line.quantity + 1,
                                 line.size,
+                                line.color,
+                                line.legLength,
                               )
                             }
                             className="px-2.5 py-1.5 text-ink/70 transition-colors hover:text-accent"
@@ -344,7 +348,14 @@ export function CartDrawer() {
                         </div>
                         <button
                           type="button"
-                          onClick={() => removeItem(line.slug, line.size)}
+                          onClick={() =>
+                            removeItem(
+                              line.slug,
+                              line.size,
+                              line.color,
+                              line.legLength,
+                            )
+                          }
                           className="text-xs text-ink/45 underline-offset-2 hover:text-accent hover:underline"
                         >
                           {t.remove}

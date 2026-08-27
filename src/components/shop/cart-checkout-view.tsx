@@ -71,6 +71,7 @@ import {
   CheckoutShippingOptionsSkeleton,
 } from "@/components/shop/checkout-shipping-options";
 import { formatColorLabel } from "@/lib/shop/product-color-swatches";
+import { formatLegLengthLabel } from "@/lib/shop/product-variation-dimensions";
 import { cartLineThumbnailClass } from "@/lib/shop/cart-line-image";
 import { formatSizeLabel } from "@/lib/shop/size-label";
 import { formatCheckoutPrice } from "@/lib/shop/category";
@@ -277,6 +278,9 @@ function CartLineMeta({ line }: { line: CartLine }) {
   const parts = [
     line.size ? `${dict.pdp.size}: ${formatSizeLabel(line.size)}` : null,
     line.color ? `${dict.pdp.color}: ${formatColorLabel(line.color)}` : null,
+    line.legLength
+      ? `${dict.pdp.legLength}: ${formatLegLengthLabel(line.legLength)}`
+      : null,
   ].filter(Boolean);
 
   if (parts.length === 0) {
@@ -1971,12 +1975,26 @@ export function CartCheckoutView() {
             <CheckoutCartTable
               lines={lines}
               onDecrease={(line) =>
-                updateQuantity(line.slug, line.quantity - 1, line.size)
+                updateQuantity(
+                  line.slug,
+                  line.quantity - 1,
+                  line.size,
+                  line.color,
+                  line.legLength,
+                )
               }
               onIncrease={(line) =>
-                updateQuantity(line.slug, line.quantity + 1, line.size)
+                updateQuantity(
+                  line.slug,
+                  line.quantity + 1,
+                  line.size,
+                  line.color,
+                  line.legLength,
+                )
               }
-              onRemove={(line) => removeItem(line.slug, line.size)}
+              onRemove={(line) =>
+                removeItem(line.slug, line.size, line.color, line.legLength)
+              }
               locale={locale}
               labels={{
                 remove: t.remove,

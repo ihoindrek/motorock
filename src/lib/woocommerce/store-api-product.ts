@@ -5,6 +5,7 @@ import {
   sizesMatch,
   stripSizeLocaleSuffix,
 } from "@/lib/shop/size-label";
+import { shouldMapColorToPaSize } from "@/lib/shop/product-variation-dimensions";
 
 type StoreAttributeTerm = {
   name: string;
@@ -338,12 +339,28 @@ export function cartSizeToWooAttributeSlug(size: string) {
   return stripSizeLocaleSuffix(formatted).toLowerCase();
 }
 
-/** Build GraphQL addToCart variation attrs from cart line (works in browser). */
+/** Convert cart/UI size label to Woo `pa_size` slug (no Store API needed). */
 export function buildAddToCartVariationAttributesFromCartLine(line: {
   size?: string;
   color?: string;
+  legLength?: string;
 }) {
   const attributes: WooVariationAttributeInput[] = [];
+
+  if (line.legLength?.trim()) {
+    attributes.push({
+      attributeName: "pa_leg-length",
+      attributeValue: line.legLength.trim().toLowerCase(),
+    });
+  }
+
+  if (shouldMapColorToPaSize(line)) {
+    attributes.push({
+      attributeName: "pa_size",
+      attributeValue: stripSizeLocaleSuffix(line.color!).toLowerCase(),
+    });
+    return attributes;
+  }
 
   if (line.size && !isOneSizeLabel(line.size)) {
     attributes.push({

@@ -2,11 +2,12 @@ import type { CatalogProduct, ProductVariation } from "@/types/catalog-product";
 import { resolveLineVariationId } from "@/lib/shop/resolve-cart-variation";
 
 export function resolveActiveProductVariation(
-  product: Pick<CatalogProduct, "variations" | "variationIds" | "sizes">,
+  product: Pick<CatalogProduct, "variations" | "variationIds" | "sizes" | "legLengths">,
   size?: string,
   color?: string,
+  legLength?: string,
 ): ProductVariation | undefined {
-  const variationId = resolveLineVariationId(product, size, color);
+  const variationId = resolveLineVariationId(product, size, color, legLength);
 
   if (!variationId || !product.variations?.length) {
     return undefined;
@@ -18,11 +19,12 @@ export function resolveActiveProductVariation(
 }
 
 export function resolveActiveProductPrice(
-  product: Pick<CatalogProduct, "price" | "variations" | "variationIds" | "sizes">,
+  product: Pick<CatalogProduct, "price" | "variations" | "variationIds" | "sizes" | "legLengths">,
   size?: string,
   color?: string,
+  legLength?: string,
 ): number {
-  const variation = resolveActiveProductVariation(product, size, color);
+  const variation = resolveActiveProductVariation(product, size, color, legLength);
 
   if (typeof variation?.price === "number" && variation.price > 0) {
     return variation.price;
@@ -32,11 +34,12 @@ export function resolveActiveProductPrice(
 }
 
 export function resolveActiveProductInStock(
-  product: Pick<CatalogProduct, "inStock" | "variations" | "variationIds" | "sizes">,
+  product: Pick<CatalogProduct, "inStock" | "variations" | "variationIds" | "sizes" | "legLengths">,
   size?: string,
   color?: string,
+  legLength?: string,
 ): boolean {
-  const variation = resolveActiveProductVariation(product, size, color);
+  const variation = resolveActiveProductVariation(product, size, color, legLength);
 
   if (typeof variation?.inStock === "boolean") {
     return variation.inStock;

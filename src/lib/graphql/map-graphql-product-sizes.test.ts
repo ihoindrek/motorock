@@ -68,4 +68,65 @@ describe("resolveVariableProductSizes", () => {
 
     expect(resolveVariableProductSizes(product)).toEqual(["43"]);
   });
+
+  it("reads UK sizes from SKUs when pa_size stores color codes", () => {
+    const product = {
+      name: "Fiona Black Leather Trousers",
+      slug: "fiona-black-leather-trousers",
+      attributes: {
+        nodes: [
+          {
+            name: "pa_size",
+            options: ["blk", "red", "yel"],
+            variation: true,
+            terms: {
+              nodes: [
+                { name: "BLK", slug: "blk" },
+                { name: "Red", slug: "red" },
+                { name: "YEL", slug: "yel" },
+              ],
+            },
+          },
+          {
+            name: "pa_leg-length",
+            options: ["petite", "regular", "tall"],
+            variation: true,
+            terms: {
+              nodes: [
+                { name: "Petite", slug: "petite" },
+                { name: "Regular", slug: "regular" },
+                { name: "Tall", slug: "tall" },
+              ],
+            },
+          },
+        ],
+      },
+      variations: {
+        nodes: [
+          {
+            databaseId: 1,
+            sku: "FIO-TRO-BLK-6P",
+            attributes: {
+              nodes: [
+                { name: "pa_size", value: "blk" },
+                { name: "pa_leg-length", value: "petite" },
+              ],
+            },
+          },
+          {
+            databaseId: 2,
+            sku: "FIO-TRO-BLK-8R",
+            attributes: {
+              nodes: [
+                { name: "pa_size", value: "blk" },
+                { name: "pa_leg-length", value: "regular" },
+              ],
+            },
+          },
+        ],
+      },
+    } as GraphQLVariableProduct;
+
+    expect(resolveVariableProductSizes(product)).toEqual(["6", "8"]);
+  });
 });

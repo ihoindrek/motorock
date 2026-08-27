@@ -267,6 +267,7 @@ export type Dictionary = {
     sizeGuideAllSizes: string;
     sizeGuideClose: string;
     color: string;
+    legLength: string;
     addToCart: string;
     addedToCart: string;
     buyNow: string;
@@ -952,6 +953,7 @@ export const en: Dictionary = {
     sizeGuideAllSizes: "All sizes",
     sizeGuideClose: "Close size guide",
     color: "Color",
+    legLength: "Leg length",
     addToCart: "Add to cart",
     addedToCart: "Added to cart",
     buyNow: "Buy now",

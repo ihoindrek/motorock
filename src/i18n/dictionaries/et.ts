@@ -296,6 +296,7 @@ export const et: Dictionary = {
     sizeGuideAllSizes: "Kõik suurused",
     sizeGuideClose: "Sulge suuruste tabel",
     color: "Värv",
+    legLength: "Jala pikkus",
     addToCart: "Lisa ostukorvi",
     addedToCart: "Lisatud ostukorvi",
     buyNow: "Osta kohe",
