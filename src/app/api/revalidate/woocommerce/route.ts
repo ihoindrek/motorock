@@ -6,6 +6,7 @@ import {
   revalidateFromManualRequest,
   revalidateFromWooWebhook,
 } from "@/lib/revalidate/handle-woocommerce-revalidate";
+import { getWooInternalSecret } from "@/lib/woocommerce/internal-secret";
 
 export const dynamic = "force-dynamic";
 

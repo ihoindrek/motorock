@@ -218,10 +218,15 @@ function motorock_request_storefront_revalidate( $source = 'size-guide-save' ) {
 	$secret = '';
 	if ( defined( 'MOTOROCK_REVALIDATE_SECRET' ) && MOTOROCK_REVALIDATE_SECRET ) {
 		$secret = (string) MOTOROCK_REVALIDATE_SECRET;
+	} elseif ( defined( 'MOTOROCK_INTERNAL_SECRET' ) && MOTOROCK_INTERNAL_SECRET ) {
+		$secret = (string) MOTOROCK_INTERNAL_SECRET;
 	} elseif ( defined( 'WOOCOMMERCE_WEBHOOK_SECRET' ) && WOOCOMMERCE_WEBHOOK_SECRET ) {
 		$secret = (string) WOOCOMMERCE_WEBHOOK_SECRET;
 	} else {
 		$env = getenv( 'MOTOROCK_REVALIDATE_SECRET' );
+		if ( ! is_string( $env ) || $env === '' ) {
+			$env = getenv( 'MOTOROCK_INTERNAL_SECRET' );
+		}
 		if ( ! is_string( $env ) || $env === '' ) {
 			$env = getenv( 'WOOCOMMERCE_WEBHOOK_SECRET' );
 		}
