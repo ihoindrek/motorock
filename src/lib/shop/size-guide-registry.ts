@@ -15,13 +15,27 @@ export function sizeGuideLookupKey(
   return `${brandSlug}:${category}:${gender}`;
 }
 
-function canonicalBrandSlugFromGuideBrandSlug(brandSlug: string) {
+/** Normalize legacy guide brand slugs (e.g. johnny-reb-vests → johnny-reb). */
+export function normalizeGuideBrandSlug(brandSlug: string) {
   return brandSlug
+    .trim()
+    .toLowerCase()
     .replace(/-for-(men|women|unisex)$/i, "")
     .replace(/-(men|women|unisex)$/i, "")
-    .replace(/-vests$/i, "")
-    .replace(/-pants$/i, "")
-    .replace(/-jackets$/i, "");
+    .replace(/-(vests|pants|jackets|gloves|footwear|hoodies)$/i, "");
+}
+
+function registerGuideMatch(
+  registry: Record<string, SizeGuide>,
+  brandSlug: string,
+  category: ProductCategory,
+  gender: ProductGender,
+  guide: SizeGuide,
+) {
+  const key = sizeGuideLookupKey(brandSlug, category, gender);
+  if (!registry[key]) {
+    registry[key] = guide;
+  }
 }
 
 export function buildSizeGuideRegistry(
@@ -35,22 +49,33 @@ export function buildSizeGuideRegistry(
     bySlug[slug] = guide;
     bySlug[guide.id] = guide;
 
-    // Allow product override by ACF brand slug (e.g. johnny-reb-vests) when WP post slug is numeric.
     if (guide.brandSlug) {
       bySlug[guide.brandSlug] = guide;
     }
 
-    if (guide.brandSlug && guide.category && guide.gender) {
-      byBrandCategoryGender[
-        sizeGuideLookupKey(guide.brandSlug, guide.category, guide.gender)
-      ] = guide;
+    if (!guide.brandSlug || !guide.category || !guide.gender) {
+      continue;
+    }
 
-      const canonicalBrand = canonicalBrandSlugFromGuideBrandSlug(guide.brandSlug);
-      if (canonicalBrand && canonicalBrand !== guide.brandSlug) {
-        byBrandCategoryGender[
-          sizeGuideLookupKey(canonicalBrand, guide.category, guide.gender)
-        ] = guide;
-      }
+    const canonicalBrand = normalizeGuideBrandSlug(guide.brandSlug);
+
+    registerGuideMatch(
+      byBrandCategoryGender,
+      canonicalBrand,
+      guide.category,
+      guide.gender,
+      guide,
+    );
+
+    // Legacy guides may still use descriptive slugs on the brand field.
+    if (guide.brandSlug !== canonicalBrand) {
+      registerGuideMatch(
+        byBrandCategoryGender,
+        guide.brandSlug,
+        guide.category,
+        guide.gender,
+        guide,
+      );
     }
   }
 

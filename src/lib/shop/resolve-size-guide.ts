@@ -13,6 +13,26 @@ function brandSlug(brand: string) {
     .replace(/^-|-$/g, "");
 }
 
+function findGuideByBrandCategoryGender(
+  registry: SizeGuideRegistry,
+  brand: string,
+  category: CatalogProduct["category"],
+  genders: readonly ProductGender[],
+): SizeGuide | undefined {
+  for (const gender of genders) {
+    const guide =
+      registry.byBrandCategoryGender[
+        sizeGuideLookupKey(brand, category, gender)
+      ];
+
+    if (guide) {
+      return guide;
+    }
+  }
+
+  return undefined;
+}
+
 function filterRowsForProduct(
   guide: SizeGuide,
   productSizes: readonly string[],
@@ -64,16 +84,18 @@ export function resolveSizeGuide(
   }
 
   const slug = brandSlug(product.brand);
+  const genders = gendersToTry(product.gender);
+  const autoMatch =
+    findGuideByBrandCategoryGender(registry, slug, product.category, genders) ??
+    findGuideByBrandCategoryGender(
+      registry,
+      slug,
+      product.category,
+      gendersToTry("unisex"),
+    );
 
-  for (const gender of gendersToTry(product.gender)) {
-    const guide =
-      registry.byBrandCategoryGender[
-        sizeGuideLookupKey(slug, product.category, gender)
-      ];
-
-    if (guide) {
-      return filterRowsForProduct(guide, product.sizes);
-    }
+  if (autoMatch) {
+    return filterRowsForProduct(autoMatch, product.sizes);
   }
 
   return null;

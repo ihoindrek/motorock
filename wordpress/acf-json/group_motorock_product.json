@@ -93,7 +93,7 @@
       "name": "size_guide_slug",
       "aria-label": "",
       "type": "text",
-      "instructions": "Valikuline. Size guide'i slug (Products → Size guides — postituse slug või brand slug väljal). Üle kirjutab brändi/kategooria automaatse tabeli.",
+      "instructions": "Valikuline erand. Tühjaks jättes kasutatakse automaatselt brändi + kategooria + soo põhjal leitud size guide'i. Täida ainult siis, kui see toode vajab teist tabelit kui sama brändi/kategooria teised tooted.",
       "required": 0,
       "conditional_logic": 0,
       "wrapper": {
@@ -103,7 +103,7 @@
       },
       "default_value": "",
       "allow_in_bindings": 0,
-      "placeholder": "johnny-reb-vests"
+      "placeholder": ""
     },
     {
       "key": "field_motorock_showroom_available",

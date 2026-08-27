@@ -95,6 +95,36 @@ describe("resolveSizeGuide", () => {
     expect(guide?.rows.map((row) => row.size)).toEqual(["32", "34"]);
   });
 
+  it("auto-matches johnny reb men vests without product override", () => {
+    const remoteRegistry = buildSizeGuideRegistry([
+      {
+        id: "johnny-reb-vests",
+        slug: "johnny-reb-vests",
+        title: "Johnny Reb Vests for Men",
+        brand: "Johnny Reb",
+        brandSlug: "johnny-reb",
+        category: "vests",
+        gender: "men",
+        columns: [{ key: "chest", label: "Chest" }],
+        rows: [{ size: "M", measurements: { chest: 112 } }],
+      },
+    ]);
+
+    const guide = resolveSizeGuide(
+      product({
+        slug: "johnny-reb-mens-aussie-flag-leather-vest",
+        name: "Johnny Reb Men's Aussie Flag Leather Vest",
+        brand: "Johnny Reb",
+        category: "vests",
+        gender: "men",
+        sizes: ["SMALL", "Medium"],
+      }),
+      remoteRegistry,
+    );
+
+    expect(guide?.title).toBe("Johnny Reb Vests for Men");
+  });
+
   it("matches size guide by brandSlug alias when WP post slug is numeric", () => {
     const remoteRegistry = buildSizeGuideRegistry([
       {

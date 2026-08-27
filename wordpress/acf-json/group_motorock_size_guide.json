@@ -4,13 +4,23 @@
   "fields": [
     {
       "key": "field_motorock_sg_brand_slug",
-      "label": "Brand slug",
+      "label": "Brand",
       "name": "size_guide_brand_slug",
-      "type": "text",
-      "instructions": "Lowercase slug matching storefront brand, e.g. pando-moto, johnny-reb, holyfreedom.",
+      "type": "select",
+      "instructions": "Auto-match: all products with this brand + category + gender show this guide. Use the storefront brand slug (not the guide post slug).",
       "required": 1,
       "wrapper": { "width": "33" },
-      "placeholder": "pando-moto"
+      "choices": {
+        "pando-moto": "Pando Moto",
+        "holyfreedom": "Holyfreedom",
+        "johnny-reb": "Johnny Reb",
+        "motogirl": "Motogirl",
+        "bobhead": "Bobhead",
+        "makita": "Makita"
+      },
+      "default_value": "",
+      "allow_null": 0,
+      "return_format": "value"
     },
     {
       "key": "field_motorock_sg_category",
@@ -223,5 +233,5 @@
   "instruction_placement": "label",
   "active": true,
   "show_in_rest": 1,
-  "modified": 1756280000
+  "modified": 1756281200
 }
