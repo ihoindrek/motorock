@@ -19,7 +19,7 @@ const sizeGuideColumnSchema = z.object({
 
 const sizeGuideRowSchema = z.object({
   size: z.string().min(1),
-  measurements: z.record(columnKeySchema, z.number()),
+  measurements: z.partialRecord(columnKeySchema, z.number()),
 });
 
 const productCategorySchema = z.enum([

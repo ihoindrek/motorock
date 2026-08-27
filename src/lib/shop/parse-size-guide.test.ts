@@ -35,14 +35,7 @@ describe("parseRemoteSizeGuide content fields", () => {
       rows: [
         {
           size: "M",
-          measurements: {
-            chest: 112,
-            waist: 96,
-            hips: 104,
-            length: 70,
-            inseam: 80,
-            sleeve: 62,
-          },
+          measurements: { chest: 112, hips: 104, length: 70 },
         },
       ],
     });
