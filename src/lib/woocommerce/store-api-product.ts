@@ -5,6 +5,11 @@ import {
   sizesMatch,
   stripSizeLocaleSuffix,
 } from "@/lib/shop/size-label";
+import {
+  cartSizeToWooSizeSlug,
+  colorToWooColorSlug,
+  euUkSizesMatch,
+} from "@/lib/shop/eu-uk-size";
 import { shouldMapColorToPaSize } from "@/lib/shop/product-variation-dimensions";
 
 type StoreAttributeTerm = {
@@ -38,6 +43,10 @@ function normalizeAttributeName(name: string) {
 
 function isSizeAttribute(name: string) {
   const normalized = normalizeAttributeName(name);
+  if (isLegLengthAttribute(name)) {
+    return false;
+  }
+
   return normalized === "size" || normalized === "suurus" || normalized.includes("size");
 }
 
@@ -58,6 +67,14 @@ function isLegLengthAttribute(name: string) {
     normalized === "leg-length" ||
     normalized === "jala pikkus"
   );
+}
+
+function sizeValuesMatch(cartSize: string, wooValue: string) {
+  if (sizesMatch(cartSize, wooValue)) {
+    return true;
+  }
+
+  return euUkSizesMatch(cartSize, wooValue);
 }
 
 function findProductAttribute(product: StoreProduct, attributeName: string) {
@@ -198,7 +215,7 @@ export function buildVariationIdsFromStoreProduct(product: StoreProduct) {
 
 export function findStoreVariationId(
   product: StoreProduct,
-  input: { size?: string; color?: string },
+  input: { size?: string; color?: string; legLength?: string },
 ) {
   const variations = product.variations ?? [];
   if (variations.length === 0) {
@@ -221,32 +238,40 @@ export function findStoreVariationId(
     const color = variation.attributes.find((attribute) =>
       isColorAttribute(attribute.name),
     );
+    const leg = variation.attributes.find((attribute) =>
+      isLegLengthAttribute(attribute.name),
+    );
 
     const sizeValue = size?.value?.trim();
     const sizeMatches =
       !sizeIsGeneric &&
       typeof input.size === "string" &&
       typeof sizeValue === "string" &&
-      sizesMatch(sizeValue, input.size);
+      sizeValuesMatch(input.size, sizeValue);
 
     const colorMatches =
       Boolean(input.color) &&
       Boolean(color) &&
       colorValueMatches(color!.value, input.color!, colorTerms);
 
-    if (sizeMatches && colorMatches) {
+    const legMatches =
+      !input.legLength?.trim() ||
+      (Boolean(leg?.value?.trim()) &&
+        leg!.value!.trim().toLowerCase() === input.legLength!.trim().toLowerCase());
+
+    if (sizeMatches && colorMatches && legMatches) {
       return true;
     }
 
-    if (sizeMatches && !input.color) {
+    if (sizeMatches && !input.color && legMatches) {
       return true;
     }
 
-    if (colorMatches && sizeIsGeneric) {
+    if (colorMatches && sizeIsGeneric && legMatches) {
       return true;
     }
 
-    if (sizeIsGeneric && !input.color && !color) {
+    if (sizeIsGeneric && !input.color && !color && legMatches) {
       return true;
     }
 
@@ -258,7 +283,7 @@ export function findStoreVariationId(
 
 export async function resolveStoreVariationId(
   productId: number,
-  input: { size?: string; color?: string },
+  input: { size?: string; color?: string; legLength?: string },
 ) {
   if (typeof window !== "undefined") {
     try {
@@ -268,6 +293,9 @@ export async function resolveStoreVariationId(
       }
       if (input.color) {
         params.set("color", input.color);
+      }
+      if (input.legLength) {
+        params.set("legLength", input.legLength);
       }
 
       const response = await fetch(
@@ -357,22 +385,19 @@ export function buildAddToCartVariationAttributesFromCartLine(line: {
   if (shouldMapColorToPaSize(line)) {
     attributes.push({
       attributeName: "pa_size",
-      attributeValue: stripSizeLocaleSuffix(line.color!).toLowerCase(),
+      attributeValue: colorToWooColorSlug(line.color!),
     });
-    return attributes;
-  }
-
-  if (line.size && !isOneSizeLabel(line.size)) {
+  } else if (line.size && !isOneSizeLabel(line.size)) {
     attributes.push({
       attributeName: "pa_size",
-      attributeValue: cartSizeToWooAttributeSlug(line.size),
+      attributeValue: cartSizeToWooSizeSlug(line.size),
     });
   }
 
-  if (line.color) {
+  if (line.color && !shouldMapColorToPaSize(line)) {
     attributes.push({
       attributeName: "pa_color",
-      attributeValue: stripSizeLocaleSuffix(line.color).toLowerCase(),
+      attributeValue: colorToWooColorSlug(line.color),
     });
   }
 

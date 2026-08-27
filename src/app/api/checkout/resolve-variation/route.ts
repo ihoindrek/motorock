@@ -12,6 +12,7 @@ export async function GET(request: Request) {
   const productId = Number(searchParams.get("productId"));
   const size = searchParams.get("size") ?? undefined;
   const color = searchParams.get("color") ?? undefined;
+  const legLength = searchParams.get("legLength") ?? undefined;
 
   if (!Number.isFinite(productId) || productId <= 0) {
     return NextResponse.json({ error: "Invalid productId" }, { status: 400 });
@@ -22,6 +23,6 @@ export async function GET(request: Request) {
     return NextResponse.json({ variationId: null });
   }
 
-  const variationId = findStoreVariationId(product, { size, color });
+  const variationId = findStoreVariationId(product, { size, color, legLength });
   return NextResponse.json({ variationId: variationId ?? null });
 }

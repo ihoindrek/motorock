@@ -127,27 +127,16 @@ class Motorock_Catalog_Importer_Generic_Csv_Adapter extends Motorock_Catalog_Imp
         );
     }
 
-    private function map_simple(array $feed, array $row) {
-        $sku = trim((string) $this->row_value($row, $feed, 'sku'));
-        $stock = (int) $this->row_value($row, $feed, 'stock');
+    private function map_variable(array $feed, array $queue_item) {
+        $mapped = $this->map_variable_raw($feed, $queue_item);
+        if (!$mapped) {
+            return null;
+        }
 
-        return array(
-            'is_simple' => true,
-            'sku' => $sku,
-            'name' => trim((string) $this->row_value($row, $feed, 'name')),
-            'description' => (string) $this->row_value($row, $feed, 'description'),
-            'short_description' => (string) $this->row_value($row, $feed, 'short_description'),
-            'regular_price' => $this->format_price($this->row_value($row, $feed, 'regular_price'), $feed),
-            'stock_quantity' => $stock,
-            'stock_status' => $stock > 0 ? 'instock' : 'outofstock',
-            'category_ids' => $this->resolve_category_ids($feed, $this->row_value($row, $feed, 'category')),
-            'brand' => isset($feed['brand']) ? $feed['brand'] : '',
-            'images' => $this->map_images_from_string($this->row_value($row, $feed, 'images')),
-            'meta' => $this->build_meta($row, $feed),
-        );
+        return Motorock_Catalog_Importer_Attribute_Normalizer::normalize_product_data($mapped);
     }
 
-    private function map_variable(array $feed, array $queue_item) {
+    private function map_variable_raw(array $feed, array $queue_item) {
         $rows = $queue_item['rows'];
         $first = $rows[0];
         $parent_sku = $queue_item['parent_sku'];
@@ -209,6 +198,26 @@ class Motorock_Catalog_Importer_Generic_Csv_Adapter extends Motorock_Catalog_Imp
             'images' => $this->map_images_from_string($this->row_value($first, $feed, 'images')),
             'attributes' => $attributes,
             'variations' => $variations,
+        );
+    }
+
+    private function map_simple(array $feed, array $row) {
+        $sku = trim((string) $this->row_value($row, $feed, 'sku'));
+        $stock = (int) $this->row_value($row, $feed, 'stock');
+
+        return array(
+            'is_simple' => true,
+            'sku' => $sku,
+            'name' => trim((string) $this->row_value($row, $feed, 'name')),
+            'description' => (string) $this->row_value($row, $feed, 'description'),
+            'short_description' => (string) $this->row_value($row, $feed, 'short_description'),
+            'regular_price' => $this->format_price($this->row_value($row, $feed, 'regular_price'), $feed),
+            'stock_quantity' => $stock,
+            'stock_status' => $stock > 0 ? 'instock' : 'outofstock',
+            'category_ids' => $this->resolve_category_ids($feed, $this->row_value($row, $feed, 'category')),
+            'brand' => isset($feed['brand']) ? $feed['brand'] : '',
+            'images' => $this->map_images_from_string($this->row_value($row, $feed, 'images')),
+            'meta' => $this->build_meta($row, $feed),
         );
     }
 

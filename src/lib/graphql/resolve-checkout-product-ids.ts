@@ -3,6 +3,7 @@ import {
   findTranslationDatabaseId,
   getGraphqlLanguageCode,
 } from "@/lib/graphql/wpml";
+import { euUkSizesMatch } from "@/lib/shop/eu-uk-size";
 
 /** WooCommerce checkout must use EN product IDs so cart totals match storefront prices. */
 const CHECKOUT_PRICING_LOCALE = "en" as const;
@@ -69,7 +70,20 @@ function normalizeAttributeName(name: string) {
 
 function isSizeAttribute(name: string) {
   const normalized = normalizeAttributeName(name);
+  if (isLegLengthAttribute(name)) {
+    return false;
+  }
+
   return normalized === "size" || normalized === "suurus" || normalized.includes("size");
+}
+
+function isLegLengthAttribute(name: string) {
+  const normalized = normalizeAttributeName(name);
+  return (
+    normalized === "leg-length" ||
+    normalized === "leg length" ||
+    normalized === "jala pikkus"
+  );
 }
 
 function isColorAttribute(name: string) {
@@ -107,12 +121,14 @@ function findVariationForLine(
     const attributes = node.attributes?.nodes ?? [];
     const size = attributes.find((attribute) => isSizeAttribute(attribute.name));
     const color = attributes.find((attribute) => isColorAttribute(attribute.name));
+    const leg = attributes.find((attribute) => isLegLengthAttribute(attribute.name));
 
     const sizeMatches =
       !sizeIsGeneric &&
       Boolean(line.size) &&
       Boolean(size) &&
-      sizesMatch(size!.value, line.size!);
+      (sizesMatch(size!.value, line.size!) ||
+        euUkSizesMatch(size!.value, line.size!));
 
     const colorMatches =
       Boolean(line.color) &&
@@ -120,19 +136,24 @@ function findVariationForLine(
       (color!.value === line.color ||
         color!.value.toLowerCase() === line.color!.toLowerCase());
 
-    if (sizeMatches && colorMatches) {
+    const legMatches =
+      !line.legLength?.trim() ||
+      (Boolean(leg?.value) &&
+        leg!.value.toLowerCase() === line.legLength!.trim().toLowerCase());
+
+    if (sizeMatches && colorMatches && legMatches) {
       return true;
     }
 
-    if (sizeMatches && !line.color) {
+    if (sizeMatches && !line.color && legMatches) {
       return true;
     }
 
-    if (colorMatches && sizeIsGeneric) {
+    if (colorMatches && sizeIsGeneric && legMatches) {
       return true;
     }
 
-    if (sizeIsGeneric && !line.color && !color) {
+    if (sizeIsGeneric && !line.color && !color && legMatches) {
       return true;
     }
 

@@ -229,6 +229,7 @@ export async function resolveCartLineIds(line: CartLine): Promise<{
     const variationId = await resolveStoreVariationId(englishProduct.databaseId, {
       size: line.size,
       color: line.color,
+      legLength: line.legLength,
     });
 
     if (!variationId) {

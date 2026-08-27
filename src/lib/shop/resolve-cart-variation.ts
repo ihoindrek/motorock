@@ -1,6 +1,7 @@
 import type { CatalogProduct } from "@/types/catalog-product";
 import { formatSizeLabel, isOneSizeLabel, sizesMatch } from "@/lib/shop/size-label";
 import { buildVariationLookupKey } from "@/lib/shop/product-variation-dimensions";
+import { euUkSizesMatch } from "@/lib/shop/eu-uk-size";
 
 export function resolveLineVariationId(
   product: Pick<CatalogProduct, "variationIds" | "sizes" | "legLengths">,
@@ -23,7 +24,9 @@ export function resolveLineVariationId(
     const bySize =
       variationIds[normalizedSize] ??
       variationIds[size] ??
-      Object.entries(variationIds).find(([key]) => sizesMatch(key, size))?.[1];
+      Object.entries(variationIds).find(
+        ([key]) => sizesMatch(key, size) || euUkSizesMatch(key, size),
+      )?.[1];
 
     if (bySize) {
       return bySize;

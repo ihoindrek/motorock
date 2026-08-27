@@ -70,6 +70,7 @@ final class Motorock_Catalog_Importer_Plugin {
         require_once MOTOROCK_CATALOG_IMPORTER_DIR . 'includes/adapters/class-holyfreedom-adapter.php';
         require_once MOTOROCK_CATALOG_IMPORTER_DIR . 'includes/adapters/class-generic-csv-adapter.php';
         require_once MOTOROCK_CATALOG_IMPORTER_DIR . 'includes/class-image-downloader.php';
+        require_once MOTOROCK_CATALOG_IMPORTER_DIR . 'includes/class-attribute-normalizer.php';
         require_once MOTOROCK_CATALOG_IMPORTER_DIR . 'includes/class-product-writer.php';
         require_once MOTOROCK_CATALOG_IMPORTER_DIR . 'includes/class-import-runner.php';
         require_once MOTOROCK_CATALOG_IMPORTER_DIR . 'includes/admin/class-admin-menu.php';

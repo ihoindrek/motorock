@@ -38,6 +38,7 @@ class Motorock_Catalog_Importer_Product_Writer {
         if (!empty($product_data['is_simple'])) {
             $product_id = $this->create_simple($product_data);
         } else {
+            $product_data = Motorock_Catalog_Importer_Attribute_Normalizer::normalize_product_data($product_data);
             $product_id = $this->create_variable($product_data);
         }
 

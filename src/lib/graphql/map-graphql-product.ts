@@ -42,6 +42,7 @@ import {
   buildVariationLookupKey,
   parseVariationSkuDimensions,
 } from "@/lib/shop/product-variation-dimensions";
+import { formatEuUkSizeLabel } from "@/lib/shop/eu-uk-size";
 import { resolveShowroomAvailableFromSources } from "@/lib/shop/resolve-showroom-available";
 import type { ShowroomMetaSource } from "@/lib/shop/resolve-showroom-available";
 import { resolveIsNewFromSources } from "@/lib/shop/resolve-is-new";
@@ -482,9 +483,13 @@ export function variationIdsFromProduct(product: GraphQLVariableProduct) {
       : colorAttribute?.value?.trim() ?? parsed?.color;
     const size = paSizeIsColor
       ? parsed?.size
+        ? formatEuUkSizeLabel(Number(parsed.size))
+        : undefined
       : sizeAttribute?.value?.trim()
         ? resolveSizeOptionLabel(sizeAttribute.value, sizeTerms)
-        : parsed?.size;
+        : parsed?.size
+          ? formatEuUkSizeLabel(Number(parsed.size))
+          : undefined;
     const legLength =
       legAttribute?.value?.trim().toLowerCase() ?? parsed?.legLength;
 
