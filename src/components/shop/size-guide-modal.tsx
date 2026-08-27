@@ -111,6 +111,10 @@ export function SizeGuideModal({
       ) ?? guide.rows[0],
     [activeSize, guide.rows],
   );
+  const contentHtml = useMemo(
+    () => sanitizeSizeGuideContentHtml(guide.contentHtml),
+    [guide.contentHtml],
+  );
 
   if (!mounted || !activeRow) {
     return null;
@@ -119,10 +123,6 @@ export function SizeGuideModal({
   const fitLabel = guide.fit
     ? FIT_LABELS[guide.fit][locale === "et" ? "et" : "en"]
     : null;
-  const contentHtml = useMemo(
-    () => sanitizeSizeGuideContentHtml(guide.contentHtml),
-    [guide.contentHtml],
-  );
   const hasCustomContent = Boolean(contentHtml?.trim());
 
   return createPortal(
