@@ -13,6 +13,16 @@ const ALLOWED_TAGS = new Set([
   "blockquote",
 ]);
 
+/** WP WYSIWYG sometimes stores literal `n` instead of newlines between tags. */
+function normalizeWpNewlineArtifacts(html: string) {
+  return html
+    .replace(/\r\n/g, "\n")
+    .replace(/(<\/?(?:p|ol|ul|li|h[34]|blockquote)[^>]*>)\s*n\s*/gi, "$1")
+    .replace(/(<br\s*\/?>)\s*n(?=\s*[A-Za-z(])/gi, "$1")
+    .replace(/>\s*n\s*(?=[A-Za-z(])/g, ">")
+    .replace(/>\s*n\s*</g, "><");
+}
+
 /** Strip unsafe markup from WP WYSIWYG size guide content. */
 export function sanitizeSizeGuideContentHtml(
   html: string | null | undefined,
@@ -21,7 +31,7 @@ export function sanitizeSizeGuideContentHtml(
     return undefined;
   }
 
-  const cleaned = html
+  const cleaned = normalizeWpNewlineArtifacts(html)
     .replace(/<(script|style|iframe|object|embed)[\s\S]*?<\/\1>/gi, "")
     .replace(/on\w+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, "")
     .replace(/<\/?([a-z0-9]+)(\s[^>]*)?>/gi, (match, tagName: string) => {
@@ -41,7 +51,7 @@ export function sanitizeSizeGuideContentHtml(
 
       return `<${tag}>`;
     })
-    .replace(/(?:\s|&nbsp;)+/g, " ")
+    .replace(/\s{2,}/g, " ")
     .trim();
 
   return cleaned || undefined;

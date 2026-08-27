@@ -142,7 +142,7 @@ export function SizeGuideModal({
         aria-labelledby="size-guide-title"
         aria-hidden={!open}
         className={cn(
-          "fixed inset-x-4 top-[6vh] z-[121] mx-auto flex max-h-[88vh] max-w-xl flex-col overflow-hidden border border-ink/10 bg-paper shadow-[0_24px_80px_rgb(11_11_11_/_0.18)] transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none sm:inset-x-auto sm:left-1/2 sm:w-full sm:-translate-x-1/2",
+          "fixed inset-x-4 top-[6vh] z-[121] mx-auto flex max-h-[88vh] max-w-xl flex-col overflow-hidden border border-ink/10 bg-white shadow-[0_24px_80px_rgb(11_11_11_/_0.18)] transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none sm:inset-x-auto sm:left-1/2 sm:w-full sm:-translate-x-1/2",
           open
             ? "translate-y-0 opacity-100"
             : "pointer-events-none translate-y-4 opacity-0",
@@ -177,13 +177,13 @@ export function SizeGuideModal({
 
         <div className="overflow-auto px-5 py-5 sm:px-6">
           {guide.imageUrl ? (
-            <div className="relative mb-5 aspect-[4/3] w-full overflow-hidden border border-ink/10 bg-ink/[0.03]">
+            <div className="relative mb-5 aspect-[4/3] w-full">
               <Image
                 src={guide.imageUrl}
                 alt={guide.title}
                 fill
                 sizes="(max-width: 640px) 90vw, 36rem"
-                className="object-contain p-2"
+                className="object-contain"
               />
             </div>
           ) : null}
@@ -246,7 +246,7 @@ export function SizeGuideModal({
 
           {hasCustomContent ? (
             <div
-              className="prose prose-sm mt-6 max-w-none border-t border-ink/10 pt-5 text-ink/70 [&_h3]:mt-0 [&_h3]:font-body [&_h3]:text-sm [&_h3]:font-bold [&_h3]:uppercase [&_h3]:tracking-aggressive [&_h3]:text-ink [&_li]:text-sm [&_p]:text-sm [&_p]:leading-relaxed"
+              className="size-guide-content mt-6 max-w-none border-t border-ink/10 pt-5 text-sm leading-relaxed text-ink/75 [&_li]:ml-5 [&_li]:list-item [&_ol]:my-3 [&_ol]:list-decimal [&_ol]:space-y-2 [&_ol]:pl-5 [&_p+p]:mt-3 [&_p]:leading-relaxed [&_strong]:font-semibold [&_strong]:text-ink [&_ul]:my-3 [&_ul]:list-disc [&_ul]:space-y-2 [&_ul]:pl-5"
               dangerouslySetInnerHTML={{ __html: guide.contentHtml ?? "" }}
             />
           ) : (

@@ -28,6 +28,7 @@ import { RecentlyViewedProducts } from "@/components/shop/recently-viewed-produc
 import { RelatedProducts } from "@/components/shop/related-products";
 import { EquipmentTrustBadges } from "@/components/shop/equipment-trust-badges";
 import { SizeGuideModal } from "@/components/shop/size-guide-modal";
+import { SizeGuideIcon } from "@/components/shop/size-guide-icon";
 import { EquipmentColorPicker } from "@/components/shop/equipment-color-picker";
 import { EquipmentStickyAtc } from "@/components/shop/equipment-sticky-atc";
 import { WishlistButton } from "@/components/shop/wishlist-button";
@@ -418,8 +419,9 @@ export function EquipmentProductView({
                   <button
                     type="button"
                     onClick={() => setSizeGuideOpen(true)}
-                    className="font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/45 underline-offset-2 transition-colors hover:text-accent hover:underline"
+                    className="inline-flex min-h-9 items-center gap-1.5 border border-ink/20 bg-white px-2.5 py-1.5 font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/70 transition-colors hover:border-ink hover:text-accent"
                   >
+                    <SizeGuideIcon className="size-3.5 shrink-0" />
                     {dict.pdp.sizeGuide}
                   </button>
                 ) : null}

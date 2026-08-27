@@ -18,6 +18,16 @@ describe("sanitizeSizeGuideContentHtml", () => {
       ),
     ).toBe("<p>Hi</p>");
   });
+
+  it("normalizes literal n markers from WP content", () => {
+    expect(
+      sanitizeSizeGuideContentHtml(
+        "<p><strong>Title</strong><br />nFor example: chest.</p>n<ol>n<li>First step</li>n<li>Second step</li>n</ol>",
+      ),
+    ).toBe(
+      "<p><strong>Title</strong><br />For example: chest.</p><ol><li>First step</li><li>Second step</li></ol>",
+    );
+  });
 });
 
 describe("parseRemoteSizeGuide content fields", () => {
