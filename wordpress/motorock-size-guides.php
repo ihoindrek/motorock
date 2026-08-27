@@ -74,6 +74,8 @@ add_action(
 			MOTOROCK_SIZE_GUIDE_JSON_META,
 			wp_json_encode( $payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES )
 		);
+
+		motorock_request_storefront_revalidate( 'size-guide-save' );
 	},
 	20
 );
@@ -192,6 +194,57 @@ function motorock_build_size_guide_payload( $post_id ) {
 function motorock_format_brand_label( $slug ) {
 	$parts = array_filter( explode( '-', $slug ) );
 	return implode( ' ', array_map( 'ucfirst', $parts ) );
+}
+
+/**
+ * Ping headless storefront cache purge after size guide changes.
+ */
+function motorock_request_storefront_revalidate( $source = 'size-guide-save' ) {
+	$base_url = '';
+
+	if ( defined( 'MOTOROCK_STOREFRONT_URL' ) && MOTOROCK_STOREFRONT_URL ) {
+		$base_url = rtrim( (string) MOTOROCK_STOREFRONT_URL, '/' );
+	} else {
+		$env = getenv( 'MOTOROCK_STOREFRONT_URL' );
+		if ( is_string( $env ) && $env !== '' ) {
+			$base_url = rtrim( $env, '/' );
+		}
+	}
+
+	if ( $base_url === '' ) {
+		return;
+	}
+
+	$secret = '';
+	if ( defined( 'MOTOROCK_REVALIDATE_SECRET' ) && MOTOROCK_REVALIDATE_SECRET ) {
+		$secret = (string) MOTOROCK_REVALIDATE_SECRET;
+	} elseif ( defined( 'WOOCOMMERCE_WEBHOOK_SECRET' ) && WOOCOMMERCE_WEBHOOK_SECRET ) {
+		$secret = (string) WOOCOMMERCE_WEBHOOK_SECRET;
+	} else {
+		$env = getenv( 'MOTOROCK_REVALIDATE_SECRET' );
+		if ( ! is_string( $env ) || $env === '' ) {
+			$env = getenv( 'WOOCOMMERCE_WEBHOOK_SECRET' );
+		}
+		if ( is_string( $env ) && $env !== '' ) {
+			$secret = $env;
+		}
+	}
+
+	if ( $secret === '' ) {
+		return;
+	}
+
+	wp_remote_get(
+		$base_url . '/api/revalidate/woocommerce',
+		array(
+			'timeout'   => 5,
+			'blocking'  => false,
+			'headers'   => array(
+				'Authorization' => 'Bearer ' . $secret,
+			),
+			'body'      => null,
+		)
+	);
 }
 
 /**

@@ -15,6 +15,15 @@ export function sizeGuideLookupKey(
   return `${brandSlug}:${category}:${gender}`;
 }
 
+function canonicalBrandSlugFromGuideBrandSlug(brandSlug: string) {
+  return brandSlug
+    .replace(/-for-(men|women|unisex)$/i, "")
+    .replace(/-(men|women|unisex)$/i, "")
+    .replace(/-vests$/i, "")
+    .replace(/-pants$/i, "")
+    .replace(/-jackets$/i, "");
+}
+
 export function buildSizeGuideRegistry(
   guides: readonly SizeGuide[],
 ): SizeGuideRegistry {
@@ -35,6 +44,13 @@ export function buildSizeGuideRegistry(
       byBrandCategoryGender[
         sizeGuideLookupKey(guide.brandSlug, guide.category, guide.gender)
       ] = guide;
+
+      const canonicalBrand = canonicalBrandSlugFromGuideBrandSlug(guide.brandSlug);
+      if (canonicalBrand && canonicalBrand !== guide.brandSlug) {
+        byBrandCategoryGender[
+          sizeGuideLookupKey(canonicalBrand, guide.category, guide.gender)
+        ] = guide;
+      }
     }
   }
 

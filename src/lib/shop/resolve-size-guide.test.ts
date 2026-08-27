@@ -129,4 +129,34 @@ describe("resolveSizeGuide", () => {
     expect(guide?.brandSlug).toBe("johnny-reb-vests");
     expect(guide?.rows).toHaveLength(2);
   });
+
+  it("auto-matches johnny reb women vests from canonical brand slug", () => {
+    const remoteRegistry = buildSizeGuideRegistry([
+      {
+        id: "johnny-reb-vests-for-women",
+        slug: "johnny-reb-vests-for-women",
+        title: "Johnny Reb Vests for Women",
+        brand: "Johnny Reb Vests",
+        brandSlug: "johnny-reb-vests-for-women",
+        category: "vests",
+        gender: "women",
+        columns: [{ key: "chest", label: "Chest" }],
+        rows: [{ size: "S", measurements: { chest: 92 } }],
+      },
+    ]);
+
+    const guide = resolveSizeGuide(
+      product({
+        slug: "johnny-reb-womens-springbrook-leather-vest",
+        name: "Johnny Reb Women's Springbrook Leather Vest",
+        brand: "Johnny Reb",
+        category: "vests",
+        gender: "women",
+        sizes: ["SMALL", "Medium"],
+      }),
+      remoteRegistry,
+    );
+
+    expect(guide?.title).toBe("Johnny Reb Vests for Women");
+  });
 });
