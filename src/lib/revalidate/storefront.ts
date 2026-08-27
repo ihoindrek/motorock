@@ -28,6 +28,7 @@ export function revalidateWooCatalogTags() {
   revalidateTag("categories", "max");
   revalidateTag("motorcycle-catalog", "max");
   revalidateTag("equipment-catalog", "max");
+  revalidateTag("size-guides", "max");
   revalidateTag("sitemap", "max");
   revalidatePath("/sitemap.xml");
   revalidatePath("/sitemaps/main.xml");
