@@ -33,6 +33,10 @@ export type SizeGuide = {
   gender?: ProductGender;
   fit?: SizeGuideFit;
   note?: string;
+  /** Rich text from WP (sanitized). Replaces generic how-to-measure when set. */
+  contentHtml?: string;
+  /** Illustration / measurement diagram URL. */
+  imageUrl?: string;
   columns: readonly SizeGuideColumn[];
   rows: readonly SizeGuideRow[];
 };

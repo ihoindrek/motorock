@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { useDictionary, useLocale } from "@/context/locale-context";
@@ -117,6 +118,7 @@ export function SizeGuideModal({
   const fitLabel = guide.fit
     ? FIT_LABELS[guide.fit][locale === "et" ? "et" : "en"]
     : null;
+  const hasCustomContent = Boolean(guide.contentHtml?.trim());
 
   return createPortal(
     <>
@@ -174,6 +176,18 @@ export function SizeGuideModal({
         </div>
 
         <div className="overflow-auto px-5 py-5 sm:px-6">
+          {guide.imageUrl ? (
+            <div className="relative mb-5 aspect-[4/3] w-full overflow-hidden border border-ink/10 bg-ink/[0.03]">
+              <Image
+                src={guide.imageUrl}
+                alt={guide.title}
+                fill
+                sizes="(max-width: 640px) 90vw, 36rem"
+                className="object-contain p-2"
+              />
+            </div>
+          ) : null}
+
           <p className="font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/45">
             {dict.pdp.sizeGuideUnit}
           </p>
@@ -230,30 +244,38 @@ export function SizeGuideModal({
             </p>
           ) : null}
 
-          <div className="mt-6 border-t border-ink/10 pt-5">
-            <p className="font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/45">
-              {dict.pdp.sizeGuideHowToMeasure}
-            </p>
-            <ul className="mt-3 space-y-2 text-sm leading-relaxed text-ink/60">
-              {guide.columns.some((column) => column.key === "chest") ? (
-                <li>{dict.pdp.sizeGuideMeasureChest}</li>
-              ) : null}
-              {guide.columns.some((column) => column.key === "waist") ? (
-                <li>{dict.pdp.sizeGuideMeasureWaist}</li>
-              ) : null}
-              {guide.columns.some((column) => column.key === "hips") ? (
-                <li>{dict.pdp.sizeGuideMeasureHips}</li>
-              ) : null}
-              {guide.columns.some((column) => column.key === "inseam") ? (
-                <li>{dict.pdp.sizeGuideMeasureInseam}</li>
-              ) : null}
-              {guide.columns.some(
-                (column) => column.key === "length" || column.key === "sleeve",
-              ) ? (
-                <li>{dict.pdp.sizeGuideMeasureGarment}</li>
-              ) : null}
-            </ul>
-          </div>
+          {hasCustomContent ? (
+            <div
+              className="prose prose-sm mt-6 max-w-none border-t border-ink/10 pt-5 text-ink/70 [&_h3]:mt-0 [&_h3]:font-body [&_h3]:text-sm [&_h3]:font-bold [&_h3]:uppercase [&_h3]:tracking-aggressive [&_h3]:text-ink [&_li]:text-sm [&_p]:text-sm [&_p]:leading-relaxed"
+              dangerouslySetInnerHTML={{ __html: guide.contentHtml ?? "" }}
+            />
+          ) : (
+            <div className="mt-6 border-t border-ink/10 pt-5">
+              <p className="font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/45">
+                {dict.pdp.sizeGuideHowToMeasure}
+              </p>
+              <ul className="mt-3 space-y-2 text-sm leading-relaxed text-ink/60">
+                {guide.columns.some((column) => column.key === "chest") ? (
+                  <li>{dict.pdp.sizeGuideMeasureChest}</li>
+                ) : null}
+                {guide.columns.some((column) => column.key === "waist") ? (
+                  <li>{dict.pdp.sizeGuideMeasureWaist}</li>
+                ) : null}
+                {guide.columns.some((column) => column.key === "hips") ? (
+                  <li>{dict.pdp.sizeGuideMeasureHips}</li>
+                ) : null}
+                {guide.columns.some((column) => column.key === "inseam") ? (
+                  <li>{dict.pdp.sizeGuideMeasureInseam}</li>
+                ) : null}
+                {guide.columns.some(
+                  (column) =>
+                    column.key === "length" || column.key === "sleeve",
+                ) ? (
+                  <li>{dict.pdp.sizeGuideMeasureGarment}</li>
+                ) : null}
+              </ul>
+            </div>
+          )}
 
           <details className="group mt-6 border-t border-ink/10 pt-5">
             <summary className="cursor-pointer list-none font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/45 transition-colors hover:text-accent [&::-webkit-details-marker]:hidden">

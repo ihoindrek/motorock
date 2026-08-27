@@ -68,6 +68,28 @@
       "new_lines": "br"
     },
     {
+      "key": "field_motorock_sg_image",
+      "label": "Illustration",
+      "name": "size_guide_image",
+      "type": "image",
+      "instructions": "Optional diagram or photo (e.g. how to measure). Shown at the top of the size guide modal.",
+      "return_format": "array",
+      "preview_size": "medium",
+      "library": "all",
+      "mime_types": "jpg,jpeg,png,webp"
+    },
+    {
+      "key": "field_motorock_sg_content",
+      "label": "Additional content",
+      "name": "size_guide_content",
+      "type": "wysiwyg",
+      "instructions": "Optional rich text below the table. Replaces the generic how-to-measure tips when filled in.",
+      "tabs": "all",
+      "toolbar": "basic",
+      "media_upload": 0,
+      "delay": 0
+    },
+    {
       "key": "field_motorock_sg_fit",
       "label": "Fit",
       "name": "size_guide_fit",
@@ -201,5 +223,5 @@
   "instruction_placement": "label",
   "active": true,
   "show_in_rest": 1,
-  "modified": 1754311200
+  "modified": 1756280000
 }

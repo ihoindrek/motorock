@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { ProductCategory } from "@/types/catalog-product";
 import type { SizeGuide, SizeGuideColumnKey } from "@/types/size-guide";
+import { sanitizeSizeGuideContentHtml } from "@/lib/shop/sanitize-size-guide-content";
 
 const columnKeySchema = z.enum([
   "chest",
@@ -55,6 +56,8 @@ export const remoteSizeGuideSchema = z.object({
   category: productCategorySchema,
   gender: z.enum(["men", "women", "unisex"]),
   note: z.string().nullable().optional(),
+  contentHtml: z.string().nullable().optional(),
+  imageUrl: z.string().url().nullable().optional(),
   fit: z.enum(["slim", "regular", "relaxed"]).nullable().optional(),
   columns: z.array(sizeGuideColumnSchema).min(1),
   rows: z.array(sizeGuideRowSchema).min(1),
@@ -81,6 +84,8 @@ export function parseRemoteSizeGuide(input: unknown): SizeGuide | null {
     category: guide.category as ProductCategory,
     gender: guide.gender,
     note: guide.note ?? undefined,
+    contentHtml: sanitizeSizeGuideContentHtml(guide.contentHtml),
+    imageUrl: guide.imageUrl ?? undefined,
     fit: guide.fit ?? undefined,
     columns: guide.columns,
     rows: guide.rows.map((row) => ({

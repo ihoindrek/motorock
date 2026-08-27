@@ -164,6 +164,8 @@ function motorock_build_size_guide_payload( $post_id ) {
 	}
 
 	$note = trim( (string) get_field( 'size_guide_note', $post_id ) );
+	$content_html = motorock_size_guide_content_html( $post_id );
+	$image_url    = motorock_size_guide_image_url( $post_id );
 
 	$post_slug = $post->post_name !== '' ? $post->post_name : '';
 	if ( $post_slug === '' || preg_match( '/^\d+$/', $post_slug ) ) {
@@ -178,8 +180,10 @@ function motorock_build_size_guide_payload( $post_id ) {
 		'category'  => $category,
 		'gender'    => $gender,
 		'brand'     => motorock_format_brand_label( $brand_slug ),
-		'note'      => $note !== '' ? $note : null,
-		'fit'       => $fit,
+		'note'        => $note !== '' ? $note : null,
+		'contentHtml' => $content_html,
+		'imageUrl'    => $image_url,
+		'fit'         => $fit,
 		'columns'   => $columns,
 		'rows'      => $rows,
 	);
@@ -188,6 +192,48 @@ function motorock_build_size_guide_payload( $post_id ) {
 function motorock_format_brand_label( $slug ) {
 	$parts = array_filter( explode( '-', $slug ) );
 	return implode( ' ', array_map( 'ucfirst', $parts ) );
+}
+
+/**
+ * @return string|null
+ */
+function motorock_size_guide_content_html( $post_id ) {
+	if ( ! function_exists( 'get_field' ) ) {
+		return null;
+	}
+
+	$content = trim( (string) get_field( 'size_guide_content', $post_id ) );
+	if ( $content === '' ) {
+		return null;
+	}
+
+	return wp_kses_post( $content );
+}
+
+/**
+ * @return string|null
+ */
+function motorock_size_guide_image_url( $post_id ) {
+	if ( ! function_exists( 'get_field' ) ) {
+		return null;
+	}
+
+	$image = get_field( 'size_guide_image', $post_id );
+
+	if ( is_array( $image ) && ! empty( $image['url'] ) ) {
+		return esc_url_raw( (string) $image['url'] );
+	}
+
+	if ( is_numeric( $image ) ) {
+		$url = wp_get_attachment_image_url( (int) $image, 'large' );
+		return $url ? esc_url_raw( $url ) : null;
+	}
+
+	if ( is_string( $image ) && $image !== '' ) {
+		return esc_url_raw( $image );
+	}
+
+	return null;
 }
 
 add_action(
