@@ -21,13 +21,13 @@ const BRAND_FILTER_CATEGORY_ORDER: readonly ProductCategory[] = [
   "socks",
   "safety",
   "accessories",
-  "other",
 ];
 
 const HIDDEN_BRAND_FILTER_CATEGORIES = new Set<ProductCategory>([
   "motorcycles",
   "tools",
   "helmet-accessories",
+  "other",
 ]);
 
 export type ProductCategoryFilterOption = {

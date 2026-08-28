@@ -3,6 +3,9 @@ import {
   getMotorcycleBrandFilterNames,
   isMotorcycleBrandSlug,
   resolveBrandFromProductAttributes,
+  resolveEquipmentBrand,
+  resolveEquipmentBrandFromImportMeta,
+  resolveEquipmentBrandFromProductName,
   resolveMotorcycleBrandFromProductName,
 } from "@/lib/shop/resolve-product-brand";
 
@@ -106,5 +109,59 @@ describe("resolveMotorcycleBrandFromProductName", () => {
     expect(resolveMotorcycleBrandFromProductName("Mutt GT-SS 125cc")).toBe(
       "Mutt",
     );
+  });
+});
+
+describe("resolveEquipmentBrandFromImportMeta", () => {
+  it("maps Motogirl Shopify imports to Motogirl", () => {
+    expect(
+      resolveEquipmentBrandFromImportMeta([
+        { key: "_shopify_site_id", value: "motogirl-co-uk" },
+      ]),
+    ).toBe("Motogirl");
+  });
+
+  it("maps Motomad-only imports to Motogirl", () => {
+    expect(
+      resolveEquipmentBrandFromImportMeta([
+        { key: "_import_source", value: "motomad" },
+        { key: "_motomad_product_id", value: "15016" },
+      ]),
+    ).toBe("Motogirl");
+  });
+
+  it("does not treat Pando Shopify imports as Motogirl", () => {
+    expect(
+      resolveEquipmentBrandFromImportMeta([
+        { key: "_import_source", value: "shopify" },
+        { key: "_shopify_site_id", value: "pandomoto-com" },
+        { key: "_shopify_product_id", value: "9813431320918" },
+        { key: "_motomad_product_id", value: "17506" },
+      ]),
+    ).toBe("Pando Moto");
+  });
+});
+
+describe("resolveEquipmentBrandFromProductName", () => {
+  it("matches MG-prefixed Motogirl product titles", () => {
+    expect(resolveEquipmentBrandFromProductName("MG Waterproof Trousers")).toBe(
+      "Motogirl",
+    );
+  });
+});
+
+describe("resolveEquipmentBrand", () => {
+  it("falls back to Shopify import metadata when pa_brand is missing", () => {
+    expect(
+      resolveEquipmentBrand(
+        "Vanessa Trousers",
+        { nodes: [] },
+        [
+          { key: "_import_source", value: "shopify" },
+          { key: "_shopify_site_id", value: "motogirl-co-uk" },
+        ],
+        "VANT-BLK",
+      ),
+    ).toBe("Motogirl");
   });
 });

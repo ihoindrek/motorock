@@ -137,6 +137,31 @@ function motorock_backfill_resolve_brand_slug( WC_Product $product ): ?string {
 		}
 	}
 
+	$shopify_site_id = get_post_meta( $product_id, '_shopify_site_id', true );
+	if ( is_string( $shopify_site_id ) && $shopify_site_id !== '' ) {
+		$site_slug = sanitize_title( $shopify_site_id );
+		if ( str_contains( $site_slug, 'motogirl' ) ) {
+			return 'motogirl';
+		}
+		if ( str_contains( $site_slug, 'pando' ) ) {
+			return 'pando-moto';
+		}
+	}
+
+	$import_source = get_post_meta( $product_id, '_import_source', true );
+	$motomad_product_id = get_post_meta( $product_id, '_motomad_product_id', true );
+	$shopify_product_id = get_post_meta( $product_id, '_shopify_product_id', true );
+
+	if (
+		$import_source === 'motomad'
+		&& is_string( $motomad_product_id )
+		&& $motomad_product_id !== ''
+		&& ( ! is_string( $shopify_product_id ) || $shopify_product_id === '' )
+		&& ( ! is_string( $shopify_site_id ) || $shopify_site_id === '' )
+	) {
+		return 'motogirl';
+	}
+
 	if ( str_starts_with( $sku, 'BH' ) ) {
 		return 'bobhead';
 	}

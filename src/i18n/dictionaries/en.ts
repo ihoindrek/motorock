@@ -37,8 +37,12 @@ export type Dictionary = {
     goggles: string;
     headwear: string;
     bags: string;
+    belts: string;
+    jewelry: string;
     safety: string;
     scarves: string;
+    socks: string;
+    other: string;
   };
   footer: {
     shop: string;
@@ -699,8 +703,12 @@ export const en: Dictionary = {
     goggles: "Goggles",
     headwear: "Headwear",
     bags: "Bags & backpacks",
+    belts: "Belts",
+    jewelry: "Jewelry",
     safety: "Safety & protection",
-    scarves: "Scarves & tubulars",
+    scarves: "Scarves & neck tubes",
+    socks: "Socks",
+    other: "Other",
   },
   footer: {
     shop: "Shop",

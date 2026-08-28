@@ -5,7 +5,7 @@
  * Usage (on shop.motorock.eu):
  *   wp eval-file wp-content/plugins/motorock-catalog-importer/scripts/backfill-product-attributes.php
  *   wp eval-file wp-content/plugins/motorock-catalog-importer/scripts/backfill-product-attributes.php motogirl
- *   wp eval-file wp-content/plugins/motorock-catalog-importer/scripts/backfill-product-attributes.php motogirl --dry-run
+ *   wp eval-file wp-content/plugins/motorock-catalog-importer/scripts/backfill-product-attributes.php motogirl dry-run
  *
  * @package Motorock_Catalog_Importer
  */
@@ -27,7 +27,8 @@ if (!class_exists('WooCommerce')) {
 require_once dirname(__DIR__) . '/includes/class-attribute-normalizer.php';
 
 $brand = isset($args[0]) ? trim((string) $args[0]) : 'motogirl';
-$dry_run = in_array('--dry-run', $args ?? array(), true);
+$dry_run = in_array('--dry-run', $args ?? array(), true)
+    || in_array('dry-run', $args ?? array(), true);
 
 $product_ids = get_posts(array(
     'post_type' => 'product',

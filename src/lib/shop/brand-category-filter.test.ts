@@ -74,4 +74,13 @@ describe("brand category filter", () => {
     ]);
     expect(matchProductCategoriesFromParam("unknown", options)).toEqual([]);
   });
+
+  it("hides the other category from brand filters", () => {
+    const options = resolveAvailableProductCategories(
+      [product("jackets"), product("other")],
+      dict,
+    );
+
+    expect(options.map((option) => option.id)).toEqual(["jackets"]);
+  });
 });

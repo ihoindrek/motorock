@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
+import { getDictionary } from "@/i18n/get-dictionary";
 import {
   buildProductSeoDescription,
   buildProductSeoTitle,
+  resolveProductCategoryLabel,
 } from "@/lib/seo/product-seo-copy";
 
 describe("buildProductSeoTitle", () => {
@@ -80,5 +82,18 @@ describe("buildProductSeoDescription", () => {
     expect(description).toContain("Brixton Crossfire 125");
     expect(description).toMatch(/3999/);
     expect(description).toContain("Motorock.eu");
+  });
+});
+
+describe("resolveProductCategoryLabel", () => {
+  it("localizes brand-filter categories in Estonian", () => {
+    const dict = getDictionary("et");
+
+    expect(resolveProductCategoryLabel("scarves", dict)).toBe(
+      "Sallid ja torusallid",
+    );
+    expect(resolveProductCategoryLabel("socks", dict)).toBe("Sokid");
+    expect(resolveProductCategoryLabel("other", dict)).toBe("Muu");
+    expect(resolveProductCategoryLabel("belts", dict)).toBe("Rihmad");
   });
 });

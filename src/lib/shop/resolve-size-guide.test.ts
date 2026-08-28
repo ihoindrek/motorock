@@ -189,4 +189,34 @@ describe("resolveSizeGuide", () => {
 
     expect(guide?.title).toBe("Johnny Reb Vests for Women");
   });
+
+  it("matches Motogirl pants automatically when brand is Motogirl", () => {
+    const registry = buildSizeGuideRegistry([
+      {
+        id: "motogirl-jeans-pants",
+        slug: "motogirl-jeans-pants",
+        title: "Motogirl Jeans & Pants",
+        brand: "Motogirl",
+        brandSlug: "motogirl",
+        category: "pants",
+        gender: "women",
+        columns: [{ key: "waist", label: "Waist" }],
+        rows: [{ size: "UK10", measurements: { waist: 70 } }],
+      },
+    ]);
+
+    const guide = resolveSizeGuide(
+      product({
+        slug: "vanessa-trousers",
+        name: "Vanessa Trousers",
+        brand: "Motogirl",
+        gender: "women",
+        category: "pants",
+        sizes: ["UK10", "UK12"],
+      }),
+      registry,
+    );
+
+    expect(guide?.slug).toBe("motogirl-jeans-pants");
+  });
 });

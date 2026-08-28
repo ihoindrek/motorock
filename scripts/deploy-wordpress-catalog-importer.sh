@@ -56,6 +56,6 @@ PORT="${WP_DEPLOY_PORT:-22}"
 rsync -avz --delete \
   -e "ssh -p $PORT" \
   "$PLUGIN_DIR/" \
-  "$WP_DEPLOY_USER@$WP_DEPLOY_HOST:$WP_DEPLOY_PATH/motorock-catalog-importer/"
+  "$WP_DEPLOY_USER@$WP_DEPLOY_HOST:${WP_DEPLOY_PLUGINS_PATH:-$WP_DEPLOY_PATH/plugins}/motorock-catalog-importer/"
 
 echo "Uploaded plugin to $WP_DEPLOY_HOST:$WP_DEPLOY_PATH/motorock-catalog-importer/"

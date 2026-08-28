@@ -53,10 +53,12 @@ function revalidateResponse(
   });
 }
 
-/** Manual cache purge — Authorization: Bearer <REVALIDATE_SECRET|WOOCOMMERCE_WEBHOOK_SECRET> */
+/** Manual cache purge — Authorization: Bearer <REVALIDATE_SECRET|WOOCOMMERCE_WEBHOOK_SECRET|MOTOROCK_INTERNAL_SECRET> */
 export async function GET(request: Request) {
   const secret =
-    process.env.REVALIDATE_SECRET ?? process.env.WOOCOMMERCE_WEBHOOK_SECRET;
+    process.env.REVALIDATE_SECRET ??
+    process.env.WOOCOMMERCE_WEBHOOK_SECRET ??
+    getWooInternalSecret();
 
   if (!secret) {
     return Response.json(

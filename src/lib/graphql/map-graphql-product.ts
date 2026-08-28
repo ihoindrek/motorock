@@ -1,4 +1,3 @@
-import { brands } from "@/data/brands";
 import type { Locale } from "@/i18n/config";
 import type {
   CatalogProduct,
@@ -21,8 +20,8 @@ import { decodeHtmlEntities } from "@/lib/html/decode-html-entities";
 import { resolveGraphqlProductPrice } from "@/lib/shop/resolve-product-price";
 import { getCanonicalBrandName } from "@/lib/shop/brands";
 import {
-  MOTORCYCLE_BRAND_SLUGS,
   resolveBrandFromProductAttributes,
+  resolveEquipmentBrand,
   resolveMotorcycleBrandFromProductName,
 } from "@/lib/shop/resolve-product-brand";
 import { parseSpecsFromDescriptionHtml, resolveProductDescriptionHtml } from "@/lib/shop/parse-product-description";
@@ -163,8 +162,6 @@ function legLengthsFromVariableProduct(product: GraphQLVariableProduct) {
   return [...new Set(fromVariations)];
 }
 
-const MOTORCYCLE_BRAND_SLUGS_SET = MOTORCYCLE_BRAND_SLUGS;
-
 function isMotorcycleProduct(categories: GraphQLProduct["productCategories"]) {
   const slugs = collectProductWcCategorySlugs(categories?.nodes ?? []);
 
@@ -207,61 +204,6 @@ function resolveMotorcycleBrand(
   const raw = fallbackCategory?.name ?? "Motorcycle";
 
   return getCanonicalBrandName(raw);
-}
-
-function resolveEquipmentBrand(
-  productName: string,
-  attributes?: GraphQLVariableProduct["attributes"] | null,
-) {
-  const fromBrandAttribute = resolveBrandFromProductAttributes(attributes, {
-    equipmentOnly: true,
-  });
-
-  if (fromBrandAttribute) {
-    return fromBrandAttribute;
-  }
-
-  const brandAttribute = attributes?.nodes.find(
-    (attribute) => normalizeAttributeName(attribute.name) === "brand",
-  );
-  const brandSlug = brandAttribute?.options?.[0];
-
-  if (brandSlug) {
-    const normalized = brandSlug.toLowerCase();
-    const fromConfig = brands.find(
-      (brand) =>
-        !MOTORCYCLE_BRAND_SLUGS_SET.has(brand.slug) &&
-        (brand.slug === normalized ||
-          brand.slug.replace(/-/g, "") === normalized.replace(/-/g, "") ||
-          brand.slug.startsWith(`${normalized}-`) ||
-          brand.name.toLowerCase().startsWith(normalized)),
-    );
-
-    if (fromConfig) {
-      return fromConfig.name;
-    }
-
-    return brandSlug
-      .split(/[-_]/)
-      .filter(Boolean)
-      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-      .join(" ");
-  }
-
-  const lower = productName.toLowerCase();
-
-  for (const brand of brands) {
-    if (MOTORCYCLE_BRAND_SLUGS_SET.has(brand.slug)) {
-      continue;
-    }
-
-    const needle = brand.name.toLowerCase().split(/\s+/)[0];
-    if (needle.length > 2 && lower.includes(needle)) {
-      return brand.name;
-    }
-  }
-
-  return "Motorock";
 }
 
 function parseCardPrice(product: GraphQLProductCard) {
@@ -690,7 +632,12 @@ export function mapGraphqlToCatalogProduct(
         product.attributes,
         product.name,
       )
-    : resolveEquipmentBrand(product.name, product.attributes);
+    : resolveEquipmentBrand(
+        product.name,
+        product.attributes,
+        product.metaData,
+        product.sku,
+      );
   const equipmentMeta = isMotorcycle
     ? { gender: "unisex" as const, category: "motorcycles" as const }
     : resolveEquipmentMeta(product.productCategories, product.name);
@@ -812,7 +759,12 @@ export function mapGraphqlCardToCatalogProduct(
         product.attributes,
         localized.name,
       )
-    : resolveEquipmentBrand(localized.name, product.attributes);
+    : resolveEquipmentBrand(
+        localized.name,
+        product.attributes,
+        product.metaData,
+        product.sku,
+      );
   const equipmentMeta = isMotorcycle
     ? { gender: "unisex" as const, category: "motorcycles" as const }
     : resolveEquipmentMeta(product.productCategories, localized.name);
