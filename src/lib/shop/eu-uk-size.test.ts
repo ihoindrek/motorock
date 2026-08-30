@@ -32,5 +32,9 @@ describe("eu-uk-size", () => {
   it("builds Woo size slug from cart label", () => {
     expect(cartSizeToWooSizeSlug("10")).toBe("eu38-uk10");
     expect(cartSizeToWooSizeSlug("EU38 (UK10)")).toBe("eu38-uk10");
+    expect(cartSizeToWooSizeSlug("UK14/EU42/US12")).toBe("uk14-eu42-us12");
+    expect(cartSizeToWooSizeSlug("Small (238 x 364mm)")).toBe(
+      "small-238-x-364mm",
+    );
   });
 });

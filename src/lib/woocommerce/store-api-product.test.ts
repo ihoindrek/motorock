@@ -168,6 +168,33 @@ describe("findStoreVariationId", () => {
       ),
     ).toBe(55);
   });
+
+  it("does not map a lone in-stock variation to a different requested size", () => {
+    expect(
+      findStoreVariationId(
+        {
+          id: 33134,
+          type: "variable",
+          attributes: [
+            {
+              name: "size",
+              terms: [
+                { name: "Small", slug: "small-238-x-364mm" },
+                { name: "Medium", slug: "medium-262-x-404mm" },
+              ],
+            },
+          ],
+          variations: [
+            {
+              id: 33145,
+              attributes: [{ name: "size", value: "medium-262-x-404mm" }],
+            },
+          ],
+        },
+        { size: "Small (238 x 364mm)" },
+      ),
+    ).toBeUndefined();
+  });
 });
 
 describe("resolveSizeAttributeSlug", () => {

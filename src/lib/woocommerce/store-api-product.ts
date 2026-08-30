@@ -213,6 +213,53 @@ export function buildVariationIdsFromStoreProduct(product: StoreProduct) {
   return Object.keys(variationIds).length > 0 ? variationIds : undefined;
 }
 
+function variationMatchesInput(
+  variation: StoreProductVariation,
+  input: { size?: string; color?: string; legLength?: string },
+  colorTerms: StoreAttributeTerm[],
+) {
+  const size = variation.attributes.find((attribute) =>
+    isSizeAttribute(attribute.name),
+  );
+  const color = variation.attributes.find((attribute) =>
+    isColorAttribute(attribute.name),
+  );
+  const leg = variation.attributes.find((attribute) =>
+    isLegLengthAttribute(attribute.name),
+  );
+
+  const sizeIsGeneric = isOneSizeLabel(input.size);
+  const sizeValue = size?.value?.trim();
+  const sizeMatches =
+    sizeIsGeneric ||
+    !input.size?.trim() ||
+    (typeof sizeValue === "string" && sizeValuesMatch(input.size, sizeValue));
+
+  const colorMatches =
+    !input.color?.trim() ||
+    (Boolean(color) &&
+      colorValueMatches(color!.value, input.color!, colorTerms));
+
+  const legMatches =
+    !input.legLength?.trim() ||
+    (Boolean(leg?.value?.trim()) &&
+      leg!.value!.trim().toLowerCase() === input.legLength!.trim().toLowerCase());
+
+  return sizeMatches && colorMatches && legMatches;
+}
+
+function hasExplicitVariationSelection(input: {
+  size?: string;
+  color?: string;
+  legLength?: string;
+}) {
+  return (
+    (Boolean(input.size?.trim()) && !isOneSizeLabel(input.size)) ||
+    Boolean(input.color?.trim()) ||
+    Boolean(input.legLength?.trim())
+  );
+}
+
 export function findStoreVariationId(
   product: StoreProduct,
   input: { size?: string; color?: string; legLength?: string },
@@ -222,61 +269,25 @@ export function findStoreVariationId(
     return undefined;
   }
 
-  if (variations.length === 1) {
-    return variations[0].id;
-  }
-
   const colorTerms =
     product.attributes?.find((attribute) => isColorAttribute(attribute.name))
       ?.terms ?? [];
-  const sizeIsGeneric = isOneSizeLabel(input.size);
 
-  const matched = variations.find((variation) => {
-    const size = variation.attributes.find((attribute) =>
-      isSizeAttribute(attribute.name),
-    );
-    const color = variation.attributes.find((attribute) =>
-      isColorAttribute(attribute.name),
-    );
-    const leg = variation.attributes.find((attribute) =>
-      isLegLengthAttribute(attribute.name),
-    );
-
-    const sizeValue = size?.value?.trim();
-    const sizeMatches =
-      !sizeIsGeneric &&
-      typeof input.size === "string" &&
-      typeof sizeValue === "string" &&
-      sizeValuesMatch(input.size, sizeValue);
-
-    const colorMatches =
-      Boolean(input.color) &&
-      Boolean(color) &&
-      colorValueMatches(color!.value, input.color!, colorTerms);
-
-    const legMatches =
-      !input.legLength?.trim() ||
-      (Boolean(leg?.value?.trim()) &&
-        leg!.value!.trim().toLowerCase() === input.legLength!.trim().toLowerCase());
-
-    if (sizeMatches && colorMatches && legMatches) {
-      return true;
+  if (variations.length === 1) {
+    const only = variations[0];
+    if (
+      hasExplicitVariationSelection(input) &&
+      !variationMatchesInput(only, input, colorTerms)
+    ) {
+      return undefined;
     }
 
-    if (sizeMatches && !input.color && legMatches) {
-      return true;
-    }
+    return only.id;
+  }
 
-    if (colorMatches && sizeIsGeneric && legMatches) {
-      return true;
-    }
-
-    if (sizeIsGeneric && !input.color && !color && legMatches) {
-      return true;
-    }
-
-    return false;
-  });
+  const matched = variations.find((variation) =>
+    variationMatchesInput(variation, input, colorTerms),
+  );
 
   return matched?.id;
 }
@@ -500,6 +511,23 @@ export function buildAddToCartVariationAttributes(
   }
 
   return attributes;
+}
+
+/** Prefer Store API slugs from the resolved variation — avoids Woo "Invalid value posted" errors. */
+export async function buildCheckoutAddToCartVariationAttributes(
+  productId: number,
+  line: { size?: string; color?: string; legLength?: string },
+  variationId?: number,
+) {
+  const product = await fetchStoreProduct(productId);
+  if (product && variationId) {
+    const fromStore = buildAddToCartVariationAttributes(product, line, variationId);
+    if (fromStore.length > 0) {
+      return fromStore;
+    }
+  }
+
+  return buildAddToCartVariationAttributesFromCartLine(line);
 }
 
 export async function enrichCatalogProductVariations<

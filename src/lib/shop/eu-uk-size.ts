@@ -96,13 +96,32 @@ export function euUkSizesMatch(left: string, right: string) {
   return false;
 }
 
+/** Normalize cart/UI size labels to Woo `pa_size` term slugs. */
 export function cartSizeToWooSizeSlug(size: string) {
-  const parsed = parseEuUkSize(size);
+  const trimmed = size.trim();
+  if (!trimmed) {
+    return "";
+  }
+
+  const parsed = parseEuUkSize(trimmed);
   if (parsed) {
     return slugifyEuUkSizeLabel(parsed.label);
   }
 
-  return size.trim().toLowerCase();
+  if (trimmed.includes("/")) {
+    return trimmed.toLowerCase().replace(/\//g, "-").replace(/\s+/g, "");
+  }
+
+  if (/[()]/.test(trimmed) || /\d+\s*x\s*\d+/i.test(trimmed)) {
+    return trimmed
+      .toLowerCase()
+      .replace(/[()]/g, "")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "");
+  }
+
+  return trimmed.toLowerCase();
 }
 
 export function colorToWooColorSlug(color: string) {

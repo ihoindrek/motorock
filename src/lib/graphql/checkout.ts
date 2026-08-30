@@ -28,7 +28,7 @@ import {
 } from "@/lib/graphql/resolve-checkout-product-ids";
 import { isOneSizeLabel, sizesMatch } from "@/lib/shop/size-label";
 import {
-  buildAddToCartVariationAttributesFromCartLine,
+  buildCheckoutAddToCartVariationAttributes,
   resolveStoreVariationId,
 } from "@/lib/woocommerce/store-api-product";
 import {
@@ -312,7 +312,11 @@ export async function syncLocalCartToWoo(
     if (variationId) {
       input.variationId = variationId;
 
-      const variation = buildAddToCartVariationAttributesFromCartLine(line);
+      const variation = await buildCheckoutAddToCartVariationAttributes(
+        productId,
+        line,
+        variationId,
+      );
       if (variation.length > 0) {
         input.variation = variation;
       }
