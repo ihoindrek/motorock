@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  resolveCheckoutDisplaySubtotal,
   resolveCheckoutDisplayTotal,
   resolveCheckoutShippingTotal,
 } from "@/lib/checkout/shipping-total";
@@ -32,6 +33,20 @@ describe("resolveCheckoutShippingTotal", () => {
   });
 });
 
+describe("resolveCheckoutDisplaySubtotal", () => {
+  it("prefers Woo subtotal when populated", () => {
+    expect(resolveCheckoutDisplaySubtotal(400, 437.32, 3)).toBe(437.32);
+  });
+
+  it("falls back to local subtotal when Woo reports zero with items", () => {
+    expect(resolveCheckoutDisplaySubtotal(437.35, 0, 3)).toBe(437.35);
+  });
+
+  it("uses Woo zero for an empty cart", () => {
+    expect(resolveCheckoutDisplaySubtotal(0, 0, 0)).toBe(0);
+  });
+});
+
 describe("resolveCheckoutDisplayTotal", () => {
   it("adds quoted shipping when Woo total omitted it", () => {
     expect(
@@ -55,5 +70,17 @@ describe("resolveCheckoutDisplayTotal", () => {
         wcTotal: 12.89,
       }),
     ).toBeCloseTo(12.89);
+  });
+
+  it("computes total when Woo reports zero with a non-zero subtotal", () => {
+    expect(
+      resolveCheckoutDisplayTotal({
+        cartShippingTotal: 0,
+        selectedRate: null,
+        subtotal: 437.35,
+        discountTotal: 43.74,
+        wcTotal: 0,
+      }),
+    ).toBeCloseTo(393.61);
   });
 });

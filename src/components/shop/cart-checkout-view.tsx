@@ -99,6 +99,7 @@ import { cn } from "@/lib/utils";
 import { buildEquipmentHubHref } from "@/lib/shop/category-url";
 import { CampaignCartPanels } from "@/components/campaigns/campaign-cart-panels";
 import {
+  resolveCheckoutDisplaySubtotal,
   resolveCheckoutDisplayTotal,
   resolveCheckoutShippingTotal,
 } from "@/lib/checkout/shipping-total";
@@ -801,7 +802,11 @@ export function CartCheckoutView() {
   }, [needsPickupPoint, shipping.country, shipping.selectedRate]);
   const requiresPickupSelection = needsPickupPoint && Boolean(pickupPointSources);
 
-  const displaySubtotal = shipping.wcSubtotal ?? subtotal;
+  const displaySubtotal = resolveCheckoutDisplaySubtotal(
+    subtotal,
+    shipping.wcSubtotal,
+    itemCount,
+  );
   const displayShipping = resolveCheckoutShippingTotal(
     shipping.shippingTotal,
     shipping.selectedRate,
@@ -814,7 +819,10 @@ export function CartCheckoutView() {
     discountTotal: displayDiscount,
     wcTotal: shipping.wcTotal,
   });
-  const wooPaymentsChargeTotal = shipping.wcTotal ?? displayTotal;
+  const wooPaymentsChargeTotal =
+    shipping.wcTotal != null && shipping.wcTotal > 0
+      ? shipping.wcTotal
+      : displayTotal;
 
   useEffect(() => {
     if (itemCount === 0) {

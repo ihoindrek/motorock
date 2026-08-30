@@ -462,7 +462,26 @@ export function useCheckoutShipping(
       setCouponError(null);
 
       try {
-        const result = await applyCheckoutCoupon(trimmed, activeSession());
+        // Coupons must run against a synced Woo cart — applying on an empty
+        // session leaves totals at €0 while local line items still display.
+        if (linesRef.current.length > 0) {
+          const session = await syncLocalCartToWoo(linesRef.current, {
+            linesKey,
+          });
+          rememberSession(session);
+        }
+
+        let result = await applyCheckoutCoupon(trimmed, activeSession());
+        const syncedSubtotal = parseCartMoney(result.cart.subtotal);
+
+        if (linesRef.current.length > 0 && syncedSubtotal <= 0) {
+          const session = await syncLocalCartToWoo(linesRef.current, {
+            linesKey,
+          });
+          rememberSession(session);
+          result = await applyCheckoutCoupon(trimmed, activeSession());
+        }
+
         applyCart(result);
         return { ok: true };
       } catch (cause) {
@@ -476,7 +495,7 @@ export function useCheckoutShipping(
         setCouponLoading(false);
       }
     },
-    [activeSession, applyCart, dict.checkout],
+    [activeSession, applyCart, dict.checkout, linesKey, rememberSession],
   );
 
   const removeCoupon = useCallback(
@@ -572,6 +591,10 @@ export function useCheckoutShipping(
         setCountryState(shipCountry);
 
         if (!shipCountry) {
+          const cart = await fetchCartShipping(activeSession());
+          if (!cancelled) {
+            applyCart(cart);
+          }
           setRates([]);
           setSelectedRateIdState(null);
           syncedLinesKeyRef.current = linesKey;
@@ -698,6 +721,54 @@ export function useCheckoutShipping(
       cancelled = true;
     };
   }, [linesKey, needsAddress, loading, pushCustomerShipping, rememberSession]);
+
+  /** Recover when a coupon was applied before the Woo cart had line items. */
+  useEffect(() => {
+    if (
+      !cartHydrated ||
+      loading ||
+      syncing ||
+      !bootstrapReadyRef.current ||
+      linesRef.current.length === 0 ||
+      wcSubtotal !== 0
+    ) {
+      return;
+    }
+
+    let cancelled = false;
+
+    void (async () => {
+      try {
+        const session = await syncLocalCartToWoo(linesRef.current, {
+          linesKey,
+        });
+        if (cancelled) {
+          return;
+        }
+
+        rememberSession(session);
+        const cart = await fetchCartShipping(activeSession());
+        if (!cancelled) {
+          applyCart(cart);
+        }
+      } catch {
+        // Bootstrap retry handles hard failures.
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    activeSession,
+    applyCart,
+    cartHydrated,
+    linesKey,
+    loading,
+    rememberSession,
+    syncing,
+    wcSubtotal,
+  ]);
 
   return {
     loading,
