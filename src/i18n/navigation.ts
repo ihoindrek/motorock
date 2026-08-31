@@ -21,6 +21,7 @@ import type { Campaign } from "@/types/campaign";
 const equipmentBrandSlugs = [
   { slug: "pando-moto", label: "Pando Moto" },
   { slug: "holyfreedom", label: "Holyfreedom" },
+  { slug: "john-doe", label: "John Doe" },
   { slug: "johnny-reb", label: "Johnny Reb" },
   { slug: "bobhead", label: "Bobhead" },
   { slug: "motogirl", label: "Motogirl" },

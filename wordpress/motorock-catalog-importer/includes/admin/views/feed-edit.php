@@ -25,6 +25,8 @@ if (!empty($feed['csv_file']) && file_exists($feed['csv_file'])) {
             $column_map = isset($feed['column_map']) ? $feed['column_map'] : Motorock_Catalog_Importer_Generic_Csv_Adapter::default_column_map();
             $category_column = isset($column_map['category']) ? $column_map['category'] : 'category';
             $source_categories = Motorock_Catalog_Importer_Feed_Manager::collect_source_categories($rows, $category_column);
+        } elseif ($feed['adapter'] === 'johndoe') {
+            $source_categories = Motorock_Catalog_Importer_Johndoe_Adapter::inferred_category_labels();
         }
 
         if (!empty($rows[0]) && is_array($rows[0])) {
@@ -33,6 +35,10 @@ if (!empty($feed['csv_file']) && file_exists($feed['csv_file'])) {
     } catch (Throwable $e) {
         $source_categories = array();
     }
+}
+
+if ($feed['adapter'] === 'johndoe' && empty($source_categories)) {
+    $source_categories = Motorock_Catalog_Importer_Johndoe_Adapter::inferred_category_labels();
 }
 
 $mappings = isset($feed['category_mappings']) ? $feed['category_mappings'] : array();

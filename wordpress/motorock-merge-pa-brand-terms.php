@@ -79,6 +79,16 @@ function motorock_brand_canonical_meta( string $slug ): ?array {
 			'name'  => 'Holyfreedom',
 			'slug'  => 'holyfreedom',
 		),
+		'john-doe'     => array(
+			'group' => 'john-doe',
+			'name'  => 'John Doe',
+			'slug'  => 'john-doe',
+		),
+		'johndoe'      => array(
+			'group' => 'john-doe',
+			'name'  => 'John Doe',
+			'slug'  => 'john-doe',
+		),
 		'motogirl'     => array(
 			'group' => 'motogirl',
 			'name'  => 'Motogirl',

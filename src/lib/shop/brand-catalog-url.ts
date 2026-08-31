@@ -16,6 +16,7 @@ export const MOTORCYCLE_BRAND_SLUG_LIST = [...MOTORCYCLE_BRAND_SLUGS];
 export const EQUIPMENT_BRAND_SLUGS = [
   "pando-moto",
   "holyfreedom",
+  "john-doe",
   "johnny-reb",
   "bobhead",
   "motogirl",
@@ -28,6 +29,7 @@ export const EQUIPMENT_BRAND_NAMES: Record<
 > = {
   "pando-moto": "Pando Moto",
   holyfreedom: "Holyfreedom",
+  "john-doe": "John Doe",
   "johnny-reb": "Johnny Reb",
   bobhead: "Bobhead",
   motogirl: "Motogirl",

@@ -99,6 +99,16 @@ export const brands: readonly BrandConfig[] = [
     logoClassLg: "h-5 w-auto max-w-[110px] sm:h-6",
   },
   {
+    name: "John Doe",
+    slug: "john-doe",
+    logo: "/John-Doe-logo.svg",
+    width: 213,
+    height: 33,
+    logoInvert: false,
+    logoClass: "h-4 w-auto max-w-[110px] sm:h-5",
+    logoClassLg: "h-5 w-auto max-w-[140px] sm:h-6",
+  },
+  {
     name: "Makita",
     slug: "makita",
     logoClass: "",

@@ -33,6 +33,7 @@ function motorock_backfill_brand_slug_map(): array {
 		'mutt'         => 'mutt',
 		'brixton'      => 'brixton',
 		'holyfreedom'  => 'holyfreedom',
+		'john-doe'     => 'john-doe',
 		'johnny-reb'   => 'johnny-reb',
 		'makita'       => 'makita',
 		'malaguti'     => 'malaguti',

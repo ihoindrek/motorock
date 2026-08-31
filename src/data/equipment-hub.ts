@@ -247,6 +247,17 @@ export const equipmentHubBrands = [
     },
   },
   {
+    name: "John Doe",
+    slug: "john-doe",
+    image: "/John-Doe-logo.svg",
+    logo: "/John-Doe-logo.svg",
+    logoInvert: false,
+    imageAlt: {
+      en: "John Doe motorcycle apparel",
+      et: "John Doe mootorrattariided",
+    },
+  },
+  {
     name: "Motogirl",
     slug: "motogirl",
     image: "/MotoGirl44.webp",

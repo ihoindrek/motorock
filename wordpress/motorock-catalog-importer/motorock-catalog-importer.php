@@ -67,7 +67,9 @@ final class Motorock_Catalog_Importer_Plugin {
         require_once MOTOROCK_CATALOG_IMPORTER_DIR . 'includes/class-logger.php';
         require_once MOTOROCK_CATALOG_IMPORTER_DIR . 'includes/class-csv-parser.php';
         require_once MOTOROCK_CATALOG_IMPORTER_DIR . 'includes/class-prestashop-scraper.php';
+        require_once MOTOROCK_CATALOG_IMPORTER_DIR . 'includes/class-partseurope-scraper.php';
         require_once MOTOROCK_CATALOG_IMPORTER_DIR . 'includes/adapters/class-holyfreedom-adapter.php';
+        require_once MOTOROCK_CATALOG_IMPORTER_DIR . 'includes/adapters/class-johndoe-adapter.php';
         require_once MOTOROCK_CATALOG_IMPORTER_DIR . 'includes/adapters/class-generic-csv-adapter.php';
         require_once MOTOROCK_CATALOG_IMPORTER_DIR . 'includes/class-image-downloader.php';
         require_once MOTOROCK_CATALOG_IMPORTER_DIR . 'includes/class-attribute-normalizer.php';

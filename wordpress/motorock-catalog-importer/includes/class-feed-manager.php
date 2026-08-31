@@ -61,6 +61,7 @@ class Motorock_Catalog_Importer_Feed_Manager {
 
         self::$adapters = array(
             'holyfreedom' => new Motorock_Catalog_Importer_Holyfreedom_Adapter(),
+            'johndoe' => new Motorock_Catalog_Importer_Johndoe_Adapter(),
             'generic_csv' => new Motorock_Catalog_Importer_Generic_Csv_Adapter(),
         );
 
