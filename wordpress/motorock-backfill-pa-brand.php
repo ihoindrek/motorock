@@ -175,6 +175,17 @@ function motorock_backfill_resolve_brand_slug( WC_Product $product ): ?string {
 		return 'motogirl';
 	}
 
+	$catalog_adapter = get_post_meta( $product_id, '_catalog_adapter', true );
+	if ( is_string( $catalog_adapter ) && $catalog_adapter === 'johndoe' ) {
+		return 'john-doe';
+	}
+
+	if (
+		preg_match( '/^(JW|JLE800|JHK800|MJDD|MJDC|JDD|JDC|JDOV|IJ)/', $sku )
+	) {
+		return 'john-doe';
+	}
+
 	if ( stripos( $sku, 'FALCON-LEATHER-AVIATOR' ) !== false || stripos( $title, 'FALCON LEATHER AVIATOR' ) !== false ) {
 		return 'pando-moto';
 	}

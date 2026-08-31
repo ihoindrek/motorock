@@ -11,6 +11,7 @@ import {
 } from "@/lib/shop/similar-products";
 import {
   type CategoryRoute,
+  filterProductsByRoute,
   resolveEquipmentCatalogWhere,
 } from "@/lib/shop/category";
 import { TOOLS_WC_SLUG } from "@/lib/shop/wc-categories";
@@ -22,7 +23,7 @@ import {
   mapGraphqlToMotorcycleProduct,
   variationIdsFromProduct,
 } from "@/lib/graphql/map-graphql-product";
-import { PRODUCT_BY_SLUG, PRODUCT_BY_DATABASE_ID, HOMEPAGE_PRODUCT_CATALOG_PAGE, PRODUCT_CATALOG_PAGE } from "@/lib/graphql/queries";
+import { PRODUCT_BY_SLUG, PRODUCT_BY_DATABASE_ID, HOMEPAGE_PRODUCT_CATALOG_PAGE, PRODUCT_BRAND_CATALOG_PAGE, PRODUCT_CATALOG_PAGE } from "@/lib/graphql/queries";
 import type { GraphQLProduct, GraphQLProductCard } from "@/lib/graphql/types";
 import {
   mergeGraphqlProductPricing,
@@ -61,6 +62,7 @@ type CatalogPageResponse = {
 type CatalogWhere = {
   category?: string;
   categoryNotIn?: string[];
+  brandSlug?: string;
 };
 
 type CatalogPageVariables = {
@@ -68,6 +70,10 @@ type CatalogPageVariables = {
   after: string | null;
   category: string | null;
   categoryNotIn: string[] | null;
+};
+
+type BrandCatalogPageVariables = CatalogPageVariables & {
+  brandTaxonomyTerms: string[];
 };
 
 const CATALOG_PAGE_SIZE = 100;
@@ -312,24 +318,31 @@ async function fetchAllCatalogNodes(
 ): Promise<CatalogFetchResult> {
   const rawNodes: GraphQLProductCard[] = [];
   let after: string | null = null;
+  const useBrandTaxonomy = Boolean(where.brandSlug);
 
   for (;;) {
-    const variables: CatalogPageVariables = {
-      first: CATALOG_PAGE_SIZE,
-      after,
-      category: where.category ?? null,
-      categoryNotIn: where.categoryNotIn ?? null,
-    };
-
-    // Paging through the whole catalog is inherently sequential and is by
-    // far the most expensive fetch chain (similar products, category pages).
-    // A long revalidate is safe: WooCommerce changes purge the "woocommerce"
-    // tag via the revalidation webhook, so this TTL is only a fallback.
-    const data = await graphqlRequest<CatalogPageResponse, CatalogPageVariables>(
-      PRODUCT_CATALOG_PAGE,
-      variables,
-      { next: { revalidate: 3600 }, retryAttempts: 5 },
-    );
+    const data: CatalogPageResponse = useBrandTaxonomy
+      ? await graphqlRequest<CatalogPageResponse, BrandCatalogPageVariables>(
+          PRODUCT_BRAND_CATALOG_PAGE,
+          {
+            first: CATALOG_PAGE_SIZE,
+            after,
+            category: where.category ?? null,
+            categoryNotIn: where.categoryNotIn ?? null,
+            brandTaxonomyTerms: [where.brandSlug!],
+          },
+          { next: { revalidate: 3600 }, retryAttempts: 5 },
+        )
+      : await graphqlRequest<CatalogPageResponse, CatalogPageVariables>(
+          PRODUCT_CATALOG_PAGE,
+          {
+            first: CATALOG_PAGE_SIZE,
+            after,
+            category: where.category ?? null,
+            categoryNotIn: where.categoryNotIn ?? null,
+          },
+          { next: { revalidate: 3600 }, retryAttempts: 5 },
+        );
 
     rawNodes.push(...data.products.nodes);
 
@@ -865,7 +878,13 @@ export async function getEquipmentCatalogForRoute(
   try {
     const where = resolveEquipmentCatalogWhere(route);
     const { nodes, nodesById } = await fetchAllCatalogNodes(where, locale);
-    return mapCatalogNodesForRoute(nodes, route, locale, nodesById);
+    const products = mapCatalogNodesForRoute(nodes, route, locale, nodesById);
+
+    if (route.brand) {
+      return filterProductsByRoute(products, route);
+    }
+
+    return products;
   } catch (error) {
     console.error("[equipment] GraphQL catalog fetch failed:", error);
     return [];

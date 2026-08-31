@@ -86,8 +86,8 @@ class Motorock_Catalog_Importer_Product_Writer {
         $product->set_price($data['regular_price']);
         $product->set_description(isset($data['description']) ? $data['description'] : '');
         $product->set_short_description(isset($data['short_description']) ? $data['short_description'] : '');
-        $product->set_status('publish');
-        $product->set_catalog_visibility('visible');
+        $product->set_status(Motorock_Catalog_Importer_Feed_Products::default_status_for_feed($this->feed));
+        $product->set_catalog_visibility(Motorock_Catalog_Importer_Feed_Products::default_catalog_visibility_for_feed($this->feed));
         $this->apply_orderable_stock($product, (int) $data['stock_quantity']);
 
         $product_id = $product->save();
@@ -111,8 +111,8 @@ class Motorock_Catalog_Importer_Product_Writer {
         $product->set_sku($data['sku']);
         $product->set_description(isset($data['description']) ? $data['description'] : '');
         $product->set_short_description(isset($data['short_description']) ? $data['short_description'] : '');
-        $product->set_status('publish');
-        $product->set_catalog_visibility('visible');
+        $product->set_status(Motorock_Catalog_Importer_Feed_Products::default_status_for_feed($this->feed));
+        $product->set_catalog_visibility(Motorock_Catalog_Importer_Feed_Products::default_catalog_visibility_for_feed($this->feed));
 
         $attributes = array();
         foreach (isset($data['attributes']) ? $data['attributes'] : array() as $attribute_data) {

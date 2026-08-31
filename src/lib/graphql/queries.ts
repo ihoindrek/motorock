@@ -201,6 +201,43 @@ export const PRODUCT_CATALOG_PAGE = `
   }
 `;
 
+export const PRODUCT_BRAND_CATALOG_PAGE = `
+  query ProductBrandCatalogPage(
+    $first: Int!
+    $after: String
+    $category: String
+    $categoryNotIn: [String]
+    $brandTaxonomyTerms: [String]!
+  ) {
+    products(
+      first: $first
+      after: $after
+      where: {
+        status: "publish"
+        category: $category
+        categoryNotIn: $categoryNotIn
+        taxonomyFilter: {
+          filters: [
+            {
+              taxonomy: PA_BRAND
+              operator: IN
+              terms: $brandTaxonomyTerms
+            }
+          ]
+        }
+      }
+    ) {
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+      nodes {
+        ${CATALOG_LIST_FIELDS}
+      }
+    }
+  }
+`;
+
 export const HOMEPAGE_PRODUCT_CATALOG_PAGE = `
   query HomepageProductCatalogPage($first: Int!, $after: String, $category: String, $categoryNotIn: [String]) {
     products(

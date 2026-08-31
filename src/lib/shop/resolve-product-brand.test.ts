@@ -140,6 +140,14 @@ describe("resolveEquipmentBrandFromImportMeta", () => {
       ]),
     ).toBe("Pando Moto");
   });
+
+  it("maps John Doe catalog imports to John Doe", () => {
+    expect(
+      resolveEquipmentBrandFromImportMeta([
+        { key: "_catalog_adapter", value: "johndoe" },
+      ]),
+    ).toBe("John Doe");
+  });
 });
 
 describe("resolveEquipmentBrandFromProductName", () => {
@@ -147,6 +155,13 @@ describe("resolveEquipmentBrandFromProductName", () => {
     expect(resolveEquipmentBrandFromProductName("MG Waterproof Trousers")).toBe(
       "Motogirl",
     );
+  });
+
+  it("matches full John Doe name but not partial john", () => {
+    expect(
+      resolveEquipmentBrandFromProductName("John Doe Roadster Tech Jacket"),
+    ).toBe("John Doe");
+    expect(resolveEquipmentBrandFromProductName("Johnson City Tee")).toBeUndefined();
   });
 });
 

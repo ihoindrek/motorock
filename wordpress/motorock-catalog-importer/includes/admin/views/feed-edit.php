@@ -47,6 +47,8 @@ $default_column_map = Motorock_Catalog_Importer_Generic_Csv_Adapter::default_col
 $adapters = Motorock_Catalog_Importer_Feed_Manager::get_adapter_choices();
 $default_import_mode = isset($feed['default_import_mode']) ? $feed['default_import_mode'] : 'full';
 $is_generic = $feed['adapter'] === 'generic_csv';
+$catalog_hidden = !Motorock_Catalog_Importer_Feed_Products::is_feed_visible_on_storefront($feed);
+$product_stats = Motorock_Catalog_Importer_Feed_Products::get_visibility_stats_for_feed($feed['id']);
 ?>
 
 <div class="wrap motorock-catalog-importer">
@@ -94,6 +96,16 @@ $is_generic = $feed['adapter'] === 'generic_csv';
                         <option value="full" <?php selected($default_import_mode, 'full'); ?>>Full import (create/update products)</option>
                         <option value="update_only" <?php selected($default_import_mode, 'update_only'); ?>>Update stock &amp; prices only</option>
                     </select>
+                </td>
+            </tr>
+            <tr>
+                <th>New products</th>
+                <td>
+                    <label>
+                        <input type="checkbox" id="mci-catalog-hidden" value="1" <?php checked($catalog_hidden); ?>>
+                        Hide new imports from storefront (draft until you publish the feed)
+                    </label>
+                    <p class="description">When checked, newly imported products are created as <strong>draft</strong>. Use the storefront toggle below to show or hide all feed products at once.</p>
                 </td>
             </tr>
         </table>
@@ -180,6 +192,56 @@ $is_generic = $feed['adapter'] === 'generic_csv';
         <button type="button" class="button button-primary" id="mci-save-category-mappings">Save category mapping</button>
     </div>
     <?php endif; ?>
+
+    <div class="mci-card">
+        <h2>Imported products</h2>
+        <p>
+            Brand: <strong><?php echo esc_html($feed['brand'] !== '' ? $feed['brand'] : '—'); ?></strong>
+        </p>
+        <ul class="mci-stats-list">
+            <li><strong><?php echo intval($product_stats['total']); ?></strong> products linked to this feed</li>
+            <li><strong><?php echo intval($product_stats['published']); ?></strong> visible on storefront (published)</li>
+            <li><strong><?php echo intval($product_stats['draft']); ?></strong> hidden (draft)</li>
+        </ul>
+        <?php if (!empty($feed['last_import_stats'])) : ?>
+            <p class="description">
+                Last import:
+                <?php echo intval($feed['last_import_stats']['imported']); ?> new,
+                <?php echo intval($feed['last_import_stats']['updated']); ?> updated,
+                <?php echo intval($feed['last_import_stats']['failed']); ?> failed
+                <?php if (!empty($feed['last_import_at'])) : ?>
+                    (<?php echo esc_html($feed['last_import_at']); ?>)
+                <?php endif; ?>
+            </p>
+        <?php endif; ?>
+
+        <h3>Storefront visibility</h3>
+        <p>Hide or show <em>all</em> products from this feed on motorock.eu. Hidden products are set to <strong>draft</strong> (not in the GraphQL catalog). Run <code>npm run revalidate</code> after toggling.</p>
+
+        <p>
+            <?php if ($catalog_hidden || ($product_stats['published'] === 0 && $product_stats['total'] > 0)) : ?>
+                <span class="mci-badge mci-badge-hidden">Currently hidden</span>
+            <?php elseif ($product_stats['total'] > 0) : ?>
+                <span class="mci-badge mci-badge-visible">Currently visible</span>
+            <?php endif; ?>
+        </p>
+
+        <p>
+            <button type="button" class="button button-primary" id="mci-show-on-storefront" <?php disabled($product_stats['total'] === 0 || ($product_stats['published'] >= $product_stats['total'] && !$catalog_hidden)); ?>>
+                Show on storefront
+            </button>
+            <button type="button" class="button" id="mci-hide-from-storefront" <?php disabled($product_stats['total'] === 0 || $product_stats['published'] === 0); ?>>
+                Hide from storefront
+            </button>
+        </p>
+
+        <div id="mci-visibility-progress" style="display:none;margin-top:16px;">
+            <div class="mci-progress-bar-wrap">
+                <div id="mci-visibility-progress-bar" class="mci-progress-bar">0%</div>
+            </div>
+            <p id="mci-visibility-progress-text"></p>
+        </div>
+    </div>
 
     <div class="mci-card">
         <h2>Import</h2>

@@ -18,18 +18,25 @@ import {
 } from "@/lib/shop/wc-categories";
 import { resolveAvailableDisplacements } from "@/lib/shop/motorcycle-displacement";
 import { buildBrandCatalogHref } from "@/lib/shop/brand-url";
-import { getBrandBySlug } from "@/lib/shop/brands";
+import { getBrandByName, getBrandBySlug } from "@/lib/shop/brands";
 
 export type EquipmentCatalogWhere = {
   category?: string;
   categoryNotIn?: string[];
+  /** pa_brand slug — fetch only this brand from WooCommerce GraphQL. */
+  brandSlug?: string;
 };
 
 export function resolveEquipmentCatalogWhere(
   route: CategoryRoute,
 ): EquipmentCatalogWhere {
   if (route.brand) {
-    return { categoryNotIn: ["motorcycles", "tools-maintenance"] };
+    const brandSlug = getBrandByName(route.brand)?.slug;
+
+    return {
+      categoryNotIn: ["motorcycles", "tools-maintenance"],
+      ...(brandSlug ? { brandSlug } : {}),
+    };
   }
 
   if (route.accessoriesOnly && route.wcCategorySlug) {

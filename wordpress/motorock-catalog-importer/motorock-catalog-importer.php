@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Motorock Catalog Importer
  * Description: Universal catalog import for WooCommerce — CSV feeds with enrichment (Holy Freedom / PrestaShop) and future supplier adapters.
- * Version: 0.2.0
+ * Version: 0.3.0
  * Author: Motorock
  * Requires at least: 6.0
  * Requires PHP: 7.4
@@ -13,7 +13,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('MOTOROCK_CATALOG_IMPORTER_VERSION', '0.2.0');
+define('MOTOROCK_CATALOG_IMPORTER_VERSION', '0.3.0');
 define('MOTOROCK_CATALOG_IMPORTER_FILE', __FILE__);
 define('MOTOROCK_CATALOG_IMPORTER_DIR', plugin_dir_path(__FILE__));
 define('MOTOROCK_CATALOG_IMPORTER_URL', plugin_dir_url(__FILE__));
@@ -50,6 +50,7 @@ final class Motorock_Catalog_Importer_Plugin {
         add_action('wp_ajax_motorock_catalog_prepare_import', array($this, 'ajax_prepare_import'));
         add_action('wp_ajax_motorock_catalog_run_import', array($this, 'ajax_run_import'));
         add_action('wp_ajax_motorock_catalog_delete_feed', array($this, 'ajax_delete_feed'));
+        add_action('wp_ajax_motorock_catalog_set_feed_visibility', array($this, 'ajax_set_feed_visibility'));
     }
 
     public function woocommerce_missing_notice() {
@@ -64,6 +65,7 @@ final class Motorock_Catalog_Importer_Plugin {
         require_once MOTOROCK_CATALOG_IMPORTER_DIR . 'includes/shared/class-session-store.php';
         require_once MOTOROCK_CATALOG_IMPORTER_DIR . 'includes/shared/class-adapter-base.php';
         require_once MOTOROCK_CATALOG_IMPORTER_DIR . 'includes/class-feed-manager.php';
+        require_once MOTOROCK_CATALOG_IMPORTER_DIR . 'includes/class-feed-products.php';
         require_once MOTOROCK_CATALOG_IMPORTER_DIR . 'includes/class-logger.php';
         require_once MOTOROCK_CATALOG_IMPORTER_DIR . 'includes/class-csv-parser.php';
         require_once MOTOROCK_CATALOG_IMPORTER_DIR . 'includes/class-prestashop-scraper.php';
@@ -129,6 +131,8 @@ final class Motorock_Catalog_Importer_Plugin {
             ? 'update_only'
             : 'full';
 
+        $catalog_hidden = !empty($_POST['catalog_hidden']) && wp_unslash($_POST['catalog_hidden']) === '1';
+
         $saved = Motorock_Catalog_Importer_Feed_Manager::save_feed($feed_id, array(
             'name' => isset($_POST['name']) ? sanitize_text_field(wp_unslash($_POST['name'])) : '',
             'adapter' => isset($_POST['adapter']) ? sanitize_key(wp_unslash($_POST['adapter'])) : 'holyfreedom',
@@ -137,6 +141,7 @@ final class Motorock_Catalog_Importer_Plugin {
             'category_mappings' => $category_mappings,
             'column_map' => $column_map,
             'default_import_mode' => $default_import_mode,
+            'catalog_hidden' => $catalog_hidden,
         ));
 
         wp_send_json_success(array(
@@ -243,6 +248,7 @@ final class Motorock_Catalog_Importer_Plugin {
                 'last_import_at' => current_time('mysql'),
                 'last_import_stats' => $result['stats'],
             ));
+            Motorock_Catalog_Importer_Feed_Products::refresh_feed_product_stats($feed_id);
         }
 
         wp_send_json_success($result);
@@ -255,6 +261,46 @@ final class Motorock_Catalog_Importer_Plugin {
         Motorock_Catalog_Importer_Feed_Manager::delete_feed($feed_id);
 
         wp_send_json_success(array('message' => 'Feed deleted.'));
+    }
+
+    public function ajax_set_feed_visibility() {
+        $this->verify_ajax();
+
+        $feed_id = isset($_POST['feed_id']) ? sanitize_key(wp_unslash($_POST['feed_id'])) : '';
+        $feed = Motorock_Catalog_Importer_Feed_Manager::get_feed($feed_id);
+
+        if (!$feed) {
+            wp_send_json_error(array('message' => 'Feed not found.'));
+        }
+
+        $visible = isset($_POST['visible']) && wp_unslash($_POST['visible']) === '1';
+        $offset = isset($_POST['offset']) ? max(0, (int) $_POST['offset']) : 0;
+
+        $result = Motorock_Catalog_Importer_Feed_Products::apply_storefront_visibility_batch(
+            $feed_id,
+            $visible,
+            $offset
+        );
+
+        if (!empty($result['done'])) {
+            Motorock_Catalog_Importer_Feed_Manager::save_feed($feed_id, array(
+                'catalog_hidden' => !$visible,
+            ));
+            Motorock_Catalog_Importer_Feed_Products::refresh_feed_product_stats($feed_id);
+        }
+
+        wp_send_json_success(array(
+            'message' => $visible ? 'Products shown on storefront.' : 'Products hidden from storefront.',
+            'visible' => $visible,
+            'processed' => $result['processed'],
+            'offset' => $result['offset'],
+            'total' => $result['total'],
+            'done' => $result['done'],
+            'stats' => $result['stats'],
+            'progress' => $result['total'] > 0
+                ? min(100, (int) round(($result['offset'] / $result['total']) * 100))
+                : 100,
+        ));
     }
 }
 

@@ -48,7 +48,10 @@ $adapters = Motorock_Catalog_Importer_Feed_Manager::get_adapter_choices();
                 <thead>
                     <tr>
                         <th>Name</th>
+                        <th>Brand</th>
                         <th>Adapter</th>
+                        <th>Products</th>
+                        <th>Storefront</th>
                         <th>CSV</th>
                         <th>Last import</th>
                         <th></th>
@@ -56,9 +59,33 @@ $adapters = Motorock_Catalog_Importer_Feed_Manager::get_adapter_choices();
                 </thead>
                 <tbody>
                     <?php foreach ($feeds as $feed) : ?>
+                        <?php
+                        $product_count = Motorock_Catalog_Importer_Feed_Products::count_for_feed($feed['id']);
+                        $visibility_stats = Motorock_Catalog_Importer_Feed_Products::get_visibility_stats_for_feed($feed['id']);
+                        $catalog_hidden = !Motorock_Catalog_Importer_Feed_Products::is_feed_visible_on_storefront($feed);
+                        ?>
                         <tr>
                             <td><strong><?php echo esc_html($feed['name']); ?></strong></td>
+                            <td><?php echo esc_html($feed['brand'] !== '' ? $feed['brand'] : '—'); ?></td>
                             <td><?php echo esc_html(isset($adapters[$feed['adapter']]) ? $adapters[$feed['adapter']] : $feed['adapter']); ?></td>
+                            <td>
+                                <strong><?php echo intval($product_count); ?></strong>
+                                <?php if ($product_count > 0) : ?>
+                                    <br><small>
+                                        <?php echo intval($visibility_stats['published']); ?> live,
+                                        <?php echo intval($visibility_stats['draft']); ?> hidden
+                                    </small>
+                                <?php endif; ?>
+                            </td>
+                            <td>
+                                <?php if ($catalog_hidden || $visibility_stats['published'] === 0 && $product_count > 0) : ?>
+                                    <span class="mci-badge mci-badge-hidden">Hidden</span>
+                                <?php elseif ($product_count > 0) : ?>
+                                    <span class="mci-badge mci-badge-visible">Visible</span>
+                                <?php else : ?>
+                                    —
+                                <?php endif; ?>
+                            </td>
                             <td>
                                 <?php if (!empty($feed['csv_original_name'])) : ?>
                                     <?php echo esc_html($feed['csv_original_name']); ?>
@@ -72,8 +99,11 @@ $adapters = Motorock_Catalog_Importer_Feed_Manager::get_adapter_choices();
                             <td>
                                 <?php if (!empty($feed['last_import_at'])) : ?>
                                     <?php echo esc_html($feed['last_import_at']); ?>
-                                    <?php if (!empty($feed['last_import_stats']['imported'])) : ?>
-                                        <br><small><?php echo intval($feed['last_import_stats']['imported']); ?> imported</small>
+                                    <?php if (!empty($feed['last_import_stats'])) : ?>
+                                        <br><small>
+                                            <?php echo intval($feed['last_import_stats']['imported']); ?> new,
+                                            <?php echo intval($feed['last_import_stats']['updated']); ?> updated
+                                        </small>
                                     <?php endif; ?>
                                 <?php else : ?>
                                     —

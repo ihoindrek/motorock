@@ -37,6 +37,11 @@ class Motorock_Catalog_Importer_Feed_Manager {
             'csv_uploaded_at' => '',
             'last_import_at' => '',
             'last_import_stats' => array(),
+            'catalog_hidden' => false,
+            'product_count' => 0,
+            'product_count_published' => 0,
+            'product_count_draft' => 0,
+            'product_count_updated_at' => '',
             'created_at' => current_time('mysql'),
         ), $existing, $data, array('id' => $feed_id));
 

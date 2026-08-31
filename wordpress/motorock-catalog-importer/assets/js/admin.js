@@ -73,6 +73,7 @@
             brand: $('#mci-feed-brand').val(),
             price_multiplier: $('#mci-feed-multiplier').val(),
             default_import_mode: $('#mci-default-import-mode').val(),
+            catalog_hidden: $('#mci-catalog-hidden').is(':checked') ? '1' : '0',
             category_mappings: collectCategoryMappings(),
             column_map: collectColumnMappings()
         });
@@ -247,6 +248,7 @@
                             importRunning = false;
                             $('#mci-start-import').prop('disabled', false).text('Prepare & start import');
                             showStatus($status, 'Import complete.', true);
+                            window.setTimeout(function () { window.location.reload(); }, 900);
                             return;
                         }
 
@@ -277,5 +279,73 @@
 
     $('#mci-start-import').on('click', function () {
         startImport($('#mci-import-mode').val());
+    });
+
+    function runVisibilityBatch(visible, offset) {
+        return $.post(motorockCatalogImporter.ajaxurl, {
+            action: 'motorock_catalog_set_feed_visibility',
+            nonce: motorockCatalogImporter.nonce,
+            feed_id: $('#mci-feed-id').val(),
+            visible: visible ? '1' : '0',
+            offset: offset
+        });
+    }
+
+    function setFeedVisibility(visible) {
+        var actionLabel = visible ? 'show on storefront' : 'hide from storefront';
+        if (!confirm('This will ' + actionLabel + ' all products linked to this feed. Continue?')) {
+            return;
+        }
+
+        var $status = $('#mci-status');
+        var $progress = $('#mci-visibility-progress');
+        var $showBtn = $('#mci-show-on-storefront');
+        var $hideBtn = $('#mci-hide-from-storefront');
+
+        $progress.show();
+        $('#mci-visibility-progress-bar').css('width', '0%').text('0%');
+        $showBtn.prop('disabled', true);
+        $hideBtn.prop('disabled', true);
+
+        var offset = 0;
+
+        function step() {
+            runVisibilityBatch(visible, offset).done(function (response) {
+                if (!response.success) {
+                    throw new Error(response.data && response.data.message ? response.data.message : 'Visibility update failed.');
+                }
+
+                var data = response.data;
+                $('#mci-visibility-progress-bar').css('width', data.progress + '%').text(data.progress + '%');
+                $('#mci-visibility-progress-text').text(
+                    'Updated ' + Math.min(data.offset, data.total) + ' / ' + data.total
+                );
+
+                if (data.done) {
+                    $('#mci-catalog-hidden').prop('checked', !visible);
+                    showStatus($status, data.message || 'Done.', true);
+                    window.setTimeout(function () { window.location.reload(); }, 700);
+                    return;
+                }
+
+                offset = data.offset;
+                step();
+            }).fail(function (xhr) {
+                var message = xhr.responseJSON && xhr.responseJSON.data ? xhr.responseJSON.data.message : 'Visibility update failed.';
+                showStatus($status, message, false);
+                $showBtn.prop('disabled', false);
+                $hideBtn.prop('disabled', false);
+            });
+        }
+
+        step();
+    }
+
+    $('#mci-show-on-storefront').on('click', function () {
+        setFeedVisibility(true);
+    });
+
+    $('#mci-hide-from-storefront').on('click', function () {
+        setFeedVisibility(false);
     });
 })(jQuery);

@@ -4,7 +4,7 @@ import { CategoryView } from "@/components/shop/category-view";
 import type { Locale } from "@/i18n/config";
 import { localizedHref } from "@/i18n/paths";
 import { getDictionary } from "@/i18n/get-dictionary";
-import { getEquipmentCatalog, getMotorcycleCatalog } from "@/lib/graphql/products";
+import { getEquipmentCatalogForRoute, getMotorcycleCatalog } from "@/lib/graphql/products";
 import {
   buildBrandCatalogHref,
   buildEquipmentBrandRoute,
@@ -92,7 +92,7 @@ export async function renderBrandCatalogPage({
       notFound();
     }
 
-    const products = await getEquipmentCatalog(locale);
+    const products = await getEquipmentCatalogForRoute(route, locale);
 
     return <CategoryView route={route} products={products} />;
   }

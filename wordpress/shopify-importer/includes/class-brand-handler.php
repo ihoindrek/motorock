@@ -35,6 +35,7 @@ class Shopify_Importer_Brand_Handler {
                 'pando-moto'   => 'Pando Moto',
                 'johnny-reb'   => 'Johnny Reb',
                 'holyfreedom'  => 'Holyfreedom',
+                'john-doe'     => 'John Doe',
                 'motogirl'     => 'Motogirl',
                 'makita'       => 'Makita',
                 'brixton'      => 'Brixton',

@@ -114,6 +114,11 @@ export function resolveEquipmentBrandFromImportMeta(
     return "Pando Moto";
   }
 
+  const catalogAdapter = readMetaValue(meta, "_catalog_adapter").toLowerCase();
+  if (catalogAdapter === "johndoe" || catalogAdapter === "john-doe") {
+    return "John Doe";
+  }
+
   const fbBrand = readMetaValue(meta, "fb_brand");
   if (fbBrand) {
     const fromMeta = resolveBrandNameFromSlug(fbBrand, { equipmentOnly: true });
@@ -158,6 +163,12 @@ export function resolveEquipmentBrandFromSku(
     return "Pando Moto";
   }
 
+  if (
+    /^(JW|JLE800|JHK800|MJDD|MJDC|JDD|JDC|JDOV|IJ)/.test(normalized)
+  ) {
+    return "John Doe";
+  }
+
   return undefined;
 }
 
@@ -180,6 +191,11 @@ export function resolveEquipmentBrandFromProductName(
 
     if (lower.includes(nameLower)) {
       return brand.name;
+    }
+
+    // Multi-word brands must match the full name — avoid "john" matching John Doe.
+    if (nameLower.includes(" ")) {
+      continue;
     }
 
     const needle = nameLower.split(/\s+/)[0];
