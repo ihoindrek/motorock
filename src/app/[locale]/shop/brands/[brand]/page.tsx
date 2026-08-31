@@ -6,6 +6,7 @@ import { generateBrandCatalogMetadata } from "@/lib/shop/brand-catalog-page";
 import { buildBrandCatalogHref } from "@/lib/shop/brand-url";
 
 export const revalidate = 300;
+export const maxDuration = 120;
 
 // No build-time prerender (empty list), but having generateStaticParams
 // opts the route into ISR so visited paths get cached on demand.

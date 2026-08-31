@@ -14,6 +14,7 @@ import {
   filterProductsByRoute,
   resolveEquipmentCatalogWhere,
 } from "@/lib/shop/category";
+import { getBrandByName } from "@/lib/shop/brands";
 import { TOOLS_WC_SLUG } from "@/lib/shop/wc-categories";
 import { graphqlRequest } from "@/lib/graphql/client";
 import {
@@ -77,6 +78,8 @@ type BrandCatalogPageVariables = CatalogPageVariables & {
 };
 
 const CATALOG_PAGE_SIZE = 100;
+/** Woo catalog queries often exceed the default 20s client timeout. */
+const CATALOG_GRAPHQL_TIMEOUT_MS = 120_000;
 const HOMEPAGE_MOTORCYCLE_LIMIT = 36;
 const HOMEPAGE_GEAR_LIMIT = 120;
 const HOMEPAGE_WOMEN_LIMIT = 200;
@@ -331,7 +334,11 @@ async function fetchAllCatalogNodes(
             categoryNotIn: where.categoryNotIn ?? null,
             brandTaxonomyTerms: [where.brandSlug!],
           },
-          { next: { revalidate: 3600 }, retryAttempts: 5 },
+          {
+            next: { revalidate: 3600 },
+            retryAttempts: 3,
+            timeoutMs: CATALOG_GRAPHQL_TIMEOUT_MS,
+          },
         )
       : await graphqlRequest<CatalogPageResponse, CatalogPageVariables>(
           PRODUCT_CATALOG_PAGE,
@@ -341,7 +348,11 @@ async function fetchAllCatalogNodes(
             category: where.category ?? null,
             categoryNotIn: where.categoryNotIn ?? null,
           },
-          { next: { revalidate: 3600 }, retryAttempts: 5 },
+          {
+            next: { revalidate: 3600 },
+            retryAttempts: 3,
+            timeoutMs: CATALOG_GRAPHQL_TIMEOUT_MS,
+          },
         );
 
     rawNodes.push(...data.products.nodes);
@@ -871,10 +882,70 @@ export const getEquipmentCatalog = cache(async (locale: Locale = "en") => {
   return equipmentCatalogByLocale[locale]();
 });
 
+async function fetchEquipmentBrandCatalogUncached(
+  brandSlug: string,
+  brandName: string,
+  locale: Locale,
+): Promise<CatalogProduct[]> {
+  const route: CategoryRoute = { title: brandName, description: "", breadcrumbs: [], brand: brandName };
+  const where = resolveEquipmentCatalogWhere(route);
+  const { nodes, nodesById } = await fetchAllCatalogNodes(where, locale);
+  const products = mapCatalogNodesForRoute(nodes, route, locale, nodesById);
+  return filterProductsByRoute(products, route);
+}
+
+function getEquipmentBrandCatalogCached(
+  brandSlug: string,
+  brandName: string,
+  locale: Locale,
+) {
+  return unstable_cache(
+    () => fetchEquipmentBrandCatalogUncached(brandSlug, brandName, locale),
+    ["equipment-brand-catalog", brandSlug, locale],
+    {
+      revalidate: 300,
+      tags: ["woocommerce", "equipment-catalog", `brand-${brandSlug}`],
+    },
+  );
+}
+
 export async function getEquipmentCatalogForRoute(
   route: CategoryRoute,
   locale: Locale = "en",
 ): Promise<CatalogProduct[]> {
+  if (route.brand) {
+    const brandSlug = getBrandByName(route.brand)?.slug;
+
+    if (brandSlug) {
+      try {
+        const products = await getEquipmentBrandCatalogCached(
+          brandSlug,
+          route.brand,
+          locale,
+        )();
+
+        if (products.length > 0) {
+          return products;
+        }
+      } catch (error) {
+        console.error("[equipment] brand catalog fetch failed:", error);
+      }
+
+      try {
+        const cached = await getEquipmentCatalog(locale);
+        const filtered = filterProductsByRoute(cached, route);
+
+        if (filtered.length > 0) {
+          return filtered;
+        }
+      } catch (error) {
+        console.error("[equipment] brand catalog fallback failed:", error);
+      }
+
+      return [];
+    }
+  }
+
   try {
     const where = resolveEquipmentCatalogWhere(route);
     const { nodes, nodesById } = await fetchAllCatalogNodes(where, locale);

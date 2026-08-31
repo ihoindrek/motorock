@@ -7,6 +7,7 @@ import {
 } from "@/lib/shop/brand-catalog-page";
 
 export const revalidate = 300;
+export const maxDuration = 120;
 
 // No build-time prerender (empty list), but having generateStaticParams
 // opts the route into ISR so visited brand pages get cached on demand.
