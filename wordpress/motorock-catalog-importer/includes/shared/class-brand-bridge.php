@@ -22,7 +22,10 @@ class Motorock_Catalog_Importer_Brand_Bridge {
         }
 
         if ($this->shopify_handler) {
-            return $this->shopify_handler->ensure_product_brand($product_id, $brand_name, $logger, $force);
+            $assigned = $this->shopify_handler->ensure_product_brand($product_id, $brand_name, $logger, $force);
+            if ($assigned) {
+                return true;
+            }
         }
 
         if (!taxonomy_exists('pa_brand')) {

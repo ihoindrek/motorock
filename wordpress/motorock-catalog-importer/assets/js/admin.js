@@ -177,7 +177,7 @@
         return $.ajax({
             url: motorockCatalogImporter.ajaxurl,
             method: 'POST',
-            timeout: 120000,
+            timeout: 300000,
             data: {
                 action: 'motorock_catalog_run_import',
                 nonce: motorockCatalogImporter.nonce,
