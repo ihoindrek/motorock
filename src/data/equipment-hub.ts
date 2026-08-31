@@ -249,9 +249,9 @@ export const equipmentHubBrands = [
   {
     name: "John Doe",
     slug: "john-doe",
-    image: "/John-Doe-logo.svg",
+    image: "/john-doe-hero.webp",
     logo: "/John-Doe-logo.svg",
-    logoInvert: false,
+    logoInvert: true,
     imageAlt: {
       en: "John Doe motorcycle apparel",
       et: "John Doe mootorrattariided",
