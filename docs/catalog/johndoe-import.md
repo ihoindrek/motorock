@@ -11,7 +11,19 @@ John Doe supplies a daily stock CSV (Frankfurt + outside warehouse). Motorock us
 
 ## Initial full import (recommended)
 
-### 1. Generate WooCommerce CSV
+Use **WooCommerce → Catalog Import** in WP admin (plugin already deployed on shop.motorock.eu).
+
+1. **New feed** → adapter **John Doe (stock CSV)**
+2. Brand: `John Doe`, Price multiplier: `1`
+3. **Category mapping** — map each `John Doe > Men/Women > …` label to Motorock categories (see table below) → **Save**
+4. Upload stock CSV (or use server copy at `uploads/motorock-catalog-importer/csv/johndoe-source.csv`)
+5. **Full import** — creates variable products (letter sizes + waist/inseam e.g. `30/32`)
+6. After import: `npm run revalidate`
+
+Parts Europe image cache is on the server at  
+`uploads/motorock-catalog-importer/cache/johndoe-partseurope-index.json` (~86 parent products with images).
+
+### Optional: generate WooCommerce CSV locally
 
 ```bash
 # Download CSV + build import file (test with 20 parents)
@@ -87,11 +99,48 @@ Toni recommends treating **Inside ≥ 5** as safer for customer-facing availabil
 
 ## Categories
 
-Inferred from product name when no manual mapping exists:
+Importer infers **gender + product type** from the product name and SKU (stock CSV has no category column).
 
-- Jackets, Pants, Gloves, Footwear, Protection, Accessories → under **John Doe**
+**Label format:** `John Doe > Men > Jackets` or `John Doe > Women > T-Shirts`
 
-Configure exact `product_cat` targets in the feed’s category mappings in WP admin.
+**Gender rules:**
+
+| Signal | Audience |
+|--------|----------|
+| `Women`, `Woman`, `Jeggings` in name | Women |
+| `Men`, `Men's` in name | Men |
+| SKU prefix `JW`, `JLE800`, `JHK800`, `MJDD`, `MJDC` | Women |
+| Names like `Ruby`, `Betty`, `Jackie` | Women |
+| Everything else | Men |
+
+**Product types:** Jackets, Motoshirts, Vests, Hoodies & Sweaters, T-Shirts, Pants, Gloves, Footwear, Eyewear, Protection, Accessories, Other
+
+### Recommended Catalog Import mapping (Motorock)
+
+| Source label | Map to WooCommerce |
+|--------------|-------------------|
+| `John Doe > Men > Jackets` | For men › Jackets & tags |
+| `John Doe > Women > Jackets` | For women › Jackets & tags |
+| `John Doe > Men > Motoshirts` | For men › Jackets & tags |
+| `John Doe > Women > Motoshirts` | For women › Jackets & tags |
+| `John Doe > Men > Vests` | For men › Vests |
+| `John Doe > Women > Vests` | For women › Vests |
+| `John Doe > Men > Hoodies & Sweaters` | For men › Sweaters |
+| `John Doe > Women > Hoodies & Sweaters` | For women › Hoodies & sweatshirts |
+| `John Doe > Men > T-Shirts` | For men › T-shirts |
+| `John Doe > Women > T-Shirts` | For women › T-shirts & jerseys |
+| `John Doe > Men > Pants` | For men › Pants |
+| `John Doe > Women > Pants` | For women › Pants & jeans |
+| `John Doe > Men > Gloves` | For men › Gloves |
+| `John Doe > Women > Gloves` | For women › Gloves |
+| `John Doe > Men > Footwear` | For men › Footwear |
+| `John Doe > Women > Footwear` | For women › Footwear |
+| `John Doe > Men > Protection` | Accessories › Protection (or brand subcat) |
+| `John Doe > Men > Eyewear` | Accessories › Goggles |
+| `John Doe > Men > Accessories` | Accessories (caps, tubes, belts…) |
+| `John Doe > Men > Other` / `Women > Other` | Review manually or default brand category |
+
+After mapping, **Full import** assigns Woo categories so storefront **For men / For women** filters work.
 
 ## Content enrichment
 

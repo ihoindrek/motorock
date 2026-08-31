@@ -22,15 +22,30 @@ class Motorock_Catalog_Importer_Johndoe_Adapter extends Motorock_Catalog_Importe
     }
 
     public static function inferred_category_labels() {
-        return array(
-            'John Doe > Jackets',
-            'John Doe > Pants',
-            'John Doe > Gloves',
-            'John Doe > Footwear',
-            'John Doe > Protection',
-            'John Doe > Accessories',
-            'John Doe',
+        $genders = array('Men', 'Women');
+        $types = array(
+            'Jackets',
+            'Motoshirts',
+            'Vests',
+            'Hoodies & Sweaters',
+            'T-Shirts',
+            'Pants',
+            'Gloves',
+            'Footwear',
+            'Eyewear',
+            'Protection',
+            'Accessories',
+            'Other',
         );
+
+        $labels = array('John Doe');
+        foreach ($genders as $gender) {
+            foreach ($types as $type) {
+                $labels[] = 'John Doe > ' . $gender . ' > ' . $type;
+            }
+        }
+
+        return $labels;
     }
 
     public function build_queue(array $feed, array $context = array()) {
@@ -142,7 +157,7 @@ class Motorock_Catalog_Importer_Johndoe_Adapter extends Motorock_Catalog_Importe
             'regular_price' => $this->format_price($row['VK_Brutto'], $feed),
             'stock_quantity' => $stock,
             'stock_status' => $stock > 0 ? 'instock' : 'outofstock',
-            'category_ids' => $this->resolve_category_ids($feed, $this->infer_category($name)),
+            'category_ids' => $this->resolve_category_ids($feed, $this->infer_category($name, $sku)),
             'brand' => isset($feed['brand']) && $feed['brand'] !== '' ? $feed['brand'] : 'John Doe',
             'images' => $this->map_images($enriched),
             'meta' => $this->row_meta($row, $sku),
@@ -187,7 +202,7 @@ class Motorock_Catalog_Importer_Johndoe_Adapter extends Motorock_Catalog_Importe
             'name' => $name,
             'description' => $enriched ? $enriched['description_html'] : '',
             'short_description' => $enriched ? $enriched['short_description'] : '',
-            'category_ids' => $this->resolve_category_ids($feed, $this->infer_category($name)),
+            'category_ids' => $this->resolve_category_ids($feed, $this->infer_category($name, $parent_sku)),
             'brand' => isset($feed['brand']) && $feed['brand'] !== '' ? $feed['brand'] : 'John Doe',
             'images' => $this->map_images($enriched),
             'attributes' => array(
@@ -278,23 +293,91 @@ class Motorock_Catalog_Importer_Johndoe_Adapter extends Motorock_Catalog_Importe
         return $split['size'];
     }
 
-    private function infer_category($name) {
+    private function infer_category($name, $sku = '') {
+        return 'John Doe > ' . $this->infer_gender($name, $sku) . ' > ' . $this->infer_product_type($name);
+    }
+
+    private function infer_gender($name, $sku = '') {
+        if (preg_match('/\bwomen\'?s?\b|\bwoman\b|\bladies\'?s?\b|\bjegging/i', $name)) {
+            return 'Women';
+        }
+
+        if (preg_match('/\bmen\'?s?\b|\bfor men\b/i', $name)) {
+            return 'Men';
+        }
+
+        $sku = strtoupper(trim((string) $sku));
+        if (preg_match('/^(JW|JLE800|JHK800|MJDD|MJDC)/', $sku)) {
+            return 'Women';
+        }
+
+        if (preg_match('/\bruby\b|\bbetty\b|\bjackie\b/i', $name)) {
+            return 'Women';
+        }
+
+        return 'Men';
+    }
+
+    private function infer_product_type($name) {
         $checks = array(
-            '/jacket|motoshirt|shirt|hoodie|sweat|vest|blouson|windblock|flannel/i' => 'Jackets',
-            '/pant|jean|cargo|chino|stroker|ironhead|explorer/i' => 'Pants',
-            '/glove/i' => 'Gloves',
-            '/boot|shoe|sneaker|shifter|neo/i' => 'Footwear',
-            '/protector|protect/i' => 'Protection',
-            '/helmet|goggle|mask|hat|trucker|cap|tube|sock|belt|wallet|bag/i' => 'Accessories',
+            array(
+                'pattern' => '/t-?shirt/i',
+                'label' => 'T-Shirts',
+            ),
+            array(
+                'pattern' => '/sweater|hoodie|sweatshirt/i',
+                'label' => 'Hoodies & Sweaters',
+            ),
+            array(
+                'pattern' => '/motoshirt/i',
+                'label' => 'Motoshirts',
+            ),
+            array(
+                'pattern' => '/\bvest\b/i',
+                'label' => 'Vests',
+                'skip' => '/invest/i',
+            ),
+            array(
+                'pattern' => '/jacket|blouson|windblock|flannel|softshell/i',
+                'label' => 'Jackets',
+            ),
+            array(
+                'pattern' => '/\b(pant|pants|jeans?|jegging|joggers?|chino)\b|cargo|stroker|ironhead|drifter|dexter|ruby|monolayer|explorer|pioneer|dylan|\bluna\b|jane|classic tapered|jeggy|loose fit|tapered/i',
+                'label' => 'Pants',
+                'skip' => '/\bjacket\b/i',
+            ),
+            array(
+                'pattern' => '/glove/i',
+                'label' => 'Gloves',
+            ),
+            array(
+                'pattern' => '/photochromic|sunglass|goggle|memphis|dakota|highland|\breno\b|kamikaze|roadking|sunliner|speedking|titan|god of speed|mechanix|aviator|airflow/i',
+                'label' => 'Eyewear',
+            ),
+            array(
+                'pattern' => '/\bboot|\bshoe|sneaker|shifter|\bheel\b|tracker|\brover\b|\bsixty\b|grinder|durango|traveler|freewheeler|coyote|taylor mono|\bbetty\b|\bjackie\b|\bora\b|falcon|overland|daytona|rambler|iron black|iron dark|defender mono/i',
+                'label' => 'Footwear',
+            ),
+            array(
+                'pattern' => '/protector|protect/i',
+                'label' => 'Protection',
+            ),
+            array(
+                'pattern' => '/helmet|tube|sock|belt|wallet|bag|trucker|cap|hat|mask|beanie|tunnel|kidney|visor|\bpeak\b/i',
+                'label' => 'Accessories',
+            ),
         );
 
-        foreach ($checks as $pattern => $label) {
-            if (preg_match($pattern, $name)) {
-                return 'John Doe > ' . $label;
+        foreach ($checks as $check) {
+            if (!empty($check['skip']) && preg_match($check['skip'], $name)) {
+                continue;
+            }
+            if (preg_match($check['pattern'], $name)) {
+                return $check['label'];
             }
         }
 
-        return 'John Doe';
+        return 'Other';
     }
 
     private function map_images($enriched) {

@@ -72,13 +72,83 @@ const SIZE_SUFFIX =
 const WAIST_INSEAM_SUFFIX = /^(.+)-(\d{2}\/\d{2}(?:-[A-Z0-9]+)?)$/i;
 
 const CATEGORY_RULES = [
-  [/jacket|motoshirt|shirt|hoodie|sweat|vest|blouson|windblock|flannel/i, "Jackets"],
-  [/pant|jean|cargo|chino|stroker|ironhead|explorer/i, "Pants"],
+  [/t-?shirt/i, "T-Shirts"],
+  [/sweater|hoodie|sweatshirt/i, "Hoodies & Sweaters"],
+  [/motoshirt/i, "Motoshirts"],
+  [/\bvest\b/i, "Vests"],
+  [/jacket|blouson|windblock|flannel|softshell/i, "Jackets"],
+  [
+    /\b(pant|pants|jeans?|jegging|joggers?|chino)\b|cargo|stroker|ironhead|drifter|dexter|ruby|monolayer|explorer|pioneer|dylan|\bluna\b|jane|classic tapered|jeggy|loose fit|tapered/i,
+    "Pants",
+  ],
   [/glove/i, "Gloves"],
-  [/boot|shoe|sneaker|shifter|neo/i, "Footwear"],
+  [
+    /photochromic|sunglass|goggle|memphis|dakota|highland|\breno\b|kamikaze|roadking|sunliner|speedking|titan|god of speed|mechanix|aviator|airflow/i,
+    "Eyewear",
+  ],
+  [
+    /\bboot|\bshoe|sneaker|shifter|\bheel\b|tracker|\brover\b|\bsixty\b|grinder|durango|traveler|freewheeler|coyote|taylor mono|\bbetty\b|\bjackie\b|\bora\b|falcon|overland|daytona|rambler|iron black|iron dark|defender mono/i,
+    "Footwear",
+  ],
   [/protector|protect/i, "Protection"],
-  [/helmet|goggle|mask|hat|trucker|cap|tube|sock|belt|wallet|bag/i, "Accessories"],
+  [/helmet|tube|sock|belt|wallet|bag|trucker|cap|hat|mask|beanie|tunnel|kidney|visor|\bpeak\b/i, "Accessories"],
 ];
+
+const WOMEN_SKU_PREFIXES = /^(JW|JLE800|JHK800|MJDD|MJDC)/;
+
+function inferGender(name, sku = "") {
+  if (/\bwomen'?s?\b|\bwoman\b|\bladies'?s?\b|\bjegging/i.test(name)) {
+    return "Women";
+  }
+  if (/\bmen'?s?\b|\bfor men\b/i.test(name)) {
+    return "Men";
+  }
+  if (WOMEN_SKU_PREFIXES.test(sku.trim().toUpperCase())) {
+    return "Women";
+  }
+  if (/\bruby\b|\bbetty\b|\bjackie\b/i.test(name)) {
+    return "Women";
+  }
+  return "Men";
+}
+
+function inferProductType(name) {
+  for (const [pattern, category] of CATEGORY_RULES) {
+    if (category === "Pants" && /\bjacket\b/i.test(name)) {
+      continue;
+    }
+    if (category === "Vests" && /invest/i.test(name)) {
+      continue;
+    }
+    if (pattern.test(name)) {
+      return category;
+    }
+  }
+  return "Other";
+}
+
+function inferCategory(name, sku = "") {
+  return `${BRAND} > ${inferGender(name, sku)} > ${inferProductType(name)}`;
+}
+
+export function listJohnDoeCategoryLabels() {
+  const genders = ["Men", "Women"];
+  const types = [
+    "Jackets",
+    "Motoshirts",
+    "Vests",
+    "Hoodies & Sweaters",
+    "T-Shirts",
+    "Pants",
+    "Gloves",
+    "Footwear",
+    "Eyewear",
+    "Protection",
+    "Accessories",
+    "Other",
+  ];
+  return ["John Doe", ...genders.flatMap((gender) => types.map((type) => `${BRAND} > ${gender} > ${type}`))];
+}
 
 function parseArgs(argv) {
   const args = {
@@ -197,15 +267,6 @@ function splitParentSku(artNr) {
   }
 
   return { parentSku: trimmed, size: "" };
-}
-
-function inferCategory(name) {
-  for (const [pattern, category] of CATEGORY_RULES) {
-    if (pattern.test(name)) {
-      return `${BRAND} > ${category}`;
-    }
-  }
-  return BRAND;
 }
 
 function sortSizes(sizes) {
@@ -399,7 +460,7 @@ function baseRow(enriched, category, tags = BRAND) {
 function buildSimpleImportRow(row, enriched) {
   const sku = row.ArtNr.trim();
   const { inside, outside, total } = stockTotals(row);
-  const output = baseRow(enriched, inferCategory(row.Bezeichnung));
+  const output = baseRow(enriched, inferCategory(row.Bezeichnung, sku));
   output.Type = "simple";
   output.SKU = sku;
   output.Name = row.Bezeichnung.trim();
@@ -422,7 +483,7 @@ function buildVariableImportRows(parentSku, rows, enriched) {
     return [buildSimpleImportRow(first, enriched)];
   }
 
-  const parent = baseRow(enriched, inferCategory(first.Bezeichnung));
+  const parent = baseRow(enriched, inferCategory(first.Bezeichnung, parentSku));
   parent.Type = "variable";
   parent.SKU = parentSku;
   parent.Name = first.Bezeichnung.trim();
