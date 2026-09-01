@@ -10,6 +10,7 @@ import { buildEquipmentCategoryHref, buildEquipmentRootCategoryHref } from "@/li
 import { localizedHref } from "@/i18n/paths";
 import { sortProductSizes } from "@/lib/shop/sort-sizes";
 import { formatDisplacementLabel } from "@/lib/shop/motorcycle-displacement";
+import type { BrandGenderFilterId } from "@/lib/shop/brand-gender-filter";
 import type { ProductCategory } from "@/types/catalog-product";
 import type { CategoryRoute } from "@/lib/shop/category";
 
@@ -17,6 +18,7 @@ export type ActiveFilters = {
   brands: string[];
   sizes: string[];
   categories: ProductCategory[];
+  genders: BrandGenderFilterId[];
   displacements: number[];
   inStockOnly: boolean;
   priceMin: number;
@@ -30,11 +32,13 @@ type CategoryFiltersProps = {
   availableBrands: readonly string[];
   availableSizes?: readonly string[];
   availableProductCategories?: readonly { id: ProductCategory; label: string }[];
+  availableGenders?: readonly { id: BrandGenderFilterId; label: string }[];
   availableDisplacements?: readonly number[];
   showSizeFilter?: boolean;
   showBrandFilter?: boolean;
   showCategoryFilter?: boolean;
   showProductCategoryFilter?: boolean;
+  showGenderFilter?: boolean;
   showDisplacementFilter?: boolean;
   variant?: "bar" | "drawer";
   embedded?: boolean;
@@ -44,6 +48,7 @@ type CategoryFiltersProps = {
   onToggleBrand: (brand: string) => void;
   onToggleSize: (size: string) => void;
   onToggleCategory?: (category: ProductCategory) => void;
+  onToggleGender?: (gender: BrandGenderFilterId) => void;
   onToggleDisplacement?: (displacement: number) => void;
   onInStockChange: (value: boolean) => void;
   onPriceMinChange: (value: number) => void;
@@ -51,7 +56,14 @@ type CategoryFiltersProps = {
   onClear: () => void;
 };
 
-type OpenFilter = "category" | "brand" | "size" | "displacement" | "price" | null;
+type OpenFilter =
+  | "category"
+  | "gender"
+  | "brand"
+  | "size"
+  | "displacement"
+  | "price"
+  | null;
 
 const filterTriggerBase =
   "inline-flex min-h-12 items-center gap-2.5 border px-5 py-3 font-body text-xs font-bold uppercase tracking-aggressive transition-colors";
@@ -165,6 +177,34 @@ function BrandControls({
               className="size-5 accent-accent"
             />
             {brand}
+          </label>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function GenderControls({
+  genders,
+  activeFilters,
+  onToggleGender,
+}: {
+  genders: readonly { id: BrandGenderFilterId; label: string }[];
+  activeFilters: ActiveFilters;
+  onToggleGender: (gender: BrandGenderFilterId) => void;
+}) {
+  return (
+    <ul className="min-w-[13rem] space-y-3">
+      {genders.map((gender) => (
+        <li key={gender.id}>
+          <label className="flex min-h-11 cursor-pointer items-center gap-3 text-base text-ink">
+            <input
+              type="checkbox"
+              checked={activeFilters.genders.includes(gender.id)}
+              onChange={() => onToggleGender(gender.id)}
+              className="size-5 accent-accent"
+            />
+            {gender.label}
           </label>
         </li>
       ))}
@@ -341,11 +381,13 @@ export function CategoryFilters({
   availableBrands,
   availableSizes = [],
   availableProductCategories = [],
+  availableGenders = [],
   availableDisplacements = [],
   showSizeFilter = true,
   showBrandFilter = true,
   showCategoryFilter = true,
   showProductCategoryFilter = false,
+  showGenderFilter = false,
   showDisplacementFilter = false,
   variant = "bar",
   embedded = false,
@@ -355,6 +397,7 @@ export function CategoryFilters({
   onToggleBrand,
   onToggleSize,
   onToggleCategory,
+  onToggleGender,
   onToggleDisplacement,
   onInStockChange,
   onPriceMinChange,
@@ -434,6 +477,7 @@ export function CategoryFilters({
   const activeFilterCount =
     activeFilters.brands.length +
     activeFilters.categories.length +
+    activeFilters.genders.length +
     activeFilters.sizes.length +
     activeFilters.displacements.length +
     (activeFilters.inStockOnly ? 1 : 0) +
@@ -562,6 +606,22 @@ export function CategoryFilters({
         }`}
       >
         <div className="flex flex-wrap items-center gap-3">
+          {showGenderFilter && onToggleGender ? (
+            <FilterDropdown
+              label={dict.catalog.gender}
+              activeCount={activeFilters.genders.length}
+              open={openFilter === "gender"}
+              onToggle={() => toggleFilter("gender")}
+              whiteBackground={triggerWhiteBackground}
+            >
+              <GenderControls
+                genders={availableGenders}
+                activeFilters={activeFilters}
+                onToggleGender={onToggleGender}
+              />
+            </FilterDropdown>
+          ) : null}
+
           {showProductCategoryFilter && onToggleCategory ? (
             <FilterDropdown
               label={dict.catalog.category}
@@ -699,6 +759,16 @@ export function CategoryFilters({
           {dict.catalog.clearAll}
         </button>
       </div>
+
+      {showGenderFilter && onToggleGender ? (
+        <FilterSection title={dict.catalog.gender}>
+          <GenderControls
+            genders={availableGenders}
+            activeFilters={activeFilters}
+            onToggleGender={onToggleGender}
+          />
+        </FilterSection>
+      ) : null}
 
       {showProductCategoryFilter && onToggleCategory ? (
         <FilterSection title={dict.catalog.category}>

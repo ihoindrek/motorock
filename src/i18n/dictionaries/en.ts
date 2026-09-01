@@ -327,6 +327,7 @@ export type Dictionary = {
     filters: string;
     clearAll: string;
     category: string;
+    gender: string;
     brand: string;
     size: string;
     displacement: string;
@@ -1018,6 +1019,7 @@ export const en: Dictionary = {
     filters: "Filters",
     clearAll: "Clear all",
     category: "Category",
+    gender: "Gender",
     brand: "Brand",
     size: "Size",
     displacement: "Displacement",

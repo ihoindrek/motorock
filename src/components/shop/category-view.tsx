@@ -29,6 +29,13 @@ import {
   resolveAvailableProductCategories,
   shouldShowBrandProductCategoryFilter,
 } from "@/lib/shop/brand-category-filter";
+import {
+  matchBrandGendersFromParam,
+  productMatchesBrandGenderFilters,
+  resolveAvailableBrandGenders,
+  shouldShowBrandGenderFilter,
+  type BrandGenderFilterId,
+} from "@/lib/shop/brand-gender-filter";
 import type { ProductCategory } from "@/types/catalog-product";
 import { MotorcycleBrandLogoFilter } from "@/components/shop/motorcycle-brand-logo-filter";
 import { MobileFilterDrawer } from "@/components/ui/mobile-filter-drawer";
@@ -90,6 +97,7 @@ function getInitialFilters(
       brands: route?.brand ? [route.brand] : [],
       sizes: [],
       categories: [],
+      genders: [],
       displacements: [],
       inStockOnly: false,
       priceMin: 0,
@@ -103,6 +111,7 @@ function getInitialFilters(
     brands: route?.brand ? [route.brand] : [],
     sizes: [],
     categories: [],
+    genders: [],
     displacements: [],
     inStockOnly: false,
     priceMin: Math.min(...prices),
@@ -171,6 +180,10 @@ function applyClientFilters(
       filters.categories.length > 0 &&
       !filters.categories.includes(product.category)
     ) {
+      return false;
+    }
+
+    if (!productMatchesBrandGenderFilters(product, filters.genders)) {
       return false;
     }
 
@@ -272,6 +285,11 @@ export function CategoryView({
     [routeProducts, dict],
   );
 
+  const availableGenders = useMemo(
+    () => resolveAvailableBrandGenders(routeProducts, dict),
+    [routeProducts, dict],
+  );
+
   const availableDisplacements = useMemo(
     () => resolveAvailableDisplacements(routeProducts),
     [routeProducts],
@@ -280,6 +298,11 @@ export function CategoryView({
   const showProductCategoryFilter = useMemo(
     () => shouldShowBrandProductCategoryFilter(route.brand, availableProductCategories),
     [availableProductCategories, route.brand],
+  );
+
+  const showGenderFilter = useMemo(
+    () => shouldShowBrandGenderFilter(route.brand, availableGenders),
+    [availableGenders, route.brand],
   );
 
   const priceBounds = useMemo(() => {
@@ -331,6 +354,7 @@ export function CategoryView({
 
     const brandParam = params.get("brand");
     const categoryParam = params.get("category");
+    const genderParam = params.get("gender");
     const displacementParam = params.get("displacement");
     const sizeParam = params.get("size");
     const stockParam = params.get("stock");
@@ -339,6 +363,7 @@ export function CategoryView({
     if (
       !brandParam &&
       !categoryParam &&
+      !genderParam &&
       !displacementParam &&
       !sizeParam &&
       !stockParam &&
@@ -364,6 +389,13 @@ export function CategoryView({
         );
         if (categories.length > 0) {
           next.categories = categories;
+        }
+      }
+
+      if (genderParam) {
+        const genders = matchBrandGendersFromParam(genderParam, availableGenders);
+        if (genders.length > 0) {
+          next.genders = genders;
         }
       }
 
@@ -401,6 +433,7 @@ export function CategoryView({
   }, [
     availableBrands,
     availableDisplacements,
+    availableGenders,
     availableProductCategories,
     availableSizes,
     priceBounds,
@@ -443,6 +476,10 @@ export function CategoryView({
     setOrDelete(
       "category",
       filters.categories.length > 0 ? filters.categories.join(",") : null,
+    );
+    setOrDelete(
+      "gender",
+      filters.genders.length > 0 ? filters.genders.join(",") : null,
     );
     setOrDelete(
       "displacement",
@@ -509,7 +546,7 @@ export function CategoryView({
   }, [filteredProducts, pageSize]);
 
   const visibleProducts = filteredProducts.slice(0, visibleCount);
-  const catalogResetKey = `${sort}-${filters.brands.join(",")}-${filters.categories.join(",")}-${filters.displacements.join(",")}-${filters.sizes.join(",")}-${filters.inStockOnly}-${filters.priceMin}-${filters.priceMax}`;
+  const catalogResetKey = `${sort}-${filters.brands.join(",")}-${filters.categories.join(",")}-${filters.genders.join(",")}-${filters.displacements.join(",")}-${filters.sizes.join(",")}-${filters.inStockOnly}-${filters.priceMin}-${filters.priceMax}`;
 
   useEffect(() => {
     if (visibleProducts.length === 0) {
@@ -563,6 +600,15 @@ export function CategoryView({
     }));
   };
 
+  const toggleGender = (gender: BrandGenderFilterId) => {
+    setFilters((current) => ({
+      ...current,
+      genders: current.genders.includes(gender)
+        ? current.genders.filter((value) => value !== gender)
+        : [...current.genders, gender],
+    }));
+  };
+
   const toggleDisplacement = (displacement: number) => {
     setFilters((current) => ({
       ...current,
@@ -589,6 +635,7 @@ export function CategoryView({
     availableBrands,
     availableSizes,
     availableProductCategories,
+    availableGenders,
     availableDisplacements,
     showSizeFilter: showSizeFilter && filterFacets.showSizeFilter,
     // Prefer live available brands so the Brand control is not hidden when facets
@@ -599,11 +646,13 @@ export function CategoryView({
       (filterFacets.showBrandFilter || availableBrands.length > 0),
     showCategoryFilter: filterFacets.showCategoryFilter && !showProductCategoryFilter,
     showProductCategoryFilter,
+    showGenderFilter,
     showDisplacementFilter: filterFacets.showDisplacementFilter,
     whiteFilterTriggers: !useBrandLogos,
     onToggleBrand: toggleBrand,
     onToggleSize: toggleSize,
     onToggleCategory: toggleCategory,
+    onToggleGender: toggleGender,
     onToggleDisplacement: toggleDisplacement,
     onInStockChange: (value: boolean) =>
       setFilters((current) => ({ ...current, inStockOnly: value })),

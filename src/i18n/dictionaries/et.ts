@@ -357,6 +357,7 @@ export const et: Dictionary = {
     filters: "Filtrid",
     clearAll: "Tühista kõik",
     category: "Kategooria",
+    gender: "Sugu",
     brand: "Bränd",
     size: "Suurus",
     displacement: "Töömaht",
