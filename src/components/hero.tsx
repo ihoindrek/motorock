@@ -1,7 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
 import { HeroBannerMedia } from "@/components/hero-banner-media";
-import { HeroSaleBadge } from "@/components/hero-sale-badge";
 import { equipmentHubBrands } from "@/data/equipment-hub";
 import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries/en";
@@ -132,19 +131,11 @@ export function Hero({ locale, dictionary }: HeroProps) {
               aria-hidden="true"
             />
             <div className="relative z-10 flex flex-col items-center gap-5 px-4 sm:gap-7">
-              <div className="flex flex-wrap items-end justify-center gap-x-4 gap-y-3 sm:gap-x-6">
-                <h2
-                  className={`whitespace-pre-line text-center font-display font-extrabold uppercase leading-[0.95] tracking-tight text-paper drop-shadow-[0_4px_24px_rgba(0,0,0,0.6)] transition-transform duration-300 group-hover:scale-[1.02] ${banner.titleClass}`}
-                >
-                  {banner.label}
-                </h2>
-                {index === 0 ? (
-                  <HeroSaleBadge
-                    untilLabel={dictionary.hero.motorcycleSaleUntil}
-                    ariaLabel={dictionary.hero.motorcycleSaleAria}
-                  />
-                ) : null}
-              </div>
+              <h2
+                className={`whitespace-pre-line text-center font-display font-extrabold uppercase leading-[0.95] tracking-tight text-paper drop-shadow-[0_4px_24px_rgba(0,0,0,0.6)] transition-transform duration-300 group-hover:scale-[1.02] ${banner.titleClass}`}
+              >
+                {banner.label}
+              </h2>
 
               {banner.logos ? (
                 <ul
