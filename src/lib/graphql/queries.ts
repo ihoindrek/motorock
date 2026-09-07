@@ -35,6 +35,11 @@ const CATALOG_LIST_FIELDS = `
       sourceUrl
       altText
     }
+    galleryImages(first: 4) {
+      nodes {
+        sourceUrl
+      }
+    }
     productCategories {
       nodes {
         name

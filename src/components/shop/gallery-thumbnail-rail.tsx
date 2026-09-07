@@ -10,6 +10,7 @@ import {
   type CarouselArrowTheme,
 } from "@/components/ui/carousel-arrow";
 import { useDictionary } from "@/context/locale-context";
+import { CRAFT_GALLERY_MEDIA_CLASS } from "@/components/shop/gallery-video-slide";
 
 import "swiper/css";
 
@@ -471,7 +472,7 @@ export function CraftGalleryThumbButton({
           alt=""
           fill
           sizes="96px"
-          className="object-contain object-top p-0.5 sm:p-1"
+          className={CRAFT_GALLERY_MEDIA_CLASS}
         />
       </span>
     </button>

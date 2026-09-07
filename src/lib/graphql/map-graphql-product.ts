@@ -777,6 +777,10 @@ export function mapGraphqlCardToCatalogProduct(
   const image = normalizeWordPressMediaUrl(
     product.image?.sourceUrl ?? "/brixton-image.webp",
   );
+  const galleryUrls = normalizeWordPressMediaUrls(
+    (product.galleryImages?.nodes ?? []).map((node) => node.sourceUrl),
+  );
+  const { productImages } = splitCatalogImages(image, galleryUrls);
   const pricing = parseCardPrice(product);
   const colors = variableProduct
     ? colorsFromVariableProduct(variableProduct)
@@ -801,6 +805,10 @@ export function mapGraphqlCardToCatalogProduct(
     sku: product.sku ?? localized.slug,
     image,
     lifestyleImage: image,
+    gallery:
+      productImages.length > 1
+        ? productImages.filter((src) => src !== image)
+        : undefined,
     type: isMotorcycle ? "motorcycle" : "equipment",
     gender: equipmentMeta.gender,
     shopAudiences,

@@ -24,7 +24,7 @@ export function EquipmentStickyAtc({
   return (
     <div
       className={cn(
-        "fixed inset-x-0 bottom-0 z-50 border-t border-ink/10 bg-paper/95 backdrop-blur-lg pb-[env(safe-area-inset-bottom)] transition-transform duration-300 lg:hidden",
+        "fixed inset-x-0 bottom-0 z-50 border-t border-ink/10 bg-white/95 backdrop-blur-lg pb-[env(safe-area-inset-bottom)] transition-transform duration-300 lg:hidden",
         visible ? "translate-y-0" : "translate-y-full pointer-events-none",
       )}
       aria-hidden={!visible}

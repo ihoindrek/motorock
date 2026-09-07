@@ -510,7 +510,7 @@ export function EquipmentProductView({
               variant="scene"
               theme="light"
               layout="craft"
-              imageBackground="white"
+              imageBackground="detail"
               productVideo={product.productVideo}
               videoTitle={product.name}
               fullBleedMobile
@@ -519,7 +519,7 @@ export function EquipmentProductView({
 
           <div className="order-4 w-full max-w-md space-y-8 border-t border-ink/10 pt-8 sm:max-w-lg lg:order-none lg:max-w-xl lg:border-t-0 lg:pt-0 xl:max-w-2xl">
           {isVideoSrc(product.lifestyleImage) ? (
-            <figure className="relative aspect-[16/9] overflow-hidden bg-white">
+            <figure className="relative aspect-[16/9] overflow-hidden bg-detail">
               <video
                 autoPlay
                 muted
@@ -644,7 +644,10 @@ export function EquipmentProductView({
       <RelatedProducts products={relatedProducts} />
     ) : null}
 
-    <RecentlyViewedProducts excludeSlug={product.slug} />
+    <RecentlyViewedProducts
+      excludeSlug={product.slug}
+      className="border-t-0 bg-detail"
+    />
 
     {sizeGuide ? (
       <SizeGuideModal

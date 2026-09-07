@@ -22,6 +22,7 @@ import {
 import {
   buildGallerySlides,
   CRAFT_GALLERY_MAIN_STAGE_CLASS,
+  CRAFT_GALLERY_MEDIA_CLASS,
   GALLERY_VIDEO_THUMB_KEY,
   GalleryInlineVideoStage,
   type GalleryInlineVideoStageHandle,
@@ -539,7 +540,10 @@ export function ProductImageGallery({
                       fill
                       priority
                       sizes="(max-width: 1024px) 100vw, 42vw"
-                      className="object-contain object-top p-0.5 transition-transform duration-500 group-hover/openable:scale-[1.01] sm:p-1"
+                      className={cn(
+                        CRAFT_GALLERY_MEDIA_CLASS,
+                        "transition-transform duration-500 group-hover/openable:scale-[1.01]",
+                      )}
                     />
                     {slideCounter}
                   </figure>

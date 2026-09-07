@@ -74,7 +74,7 @@ function LightboxThumbnail({
       aria-label={`View image ${index + 1} of ${total}`}
       aria-current={selected ? "true" : undefined}
       className={`group/thumb relative block h-[4.5rem] w-full shrink-0 overflow-hidden transition-all duration-300 ease-out sm:h-20 ${
-        isProduct ? "bg-moto" : "bg-surface"
+        isProduct ? "bg-moto" : "bg-white"
       } ${
         isProduct
           ? selected
@@ -93,7 +93,7 @@ function LightboxThumbnail({
         className={
           isProduct
             ? "object-contain object-center p-1.5 mix-blend-multiply transition-transform duration-300 group-hover/thumb:scale-105"
-            : "object-cover object-center transition-transform duration-300 group-hover/thumb:scale-105"
+            : "object-contain object-center p-1 mix-blend-multiply transition-transform duration-300 group-hover/thumb:scale-105"
         }
       />
       <span
@@ -305,19 +305,13 @@ export function ProductImageLightbox({
                       isProduct={isProduct}
                     />
                   ) : (
-                    <div
-                      className={`relative size-full ${isProduct ? "bg-moto" : "bg-white"}`}
-                    >
+                    <div className="relative size-full bg-white">
                       <Image
                         src={activeImageSrc}
                         alt={`${alt} (${activeSlideIndex + 1} of ${slideCount})`}
                         fill
                         sizes="(max-width: 1024px) 100vw, 70vw"
-                        className={
-                          isProduct
-                            ? "object-contain object-center p-[3%] mix-blend-multiply sm:p-[5%]"
-                            : "object-contain object-center"
-                        }
+                        className="object-contain object-center p-[3%] mix-blend-multiply sm:p-[5%]"
                         priority
                       />
                     </div>

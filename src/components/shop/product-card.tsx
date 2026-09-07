@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import type { CatalogProduct } from "@/types/catalog-product";
 import { BrandLogo } from "@/components/shop/brand-logo";
 import { InStoreNowBadge } from "@/components/shop/in-store-now-badge";
@@ -24,24 +24,24 @@ export function ProductCard({ product }: ProductCardProps) {
   const locale = useLocale();
   const dict = useDictionary();
   const isMotorcycle = product.type === "motorcycle";
-  const [previewIndex, setPreviewIndex] = useState(0);
   const colorOptions = useMemo(
     () => buildProductColorOptions(product.colors, product.variations),
     [product.colors, product.variations],
   );
   const visibleColorOptions = colorOptions.slice(0, 3);
   const hasMoreColors = colorOptions.length > visibleColorOptions.length;
-  const previewImages = useMemo(() => {
-    const images = [
-      product.image,
-      ...colorOptions.map((option) => option.image).filter(Boolean),
-      ...(product.gallery ?? []),
-    ].filter((src): src is string => Boolean(src));
+  const hoverGalleryImage = useMemo(() => {
+    if (isMotorcycle) {
+      return undefined;
+    }
 
-    return [...new Set(images)].slice(0, 4);
-  }, [colorOptions, product.gallery, product.image]);
-  const activePreviewImage =
-    previewImages[Math.min(previewIndex, previewImages.length - 1)] ?? product.image;
+    return (product.gallery ?? []).find((src) => src && src !== product.image);
+  }, [isMotorcycle, product.gallery, product.image]);
+  const imageClassName = isMotorcycle
+    ? "object-contain object-center p-3 mix-blend-multiply group-hover:scale-[1.06] sm:p-4"
+    : "object-contain object-center p-0.5 mix-blend-multiply sm:p-1";
+  const imageFadeClass =
+    "transition-[opacity,transform] duration-500 ease-in-out motion-reduce:transition-none";
 
   return (
     <article className="group relative flex h-full flex-col">
@@ -54,22 +54,8 @@ export function ProductCard({ product }: ProductCardProps) {
           className={
             isMotorcycle
               ? "relative aspect-[4/3] overflow-hidden bg-moto"
-              : "relative overflow-hidden rounded-sm border border-ink/10 bg-white shadow-none transition-[transform,box-shadow,border-color] duration-300 ease-out motion-reduce:transition-none group-hover:-translate-y-1 group-hover:border-accent group-hover:shadow-[0_20px_50px_-20px_rgba(255,90,0,0.35),0_8px_24px_-12px_rgba(11,11,11,0.12)] aspect-[3/4]"
+              : "relative overflow-hidden rounded-sm bg-detail shadow-none transition-[transform,box-shadow] duration-300 ease-out motion-reduce:transition-none group-hover:-translate-y-1 group-hover:shadow-[0_20px_50px_-20px_rgba(255,90,0,0.35),0_8px_24px_-12px_rgba(11,11,11,0.12)] aspect-[3/4]"
           }
-          onMouseLeave={() => setPreviewIndex(0)}
-          onMouseMove={(event) => {
-            if (previewImages.length <= 1 || isMotorcycle) {
-              return;
-            }
-
-            const bounds = event.currentTarget.getBoundingClientRect();
-            const relativeX = (event.clientX - bounds.left) / bounds.width;
-            const nextIndex = Math.min(
-              previewImages.length - 1,
-              Math.max(0, Math.floor(relativeX * previewImages.length)),
-            );
-            setPreviewIndex(nextIndex);
-          }}
         >
           {product.isNew ? <NewProductBadge variant="overlay" /> : null}
           {isMotorcycle && product.showroomAvailable && product.inStock ? (
@@ -85,17 +71,41 @@ export function ProductCard({ product }: ProductCardProps) {
             </span>
           ) : null}
 
-          <Image
-            src={activePreviewImage}
-            alt={product.name}
-            fill
-            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-            className={`relative z-0 transition-transform duration-500 ease-out motion-reduce:transition-none motion-reduce:group-hover:scale-100 ${
-              isMotorcycle
-                ? "object-contain object-center p-3 mix-blend-multiply group-hover:scale-[1.06] sm:p-4"
-                : "object-contain object-center p-0.5 group-hover:scale-[1.02] sm:p-1"
-            }`}
-          />
+          {hoverGalleryImage ? (
+            <>
+              <div
+                className={`absolute inset-0 bg-detail ${imageFadeClass} opacity-100 group-hover:opacity-0 motion-reduce:group-hover:opacity-100`}
+              >
+                <Image
+                  src={product.image}
+                  alt={product.name}
+                  fill
+                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                  className={`${imageClassName} ${imageFadeClass} group-hover:scale-[1.02] motion-reduce:group-hover:scale-100`}
+                />
+              </div>
+              <div
+                className={`absolute inset-0 bg-detail ${imageFadeClass} opacity-0 group-hover:opacity-100 motion-reduce:opacity-0 motion-reduce:group-hover:opacity-0`}
+              >
+                <Image
+                  src={hoverGalleryImage}
+                  alt=""
+                  aria-hidden="true"
+                  fill
+                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                  className={`${imageClassName} ${imageFadeClass} scale-[1.03] group-hover:scale-[1.02] motion-reduce:scale-100 motion-reduce:group-hover:scale-100`}
+                />
+              </div>
+            </>
+          ) : (
+            <Image
+              src={product.image}
+              alt={product.name}
+              fill
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+              className={`relative z-0 transition-transform duration-500 ease-out motion-reduce:transition-none motion-reduce:group-hover:scale-100 ${imageClassName} group-hover:scale-[1.02]`}
+            />
+          )}
         </figure>
 
         <div

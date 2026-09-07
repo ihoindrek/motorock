@@ -63,7 +63,7 @@ export function RelatedProducts({
   return (
     <section
       aria-labelledby="related-products-heading"
-      className="relative overflow-hidden bg-paper pt-16 pb-24 text-ink lg:pt-24"
+      className="relative overflow-hidden bg-detail pt-16 pb-24 text-ink lg:pt-24"
     >
       <div className="site-container">
         <h2

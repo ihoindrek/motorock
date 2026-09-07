@@ -45,36 +45,45 @@ function RecentlyViewedCard({
   const isMotorcycle = item.type === "motorcycle";
 
   return (
-    <Link
-      href={localizedProductHref(item.slug, locale)}
-      className="flex h-full flex-col border border-ink/10 bg-paper outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-    >
-      <figure
+    <article className="relative flex h-full flex-col">
+      <Link
+        href={localizedProductHref(item.slug, locale)}
         className={cn(
-          "relative overflow-hidden",
-          isMotorcycle ? "aspect-[4/3] bg-moto" : "aspect-[3/4] bg-white",
+          "group flex h-full flex-col overflow-hidden rounded-sm border border-ink/10 bg-white shadow-none outline-none transition-[transform,box-shadow,border-color] duration-300 ease-out motion-reduce:transition-none hover:-translate-y-1 hover:border-accent hover:shadow-[0_20px_50px_-20px_rgba(255,90,0,0.35),0_8px_24px_-12px_rgba(11,11,11,0.12)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent",
         )}
       >
-        <Image
-          src={item.image}
-          alt={item.name}
-          fill
-          sizes="(max-width: 640px) 40vw, (max-width: 1024px) 30vw, 25vw"
+        <figure
           className={cn(
-            isMotorcycle
-              ? "object-contain object-center p-2 mix-blend-multiply sm:p-3"
-              : "object-contain object-center p-0.5 sm:p-1",
+            "relative overflow-hidden bg-white",
+            isMotorcycle ? "aspect-[4/3]" : "aspect-[3/4]",
           )}
-        />
-      </figure>
-      <div className="flex flex-1 flex-col gap-1.5 px-3 pb-3 pt-4 sm:pt-5">
-        {item.brand ? <BrandLogo brand={item.brand} size="sm" /> : null}
-        <h3 className="line-clamp-2 font-body text-sm font-semibold leading-snug text-ink">
-          {item.name}
-        </h3>
-        <Price value={item.price} as="p" className="mt-auto text-sm" />
-      </div>
-    </Link>
+        >
+          <Image
+            src={item.image}
+            alt={item.name}
+            fill
+            sizes="(max-width: 640px) 40vw, (max-width: 1024px) 30vw, 25vw"
+            className={cn(
+              "transition-transform duration-500 ease-out motion-reduce:transition-none motion-reduce:group-hover:scale-100",
+              isMotorcycle
+                ? "object-contain object-center p-2 mix-blend-multiply group-hover:scale-[1.06] sm:p-3"
+                : "object-contain object-center p-0.5 group-hover:scale-[1.02] sm:p-1",
+            )}
+          />
+        </figure>
+        <div className="flex flex-1 flex-col gap-1.5 bg-white px-3 pb-3 pt-4 sm:pt-5">
+          {item.brand ? <BrandLogo brand={item.brand} size="sm" /> : null}
+          <h3 className="line-clamp-2 font-body text-sm font-semibold leading-snug text-ink sm:text-base">
+            {item.name}
+          </h3>
+          <Price
+            value={item.price}
+            as="p"
+            className="mt-auto text-sm transition-colors duration-200 group-hover:text-accent"
+          />
+        </div>
+      </Link>
+    </article>
   );
 }
 
@@ -132,7 +141,10 @@ export function RecentlyViewedProducts({
   return (
     <section
       aria-label={dict.pdp.recentlyViewed}
-      className={`relative overflow-hidden border-t border-ink/10 bg-paper pt-12 pb-10 sm:pt-16 sm:pb-14 ${className}`}
+      className={cn(
+        "relative overflow-hidden border-t border-ink/10 bg-paper pt-12 pb-10 sm:pt-16 sm:pb-14",
+        className,
+      )}
     >
       <div className="site-container">
         <h2 className="mb-6 font-body text-xl font-extrabold uppercase tracking-tight text-ink sm:mb-5 sm:text-2xl">

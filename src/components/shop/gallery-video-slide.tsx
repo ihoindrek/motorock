@@ -20,6 +20,10 @@ export const GALLERY_VIDEO_THUMB_KEY = "__gallery_video__";
 export const CRAFT_GALLERY_MAIN_STAGE_CLASS =
   "relative mx-auto w-full aspect-[4/5] max-h-[min(72vh,44rem)] overflow-hidden";
 
+/** Fill the gray craft stage edge-to-edge; multiply drops white JPEG backgrounds into the stage. */
+export const CRAFT_GALLERY_MEDIA_CLASS =
+  "object-cover object-center mix-blend-multiply";
+
 export function isGalleryVideoThumbKey(value: string) {
   return value === GALLERY_VIDEO_THUMB_KEY;
 }
@@ -175,7 +179,7 @@ export function GalleryVideoThumbButton({
             alt=""
             fill
             sizes="96px"
-            className="object-contain object-top p-0.5 sm:p-1"
+            className={CRAFT_GALLERY_MEDIA_CLASS}
           />
           <span className="absolute inset-0 flex items-center justify-center bg-ink/25">
             <span className="flex size-7 items-center justify-center rounded-full bg-ink/85 text-paper sm:size-8">
