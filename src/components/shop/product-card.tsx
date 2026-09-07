@@ -18,9 +18,14 @@ import { localizedProductHref } from "@/lib/shop/product-url";
 
 type ProductCardProps = {
   product: CatalogProduct;
+  /** Equipment image area background — category grids use gray `detail`. */
+  imageBackground?: "detail" | "white";
 };
 
-export function ProductCard({ product }: ProductCardProps) {
+export function ProductCard({
+  product,
+  imageBackground = "detail",
+}: ProductCardProps) {
   const locale = useLocale();
   const dict = useDictionary();
   const isMotorcycle = product.type === "motorcycle";
@@ -42,6 +47,8 @@ export function ProductCard({ product }: ProductCardProps) {
     : "object-contain object-center p-0.5 mix-blend-multiply sm:p-1";
   const imageFadeClass =
     "transition-[opacity,transform] duration-500 ease-in-out motion-reduce:transition-none";
+  const equipmentImageBgClass =
+    imageBackground === "white" ? "bg-white" : "bg-detail";
 
   return (
     <article className="group relative flex h-full flex-col">
@@ -54,7 +61,7 @@ export function ProductCard({ product }: ProductCardProps) {
           className={
             isMotorcycle
               ? "relative aspect-[4/3] overflow-hidden bg-moto"
-              : "relative overflow-hidden rounded-sm bg-detail shadow-none transition-[transform,box-shadow] duration-300 ease-out motion-reduce:transition-none group-hover:-translate-y-1 group-hover:shadow-[0_20px_50px_-20px_rgba(255,90,0,0.35),0_8px_24px_-12px_rgba(11,11,11,0.12)] aspect-[3/4]"
+              : `relative overflow-hidden rounded-sm ${equipmentImageBgClass} shadow-none transition-[transform,box-shadow] duration-300 ease-out motion-reduce:transition-none group-hover:-translate-y-1 group-hover:shadow-[0_20px_50px_-20px_rgba(255,90,0,0.35),0_8px_24px_-12px_rgba(11,11,11,0.12)] aspect-[3/4]`
           }
         >
           {product.isNew ? <NewProductBadge variant="overlay" /> : null}
@@ -74,7 +81,7 @@ export function ProductCard({ product }: ProductCardProps) {
           {hoverGalleryImage ? (
             <>
               <div
-                className={`absolute inset-0 bg-detail ${imageFadeClass} opacity-100 group-hover:opacity-0 motion-reduce:group-hover:opacity-100`}
+                className={`absolute inset-0 ${equipmentImageBgClass} ${imageFadeClass} opacity-100 group-hover:opacity-0 motion-reduce:group-hover:opacity-100`}
               >
                 <Image
                   src={product.image}
@@ -85,7 +92,7 @@ export function ProductCard({ product }: ProductCardProps) {
                 />
               </div>
               <div
-                className={`absolute inset-0 bg-detail ${imageFadeClass} opacity-0 group-hover:opacity-100 motion-reduce:opacity-0 motion-reduce:group-hover:opacity-0`}
+                className={`absolute inset-0 ${equipmentImageBgClass} ${imageFadeClass} opacity-0 group-hover:opacity-100 motion-reduce:opacity-0 motion-reduce:group-hover:opacity-0`}
               >
                 <Image
                   src={hoverGalleryImage}
