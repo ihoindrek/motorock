@@ -381,6 +381,7 @@ export function ProductImageGallery({
                     sizes="(max-width: 1024px) 100vw, 42vw"
                     className="mx-auto block h-auto w-full max-h-[min(72vh,44rem)] object-contain object-top p-0.5 transition-transform duration-500 group-hover/openable:scale-[1.01] sm:p-1"
                   />
+                  {galleryVideoOverlay}
                   {images.length > 1 ? (
                     <span className="pointer-events-none absolute left-3 top-3 z-10 font-body text-[10px] font-bold tabular-nums tracking-aggressive text-ink">
                       {String(resolvedIndex + 1).padStart(2, "0")}
@@ -414,6 +415,15 @@ export function ProductImageGallery({
           onClose={() => setLightboxOpen(false)}
           variant={variant}
         />
+
+        {showGalleryVideo && productVideo ? (
+          <ProductVideoModal
+            video={productVideo}
+            title={videoTitle ?? `Watch ${alt}`}
+            open={videoOpen}
+            onClose={() => setVideoOpen(false)}
+          />
+        ) : null}
       </div>
     );
   }
