@@ -16,9 +16,14 @@ import {
   ProductImageLightbox,
 } from "@/components/shop/product-image-lightbox";
 import {
-  GalleryVideoPlayButton,
   ProductVideoModal,
 } from "@/components/shop/product-video-modal";
+import {
+  GALLERY_VIDEO_THUMB_KEY,
+  GalleryInlineVideoStage,
+  GalleryVideoThumbButton,
+  isGalleryVideoThumbKey,
+} from "@/components/shop/gallery-video-slide";
 import { InStoreNowBadge } from "@/components/shop/in-store-now-badge";
 import { CarouselArrow } from "@/components/ui/carousel-arrow";
 import { useDictionary } from "@/context/locale-context";
@@ -240,17 +245,25 @@ export function ProductImageGallery({
     productVideoProp ??
     (vimeoId ? ({ provider: "vimeo", id: vimeoId } satisfies ProductVideo) : undefined);
   const [videoOpen, setVideoOpen] = useState(false);
-  const showGalleryVideo = Boolean(
+  const hasVideoSlide = Boolean(
     productVideo && (isHero || layout === "craft"),
   );
+  const videoSlideIndex = hasVideoSlide ? images.length : -1;
+  const slideCount = images.length + (hasVideoSlide ? 1 : 0);
+  const posterSrc = images[0] ?? "";
 
   const resolvedIndex =
     preferredImage && preferredIndex >= 0 ? preferredIndex : activeIndex;
+  const isVideoActive =
+    hasVideoSlide && resolvedIndex === videoSlideIndex;
   const activeSrc =
     preferredImage && preferredIndex < 0
       ? preferredImage
       : (images[resolvedIndex] ?? images[0]);
-  const slideDirection = useGallerySlideDirection(resolvedIndex, images.length);
+  const slideDirection = useGallerySlideDirection(resolvedIndex, slideCount);
+  const railItems = hasVideoSlide
+    ? [...images, GALLERY_VIDEO_THUMB_KEY]
+    : images;
 
   useEffect(() => {
     if (preferredIndex >= 0) {
@@ -259,11 +272,82 @@ export function ProductImageGallery({
   }, [preferredIndex, preferredImage]);
 
   const showPrevious = () => {
-    setActiveIndex((index) => (index > 0 ? index - 1 : images.length - 1));
+    setActiveIndex((index) => (index > 0 ? index - 1 : slideCount - 1));
   };
 
   const showNext = () => {
-    setActiveIndex((index) => (index < images.length - 1 ? index + 1 : 0));
+    setActiveIndex((index) => (index < slideCount - 1 ? index + 1 : 0));
+  };
+
+  const renderSlideThumb = (
+    src: string,
+    index: number,
+    select: () => void,
+    style: "craft" | "default",
+    options?: {
+      compact?: boolean;
+      fillRail?: boolean;
+      onOpenLightbox?: () => void;
+    },
+  ) => {
+    if (isGalleryVideoThumbKey(src)) {
+      return (
+        <GalleryVideoThumbButton
+          posterSrc={posterSrc}
+          index={index}
+          total={slideCount}
+          selected={index === resolvedIndex}
+          onSelect={select}
+          imageBackground={imageBackground}
+          style={style}
+          theme={theme}
+          compact={options?.compact}
+          fillRail={options?.fillRail}
+        />
+      );
+    }
+
+    if (style === "craft") {
+      return (
+        <CraftGalleryThumbButton
+          src={src}
+          index={index}
+          total={slideCount}
+          selected={index === resolvedIndex}
+          imageBackground={imageBackground}
+          onSelect={select}
+          onOpenLightbox={
+            options?.onOpenLightbox ??
+            (() => {
+              setActiveIndex(index);
+              setLightboxOpen(true);
+            })
+          }
+        />
+      );
+    }
+
+    return (
+      <GalleryThumb
+        src={src}
+        index={index}
+        total={slideCount}
+        selected={index === resolvedIndex}
+        variant={variant}
+        theme={theme}
+        compact={options?.compact}
+        fillRail={options?.fillRail}
+        seamless={false}
+        onSelect={select}
+        onOpenLightbox={
+          options?.onOpenLightbox ??
+          (() => {
+            setActiveIndex(index);
+            setLightboxOpen(true);
+          })
+        }
+      />
+    );
   };
 
   const thumbList = (
@@ -272,7 +356,7 @@ export function ProductImageGallery({
     railClassName?: string,
   ) => (
     <GalleryThumbnailRail
-      items={images}
+      items={railItems}
       orientation={orientation}
       activeIndex={resolvedIndex}
       className={
@@ -282,35 +366,41 @@ export function ProductImageGallery({
           : "w-full")
       }
       onThumbSelect={setActiveIndex}
-      renderThumb={(src, index, select) => (
-        <GalleryThumb
-          src={src}
-          index={index}
-          total={images.length}
-          selected={index === resolvedIndex}
-          variant={variant}
-          theme={theme}
-          compact={compact}
-          fillRail={orientation === "vertical"}
-          seamless={false}
-          onSelect={select}
-          onOpenLightbox={() => {
-            setActiveIndex(index);
-            setLightboxOpen(true);
-          }}
-        />
-      )}
+      renderThumb={(src, index, select) =>
+        renderSlideThumb(src, index, select, "default", {
+          compact,
+          fillRail: orientation === "vertical",
+        })
+      }
     />
   );
 
-  const galleryVideoOverlay = showGalleryVideo ? (
-    <GalleryVideoPlayButton
-      theme={theme}
-      variant="overlay"
-      className="absolute right-3 top-3 z-20 sm:right-4 sm:top-4"
-      onClick={() => setVideoOpen(true)}
-    />
-  ) : null;
+  const slideCounter =
+    slideCount > 1 ? (
+      <span
+        className={`pointer-events-none absolute left-3 top-3 z-10 font-body text-[10px] font-bold tabular-nums tracking-aggressive ${
+          theme === "dark" ? "text-paper" : "text-ink"
+        }`}
+      >
+        {String(resolvedIndex + 1).padStart(2, "0")}
+        <span className={theme === "dark" ? "text-paper/35" : "text-ink/40"}>
+          {" "}
+          / {String(slideCount).padStart(2, "0")}
+        </span>
+      </span>
+    ) : null;
+
+  const inlineVideoStage =
+    hasVideoSlide && productVideo ? (
+      <GalleryInlineVideoStage
+        video={productVideo}
+        title={videoTitle ?? alt}
+        posterSrc={posterSrc}
+        expandLabel={dict.motorcycle.watchVideo}
+        imageBackground={imageBackground}
+        onExpand={() => setVideoOpen(true)}
+      />
+    ) : null;
 
   if (images.length === 0) {
     return null;
@@ -319,7 +409,7 @@ export function ProductImageGallery({
   if (!isProduct && layout === "craft") {
     const craftThumbRail = (orientation: "vertical" | "horizontal") => (
       <GalleryThumbnailRail
-        items={images}
+        items={railItems}
         orientation={orientation}
         activeIndex={resolvedIndex}
         className={orientation === "vertical" ? "w-20 sm:w-24" : "w-[4.25rem]"}
@@ -330,20 +420,9 @@ export function ProductImageGallery({
           theme,
         }}
         onThumbSelect={setActiveIndex}
-        renderThumb={(src, index, select) => (
-          <CraftGalleryThumbButton
-            src={src}
-            index={index}
-            total={images.length}
-            selected={index === resolvedIndex}
-            imageBackground={imageBackground}
-            onSelect={select}
-            onOpenLightbox={() => {
-              setActiveIndex(index);
-              setLightboxOpen(true);
-            }}
-          />
-        )}
+        renderThumb={(src, index, select) =>
+          renderSlideThumb(src, index, select, "craft")
+        }
       />
     );
 
@@ -356,67 +435,93 @@ export function ProductImageGallery({
               fullBleedMobile && mobileFullBleedClass,
             )}
           >
-            <OpenableImageTrigger
-              onOpen={() => setLightboxOpen(true)}
-              label={`Open ${alt} full size`}
-              theme={theme}
-              onSwipeLeft={images.length > 1 ? showNext : undefined}
-              onSwipeRight={images.length > 1 ? showPrevious : undefined}
-            >
-              <GalleryImageTransition
-                imageKey={activeSrc}
-                direction={slideDirection}
-                sizeToContent
+            {isVideoActive ? (
+              <div
                 className="w-full max-lg:rounded-none"
+                onTouchStart={(event) => {
+                  const touch = event.changedTouches[0];
+                  if (!touch) return;
+                  (event.currentTarget as HTMLElement).dataset.touchStartX =
+                    String(touch.clientX);
+                }}
+                onTouchEnd={(event) => {
+                  const startX = Number(
+                    (event.currentTarget as HTMLElement).dataset.touchStartX,
+                  );
+                  const touch = event.changedTouches[0];
+                  if (!touch || Number.isNaN(startX)) return;
+                  const delta = touch.clientX - startX;
+                  if (Math.abs(delta) < 40) return;
+                  if (delta < 0) showNext();
+                  else showPrevious();
+                }}
               >
-                <figure
-                  className={`relative w-full overflow-hidden max-lg:leading-none ${galleryImageBgClass(imageBackground)}`}
+                <GalleryImageTransition
+                  imageKey="gallery-video"
+                  direction={slideDirection}
+                  sizeToContent
+                  className="w-full max-lg:rounded-none"
                 >
-                  <Image
-                    src={activeSrc}
-                    alt={alt}
-                    width={1200}
-                    height={1500}
-                    priority
-                    sizes="(max-width: 1024px) 100vw, 42vw"
-                    className="mx-auto block h-auto w-full max-h-[min(72vh,44rem)] object-contain object-top p-0.5 transition-transform duration-500 group-hover/openable:scale-[1.01] sm:p-1"
-                  />
-                  {galleryVideoOverlay}
-                  {images.length > 1 ? (
-                    <span className="pointer-events-none absolute left-3 top-3 z-10 font-body text-[10px] font-bold tabular-nums tracking-aggressive text-ink">
-                      {String(resolvedIndex + 1).padStart(2, "0")}
-                      <span className="text-ink/40">
-                        {" "}
-                        / {String(images.length).padStart(2, "0")}
-                      </span>
-                    </span>
-                  ) : null}
-                </figure>
-              </GalleryImageTransition>
-            </OpenableImageTrigger>
+                  <div className="relative">
+                    {inlineVideoStage}
+                    {slideCounter}
+                  </div>
+                </GalleryImageTransition>
+              </div>
+            ) : (
+              <OpenableImageTrigger
+                onOpen={() => setLightboxOpen(true)}
+                label={`Open ${alt} full size`}
+                theme={theme}
+                onSwipeLeft={slideCount > 1 ? showNext : undefined}
+                onSwipeRight={slideCount > 1 ? showPrevious : undefined}
+              >
+                <GalleryImageTransition
+                  imageKey={activeSrc}
+                  direction={slideDirection}
+                  sizeToContent
+                  className="w-full max-lg:rounded-none"
+                >
+                  <figure
+                    className={`relative w-full overflow-hidden max-lg:leading-none ${galleryImageBgClass(imageBackground)}`}
+                  >
+                    <Image
+                      src={activeSrc}
+                      alt={alt}
+                      width={1200}
+                      height={1500}
+                      priority
+                      sizes="(max-width: 1024px) 100vw, 42vw"
+                      className="mx-auto block h-auto w-full max-h-[min(72vh,44rem)] object-contain object-top p-0.5 transition-transform duration-500 group-hover/openable:scale-[1.01] sm:p-1"
+                    />
+                    {slideCounter}
+                  </figure>
+                </GalleryImageTransition>
+              </OpenableImageTrigger>
+            )}
           </div>
 
-          {images.length > 1 ? (
+          {slideCount > 1 ? (
             <div className="hidden shrink-0 lg:flex">
               {craftThumbRail("vertical")}
             </div>
           ) : null}
         </div>
 
-        {images.length > 1 ? (
+        {slideCount > 1 ? (
           <div className="lg:hidden">{craftThumbRail("horizontal")}</div>
         ) : null}
 
         <ProductImageLightbox
           images={images}
           alt={alt}
-          initialIndex={resolvedIndex}
+          initialIndex={Math.min(resolvedIndex, images.length - 1)}
           open={lightboxOpen}
           onClose={() => setLightboxOpen(false)}
           variant={variant}
         />
 
-        {showGalleryVideo && productVideo ? (
+        {hasVideoSlide && productVideo ? (
           <ProductVideoModal
             video={productVideo}
             title={videoTitle ?? `Watch ${alt}`}
@@ -498,90 +603,97 @@ export function ProductImageGallery({
         fullBleedMobile && mobileFullBleedClass,
       )}
     >
-      <OpenableImageTrigger
-        onOpen={() => setLightboxOpen(true)}
-        label={`Open ${alt} full size`}
-        theme={theme}
-        onSwipeLeft={images.length > 1 ? showNext : undefined}
-        onSwipeRight={images.length > 1 ? showPrevious : undefined}
-      >
-        <GalleryImageTransition
-          imageKey={activeSrc}
-          direction={slideDirection}
-          className={
-            isProduct
-              ? isHero
-                ? "aspect-[4/3] w-full max-lg:rounded-none sm:aspect-[3/2] lg:aspect-auto lg:min-h-[min(58vh,34rem)] xl:min-h-[min(62vh,38rem)]"
-                : "aspect-[4/3] w-full max-lg:rounded-none"
-              : "aspect-[4/5] w-full"
-          }
+      {isVideoActive ? (
+        <div className="relative w-full max-lg:rounded-none">
+          <GalleryImageTransition
+            imageKey="gallery-video"
+            direction={slideDirection}
+            className={
+              isProduct
+                ? isHero
+                  ? "aspect-[4/3] w-full max-lg:rounded-none sm:aspect-[3/2] lg:aspect-auto lg:min-h-[min(58vh,34rem)] xl:min-h-[min(62vh,38rem)]"
+                  : "aspect-[4/3] w-full max-lg:rounded-none"
+                : "aspect-[4/5] w-full"
+            }
+          >
+            <div className="relative h-full">
+              {inlineVideoStage}
+              {slideCounter}
+            </div>
+          </GalleryImageTransition>
+        </div>
+      ) : (
+        <OpenableImageTrigger
+          onOpen={() => setLightboxOpen(true)}
+          label={`Open ${alt} full size`}
+          theme={theme}
+          onSwipeLeft={slideCount > 1 ? showNext : undefined}
+          onSwipeRight={slideCount > 1 ? showPrevious : undefined}
         >
-          {isProduct ? (
-            <MotorcycleImageStage
-              src={activeSrc}
-              alt={alt}
-              priority
-              sizes={
-                isHero
-                  ? "(max-width: 1024px) 100vw, 55vw"
-                  : "(max-width: 1024px) 100vw, 50vw"
-              }
-              aspectClass="h-full"
-              className="h-full"
-              seamless={false}
-              theme={theme}
-            />
-          ) : (
-            <figure
-              className={`relative h-full w-full overflow-hidden ${
-                theme === "dark" ? "bg-ink" : "bg-surface"
-              } ring-1 ring-inset ring-ink/5`}
-            >
-              <Image
+          <GalleryImageTransition
+            imageKey={activeSrc}
+            direction={slideDirection}
+            className={
+              isProduct
+                ? isHero
+                  ? "aspect-[4/3] w-full max-lg:rounded-none sm:aspect-[3/2] lg:aspect-auto lg:min-h-[min(58vh,34rem)] xl:min-h-[min(62vh,38rem)]"
+                  : "aspect-[4/3] w-full max-lg:rounded-none"
+                : "aspect-[4/5] w-full"
+            }
+          >
+            {isProduct ? (
+              <MotorcycleImageStage
                 src={activeSrc}
                 alt={alt}
-                fill
                 priority
-                sizes="(max-width: 1024px) 100vw, 50vw"
-                className="object-contain object-center p-0.5 transition-transform duration-500 group-hover/openable:scale-[1.02] sm:p-1"
+                sizes={
+                  isHero
+                    ? "(max-width: 1024px) 100vw, 55vw"
+                    : "(max-width: 1024px) 100vw, 50vw"
+                }
+                aspectClass="h-full"
+                className="h-full"
+                seamless={false}
+                theme={theme}
               />
-              <div
-                className="pointer-events-none absolute inset-0 bg-gradient-to-t from-ink/25 via-transparent to-transparent opacity-60"
-                aria-hidden="true"
-              />
-            </figure>
-          )}
-        </GalleryImageTransition>
-      </OpenableImageTrigger>
-
-      {galleryVideoOverlay}
+            ) : (
+              <figure
+                className={`relative h-full w-full overflow-hidden ${
+                  theme === "dark" ? "bg-ink" : "bg-surface"
+                } ring-1 ring-inset ring-ink/5`}
+              >
+                <Image
+                  src={activeSrc}
+                  alt={alt}
+                  fill
+                  priority
+                  sizes="(max-width: 1024px) 100vw, 50vw"
+                  className="object-contain object-center p-0.5 transition-transform duration-500 group-hover/openable:scale-[1.02] sm:p-1"
+                />
+                <div
+                  className="pointer-events-none absolute inset-0 bg-gradient-to-t from-ink/25 via-transparent to-transparent opacity-60"
+                  aria-hidden="true"
+                />
+              </figure>
+            )}
+          </GalleryImageTransition>
+        </OpenableImageTrigger>
+      )}
 
       {inStoreNow && isHero ? (
         <InStoreNowBadge
           variant="overlay"
           className={
-            images.length > 1
+            slideCount > 1
               ? "left-3 right-auto top-12 sm:top-14"
               : "left-3 right-auto"
           }
         />
       ) : null}
 
-      {images.length > 1 ? (
-        <span
-          className={`pointer-events-none absolute left-3 top-3 z-10 font-body text-[10px] font-bold uppercase tracking-aggressive ${
-            theme === "dark" ? "text-paper" : "text-ink"
-          }`}
-        >
-          {String(resolvedIndex + 1).padStart(2, "0")}
-          <span className={theme === "dark" ? "text-paper/35" : "text-ink/40"}>
-            {" "}
-            / {String(images.length).padStart(2, "0")}
-          </span>
-        </span>
-      ) : null}
+      {slideCounter}
 
-      {images.length > 1 ? (
+      {slideCount > 1 ? (
         <nav
           aria-label={dict.carousel.galleryNavigation}
           className="mt-3 flex items-center justify-between"
@@ -617,7 +729,7 @@ export function ProductImageGallery({
         {isHero ? (
           <>
             {mainStage}
-            {images.length > 1 ? (
+            {slideCount > 1 ? (
               <div className="hidden w-24 shrink-0 flex-col gap-3 lg:flex">
                 {thumbList("vertical")}
               </div>
@@ -625,7 +737,7 @@ export function ProductImageGallery({
           </>
         ) : (
           <>
-            {images.length > 1 ? (
+            {slideCount > 1 ? (
               <div className="hidden w-24 shrink-0 lg:flex">
                 {thumbList("vertical")}
               </div>
@@ -635,7 +747,7 @@ export function ProductImageGallery({
         )}
       </div>
 
-      {images.length > 1 ? (
+      {slideCount > 1 ? (
         <div className="flex flex-col gap-3 lg:hidden">
           {thumbList("horizontal")}
         </div>
@@ -644,13 +756,13 @@ export function ProductImageGallery({
       <ProductImageLightbox
         images={images}
         alt={alt}
-        initialIndex={resolvedIndex}
+        initialIndex={Math.min(resolvedIndex, images.length - 1)}
         open={lightboxOpen}
         onClose={() => setLightboxOpen(false)}
         variant={variant}
       />
 
-      {showGalleryVideo && productVideo ? (
+      {hasVideoSlide && productVideo ? (
         <ProductVideoModal
           video={productVideo}
           title={videoTitle ?? `Watch ${alt}`}
