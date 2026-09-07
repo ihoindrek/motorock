@@ -75,7 +75,7 @@
       "name": "product_video_url",
       "aria-label": "",
       "type": "url",
-      "instructions": "YouTube, Vimeo või otse video faili link (.mp4, .webm jne). Storefront kuvab galeriis \"Vaata videot\" nupu. Kehtib kõigile toodetele (mootorrattad ja varustus).",
+      "instructions": "Kleebi YouTube/Vimeo link või vali otse video fail (.mp4, .webm jne) meediateegist nupust allpool. Storefront kuvab galeriis \"Vaata videot\" nupu. Kehtib kõigile toodetele (mootorrattad ja varustus).",
       "required": 0,
       "conditional_logic": 0,
       "wrapper": {
@@ -145,5 +145,5 @@
   "active": true,
   "description": "Storefront'i tooteväljad (Motorock.eu). Kuvatakse toote põhiosa all (mitte parempoolses sidebaris).",
   "show_in_rest": 1,
-  "modified": 1754307200
+  "modified": 1757239800
 }

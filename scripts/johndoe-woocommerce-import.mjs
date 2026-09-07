@@ -22,13 +22,17 @@
  */
 
 import {
+  buildMedienpaketIndex,
+  lookupMedienpaketIndex,
+} from "./lib/johndoe-medienpaket-index.mjs";
+import { createHash } from "node:crypto";
+import {
   createWriteStream,
   existsSync,
   mkdirSync,
   readFileSync,
   writeFileSync,
 } from "node:fs";
-import { createHash } from "node:crypto";
 import { join, resolve } from "node:path";
 import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
@@ -65,6 +69,7 @@ const WC_COLUMNS = [
   "Meta: _jd_inside_stock",
   "Meta: _jd_outside_stock",
   "Meta: brand",
+  "Meta: product_video_url",
 ];
 
 const SIZE_SUFFIX =
@@ -439,28 +444,58 @@ function lookupPeContent(index, artNr, parentSku) {
   return null;
 }
 
+function mergeEnrichment(peContent, medienpaketContent) {
+  if (!peContent && !medienpaketContent) return null;
+
+  return {
+    images: medienpaketContent?.images?.length
+      ? medienpaketContent.images
+      : peContent?.images ?? [],
+    shortDescription: peContent?.shortDescription ?? "",
+    description: peContent?.description ?? "",
+    videoUrl: medienpaketContent?.videoUrl ?? "",
+  };
+}
+
+function lookupEnrichment(peIndex, mpIndex, artNr, parentSku) {
+  const pe = lookupPeContent(peIndex, artNr, parentSku);
+  const mp = lookupMedienpaketIndex(mpIndex, artNr, parentSku);
+  return mergeEnrichment(pe, mp);
+}
+
+function resolveRowVideoUrl(row) {
+  for (const key of ["Video_URL", "video_url", "product_video_url", "video"]) {
+    const value = row[key]?.trim();
+    if (value) return value;
+  }
+  return "";
+}
+
 function emptyRow() {
   return Object.fromEntries(WC_COLUMNS.map((column) => [column, ""]));
 }
 
-function baseRow(enriched, category, tags = BRAND) {
-  const row = emptyRow();
-  row.Published = "1";
-  row["Visibility in catalog"] = "visible";
-  row["Tax status"] = "taxable";
-  row.Categories = category;
-  row.Tags = tags;
-  row["Meta: brand"] = BRAND;
-  if (enriched?.shortDescription) row["Short description"] = enriched.shortDescription;
-  if (enriched?.description) row.Description = formatDescriptionForImport(enriched.description);
-  if (enriched?.images?.length) row.Images = enriched.images.join(", ");
-  return row;
+function baseRow(enriched, category, tags = BRAND, row = {}) {
+  const output = emptyRow();
+  output.Published = "1";
+  output["Visibility in catalog"] = "visible";
+  output["Tax status"] = "taxable";
+  output.Categories = category;
+  output.Tags = tags;
+  output["Meta: brand"] = BRAND;
+  if (enriched?.shortDescription) output["Short description"] = enriched.shortDescription;
+  if (enriched?.description) output.Description = formatDescriptionForImport(enriched.description);
+  const remoteImages = (enriched?.images ?? []).filter((url) => /^https?:\/\//i.test(url));
+  if (remoteImages.length) output.Images = remoteImages.join(", ");
+  const videoUrl = resolveRowVideoUrl(row) || enriched?.videoUrl || "";
+  if (videoUrl) output["Meta: product_video_url"] = videoUrl;
+  return output;
 }
 
 function buildSimpleImportRow(row, enriched) {
   const sku = row.ArtNr.trim();
   const { inside, outside, total } = stockTotals(row);
-  const output = baseRow(enriched, inferCategory(row.Bezeichnung, sku));
+  const output = baseRow(enriched, inferCategory(row.Bezeichnung, sku), BRAND, row);
   output.Type = "simple";
   output.SKU = sku;
   output.Name = row.Bezeichnung.trim();
@@ -483,7 +518,7 @@ function buildVariableImportRows(parentSku, rows, enriched) {
     return [buildSimpleImportRow(first, enriched)];
   }
 
-  const parent = baseRow(enriched, inferCategory(first.Bezeichnung, parentSku));
+  const parent = baseRow(enriched, inferCategory(first.Bezeichnung, parentSku), BRAND, first);
   parent.Type = "variable";
   parent.SKU = parentSku;
   parent.Name = first.Bezeichnung.trim();
@@ -537,6 +572,7 @@ async function main() {
   const { simple, groups } = groupRows(rows);
 
   let peIndex = {};
+  let mpIndex = {};
   if (args.scrape) {
     if (args.buildPeIndex) {
       console.log("Building Parts Europe index (one-time, cached)...");
@@ -549,6 +585,18 @@ async function main() {
       } else {
         console.log("No PE index cache — run with --build-pe-index for images/descriptions.");
       }
+    }
+
+    const inputDir = resolve("input");
+    const mpIndexPath = join(cacheDir, "medienpaket-index.json");
+    if (existsSync(inputDir)) {
+      const built = buildMedienpaketIndex(inputDir);
+      mpIndex = built.index;
+      writeFileSync(mpIndexPath, `${JSON.stringify(mpIndex, null, 2)}\n`, "utf8");
+      console.log(`Built medienpaket index from input/ (${built.products.length} products)`);
+    } else if (existsSync(mpIndexPath)) {
+      mpIndex = JSON.parse(readFileSync(mpIndexPath, "utf8"));
+      console.log(`Loaded medienpaket index (${Object.keys(mpIndex).length} keys)`);
     }
   }
 
@@ -567,9 +615,13 @@ async function main() {
   let includedParents = 0;
   for (const parent of parents) {
     const enriched = args.scrape
-      ? lookupPeContent(peIndex, parent.rows[0].ArtNr, parent.key)
+      ? lookupEnrichment(peIndex, mpIndex, parent.rows[0].ArtNr, parent.key)
       : null;
-    const hasImages = Boolean(enriched?.images?.length);
+    const hasImages = Boolean(
+      enriched?.images?.length &&
+        (enriched.images.some((url) => /^https?:\/\//i.test(url)) ||
+          enriched.images.some((url) => !/^https?:\/\//i.test(url))),
+    );
     if (hasImages) enrichedCount += 1;
 
     if (args.withImagesOnly && !hasImages) {

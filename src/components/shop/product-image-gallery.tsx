@@ -1,7 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import { MotorcycleImageStage } from "@/components/shop/motorcycle-image-stage";
 import {
   GalleryImageTransition,
@@ -19,9 +20,14 @@ import {
   ProductVideoModal,
 } from "@/components/shop/product-video-modal";
 import {
+  buildGallerySlides,
+  CRAFT_GALLERY_MAIN_STAGE_CLASS,
   GALLERY_VIDEO_THUMB_KEY,
   GalleryInlineVideoStage,
+  type GalleryInlineVideoStageHandle,
   GalleryVideoThumbButton,
+  gallerySlideRailKey,
+  imageIndexToSlideIndex,
   isGalleryVideoThumbKey,
 } from "@/components/shop/gallery-video-slide";
 import { InStoreNowBadge } from "@/components/shop/in-store-now-badge";
@@ -237,39 +243,56 @@ export function ProductImageGallery({
     ? images.findIndex((src) => src === preferredImage)
     : -1;
 
-  const [activeIndex, setActiveIndex] = useState(
-    preferredIndex >= 0 ? preferredIndex : 0,
-  );
-  const [lightboxOpen, setLightboxOpen] = useState(false);
   const productVideo =
     productVideoProp ??
     (vimeoId ? ({ provider: "vimeo", id: vimeoId } satisfies ProductVideo) : undefined);
   const [videoOpen, setVideoOpen] = useState(false);
+  const inlineVideoRef = useRef<GalleryInlineVideoStageHandle>(null);
   const hasVideoSlide = Boolean(
     productVideo && (isHero || layout === "craft"),
   );
-  const videoSlideIndex = hasVideoSlide ? images.length : -1;
-  const slideCount = images.length + (hasVideoSlide ? 1 : 0);
+  const slides = useMemo(
+    () => buildGallerySlides(images, hasVideoSlide),
+    [hasVideoSlide, images],
+  );
+  const slideCount = slides.length;
   const posterSrc = images[0] ?? "";
+  const preferredSlideIndex = imageIndexToSlideIndex(preferredIndex, slides);
+
+  const [activeIndex, setActiveIndex] = useState(
+    preferredSlideIndex >= 0 ? preferredSlideIndex : 0,
+  );
+  const [lightboxOpen, setLightboxOpen] = useState(false);
 
   const resolvedIndex =
-    preferredImage && preferredIndex >= 0 ? preferredIndex : activeIndex;
-  const isVideoActive =
-    hasVideoSlide && resolvedIndex === videoSlideIndex;
+    preferredImage && preferredIndex >= 0 ? preferredSlideIndex : activeIndex;
+  const activeSlide = slides[resolvedIndex] ?? slides[0];
+  const isVideoActive = activeSlide?.kind === "video";
   const activeSrc =
     preferredImage && preferredIndex < 0
       ? preferredImage
-      : (images[resolvedIndex] ?? images[0]);
+      : activeSlide?.kind === "image"
+        ? activeSlide.src
+        : images[0];
   const slideDirection = useGallerySlideDirection(resolvedIndex, slideCount);
-  const railItems = hasVideoSlide
-    ? [...images, GALLERY_VIDEO_THUMB_KEY]
-    : images;
+  const railItems = slides.map(gallerySlideRailKey);
 
   useEffect(() => {
-    if (preferredIndex >= 0) {
-      setActiveIndex(preferredIndex);
+    if (preferredSlideIndex >= 0) {
+      setActiveIndex(preferredSlideIndex);
     }
-  }, [preferredIndex, preferredImage]);
+  }, [preferredImage, preferredSlideIndex]);
+
+  const selectGallerySlide = (index: number) => {
+    const slide = slides[index];
+    if (slide?.kind === "video" && productVideo?.provider === "file") {
+      flushSync(() => setActiveIndex(index));
+      void inlineVideoRef.current?.play();
+      return;
+    }
+
+    setActiveIndex(index);
+  };
 
   const showPrevious = () => {
     setActiveIndex((index) => (index > 0 ? index - 1 : slideCount - 1));
@@ -278,6 +301,28 @@ export function ProductImageGallery({
   const showNext = () => {
     setActiveIndex((index) => (index < slideCount - 1 ? index + 1 : 0));
   };
+
+  const openLightboxAtSlide = (index: number) => {
+    setActiveIndex(index);
+    setLightboxOpen(true);
+  };
+
+  const lightboxProps = {
+    images,
+    alt,
+    open: lightboxOpen,
+    onClose: () => setLightboxOpen(false),
+    variant,
+    initialSlideIndex: resolvedIndex,
+    ...(hasVideoSlide && productVideo
+      ? {
+          slides,
+          productVideo,
+          posterSrc,
+          videoTitle: videoTitle ?? alt,
+        }
+      : {}),
+  } as const;
 
   const renderSlideThumb = (
     src: string,
@@ -298,6 +343,7 @@ export function ProductImageGallery({
           total={slideCount}
           selected={index === resolvedIndex}
           onSelect={select}
+          onOpenLightbox={() => openLightboxAtSlide(index)}
           imageBackground={imageBackground}
           style={style}
           theme={theme}
@@ -318,10 +364,7 @@ export function ProductImageGallery({
           onSelect={select}
           onOpenLightbox={
             options?.onOpenLightbox ??
-            (() => {
-              setActiveIndex(index);
-              setLightboxOpen(true);
-            })
+            (() => openLightboxAtSlide(index))
           }
         />
       );
@@ -341,10 +384,7 @@ export function ProductImageGallery({
         onSelect={select}
         onOpenLightbox={
           options?.onOpenLightbox ??
-          (() => {
-            setActiveIndex(index);
-            setLightboxOpen(true);
-          })
+          (() => openLightboxAtSlide(index))
         }
       />
     );
@@ -365,9 +405,9 @@ export function ProductImageGallery({
           ? "w-24 shrink-0"
           : "w-full")
       }
-      onThumbSelect={setActiveIndex}
+      onThumbSelect={selectGallerySlide}
       renderThumb={(src, index, select) =>
-        renderSlideThumb(src, index, select, "default", {
+        renderSlideThumb(src, index, () => selectGallerySlide(index), "default", {
           compact,
           fillRail: orientation === "vertical",
         })
@@ -393,11 +433,14 @@ export function ProductImageGallery({
   const inlineVideoStage =
     hasVideoSlide && productVideo ? (
       <GalleryInlineVideoStage
+        ref={inlineVideoRef}
         video={productVideo}
         title={videoTitle ?? alt}
         posterSrc={posterSrc}
         expandLabel={dict.motorcycle.watchVideo}
         imageBackground={imageBackground}
+        stageLayout={layout === "craft" || !isProduct ? "content" : "fill"}
+        className={layout === "craft" || !isProduct ? undefined : "h-full"}
         onExpand={() => setVideoOpen(true)}
       />
     ) : null;
@@ -419,9 +462,9 @@ export function ProductImageGallery({
           onNext: showNext,
           theme,
         }}
-        onThumbSelect={setActiveIndex}
+        onThumbSelect={selectGallerySlide}
         renderThumb={(src, index, select) =>
-          renderSlideThumb(src, index, select, "craft")
+          renderSlideThumb(src, index, () => selectGallerySlide(index), "craft")
         }
       />
     );
@@ -438,6 +481,7 @@ export function ProductImageGallery({
             {isVideoActive ? (
               <div
                 className="w-full max-lg:rounded-none"
+                onDoubleClick={() => openLightboxAtSlide(resolvedIndex)}
                 onTouchStart={(event) => {
                   const touch = event.changedTouches[0];
                   if (!touch) return;
@@ -483,16 +527,19 @@ export function ProductImageGallery({
                   className="w-full max-lg:rounded-none"
                 >
                   <figure
-                    className={`relative w-full overflow-hidden max-lg:leading-none ${galleryImageBgClass(imageBackground)}`}
+                    className={cn(
+                      CRAFT_GALLERY_MAIN_STAGE_CLASS,
+                      "max-lg:leading-none",
+                      galleryImageBgClass(imageBackground),
+                    )}
                   >
                     <Image
                       src={activeSrc}
                       alt={alt}
-                      width={1200}
-                      height={1500}
+                      fill
                       priority
                       sizes="(max-width: 1024px) 100vw, 42vw"
-                      className="mx-auto block h-auto w-full max-h-[min(72vh,44rem)] object-contain object-top p-0.5 transition-transform duration-500 group-hover/openable:scale-[1.01] sm:p-1"
+                      className="object-contain object-top p-0.5 transition-transform duration-500 group-hover/openable:scale-[1.01] sm:p-1"
                     />
                     {slideCounter}
                   </figure>
@@ -512,14 +559,7 @@ export function ProductImageGallery({
           <div className="lg:hidden">{craftThumbRail("horizontal")}</div>
         ) : null}
 
-        <ProductImageLightbox
-          images={images}
-          alt={alt}
-          initialIndex={Math.min(resolvedIndex, images.length - 1)}
-          open={lightboxOpen}
-          onClose={() => setLightboxOpen(false)}
-          variant={variant}
-        />
+        <ProductImageLightbox {...lightboxProps} />
 
         {hasVideoSlide && productVideo ? (
           <ProductVideoModal
@@ -584,14 +624,7 @@ export function ProductImageGallery({
           />
         ) : null}
 
-        <ProductImageLightbox
-          images={images}
-          alt={alt}
-          initialIndex={resolvedIndex}
-          open={lightboxOpen}
-          onClose={() => setLightboxOpen(false)}
-          variant={variant}
-        />
+        <ProductImageLightbox {...lightboxProps} />
       </div>
     );
   }
@@ -604,7 +637,10 @@ export function ProductImageGallery({
       )}
     >
       {isVideoActive ? (
-        <div className="relative w-full max-lg:rounded-none">
+        <div
+          className="relative w-full max-lg:rounded-none"
+          onDoubleClick={() => openLightboxAtSlide(resolvedIndex)}
+        >
           <GalleryImageTransition
             imageKey="gallery-video"
             direction={slideDirection}
@@ -624,7 +660,7 @@ export function ProductImageGallery({
         </div>
       ) : (
         <OpenableImageTrigger
-          onOpen={() => setLightboxOpen(true)}
+          onOpen={() => openLightboxAtSlide(resolvedIndex)}
           label={`Open ${alt} full size`}
           theme={theme}
           onSwipeLeft={slideCount > 1 ? showNext : undefined}
@@ -753,14 +789,7 @@ export function ProductImageGallery({
         </div>
       ) : null}
 
-      <ProductImageLightbox
-        images={images}
-        alt={alt}
-        initialIndex={Math.min(resolvedIndex, images.length - 1)}
-        open={lightboxOpen}
-        onClose={() => setLightboxOpen(false)}
-        variant={variant}
-      />
+      <ProductImageLightbox {...lightboxProps} />
 
       {hasVideoSlide && productVideo ? (
         <ProductVideoModal

@@ -2,6 +2,13 @@
 
 import Image from "next/image";
 import {
+  forwardRef,
+  useImperativeHandle,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
+import {
   buildProductVideoEmbedUrl,
   type ProductVideo,
 } from "@/lib/shop/parse-product-video";
@@ -9,8 +16,78 @@ import { cn } from "@/lib/utils";
 
 export const GALLERY_VIDEO_THUMB_KEY = "__gallery_video__";
 
+/** Shared main stage for craft equipment gallery — image + video use the same box. */
+export const CRAFT_GALLERY_MAIN_STAGE_CLASS =
+  "relative mx-auto w-full aspect-[4/5] max-h-[min(72vh,44rem)] overflow-hidden";
+
 export function isGalleryVideoThumbKey(value: string) {
   return value === GALLERY_VIDEO_THUMB_KEY;
+}
+
+export type GallerySlide =
+  | { kind: "image"; src: string }
+  | { kind: "video" };
+
+export function buildGallerySlides(
+  images: readonly string[],
+  includeVideo: boolean,
+): GallerySlide[] {
+  if (!includeVideo || images.length === 0) {
+    return images.map((src) => ({ kind: "image", src }));
+  }
+
+  return [
+    { kind: "image" as const, src: images[0] },
+    { kind: "video" as const },
+    ...images.slice(1).map((src) => ({ kind: "image" as const, src })),
+  ];
+}
+
+export function gallerySlideRailKey(slide: GallerySlide) {
+  return slide.kind === "video" ? GALLERY_VIDEO_THUMB_KEY : slide.src;
+}
+
+export function imageIndexToSlideIndex(
+  imageIndex: number,
+  slides: readonly GallerySlide[],
+) {
+  if (imageIndex < 0) {
+    return -1;
+  }
+
+  let seenImages = 0;
+  for (let index = 0; index < slides.length; index++) {
+    if (slides[index]?.kind !== "image") {
+      continue;
+    }
+
+    if (seenImages === imageIndex) {
+      return index;
+    }
+
+    seenImages++;
+  }
+
+  return 0;
+}
+
+export function slideIndexToLightboxImageIndex(
+  slideIndex: number,
+  slides: readonly GallerySlide[],
+) {
+  let imageIndex = 0;
+
+  for (let index = 0; index < slideIndex; index++) {
+    if (slides[index]?.kind === "image") {
+      imageIndex++;
+    }
+  }
+
+  if (slides[slideIndex]?.kind === "video") {
+    return Math.max(0, imageIndex - 1);
+  }
+
+  return imageIndex;
 }
 
 type GalleryVideoThumbButtonProps = {
@@ -19,12 +96,27 @@ type GalleryVideoThumbButtonProps = {
   total: number;
   selected: boolean;
   onSelect: () => void;
+  onOpenLightbox?: () => void;
   imageBackground?: "surface" | "moto" | "detail" | "white";
   style?: "craft" | "default";
   theme?: "dark" | "light";
   compact?: boolean;
   fillRail?: boolean;
 };
+
+function PauseIcon({ className = "size-3.5" }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M6 5h4v14H6V5zm8 0h4v14h-4V5z" />
+    </svg>
+  );
+}
 
 function PlayIcon({ className = "size-3.5" }: { className?: string }) {
   return (
@@ -46,6 +138,7 @@ export function GalleryVideoThumbButton({
   total,
   selected,
   onSelect,
+  onOpenLightbox,
   imageBackground = "surface",
   style = "default",
   theme = "light",
@@ -66,6 +159,7 @@ export function GalleryVideoThumbButton({
       <button
         type="button"
         onClick={onSelect}
+        onDoubleClick={onOpenLightbox}
         aria-label={`View product video (${index + 1} of ${total})`}
         aria-current={selected ? "true" : undefined}
         className={cn(
@@ -103,6 +197,7 @@ export function GalleryVideoThumbButton({
     <button
       type="button"
       onClick={onSelect}
+      onDoubleClick={onOpenLightbox}
       aria-label={`View product video (${index + 1} of ${total})`}
       aria-current={selected ? "true" : undefined}
       className={cn(
@@ -155,17 +250,72 @@ type GalleryInlineVideoStageProps = {
   expandLabel: string;
   className?: string;
   imageBackground?: "surface" | "moto" | "detail" | "white";
+  /** content = match portrait product image; fill = inherit parent gallery stage height */
+  stageLayout?: "content" | "fill";
 };
 
-export function GalleryInlineVideoStage({
-  video,
-  title,
-  posterSrc,
-  onExpand,
-  expandLabel,
-  className = "",
-  imageBackground = "white",
-}: GalleryInlineVideoStageProps) {
+function inlineVideoStageContainerClass(stageLayout: "content" | "fill") {
+  if (stageLayout === "fill") {
+    return "relative h-full w-full min-h-0 overflow-hidden";
+  }
+
+  return cn(CRAFT_GALLERY_MAIN_STAGE_CLASS, "overflow-hidden");
+}
+
+function inlineVideoMediaClass(stageLayout: "content" | "fill") {
+  return cn(
+    "absolute inset-0 h-full w-full object-cover",
+    stageLayout === "content" ? "object-top" : "object-center",
+  );
+}
+
+function inlineVideoIframeClass() {
+  return "absolute left-1/2 top-1/2 aspect-video h-full w-auto min-w-full -translate-x-1/2 -translate-y-1/2";
+}
+
+export type GalleryInlineVideoStageHandle = {
+  play: () => Promise<void>;
+};
+
+export const GalleryInlineVideoStage = forwardRef<
+  GalleryInlineVideoStageHandle,
+  GalleryInlineVideoStageProps
+>(function GalleryInlineVideoStage(
+  {
+    video,
+    title,
+    posterSrc,
+    onExpand,
+    expandLabel,
+    className = "",
+    imageBackground = "white",
+    stageLayout = "content",
+  },
+  ref,
+) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [playing, setPlaying] = useState(false);
+
+  useLayoutEffect(() => {
+    if (video.provider !== "file") {
+      return;
+    }
+
+    const element = videoRef.current;
+    if (!element) {
+      return;
+    }
+
+    void element
+      .play()
+      .then(() => setPlaying(true))
+      .catch(() => setPlaying(false));
+
+    return () => {
+      element.pause();
+    };
+  }, [video]);
+
   const imageBgClass =
     imageBackground === "moto"
       ? "bg-moto"
@@ -175,32 +325,104 @@ export function GalleryInlineVideoStage({
           ? "bg-white"
           : "bg-surface";
 
+  const togglePlayback = async () => {
+    const element = videoRef.current;
+    if (!element) {
+      return;
+    }
+
+    if (element.paused) {
+      try {
+        await element.play();
+        setPlaying(true);
+      } catch {
+        setPlaying(false);
+      }
+      return;
+    }
+
+    element.pause();
+    setPlaying(false);
+  };
+
+  useImperativeHandle(ref, () => ({
+    play: async () => {
+      if (video.provider !== "file") {
+        return;
+      }
+
+      const element = videoRef.current;
+      if (!element) {
+        return;
+      }
+
+      try {
+        await element.play();
+        setPlaying(true);
+      } catch {
+        setPlaying(false);
+      }
+    },
+  }));
+
   return (
     <figure
       className={cn(
-        "relative w-full overflow-hidden max-lg:leading-none",
-        imageBgClass,
+        "group max-lg:leading-none",
+        stageLayout === "content"
+          ? cn(CRAFT_GALLERY_MAIN_STAGE_CLASS, imageBgClass)
+          : cn(
+              "relative w-full overflow-hidden",
+              stageLayout === "fill" && "h-full",
+              imageBgClass,
+            ),
         className,
       )}
     >
-      <div className="relative mx-auto aspect-[4/5] w-full max-h-[min(72vh,44rem)] sm:aspect-video">
+      <div
+        className={
+          stageLayout === "content"
+            ? "relative h-full w-full"
+            : inlineVideoStageContainerClass(stageLayout)
+        }
+      >
         {video.provider === "file" ? (
-          <video
-            src={buildProductVideoEmbedUrl(video)}
-            title={title}
-            controls
-            playsInline
-            preload="metadata"
-            poster={posterSrc}
-            className="absolute inset-0 h-full w-full object-contain"
-          />
+          <>
+            <video
+              ref={videoRef}
+              src={buildProductVideoEmbedUrl(video)}
+              title={title}
+              autoPlay
+              playsInline
+              preload="metadata"
+              poster={posterSrc}
+              className={inlineVideoMediaClass(stageLayout)}
+              onPlay={() => setPlaying(true)}
+              onPause={() => setPlaying(false)}
+              onEnded={() => setPlaying(false)}
+            />
+            <button
+              type="button"
+              onClick={togglePlayback}
+              aria-label={playing ? "Pause video" : expandLabel}
+              className="absolute inset-0 z-10 flex items-center justify-center bg-ink/0 opacity-0 transition-opacity duration-200 pointer-events-none group-hover:pointer-events-auto group-hover:opacity-100 focus-visible:pointer-events-auto focus-visible:opacity-100"
+            >
+              <span className="flex size-14 items-center justify-center rounded-full bg-ink/80 text-paper shadow-lg transition-transform duration-200 group-hover:scale-105 sm:size-16">
+                {playing ? (
+                  <PauseIcon className="size-6 sm:size-7" />
+                ) : (
+                  <PlayIcon className="size-6 translate-x-0.5 sm:size-7" />
+                )}
+              </span>
+            </button>
+          </>
         ) : (
           <iframe
             src={buildProductVideoEmbedUrl(video)}
             title={title}
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
             allowFullScreen
-            className="absolute inset-0 h-full w-full"
+            className={inlineVideoIframeClass()}
           />
         )}
       </div>
@@ -208,7 +430,7 @@ export function GalleryInlineVideoStage({
         type="button"
         onClick={onExpand}
         aria-label={expandLabel}
-        className="absolute right-3 top-3 z-20 inline-flex size-9 items-center justify-center rounded-full border border-ink/10 bg-paper/92 text-ink shadow-sm backdrop-blur-sm transition hover:border-ink/20 sm:right-4 sm:top-4"
+        className="absolute right-3 top-3 z-20 inline-flex size-9 items-center justify-center rounded-full border border-ink/10 bg-paper/92 text-ink opacity-0 shadow-sm backdrop-blur-sm transition hover:border-ink/20 group-hover:opacity-100 focus-visible:opacity-100 sm:right-4 sm:top-4"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -223,5 +445,113 @@ export function GalleryInlineVideoStage({
         </svg>
       </button>
     </figure>
+  );
+});
+
+type GalleryLightboxVideoStageProps = {
+  video: ProductVideo;
+  title: string;
+  posterSrc?: string;
+  playLabel: string;
+  isProduct?: boolean;
+};
+
+export function GalleryLightboxVideoStage({
+  video,
+  title,
+  posterSrc,
+  playLabel,
+  isProduct = true,
+}: GalleryLightboxVideoStageProps) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [playing, setPlaying] = useState(false);
+
+  useLayoutEffect(() => {
+    if (video.provider !== "file") {
+      return;
+    }
+
+    const element = videoRef.current;
+    if (!element) {
+      return;
+    }
+
+    void element
+      .play()
+      .then(() => setPlaying(true))
+      .catch(() => setPlaying(false));
+
+    return () => {
+      element.pause();
+    };
+  }, [video]);
+
+  const togglePlayback = async () => {
+    const element = videoRef.current;
+    if (!element) {
+      return;
+    }
+
+    if (element.paused) {
+      try {
+        await element.play();
+        setPlaying(true);
+      } catch {
+        setPlaying(false);
+      }
+      return;
+    }
+
+    element.pause();
+    setPlaying(false);
+  };
+
+  return (
+    <div
+      className={cn(
+        "group relative size-full overflow-hidden",
+        isProduct ? "bg-moto" : "bg-white",
+      )}
+    >
+      {video.provider === "file" ? (
+        <>
+          <video
+            ref={videoRef}
+            src={buildProductVideoEmbedUrl(video)}
+            title={title}
+            autoPlay
+            playsInline
+            preload="metadata"
+            poster={posterSrc}
+            className="absolute inset-0 size-full object-contain object-center p-[3%] sm:p-[5%]"
+            onPlay={() => setPlaying(true)}
+            onPause={() => setPlaying(false)}
+            onEnded={() => setPlaying(false)}
+          />
+          <button
+            type="button"
+            onClick={togglePlayback}
+            aria-label={playing ? "Pause video" : playLabel}
+            className="absolute inset-0 z-10 flex items-center justify-center bg-ink/0 opacity-0 transition-opacity duration-200 pointer-events-none group-hover:pointer-events-auto group-hover:opacity-100 focus-visible:pointer-events-auto focus-visible:opacity-100"
+          >
+            <span className="flex size-16 items-center justify-center rounded-full bg-ink/80 text-paper shadow-lg transition-transform duration-200 group-hover:scale-105 sm:size-20">
+              {playing ? (
+                <PauseIcon className="size-7 sm:size-8" />
+              ) : (
+                <PlayIcon className="size-7 translate-x-0.5 sm:size-8" />
+              )}
+            </span>
+          </button>
+        </>
+      ) : (
+        <iframe
+          src={buildProductVideoEmbedUrl(video)}
+          title={title}
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+          className="absolute inset-0 size-full"
+        />
+      )}
+    </div>
   );
 }

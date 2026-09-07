@@ -2,6 +2,91 @@
 
 John Doe supplies a daily stock CSV (Frankfurt + outside warehouse). Motorock uses **VK_Brutto** as the WooCommerce regular price and **EK_Netto** as `_cost`.
 
+## Import via WP plugin (recommended)
+
+**WooCommerce → Catalog Import** on [shop.motorock.eu](https://shop.motorock.eu/wp-admin/)
+
+### 1. Create feed
+
+1. **New feed** → adapter **John Doe (stock CSV)**
+2. Name: `John Doe`, Brand: `John Doe`, Price multiplier: `1`
+3. **Hide new imports** — leave **unchecked** for normal imports. Products **without images stay draft**; products with images publish automatically. Catalog visibility is always **visible**, so manual Publish in WP admin is enough once you add content.
+4. **Parts Europe images** — check *“only products with Parts Europe images”* for the first launch (~87 parents with photos). Uncheck later to add the rest without images.
+5. **Save settings**
+
+### 2. Upload CSV
+
+Either:
+
+- Click **Upload CSV** and choose a local file, or
+- Download fresh stock and upload:
+
+```text
+https://portal.ridejohndoe.com/stocklist/export_csv_with_outside_warehouse
+```
+
+Server copy (optional): `uploads/motorock-catalog-importer/csv/johndoe-source.csv`
+
+### 3. Medienpaket (local images + videos)
+
+Place John Doe media packs under `input/` in the repo (folder per product, e.g. `JDL5022_Aero_Mesh_Motoshirt_Black/` with `04_Webshop/` and `03_Video/`).
+
+Build index locally:
+
+```bash
+npm run build:johndoe-medienpaket
+```
+
+Upload to server:
+
+| Local | Server |
+|-------|--------|
+| `input/` | `uploads/motorock-catalog-importer/medienpaket/` |
+| `output/johndoe/.cache/medienpaket-index.json` | `uploads/motorock-catalog-importer/cache/johndoe-medienpaket-index.json` |
+
+During **Catalog Import**, the plugin prefers medienpaket images/videos over Parts Europe. Protektor aliases: `XTM-103-1` → `A-H-B-1`, `XTM-132-1` → `A-SEK-B-1`.
+
+After import, backfill existing products:
+
+```bash
+wp eval-file wp-content/plugins/motorock-catalog-importer/scripts/backfill-johndoe-medienpaket.php
+```
+
+### 4. Parts Europe cache (fallback images)
+
+For enrichment, the server needs:
+
+`uploads/motorock-catalog-importer/cache/johndoe-partseurope-index.json`
+
+Build locally once:
+
+```bash
+npm run import:johndoe -- --fetch --build-pe-index
+```
+
+Then upload the cache file to the path above (or use `./scripts/deploy-johndoe-import.sh` without `--run` — it syncs CSV + cache only).
+
+### 4. Category mapping
+
+Map each **John Doe > Men/Women > …** label to Motorock categories (see table below) → **Save category mapping**.
+
+Without mapping, products land in the default Woo category only.
+
+### 5. Run import
+
+1. **Run as:** Full import
+2. **Prepare & start import** — one parent product per step (~87 with PE filter, ~15–30 min with images)
+3. When done: **Show on storefront** (if feed was hidden)
+4. On your machine: `npm run revalidate`
+
+### 6. Daily sync
+
+1. Upload fresh CSV (or replace server copy)
+2. **Run as:** Update stock & prices only
+3. **Prepare & start import** — fast, no scraping
+
+---
+
 ## Data source
 
 - URL (combined inside + outside):  
@@ -147,6 +232,19 @@ After mapping, **Full import** assigns Woo categories so storefront **For men / 
 - **ridejohndoe.com** — Cloudflare blocks automated scraping
 - **Parts Europe** — used when vendor part numbers match (~half the catalog); run `--build-pe-index` once
 - Missing images/descriptions: ask John Doe for a media pack or add manually in Woo
+
+## Product videos
+
+Storefront reads Woo meta **`product_video_url`** (ACF field *Product video URL*). Supported: Vimeo, YouTube, direct `.mp4`/`.webm`.
+
+| How to set | When |
+|------------|------|
+| Woo → **Motorock toode** → Product video URL | Manual, any product |
+| CSV column `Video_URL` / `video_url` / `product_video_url` | John Doe stock CSV extension or generic feed |
+| `Meta: product_video_url` in `npm run import:johndoe` CSV | Local WooCommerce import |
+| Catalog Import plugin (v0.3.1+) | Holyfreedom scrapes iframe/og:video from product page; re-import backfills video on existing products |
+
+After bulk video updates: `npm run revalidate`.
 
 ## Pricing
 

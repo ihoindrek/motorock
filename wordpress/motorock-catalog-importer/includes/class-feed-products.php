@@ -79,8 +79,9 @@ class Motorock_Catalog_Importer_Feed_Products {
     /**
      * Bulk show/hide feed products on the storefront.
      *
-     * Hidden = draft + catalog_visibility hidden (GraphQL catalog uses status publish).
-     * Visible = publish + catalog_visibility visible.
+     * Hidden = draft (GraphQL catalog only returns published products).
+     * Visible = publish when the product has a featured image.
+     * Catalog visibility stays visible so manual Publish in WP admin works immediately.
      *
      * @return array{processed: int, total: int, done: bool, stats: array<string, int>}
      */
@@ -96,12 +97,12 @@ class Motorock_Catalog_Importer_Feed_Products {
                 continue;
             }
 
-            if ($visible) {
+            $product->set_catalog_visibility('visible');
+
+            if ($visible && $product->get_image_id()) {
                 $product->set_status('publish');
-                $product->set_catalog_visibility('visible');
             } else {
                 $product->set_status('draft');
-                $product->set_catalog_visibility('hidden');
             }
 
             $product->save();
@@ -124,7 +125,38 @@ class Motorock_Catalog_Importer_Feed_Products {
     }
 
     public static function default_catalog_visibility_for_feed(array $feed) {
-        return self::is_feed_visible_on_storefront($feed) ? 'visible' : 'hidden';
+        return 'visible';
+    }
+
+    /**
+     * Import status: draft until the product has storefront content (image).
+     * Feed-level catalog_hidden keeps everything draft for manual review.
+     *
+     * @param array<string, mixed> $product_data
+     */
+    public static function resolve_import_status(array $feed, array $product_data) {
+        if (!empty($feed['catalog_hidden'])) {
+            return 'draft';
+        }
+
+        return self::product_has_storefront_content($product_data) ? 'publish' : 'draft';
+    }
+
+    /**
+     * @param array<string, mixed> $product_data
+     */
+    public static function product_has_storefront_content(array $product_data) {
+        $images = isset($product_data['images']) && is_array($product_data['images'])
+            ? $product_data['images']
+            : array();
+
+        foreach ($images as $image) {
+            if (is_array($image) && !empty($image['src'])) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public static function refresh_feed_product_stats($feed_id) {

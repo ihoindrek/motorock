@@ -51,11 +51,20 @@ echo "==> Deploying catalog importer plugin"
 UPLOAD_BASE="$WP_ROOT/wp-content/uploads/motorock-catalog-importer"
 CSV_REMOTE="$UPLOAD_BASE/csv/johndoe-source.csv"
 CACHE_REMOTE="$UPLOAD_BASE/cache/johndoe-partseurope-index.json"
+MEDIENPAKET_REMOTE="$UPLOAD_BASE/medienpaket"
+MP_INDEX_REMOTE="$UPLOAD_BASE/cache/johndoe-medienpaket-index.json"
 
-echo "==> Uploading stock CSV + Parts Europe cache"
-"${SSH[@]}" "mkdir -p '$UPLOAD_BASE/csv' '$UPLOAD_BASE/cache'"
+echo "==> Building medienpaket index from input/"
+(cd "$ROOT" && npm run build:johndoe-medienpaket)
+
+echo "==> Uploading stock CSV + enrichment caches + medienpaket"
+"${SSH[@]}" "mkdir -p '$UPLOAD_BASE/csv' '$UPLOAD_BASE/cache' '$MEDIENPAKET_REMOTE'"
 "${RSYNC[@]}" "$ROOT/output/johndoe/source-stock.csv" "$REMOTE:$CSV_REMOTE"
 "${RSYNC[@]}" "$ROOT/output/johndoe/.cache/partseurope-index.json" "$REMOTE:$CACHE_REMOTE"
+"${RSYNC[@]}" "$ROOT/output/johndoe/.cache/medienpaket-index.json" "$REMOTE:$MP_INDEX_REMOTE"
+if [[ -d "$ROOT/input" ]]; then
+  "${RSYNC[@]}" "$ROOT/input/" "$REMOTE:$MEDIENPAKET_REMOTE/"
+fi
 "${RSYNC[@]}" "$ROOT/wordpress/motorock-backfill-pa-brand.php" "$REMOTE:$WP_ROOT/motorock-backfill-pa-brand.php"
 
 IMPORT_ARGS="with-images-only"

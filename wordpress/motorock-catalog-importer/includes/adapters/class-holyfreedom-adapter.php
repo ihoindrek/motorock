@@ -132,10 +132,15 @@ class Motorock_Catalog_Importer_Holyfreedom_Adapter extends Motorock_Catalog_Imp
             'category_ids' => $this->resolve_category_ids($feed, $row['category_name']),
             'brand' => isset($feed['brand']) ? $feed['brand'] : 'Holyfreedom',
             'images' => $this->map_images($scraped),
+            'video_url' => $this->row_video_url(
+                $row,
+                isset($scraped['video_url']) ? $scraped['video_url'] : ''
+            ),
             'meta' => array(
                 '_cost' => $row['Dedicated_Price'],
                 '_ean' => $row['ean13'],
                 '_supplier_sku' => $row['reference'] !== '' ? $row['reference'] : $sku,
+                '_catalog_source_product_url' => $this->base_url($row['product_link']),
             ),
         );
     }
@@ -183,6 +188,10 @@ class Motorock_Catalog_Importer_Holyfreedom_Adapter extends Motorock_Catalog_Imp
             'category_ids' => $this->resolve_category_ids($feed, $queue_item['category_name']),
             'brand' => isset($feed['brand']) ? $feed['brand'] : 'Holyfreedom',
             'images' => $this->map_images($scraped),
+            'video_url' => $this->row_video_url(
+                $first,
+                isset($scraped['video_url']) ? $scraped['video_url'] : ''
+            ),
             'attributes' => array(
                 array(
                     'name' => 'Size',
@@ -194,6 +203,7 @@ class Motorock_Catalog_Importer_Holyfreedom_Adapter extends Motorock_Catalog_Imp
             'variations' => $variations,
             'meta' => array(
                 '_supplier_sku' => $parent_sku,
+                '_catalog_source_product_url' => $this->base_url($first['product_link']),
             ),
         );
     }

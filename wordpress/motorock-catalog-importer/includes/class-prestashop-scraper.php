@@ -17,11 +17,15 @@ class Motorock_Catalog_Importer_Prestashop_Scraper {
         }
     }
 
-    public function scrape($url) {
+    /**
+     * @param array{force_refresh?: bool} $options
+     */
+    public function scrape($url, array $options = array()) {
         $page_url = $this->normalize_url($url);
         $cache_file = $this->cache_dir . '/' . sha1($page_url) . '.json';
+        $force_refresh = !empty($options['force_refresh']);
 
-        if (file_exists($cache_file)) {
+        if (!$force_refresh && file_exists($cache_file)) {
             $cached = json_decode(file_get_contents($cache_file), true);
             if (is_array($cached)) {
                 return $cached;
@@ -48,6 +52,7 @@ class Motorock_Catalog_Importer_Prestashop_Scraper {
             'images' => $this->extract_images($html),
             'short_description' => $this->extract_short_description($html),
             'description_html' => $this->extract_description_html($html),
+            'video_url' => $this->extract_video_url($html),
         );
 
         file_put_contents($cache_file, wp_json_encode($payload));
@@ -130,5 +135,27 @@ class Motorock_Catalog_Importer_Prestashop_Scraper {
         );
 
         return wp_kses($html, $allowed);
+    }
+
+    private function extract_video_url($html) {
+        if (preg_match('/property="og:video(?::url)?"\s+content="([^"]+)"/i', $html, $match)) {
+            return Motorock_Catalog_Importer_Product_Video::sanitize_url(
+                html_entity_decode($match[1], ENT_QUOTES, 'UTF-8')
+            );
+        }
+
+        if (preg_match('/<iframe[^>]+src="([^"]+(?:youtube\.com|youtu\.be|vimeo\.com)[^"]*)"/i', $html, $match)) {
+            return Motorock_Catalog_Importer_Product_Video::sanitize_url(
+                html_entity_decode($match[1], ENT_QUOTES, 'UTF-8')
+            );
+        }
+
+        if (preg_match('/data-(?:video|src|embed)="([^"]+(?:youtube\.com|youtu\.be|vimeo\.com|\.mp4)[^"]*)"/i', $html, $match)) {
+            return Motorock_Catalog_Importer_Product_Video::sanitize_url(
+                html_entity_decode($match[1], ENT_QUOTES, 'UTF-8')
+            );
+        }
+
+        return '';
     }
 }

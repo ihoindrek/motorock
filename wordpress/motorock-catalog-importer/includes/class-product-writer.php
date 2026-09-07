@@ -86,8 +86,8 @@ class Motorock_Catalog_Importer_Product_Writer {
         $product->set_price($data['regular_price']);
         $product->set_description(isset($data['description']) ? $data['description'] : '');
         $product->set_short_description(isset($data['short_description']) ? $data['short_description'] : '');
-        $product->set_status(Motorock_Catalog_Importer_Feed_Products::default_status_for_feed($this->feed));
-        $product->set_catalog_visibility(Motorock_Catalog_Importer_Feed_Products::default_catalog_visibility_for_feed($this->feed));
+        $product->set_status(Motorock_Catalog_Importer_Feed_Products::resolve_import_status($this->feed, $data));
+        $product->set_catalog_visibility('visible');
         $this->apply_orderable_stock($product, (int) $data['stock_quantity']);
 
         $product_id = $product->save();
@@ -97,8 +97,9 @@ class Motorock_Catalog_Importer_Product_Writer {
 
         $this->set_categories($product_id, $data);
         $this->set_brand($product_id, $data);
-        $this->set_meta($product_id, isset($data['meta']) ? $data['meta'] : array());
+        $this->apply_product_meta($product_id, $data);
         $this->images->set_product_images($product_id, isset($data['images']) ? $data['images'] : array());
+        $this->sync_import_status_after_images($product_id, $data);
         $this->apply_shipping_dimensions($product);
         $product->save();
 
@@ -111,8 +112,8 @@ class Motorock_Catalog_Importer_Product_Writer {
         $product->set_sku($data['sku']);
         $product->set_description(isset($data['description']) ? $data['description'] : '');
         $product->set_short_description(isset($data['short_description']) ? $data['short_description'] : '');
-        $product->set_status(Motorock_Catalog_Importer_Feed_Products::default_status_for_feed($this->feed));
-        $product->set_catalog_visibility(Motorock_Catalog_Importer_Feed_Products::default_catalog_visibility_for_feed($this->feed));
+        $product->set_status(Motorock_Catalog_Importer_Feed_Products::resolve_import_status($this->feed, $data));
+        $product->set_catalog_visibility('visible');
 
         $attributes = array();
         foreach (isset($data['attributes']) ? $data['attributes'] : array() as $attribute_data) {
@@ -141,6 +142,8 @@ class Motorock_Catalog_Importer_Product_Writer {
         $this->set_categories($product_id, $data);
         $this->set_brand($product_id, $data);
         $this->images->set_product_images($product_id, isset($data['images']) ? $data['images'] : array());
+        $this->apply_product_meta($product_id, $data);
+        $this->sync_import_status_after_images($product_id, $data);
 
         foreach (isset($data['variations']) ? $data['variations'] : array() as $variation_data) {
             $this->create_variation($product_id, $variation_data);
@@ -230,7 +233,11 @@ class Motorock_Catalog_Importer_Product_Writer {
             $product->set_price($data['regular_price']);
             $this->apply_orderable_stock($product, (int) $data['stock_quantity']);
             $product->save();
-            $this->set_meta($product_id, isset($data['meta']) ? $data['meta'] : array());
+            $this->apply_product_meta($product_id, $data);
+            $this->images->set_product_images_if_missing(
+                $product_id,
+                isset($data['images']) ? $data['images'] : array()
+            );
         } elseif ($product->is_type('variable')) {
             foreach (isset($data['variations']) ? $data['variations'] : array() as $variation_data) {
                 if (empty($variation_data['sku'])) {
@@ -246,6 +253,11 @@ class Motorock_Catalog_Importer_Product_Writer {
 
             WC_Product_Variable::sync($product_id);
             wc_delete_product_transients($product_id);
+            $this->apply_product_meta($product_id, $data);
+            $this->images->set_product_images_if_missing(
+                $product_id,
+                isset($data['images']) ? $data['images'] : array()
+            );
         }
 
         $this->set_categories($product_id, $data);
@@ -281,6 +293,27 @@ class Motorock_Catalog_Importer_Product_Writer {
                 continue;
             }
             update_post_meta($product_id, $key, $value);
+        }
+    }
+
+    private function apply_product_meta($product_id, array $data) {
+        $meta = isset($data['meta']) && is_array($data['meta']) ? $data['meta'] : array();
+        $meta = array_merge($meta, Motorock_Catalog_Importer_Product_Video::meta_from_product_data($data));
+
+        $video_key = Motorock_Catalog_Importer_Product_Video::META_KEY;
+        if (!empty($meta[$video_key])) {
+            $public_video_url = $this->images->import_video_url($meta[$video_key], $product_id);
+            if ($public_video_url !== '') {
+                $meta[$video_key] = $public_video_url;
+            } else {
+                unset($meta[$video_key]);
+            }
+        }
+
+        $this->set_meta($product_id, $meta);
+
+        if (!empty($meta[$video_key]) && function_exists('update_field')) {
+            update_field($video_key, $meta[$video_key], $product_id);
         }
     }
 
@@ -356,5 +389,31 @@ class Motorock_Catalog_Importer_Product_Writer {
         }
 
         motorock_shipping_dimensions_apply_if_missing($product);
+    }
+
+    /**
+     * Image download may fail — keep draft when there is no featured image.
+     *
+     * @param array<string, mixed> $data
+     */
+    private function sync_import_status_after_images($product_id, array $data) {
+        if (!empty($this->feed['catalog_hidden'])) {
+            return;
+        }
+
+        $product = wc_get_product($product_id);
+        if (!$product) {
+            return;
+        }
+
+        $product->set_catalog_visibility('visible');
+
+        if ($product->get_image_id()) {
+            $product->set_status('publish');
+        } else {
+            $product->set_status('draft');
+        }
+
+        $product->save();
     }
 }

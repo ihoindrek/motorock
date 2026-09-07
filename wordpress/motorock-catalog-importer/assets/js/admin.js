@@ -33,8 +33,12 @@
     }
 
     function toggleGenericSections() {
-        var isGeneric = $('#mci-feed-adapter').val() === 'generic_csv';
+        var adapter = $('#mci-feed-adapter').val();
+        var isGeneric = adapter === 'generic_csv';
+        var isJohndoe = adapter === 'johndoe';
         $('.mci-generic-only').toggle(isGeneric);
+        $('.mci-johndoe-only').toggle(isJohndoe);
+        $('.mci-import-desc-johndoe').toggle(isJohndoe);
     }
 
     function toggleImportDescription() {
@@ -74,6 +78,7 @@
             price_multiplier: $('#mci-feed-multiplier').val(),
             default_import_mode: $('#mci-default-import-mode').val(),
             catalog_hidden: $('#mci-catalog-hidden').is(':checked') ? '1' : '0',
+            johndoe_with_images_only: $('#mci-johndoe-with-images-only').is(':checked') ? '1' : '0',
             category_mappings: collectCategoryMappings(),
             column_map: collectColumnMappings()
         });

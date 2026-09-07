@@ -1,19 +1,31 @@
 "use client";
 
 import Image from "next/image";
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import {
   GalleryImageTransition,
   useGallerySlideDirection,
 } from "@/components/shop/gallery-image-transition";
+import {
+  type GallerySlide,
+  GalleryLightboxVideoStage,
+  GalleryVideoThumbButton,
+  gallerySlideRailKey,
+} from "@/components/shop/gallery-video-slide";
 import { CarouselArrow } from "@/components/ui/carousel-arrow";
 import { useDictionary } from "@/context/locale-context";
+import type { ProductVideo } from "@/lib/shop/parse-product-video";
 
 type ProductImageLightboxProps = {
   images: readonly string[];
   alt: string;
   initialIndex?: number;
+  initialSlideIndex?: number;
+  slides?: readonly GallerySlide[];
+  productVideo?: ProductVideo;
+  posterSrc?: string;
+  videoTitle?: string;
   open: boolean;
   onClose: () => void;
   /** Product shots on grey vs lifestyle photos */
@@ -106,17 +118,34 @@ export function ProductImageLightbox({
   images,
   alt,
   initialIndex = 0,
+  initialSlideIndex,
+  slides,
+  productVideo,
+  posterSrc,
+  videoTitle,
   open,
   onClose,
   variant = "product",
 }: ProductImageLightboxProps) {
   const dict = useDictionary();
-  const [activeIndex, setActiveIndex] = useState(initialIndex);
+  const resolvedSlides = useMemo<readonly GallerySlide[]>(
+    () => slides ?? images.map((src) => ({ kind: "image", src })),
+    [images, slides],
+  );
+  const resolvedInitialSlideIndex = initialSlideIndex ?? initialIndex;
+  const [activeSlideIndex, setActiveSlideIndex] = useState(resolvedInitialSlideIndex);
   const [mounted, setMounted] = useState(false);
   const mobileThumbRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const desktopThumbRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const isProduct = variant === "product";
-  const hasMultiple = images.length > 1;
+  const slideCount = resolvedSlides.length;
+  const hasMultiple = slideCount > 1;
+  const activeSlide = resolvedSlides[activeSlideIndex] ?? resolvedSlides[0];
+  const activeImageSrc =
+    activeSlide?.kind === "image"
+      ? activeSlide.src
+      : posterSrc ?? images[0] ?? "";
+  const isVideoActive = activeSlide?.kind === "video" && Boolean(productVideo);
 
   useEffect(() => {
     setMounted(true);
@@ -124,33 +153,33 @@ export function ProductImageLightbox({
 
   useEffect(() => {
     if (open) {
-      setActiveIndex(initialIndex);
+      setActiveSlideIndex(resolvedInitialSlideIndex);
     }
-  }, [open, initialIndex]);
+  }, [open, resolvedInitialSlideIndex]);
 
   useEffect(() => {
     if (!open) {
       return;
     }
 
-    mobileThumbRefs.current[activeIndex]?.scrollIntoView({
+    mobileThumbRefs.current[activeSlideIndex]?.scrollIntoView({
       behavior: "smooth",
       block: "nearest",
       inline: "nearest",
     });
-    desktopThumbRefs.current[activeIndex]?.scrollIntoView({
+    desktopThumbRefs.current[activeSlideIndex]?.scrollIntoView({
       behavior: "smooth",
       block: "nearest",
     });
-  }, [activeIndex, open]);
+  }, [activeSlideIndex, open]);
 
   const showPrevious = useCallback(() => {
-    setActiveIndex((index) => (index > 0 ? index - 1 : images.length - 1));
-  }, [images.length]);
+    setActiveSlideIndex((index) => (index > 0 ? index - 1 : slideCount - 1));
+  }, [slideCount]);
 
   const showNext = useCallback(() => {
-    setActiveIndex((index) => (index < images.length - 1 ? index + 1 : 0));
-  }, [images.length]);
+    setActiveSlideIndex((index) => (index < slideCount - 1 ? index + 1 : 0));
+  }, [slideCount]);
 
   useEffect(() => {
     if (!open) {
@@ -181,7 +210,7 @@ export function ProductImageLightbox({
     };
   }, [open, hasMultiple, onClose, showNext, showPrevious]);
 
-  const slideDirection = useGallerySlideDirection(activeIndex, images.length);
+  const slideDirection = useGallerySlideDirection(activeSlideIndex, slideCount);
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
 
   const handleMainImageTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
@@ -212,18 +241,20 @@ export function ProductImageLightbox({
     showPrevious();
   };
 
-  if (!open || images.length === 0 || !mounted) {
+  if (!open || slideCount === 0 || !mounted) {
     return null;
   }
 
-  const activeSrc = images[activeIndex] ?? images[0];
+  const stageKey = isVideoActive
+    ? "gallery-video"
+    : activeImageSrc;
 
   return createPortal(
     <div
       className="fixed inset-0 z-[100] flex flex-col bg-white"
       role="dialog"
       aria-modal="true"
-      aria-label={`${alt} — image ${activeIndex + 1} of ${images.length}`}
+      aria-label={`${alt} — slide ${activeSlideIndex + 1} of ${slideCount}`}
     >
       <button
         type="button"
@@ -260,26 +291,37 @@ export function ProductImageLightbox({
             >
               <div className="absolute inset-0">
                 <GalleryImageTransition
-                  imageKey={activeSrc}
+                  imageKey={stageKey}
                   direction={slideDirection}
                   className="size-full"
                 >
-                  <div
-                    className={`relative size-full ${isProduct ? "bg-moto" : "bg-white"}`}
-                  >
-                    <Image
-                      src={activeSrc}
-                      alt={`${alt} (${activeIndex + 1} of ${images.length})`}
-                      fill
-                      sizes="(max-width: 1024px) 100vw, 70vw"
-                      className={
-                        isProduct
-                          ? "object-contain object-center p-[3%] mix-blend-multiply sm:p-[5%]"
-                          : "object-contain object-center"
-                      }
-                      priority
+                  {isVideoActive && productVideo ? (
+                    <GalleryLightboxVideoStage
+                      key="gallery-lightbox-video"
+                      video={productVideo}
+                      title={videoTitle ?? alt}
+                      posterSrc={posterSrc ?? images[0]}
+                      playLabel={dict.motorcycle.watchVideo}
+                      isProduct={isProduct}
                     />
-                  </div>
+                  ) : (
+                    <div
+                      className={`relative size-full ${isProduct ? "bg-moto" : "bg-white"}`}
+                    >
+                      <Image
+                        src={activeImageSrc}
+                        alt={`${alt} (${activeSlideIndex + 1} of ${slideCount})`}
+                        fill
+                        sizes="(max-width: 1024px) 100vw, 70vw"
+                        className={
+                          isProduct
+                            ? "object-contain object-center p-[3%] mix-blend-multiply sm:p-[5%]"
+                            : "object-contain object-center"
+                        }
+                        priority
+                      />
+                    </div>
+                  )}
                 </GalleryImageTransition>
               </div>
 
@@ -347,19 +389,36 @@ export function ProductImageLightbox({
                   />
                   <div className="overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                     <ul className="flex w-max gap-2.5 px-1">
-                    {images.map((src, index) => (
-                      <li key={`${src}-${index}`} className="w-20 shrink-0">
-                        <LightboxThumbnail
-                          src={src}
-                          index={index}
-                          total={images.length}
-                          selected={index === activeIndex}
-                          isProduct={isProduct}
-                          onSelect={() => setActiveIndex(index)}
-                          buttonRef={(node) => {
-                            mobileThumbRefs.current[index] = node;
-                          }}
-                        />
+                    {resolvedSlides.map((slide, index) => (
+                      <li
+                        key={gallerySlideRailKey(slide) + index}
+                        className="w-20 shrink-0"
+                      >
+                        {slide.kind === "video" && productVideo ? (
+                          <GalleryVideoThumbButton
+                            posterSrc={posterSrc ?? images[0] ?? ""}
+                            index={index}
+                            total={slideCount}
+                            selected={index === activeSlideIndex}
+                            onSelect={() => setActiveSlideIndex(index)}
+                            onOpenLightbox={() => setActiveSlideIndex(index)}
+                            theme="light"
+                            style="default"
+                            compact
+                          />
+                        ) : (
+                          <LightboxThumbnail
+                            src={slide.kind === "image" ? slide.src : posterSrc ?? images[0] ?? ""}
+                            index={index}
+                            total={slideCount}
+                            selected={index === activeSlideIndex}
+                            isProduct={isProduct}
+                            onSelect={() => setActiveSlideIndex(index)}
+                            buttonRef={(node) => {
+                              mobileThumbRefs.current[index] = node;
+                            }}
+                          />
+                        )}
                       </li>
                     ))}
                     </ul>
@@ -375,26 +434,41 @@ export function ProductImageLightbox({
                 className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
                 aria-label={dict.carousel.productThumbnails}
               >
-                {images.map((src, index) => (
-                  <LightboxThumbnail
-                    key={`${src}-${index}`}
-                    src={src}
-                    index={index}
-                    total={images.length}
-                    selected={index === activeIndex}
-                    isProduct={isProduct}
-                    onSelect={() => setActiveIndex(index)}
-                    buttonRef={(node) => {
-                      desktopThumbRefs.current[index] = node;
-                    }}
-                  />
+                {resolvedSlides.map((slide, index) => (
+                  <div key={gallerySlideRailKey(slide) + index}>
+                    {slide.kind === "video" && productVideo ? (
+                      <GalleryVideoThumbButton
+                        posterSrc={posterSrc ?? images[0] ?? ""}
+                        index={index}
+                        total={slideCount}
+                        selected={index === activeSlideIndex}
+                        onSelect={() => setActiveSlideIndex(index)}
+                        onOpenLightbox={() => setActiveSlideIndex(index)}
+                        theme="light"
+                        style="default"
+                        fillRail
+                      />
+                    ) : (
+                      <LightboxThumbnail
+                        src={slide.kind === "image" ? slide.src : posterSrc ?? images[0] ?? ""}
+                        index={index}
+                        total={slideCount}
+                        selected={index === activeSlideIndex}
+                        isProduct={isProduct}
+                        onSelect={() => setActiveSlideIndex(index)}
+                        buttonRef={(node) => {
+                          desktopThumbRefs.current[index] = node;
+                        }}
+                      />
+                    )}
+                  </div>
                 ))}
               </div>
               <p className="mt-2 text-center font-body text-[10px] font-bold tabular-nums tracking-aggressive text-ink/70 lg:mt-3">
-                {String(activeIndex + 1).padStart(2, "0")}
+                {String(activeSlideIndex + 1).padStart(2, "0")}
                 <span className="text-ink/35">
                   {" "}
-                  / {String(images.length).padStart(2, "0")}
+                  / {String(slideCount).padStart(2, "0")}
                 </span>
               </p>
             </aside>

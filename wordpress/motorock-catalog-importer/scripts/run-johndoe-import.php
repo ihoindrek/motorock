@@ -25,6 +25,40 @@ if (!class_exists('WooCommerce') || !class_exists('Motorock_Catalog_Importer_Fee
     exit(1);
 }
 
+/**
+ * Motorock Woo category IDs (shop.motorock.eu) — see docs/catalog/johndoe-import.md
+ *
+ * @return array<string, int>
+ */
+function motorock_johndoe_category_mappings() {
+    return array(
+        'John Doe > Men > Jackets' => 136,
+        'John Doe > Women > Jackets' => 151,
+        'John Doe > Men > Motoshirts' => 136,
+        'John Doe > Women > Motoshirts' => 151,
+        'John Doe > Men > Vests' => 143,
+        'John Doe > Women > Vests' => 159,
+        'John Doe > Men > Hoodies & Sweaters' => 139,
+        'John Doe > Women > Hoodies & Sweaters' => 155,
+        'John Doe > Men > T-Shirts' => 415,
+        'John Doe > Women > T-Shirts' => 418,
+        'John Doe > Men > Pants' => 179,
+        'John Doe > Women > Pants' => 412,
+        'John Doe > Men > Gloves' => 138,
+        'John Doe > Women > Gloves' => 153,
+        'John Doe > Men > Footwear' => 137,
+        'John Doe > Women > Footwear' => 152,
+        'John Doe > Men > Protection' => 185,
+        'John Doe > Women > Protection' => 185,
+        'John Doe > Men > Eyewear' => 203,
+        'John Doe > Women > Eyewear' => 203,
+        'John Doe > Men > Accessories' => 185,
+        'John Doe > Women > Accessories' => 185,
+        'John Doe > Men > Other' => 134,
+        'John Doe > Women > Other' => 149,
+    );
+}
+
 $cli_args = isset($args) && is_array($args) ? $args : array();
 $dry_run = in_array('dry-run', $cli_args, true) || in_array('--dry-run', $cli_args, true);
 $with_images_only = in_array('with-images-only', $cli_args, true);
@@ -57,7 +91,8 @@ $feed = array(
     'adapter' => 'johndoe',
     'brand' => 'John Doe',
     'price_multiplier' => 1,
-    'category_mappings' => array(),
+    'category_mappings' => motorock_johndoe_category_mappings(),
+    'catalog_hidden' => false,
     'csv_file' => $csv_path,
 );
 
@@ -66,22 +101,9 @@ $queue = $adapter->build_queue($feed, array('mode' => 'full'));
 $skipped_no_image = 0;
 
 if ($with_images_only) {
-    $scraper = new Motorock_Catalog_Importer_PartsEurope_Scraper();
-    $filtered = array();
-
-    foreach ($queue as $item) {
-        $first = $item['rows'][0];
-        $parent_sku = isset($item['parent_sku']) ? $item['parent_sku'] : $first['ArtNr'];
-        $enriched = $scraper->lookup($first['ArtNr'], $parent_sku);
-
-        if ($enriched && !empty($enriched['images'])) {
-            $filtered[] = $item;
-        } else {
-            $skipped_no_image += 1;
-        }
-    }
-
-    $queue = $filtered;
+    $before = count($queue);
+    $queue = $adapter->filter_queue_with_pe_images($queue);
+    $skipped_no_image = $before - count($queue);
 }
 
 $logger = new Motorock_Catalog_Importer_Logger('johndoe-cli');

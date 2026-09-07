@@ -19,6 +19,7 @@ class Motorock_Catalog_Importer_Generic_Csv_Adapter extends Motorock_Catalog_Imp
             'description' => 'description',
             'short_description' => 'short_description',
             'images' => 'images',
+            'video_url' => 'video_url',
             'size' => 'size',
         );
     }
@@ -196,6 +197,7 @@ class Motorock_Catalog_Importer_Generic_Csv_Adapter extends Motorock_Catalog_Imp
             'category_ids' => $this->resolve_category_ids($feed, $this->row_value($first, $feed, 'category')),
             'brand' => isset($feed['brand']) ? $feed['brand'] : '',
             'images' => $this->map_images_from_string($this->row_value($first, $feed, 'images')),
+            'video_url' => $this->row_video_url($first, $this->row_value($first, $feed, 'video_url')),
             'attributes' => $attributes,
             'variations' => $variations,
         );
@@ -217,6 +219,7 @@ class Motorock_Catalog_Importer_Generic_Csv_Adapter extends Motorock_Catalog_Imp
             'category_ids' => $this->resolve_category_ids($feed, $this->row_value($row, $feed, 'category')),
             'brand' => isset($feed['brand']) ? $feed['brand'] : '',
             'images' => $this->map_images_from_string($this->row_value($row, $feed, 'images')),
+            'video_url' => $this->row_video_url($row, $this->row_value($row, $feed, 'video_url')),
             'meta' => $this->build_meta($row, $feed),
         );
     }

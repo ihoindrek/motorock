@@ -38,6 +38,15 @@ abstract class Motorock_Catalog_Importer_Adapter_Base implements Motorock_Catalo
         return $default > 0 ? array($default) : array();
     }
 
+    protected function row_video_url(array $row, $fallback_url = '') {
+        $from_row = Motorock_Catalog_Importer_Product_Video::url_from_row($row);
+        if ($from_row !== '') {
+            return $from_row;
+        }
+
+        return Motorock_Catalog_Importer_Product_Video::sanitize_url($fallback_url);
+    }
+
     protected function map_images_from_string($value) {
         $value = trim((string) $value);
         if ($value === '') {

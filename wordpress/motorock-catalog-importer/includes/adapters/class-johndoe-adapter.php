@@ -9,8 +9,12 @@ class Motorock_Catalog_Importer_Johndoe_Adapter extends Motorock_Catalog_Importe
     /** @var Motorock_Catalog_Importer_PartsEurope_Scraper */
     private $scraper;
 
+    /** @var Motorock_Catalog_Importer_Medienpaket_Index */
+    private $medienpaket;
+
     public function __construct() {
         $this->scraper = new Motorock_Catalog_Importer_PartsEurope_Scraper();
+        $this->medienpaket = new Motorock_Catalog_Importer_Medienpaket_Index();
     }
 
     public function get_slug() {
@@ -79,7 +83,33 @@ class Motorock_Catalog_Importer_Johndoe_Adapter extends Motorock_Catalog_Importe
             );
         }
 
+        if (!empty($feed['johndoe_with_images_only']) || !empty($context['with_images_only'])) {
+            return $this->filter_queue_with_pe_images($queue);
+        }
+
         return $queue;
+    }
+
+    /**
+     * Keep only parent products that have Parts Europe images in cache.
+     *
+     * @param array<int, array<string, mixed>> $queue
+     * @return array<int, array<string, mixed>>
+     */
+    public function filter_queue_with_pe_images(array $queue) {
+        $filtered = array();
+
+        foreach ($queue as $item) {
+            $first = $item['rows'][0];
+            $parent_sku = isset($item['parent_sku']) ? $item['parent_sku'] : $first['ArtNr'];
+            $enriched = $this->lookup_enrichment($first['ArtNr'], $parent_sku);
+
+            if ($enriched && !empty($enriched['images'])) {
+                $filtered[] = $item;
+            }
+        }
+
+        return $filtered;
     }
 
     public function map_queue_item(array $feed, array $queue_item, array $context = array()) {
@@ -90,7 +120,7 @@ class Motorock_Catalog_Importer_Johndoe_Adapter extends Motorock_Catalog_Importe
         }
 
         $first = $queue_item['rows'][0];
-        $enriched = $this->scraper->lookup($first['ArtNr'], $queue_item['parent_sku']);
+        $enriched = $this->lookup_enrichment($first['ArtNr'], $queue_item['parent_sku']);
 
         if ($queue_item['type'] === 'simple') {
             return $this->map_simple($feed, $first, $enriched);
@@ -160,6 +190,10 @@ class Motorock_Catalog_Importer_Johndoe_Adapter extends Motorock_Catalog_Importe
             'category_ids' => $this->resolve_category_ids($feed, $this->infer_category($name, $sku)),
             'brand' => isset($feed['brand']) && $feed['brand'] !== '' ? $feed['brand'] : 'John Doe',
             'images' => $this->map_images($enriched),
+            'video_url' => $this->row_video_url(
+                $row,
+                is_array($enriched) && !empty($enriched['video_url']) ? $enriched['video_url'] : ''
+            ),
             'meta' => $this->row_meta($row, $sku),
         );
     }
@@ -205,6 +239,10 @@ class Motorock_Catalog_Importer_Johndoe_Adapter extends Motorock_Catalog_Importe
             'category_ids' => $this->resolve_category_ids($feed, $this->infer_category($name, $parent_sku)),
             'brand' => isset($feed['brand']) && $feed['brand'] !== '' ? $feed['brand'] : 'John Doe',
             'images' => $this->map_images($enriched),
+            'video_url' => $this->row_video_url(
+                $first,
+                is_array($enriched) && !empty($enriched['video_url']) ? $enriched['video_url'] : ''
+            ),
             'attributes' => array(
                 array(
                     'name' => 'Size',
@@ -391,6 +429,44 @@ class Motorock_Catalog_Importer_Johndoe_Adapter extends Motorock_Catalog_Importe
         }
 
         return $images;
+    }
+
+    /**
+     * @return array{images: string[], short_description: string, description_html: string, video_url: string}|null
+     */
+    private function lookup_enrichment($art_nr, $parent_sku = '') {
+        $medienpaket = $this->medienpaket->lookup($art_nr, $parent_sku);
+        $parts_europe = $this->scraper->lookup($art_nr, $parent_sku);
+
+        if (!$medienpaket && !$parts_europe) {
+            return null;
+        }
+
+        $images = array();
+        if ($medienpaket && !empty($medienpaket['images'])) {
+            $images = $medienpaket['images'];
+        } elseif ($parts_europe && !empty($parts_europe['images'])) {
+            $images = $parts_europe['images'];
+        }
+
+        $video_url = '';
+        if ($medienpaket && !empty($medienpaket['video_url'])) {
+            $video_url = $medienpaket['video_url'];
+        }
+
+        $short_description = $parts_europe && !empty($parts_europe['short_description'])
+            ? $parts_europe['short_description']
+            : '';
+        $description_html = $parts_europe && !empty($parts_europe['description_html'])
+            ? $parts_europe['description_html']
+            : '';
+
+        return array(
+            'images' => $images,
+            'short_description' => $short_description,
+            'description_html' => $description_html,
+            'video_url' => $video_url,
+        );
     }
 
     private function sort_sizes(array $sizes) {

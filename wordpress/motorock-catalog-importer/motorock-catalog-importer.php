@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Motorock Catalog Importer
  * Description: Universal catalog import for WooCommerce — CSV feeds with enrichment (Holy Freedom / PrestaShop) and future supplier adapters.
- * Version: 0.3.0
+ * Version: 0.3.1
  * Author: Motorock
  * Requires at least: 6.0
  * Requires PHP: 7.4
@@ -13,7 +13,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('MOTOROCK_CATALOG_IMPORTER_VERSION', '0.3.0');
+define('MOTOROCK_CATALOG_IMPORTER_VERSION', '0.3.1');
 define('MOTOROCK_CATALOG_IMPORTER_FILE', __FILE__);
 define('MOTOROCK_CATALOG_IMPORTER_DIR', plugin_dir_path(__FILE__));
 define('MOTOROCK_CATALOG_IMPORTER_URL', plugin_dir_url(__FILE__));
@@ -64,12 +64,14 @@ final class Motorock_Catalog_Importer_Plugin {
         require_once MOTOROCK_CATALOG_IMPORTER_DIR . 'includes/shared/class-wpml-bridge.php';
         require_once MOTOROCK_CATALOG_IMPORTER_DIR . 'includes/shared/class-session-store.php';
         require_once MOTOROCK_CATALOG_IMPORTER_DIR . 'includes/shared/class-adapter-base.php';
+        require_once MOTOROCK_CATALOG_IMPORTER_DIR . 'includes/shared/class-product-video.php';
         require_once MOTOROCK_CATALOG_IMPORTER_DIR . 'includes/class-feed-manager.php';
         require_once MOTOROCK_CATALOG_IMPORTER_DIR . 'includes/class-feed-products.php';
         require_once MOTOROCK_CATALOG_IMPORTER_DIR . 'includes/class-logger.php';
         require_once MOTOROCK_CATALOG_IMPORTER_DIR . 'includes/class-csv-parser.php';
         require_once MOTOROCK_CATALOG_IMPORTER_DIR . 'includes/class-prestashop-scraper.php';
         require_once MOTOROCK_CATALOG_IMPORTER_DIR . 'includes/class-partseurope-scraper.php';
+        require_once MOTOROCK_CATALOG_IMPORTER_DIR . 'includes/class-medienpaket-index.php';
         require_once MOTOROCK_CATALOG_IMPORTER_DIR . 'includes/adapters/class-holyfreedom-adapter.php';
         require_once MOTOROCK_CATALOG_IMPORTER_DIR . 'includes/adapters/class-johndoe-adapter.php';
         require_once MOTOROCK_CATALOG_IMPORTER_DIR . 'includes/adapters/class-generic-csv-adapter.php';
@@ -132,6 +134,8 @@ final class Motorock_Catalog_Importer_Plugin {
             : 'full';
 
         $catalog_hidden = !empty($_POST['catalog_hidden']) && wp_unslash($_POST['catalog_hidden']) === '1';
+        $johndoe_with_images_only = !empty($_POST['johndoe_with_images_only'])
+            && wp_unslash($_POST['johndoe_with_images_only']) === '1';
 
         $saved = Motorock_Catalog_Importer_Feed_Manager::save_feed($feed_id, array(
             'name' => isset($_POST['name']) ? sanitize_text_field(wp_unslash($_POST['name'])) : '',
@@ -142,6 +146,7 @@ final class Motorock_Catalog_Importer_Plugin {
             'column_map' => $column_map,
             'default_import_mode' => $default_import_mode,
             'catalog_hidden' => $catalog_hidden,
+            'johndoe_with_images_only' => $johndoe_with_images_only,
         ));
 
         wp_send_json_success(array(

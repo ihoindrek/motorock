@@ -47,6 +47,8 @@ $default_column_map = Motorock_Catalog_Importer_Generic_Csv_Adapter::default_col
 $adapters = Motorock_Catalog_Importer_Feed_Manager::get_adapter_choices();
 $default_import_mode = isset($feed['default_import_mode']) ? $feed['default_import_mode'] : 'full';
 $is_generic = $feed['adapter'] === 'generic_csv';
+$is_johndoe = $feed['adapter'] === 'johndoe';
+$johndoe_with_images_only = !empty($feed['johndoe_with_images_only']);
 $catalog_hidden = !Motorock_Catalog_Importer_Feed_Products::is_feed_visible_on_storefront($feed);
 $product_stats = Motorock_Catalog_Importer_Feed_Products::get_visibility_stats_for_feed($feed['id']);
 ?>
@@ -105,7 +107,22 @@ $product_stats = Motorock_Catalog_Importer_Feed_Products::get_visibility_stats_f
                         <input type="checkbox" id="mci-catalog-hidden" value="1" <?php checked($catalog_hidden); ?>>
                         Hide new imports from storefront (draft until you publish the feed)
                     </label>
-                    <p class="description">When checked, newly imported products are created as <strong>draft</strong>. Use the storefront toggle below to show or hide all feed products at once.</p>
+                    <p class="description">When checked, newly imported products are created as <strong>draft</strong> even when they have images. Products without images are always draft. Catalog visibility stays <strong>visible</strong> so a manual Publish in WooCommerce is enough once content is ready.</p>
+                </td>
+            </tr>
+            <tr class="mci-johndoe-only" <?php echo $is_johndoe ? '' : 'style="display:none;"'; ?>>
+                <th>Parts Europe images</th>
+                <td>
+                    <label>
+                        <input type="checkbox" id="mci-johndoe-with-images-only" value="1" <?php checked($johndoe_with_images_only); ?>>
+                        Full import: only products with Parts Europe images (~87 of ~365 parents)
+                    </label>
+                    <p class="description">
+                        Requires cache file
+                        <code>uploads/motorock-catalog-importer/cache/johndoe-partseurope-index.json</code>
+                        on the server. Products without PE match are skipped (no image/description enrichment).
+                        Uncheck to import the full catalog (many products will have no images).
+                    </p>
                 </td>
             </tr>
         </table>
@@ -201,7 +218,10 @@ $product_stats = Motorock_Catalog_Importer_Feed_Products::get_visibility_stats_f
         <ul class="mci-stats-list">
             <li><strong><?php echo intval($product_stats['total']); ?></strong> products linked to this feed</li>
             <li><strong><?php echo intval($product_stats['published']); ?></strong> visible on storefront (published)</li>
-            <li><strong><?php echo intval($product_stats['draft']); ?></strong> hidden (draft)</li>
+            <li><strong><?php echo intval($product_stats['draft']); ?></strong> draft (not on storefront)</li>
+            <?php if ($product_stats['hidden_visibility'] > 0) : ?>
+            <li><strong><?php echo intval($product_stats['hidden_visibility']); ?></strong> with hidden catalog visibility (fix via backfill script)</li>
+            <?php endif; ?>
         </ul>
         <?php if (!empty($feed['last_import_stats'])) : ?>
             <p class="description">
@@ -216,7 +236,7 @@ $product_stats = Motorock_Catalog_Importer_Feed_Products::get_visibility_stats_f
         <?php endif; ?>
 
         <h3>Storefront visibility</h3>
-        <p>Hide or show <em>all</em> products from this feed on motorock.eu. Hidden products are set to <strong>draft</strong> (not in the GraphQL catalog). Run <code>npm run revalidate</code> after toggling.</p>
+        <p>Hide or show <em>all</em> products from this feed on motorock.eu. Hidden products are set to <strong>draft</strong> (not in the GraphQL catalog). Products with images are published when shown. Run <code>npm run revalidate</code> after toggling.</p>
 
         <p>
             <?php if ($catalog_hidden || ($product_stats['published'] === 0 && $product_stats['total'] > 0)) : ?>
@@ -246,6 +266,7 @@ $product_stats = Motorock_Catalog_Importer_Feed_Products::get_visibility_stats_f
     <div class="mci-card">
         <h2>Import</h2>
         <p class="mci-import-desc-full">Full import: one parent product per batch step (simple or variable + variations). Holy Freedom scrapes PrestaShop for images/descriptions (cached).</p>
+        <p class="mci-import-desc-johndoe" <?php echo $is_johndoe ? '' : 'style="display:none;"'; ?>>John Doe: prices/stock from CSV; images and descriptions from Parts Europe cache when available. Use <strong>Update stock &amp; prices only</strong> for daily sync after the catalog exists.</p>
         <p class="mci-import-desc-update" style="display:none;">Update only: one CSV row per batch step — updates price, stock and cost by SKU. No scraping, no new products.</p>
 
         <p>

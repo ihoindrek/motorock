@@ -32,6 +32,7 @@ class Motorock_Catalog_Importer_Feed_Manager {
             'category_mappings' => array(),
             'column_map' => Motorock_Catalog_Importer_Generic_Csv_Adapter::default_column_map(),
             'default_import_mode' => 'full',
+            'johndoe_with_images_only' => false,
             'csv_file' => '',
             'csv_original_name' => '',
             'csv_uploaded_at' => '',
