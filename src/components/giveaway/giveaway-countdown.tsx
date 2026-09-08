@@ -9,16 +9,23 @@ type GiveawayCountdownProps = {
   className?: string;
 };
 
-type TimeLeft = {
+export type TimeLeft = {
   days: number;
   hours: number;
   minutes: number;
   seconds: number;
 };
 
-function getTimeLeft(targetDate: string): TimeLeft {
-  const diff = Math.max(0, new Date(targetDate).getTime() - Date.now());
+export function getTimeLeftFromTarget(
+  targetDate: string,
+  now = Date.now(),
+): TimeLeft {
+  const targetMs = Date.parse(targetDate);
+  if (!Number.isFinite(targetMs)) {
+    return { days: 0, hours: 0, minutes: 0, seconds: 0 };
+  }
 
+  const diff = Math.max(0, targetMs - now);
   const totalSeconds = Math.floor(diff / 1000);
 
   return {
@@ -29,12 +36,23 @@ function getTimeLeft(targetDate: string): TimeLeft {
   };
 }
 
+function isTimeLeftEnded(timeLeft: TimeLeft) {
+  return (
+    timeLeft.days === 0 &&
+    timeLeft.hours === 0 &&
+    timeLeft.minutes === 0 &&
+    timeLeft.seconds === 0
+  );
+}
+
 export function GiveawayCountdown({
   targetDate,
   className = "",
 }: GiveawayCountdownProps) {
   const dict = useDictionary();
-  const [timeLeft, setTimeLeft] = useState<TimeLeft | null>(null);
+  const [timeLeft, setTimeLeft] = useState<TimeLeft>(() =>
+    getTimeLeftFromTarget(targetDate),
+  );
 
   const segments = useMemo(
     () =>
@@ -48,27 +66,14 @@ export function GiveawayCountdown({
   );
 
   useEffect(() => {
-    const update = () => setTimeLeft(getTimeLeft(targetDate));
+    const update = () => setTimeLeft(getTimeLeftFromTarget(targetDate));
     update();
 
     const interval = window.setInterval(update, 1000);
     return () => window.clearInterval(interval);
   }, [targetDate]);
 
-  if (!timeLeft) {
-    return (
-      <div
-        className={`mt-6 h-16 animate-pulse rounded-sm bg-paper/10 ${className}`}
-        aria-hidden="true"
-      />
-    );
-  }
-
-  const ended =
-    timeLeft.days === 0 &&
-    timeLeft.hours === 0 &&
-    timeLeft.minutes === 0 &&
-    timeLeft.seconds === 0;
+  const ended = isTimeLeftEnded(timeLeft);
 
   const ariaLabel = ended
     ? dict.giveaway.drawEndedAria
@@ -89,10 +94,14 @@ export function GiveawayCountdown({
         role="timer"
         aria-live="polite"
         aria-label={ariaLabel}
+        suppressHydrationWarning
       >
         {segments.map(({ key, label, pad }) => (
           <div key={key} className="min-w-[3.25rem]">
-            <span className="font-body text-[clamp(1.75rem,5vw,2.75rem)] font-extrabold leading-none tabular-nums text-accent">
+            <span
+              className="font-body text-[clamp(1.75rem,5vw,2.75rem)] font-extrabold leading-none tabular-nums text-accent"
+              suppressHydrationWarning
+            >
               {pad ? String(timeLeft[key]).padStart(2, "0") : timeLeft[key]}
             </span>
             <span className="mt-1.5 block font-body text-[10px] font-bold uppercase tracking-aggressive text-paper/50">

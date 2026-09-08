@@ -4,6 +4,8 @@ import { BlogBadge } from "@/components/blog/blog-badge";
 import { BlogPostContent } from "@/components/blog/blog-post-content";
 import { HomeBlogPostsView } from "@/components/blog/home-blog-posts-view";
 import { GiveawayCountdown } from "@/components/giveaway/giveaway-countdown";
+import { GiveawayHowItWorks } from "@/components/giveaway/giveaway-how-it-works";
+import { GiveawayRulesCallout } from "@/components/giveaway/giveaway-rules-callout";
 import { getCampaignForBlogPost } from "@/lib/campaigns/blog";
 import { formatBlogDate } from "@/lib/blog/posts";
 import type { Dictionary } from "@/i18n/dictionaries/en";
@@ -56,10 +58,13 @@ export function BlogPostView({
               {post.title}
             </h1>
             {campaign ? (
-              <GiveawayCountdown
-                targetDate={campaign.activeUntil}
-                className="mt-6"
-              />
+              <>
+                <GiveawayCountdown
+                  targetDate={campaign.drawAt ?? campaign.activeUntil}
+                  className="mt-6"
+                />
+                <GiveawayHowItWorks variant="on-dark" className="mt-6" />
+              </>
             ) : null}
             <div className="mt-6 flex flex-wrap items-center gap-2">
               <BlogBadge variant="on-dark">
@@ -76,6 +81,9 @@ export function BlogPostView({
       <div className="bg-paper py-14 lg:py-20">
         <div className="site-container">
           <div className="mx-auto max-w-2xl">
+            {campaign ? (
+              <GiveawayRulesCallout locale={locale} shopLabel={copy.shopNow} />
+            ) : null}
             {post.excerpt ? (
               <p className="border-l-2 border-accent pl-5 text-xl font-medium leading-relaxed text-ink sm:pl-6 sm:text-2xl sm:leading-relaxed">
                 {post.excerpt}

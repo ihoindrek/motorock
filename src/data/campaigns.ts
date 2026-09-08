@@ -1,5 +1,8 @@
 import type { Campaign } from "@/types/campaign";
 
+/** Prize draw moment — 19 Sep 2026, Estonian time (matches blog + popup). */
+export const GIVEAWAY_2026_DRAW_AT = "2026-09-19T23:59:59+03:00";
+
 /** MotoRock Giveaway 2026 — Brixton Crossfire 500 STORR draw in Pärnu. */
 export const GIVEAWAY_2026_CAMPAIGN = {
   id: "giveaway-2026",
@@ -7,7 +10,8 @@ export const GIVEAWAY_2026_CAMPAIGN = {
   title: "MotoRock Giveaway 2026",
   shortTitle: "Win a Brixton Crossfire 500",
   activeFrom: "2026-01-01T00:00:00+02:00",
-  activeUntil: "2026-09-26T23:59:59+03:00",
+  activeUntil: GIVEAWAY_2026_DRAW_AT,
+  drawAt: GIVEAWAY_2026_DRAW_AT,
   minEligibleSubtotal: 100,
   productRule: "equipment-only",
   placements: [

@@ -15,6 +15,8 @@ export type Campaign = {
   shortTitle?: string;
   activeFrom: string;
   activeUntil: string;
+  /** Countdown target on blog/campaign pages (defaults to activeUntil). */
+  drawAt?: string;
   minEligibleSubtotal: number;
   productRule: CampaignProductRule;
   placements: CampaignPlacement[];
@@ -36,6 +38,8 @@ export type CampaignStatus = {
   isEligible: boolean;
   remaining: number;
   progress: number;
+  /** Whole draw entries earned from the current eligible subtotal. */
+  entryCount: number;
   progressMessage: string;
   eligibleMessage: string;
   displayTitle: string;

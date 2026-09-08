@@ -569,6 +569,16 @@ export type Dictionary = {
     activeCampaign: string;
     progress: string;
     entryWithOrder: string;
+    entryCountOne: string;
+    entryCountMany: string;
+    entryRuleSummary: string;
+    entryHeadline: string;
+    entryExamples: string;
+    entryNoForms: string;
+    howItWorksTitle: string;
+    howItWorksStep1: string;
+    howItWorksStep2: string;
+    howItWorksStep3: string;
     campaignProgressAria: string;
     rules: string;
     giveaway2026Title: string;
@@ -1297,6 +1307,17 @@ export const en: Dictionary = {
     activeCampaign: "Active campaign",
     progress: "Progress",
     entryWithOrder: "1 giveaway entry with this order",
+    entryCountOne: "1 draw entry with this order",
+    entryCountMany: "{count} draw entries with this order",
+    entryRuleSummary:
+      "Spend €100+ on riding gear — you're in automatically. Every extra €100 = another entry.",
+    entryHeadline: "Every €100 spent = 1 draw entry",
+    entryExamples: "Example: €200 order → 2 entries · €350 → 3 entries",
+    entryNoForms: "No signup, no codes — completing checkout is your entry.",
+    howItWorksTitle: "How to enter",
+    howItWorksStep1: "Add riding gear worth €100 or more to your cart",
+    howItWorksStep2: "Complete checkout at motorock.eu",
+    howItWorksStep3: "Each full €100 in your order earns one entry — stack gear for more tickets",
     campaignProgressAria: "Campaign entry progress",
     rules: "Rules",
     giveaway2026Title: "MotoRock Giveaway 2026",
@@ -1304,12 +1325,12 @@ export const en: Dictionary = {
     giveaway2026PrizeName: "Brixton Crossfire 500",
     giveaway2026ShortTitle: "Win a Brixton Crossfire 500",
     progressMessage:
-      "Order {remaining} more to enter the {prizeName} motorcycle draw.",
-    progressMessageBeforePrize: "Order {remaining} more to enter the ",
-    progressMessageAfterPrize: " motorcycle draw.",
-    eligibleMessageLead: "Complete your purchase and win ",
+      "Add {remaining} more of riding gear to reach the €100 draw threshold.",
+    progressMessageBeforePrize: "Add {remaining} more of riding gear to reach ",
+    progressMessageAfterPrize: " and enter the draw.",
+    eligibleMessageLead: "You're in the draw — complete checkout to win ",
     eligibleMessageTail: "!",
-    eligibleMessage: "Complete your purchase and win {prizeName}!",
+    eligibleMessage: "You're in the draw — complete checkout to win {prizeName}!",
   },
   legal: {
     eyebrow: "Legal",

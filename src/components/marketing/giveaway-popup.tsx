@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { Locale } from "@/i18n/config";
+import { GIVEAWAY_2026_DRAW_AT } from "@/data/campaigns";
 
 /**
  * One-time campaign popup. Bump the key suffix to re-show the popup for a
@@ -15,7 +16,7 @@ import type { Locale } from "@/i18n/config";
 const STORAGE_KEY = "motorock_popup_seen:crossfire-500-storr-2026";
 const SHOW_DELAY_MS = 2500;
 /** Prize draw day (19 Sep 2026, Estonian time) — no point promoting after. */
-export const GIVEAWAY_CAMPAIGN_ENDS = Date.parse("2026-09-19T23:59:59+03:00");
+export const GIVEAWAY_CAMPAIGN_ENDS = Date.parse(GIVEAWAY_2026_DRAW_AT);
 export const GIVEAWAY_POPUP_OPEN_EVENT = "motorock:giveaway-popup-open";
 
 export const GIVEAWAY_POPUP_CAMPAIGN = {

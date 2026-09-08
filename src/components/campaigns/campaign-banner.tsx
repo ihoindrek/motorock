@@ -11,9 +11,10 @@ import {
 import { AnimatedBorder } from "@/components/ui/animated-border";
 import { localizedHref } from "@/i18n/paths";
 import { localizedProductHref } from "@/lib/shop/product-url";
-import { formatPrice } from "@/lib/shop/category";
-import { interpolateCampaignMessage } from "@/lib/campaigns/copy";
 import { cn } from "@/lib/utils";
+import {
+  GiveawayEntryCount,
+} from "@/components/giveaway/giveaway-how-it-works";
 import type { CampaignStatus } from "@/types/campaign";
 
 const prizeLinkClassName =
@@ -64,15 +65,12 @@ function CampaignEligibleCopy({
   eligible: boolean;
 }) {
   const dict = useDictionary();
-  const locale = useLocale();
   const {
     eligibleMessage,
     progressMessage,
     prizeName,
     prizeProductSlug,
-    remaining,
   } = status;
-  const message = eligible ? eligibleMessage : progressMessage;
 
   if (eligible && prizeProductSlug && prizeName) {
     return (
@@ -84,24 +82,13 @@ function CampaignEligibleCopy({
     );
   }
 
-  if (!eligible && prizeProductSlug && prizeName) {
-    const before = interpolateCampaignMessage(
-      dict.giveaway.progressMessageBeforePrize,
-      { remaining: formatPrice(remaining, locale) },
-    );
-
-    return (
-      <span className="text-ink/75">
-        {before}
-        <CampaignPrizeLink name={prizeName} slug={prizeProductSlug} />
-        {dict.giveaway.progressMessageAfterPrize}
-      </span>
-    );
+  if (!eligible) {
+    return <span className="text-ink/75">{progressMessage}</span>;
   }
 
   return (
     <span className={eligible ? "font-medium text-ink" : "text-ink/75"}>
-      {message}
+      {eligible ? eligibleMessage : progressMessage}
     </span>
   );
 }
@@ -132,7 +119,7 @@ function GiveawayCompactBanner({
 }) {
   const locale = useLocale();
   const dict = useDictionary();
-  const { campaign, isEligible, progress } = status;
+  const { campaign, isEligible, progress, entryCount } = status;
   const ctaLabel = status.ctaLabel;
   const ctaHref = localizedHref(locale, campaign.content.ctaHref);
   const image = GIVEAWAY_IMAGES[locale];
@@ -204,6 +191,12 @@ function GiveawayCompactBanner({
           <p className="mt-1.5 text-sm leading-snug">
             <CampaignEligibleCopy status={status} eligible={isEligible} />
           </p>
+          <p className="mt-2 text-xs leading-relaxed text-ink/55">
+            {dict.giveaway.entryRuleSummary}
+          </p>
+          {isEligible ? (
+            <GiveawayEntryCount entryCount={entryCount} className="mt-2" />
+          ) : null}
         </div>
       </div>
 
@@ -283,7 +276,7 @@ export function CampaignBanner({
 }: CampaignBannerProps) {
   const locale = useLocale();
   const dict = useDictionary();
-  const { campaign, isEligible, progress } = status;
+  const { campaign, isEligible, progress, entryCount } = status;
   const ctaLabel = status.ctaLabel;
   const ctaHref = localizedHref(locale, campaign.content.ctaHref);
 
@@ -332,6 +325,12 @@ export function CampaignBanner({
       <p className="mt-3 text-sm leading-relaxed sm:text-base">
         <CampaignEligibleCopy status={status} eligible={isEligible} />
       </p>
+      <p className="mt-2 text-xs leading-relaxed text-ink/55">
+        {dict.giveaway.entryRuleSummary}
+      </p>
+      {isEligible ? (
+        <GiveawayEntryCount entryCount={entryCount} className="mt-2" />
+      ) : null}
       {!isEligible ? (
         <div className="mt-4">
           <div className="mb-2 flex justify-between font-body text-[10px] font-bold uppercase tracking-aggressive text-ink/45">

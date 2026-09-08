@@ -54,6 +54,12 @@ export function evaluateCampaign(
     campaign.minEligibleSubtotal - eligibleSubtotal,
   );
   const isEligible = eligibleSubtotal >= campaign.minEligibleSubtotal;
+  const entryCount = isEligible
+    ? Math.max(
+        1,
+        Math.floor(eligibleSubtotal / campaign.minEligibleSubtotal),
+      )
+    : 0;
   const progress =
     campaign.minEligibleSubtotal === 0
       ? 100
@@ -78,6 +84,7 @@ export function evaluateCampaign(
     isEligible,
     remaining,
     progress,
+    entryCount,
     progressMessage: interpolateCampaignMessage(copy.progressMessage, vars),
     eligibleMessage: interpolateCampaignMessage(copy.eligibleMessage, vars),
     displayTitle: copy.shortTitle,

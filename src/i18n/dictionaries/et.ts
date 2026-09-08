@@ -638,6 +638,17 @@ export const et: Dictionary = {
     activeCampaign: "Aktiivne kampaania",
     progress: "Edenemine",
     entryWithOrder: "1 loosis osalemine selle tellimusega",
+    entryCountOne: "1 loosipilet selle tellimusega",
+    entryCountMany: "{count} loosipiletit selle tellimusega",
+    entryRuleSummary:
+      "Osta vähemalt €100 väärtuses varustust — osaled automaatselt. Iga järgmine €100 = üks loosipilet juurde.",
+    entryHeadline: "Iga kulutatud €100 = 1 loosipilet",
+    entryExamples: "Näide: €200 tellimus → 2 piletit · €350 → 3 piletit",
+    entryNoForms: "Vorme ega koode pole — tellimuse vormistamine = osalemine.",
+    howItWorksTitle: "Kuidas osaled",
+    howItWorksStep1: "Lisa ostukorvi vähemalt €100 väärtuses sõiduriideid",
+    howItWorksStep2: "Vormista tellimus motorock.eu-s",
+    howItWorksStep3: "Iga täis €100 tellimuses annab ühe pileti — rohkem varustust = rohkem pileteid",
     campaignProgressAria: "Kampaania osalemise edenemine",
     rules: "Reeglid",
     giveaway2026Title: "MotoRocki loos 2026",
@@ -645,14 +656,13 @@ export const et: Dictionary = {
     giveaway2026PrizeName: "Brixton Crossfire 500",
     giveaway2026ShortTitle: "Võida Brixton Crossfire 500",
     progressMessage:
-      "Telli veel {remaining} väärtuses ja osaled {prizeName} mootorratta loosis.",
-    progressMessageBeforePrize:
-      "Telli veel {remaining} väärtuses ja osaled ",
-    progressMessageAfterPrize: " mootorratta loosis.",
-    eligibleMessageLead: "Vii oma ost lõpuni ja võida ",
+      "Lisa veel {remaining} väärtuses sõiduriideid, et jõuda €100 loosiläveni.",
+    progressMessageBeforePrize: "Lisa veel {remaining} väärtuses sõiduriideid, et jõuda ",
+    progressMessageAfterPrize: " ja osaled loosimises.",
+    eligibleMessageLead: "Oled loosimises — vormista tellimus ja võida ",
     eligibleMessageTail: "!",
     eligibleMessage:
-      "Vii oma ost lõpuni ja võida {prizeName}!",
+      "Oled loosimises — vormista tellimus ja võida {prizeName}!",
   },
   legal: {
     eyebrow: "Juriidiline",
