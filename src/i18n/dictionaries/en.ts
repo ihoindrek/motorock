@@ -591,6 +591,12 @@ export type Dictionary = {
     eligibleMessageLead: string;
     eligibleMessageTail: string;
     eligibleMessage: string;
+    productEntryCountOne: string;
+    productEntryCountMany: string;
+    productEntryNeedMore: string;
+    productEntryStackHint: string;
+    productGiveawayTitle: string;
+    productEntryHeadline: string;
   };
   legal: {
     eyebrow: string;
@@ -1331,6 +1337,13 @@ export const en: Dictionary = {
     eligibleMessageLead: "You're in the draw — complete checkout to win ",
     eligibleMessageTail: "!",
     eligibleMessage: "You're in the draw — complete checkout to win {prizeName}!",
+    productGiveawayTitle: "MotoRock Giveaway 2026",
+    productEntryHeadline: "Buy this product — you're in the draw",
+    productEntryCountOne: "1 draw entry",
+    productEntryCountMany: "{count} draw entries",
+    productEntryNeedMore:
+      "Buy this product — add {remaining} in the same order to enter the draw",
+    productEntryStackHint: "Every extra €100 in your order = another entry",
   },
   legal: {
     eyebrow: "Legal",

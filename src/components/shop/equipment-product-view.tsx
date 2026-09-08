@@ -38,6 +38,7 @@ import { ProductShippingReturnsPanel } from "@/components/shop/product-shipping-
 import { ProductDescriptionHtml } from "@/components/shop/product-description-html";
 import { ProductFaqSection } from "@/components/shop/product-faq-section";
 import { ProductBreadcrumbs } from "@/components/shop/product-breadcrumbs";
+import { GiveawayProductCallout } from "@/components/giveaway/giveaway-product-callout";
 import type { Breadcrumb } from "@/lib/shop/category";
 import {
   buildProductColorOptions,
@@ -378,6 +379,8 @@ export function EquipmentProductView({
           <div className="space-y-2">
             <Price value={activePrice} variant="xl" />
           </div>
+
+          <GiveawayProductCallout price={activePrice} />
 
           {showColorPicker ? (
             <EquipmentColorPicker

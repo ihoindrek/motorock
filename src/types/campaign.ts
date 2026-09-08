@@ -4,7 +4,8 @@ export type CampaignPlacement =
   | "checkout"
   | "blog"
   | "header-nav"
-  | "site-banner";
+  | "site-banner"
+  | "product-detail";
 
 export type CampaignProductRule = "equipment-only" | "all";
 

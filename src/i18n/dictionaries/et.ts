@@ -663,6 +663,13 @@ export const et: Dictionary = {
     eligibleMessageTail: "!",
     eligibleMessage:
       "Oled loosimises — vormista tellimus ja võida {prizeName}!",
+    productGiveawayTitle: "MotoRocki loos 2026",
+    productEntryHeadline: "Osta see toode — osaled loosis",
+    productEntryCountOne: "1 loosipilet",
+    productEntryCountMany: "{count} loosipiletit",
+    productEntryNeedMore:
+      "Osta see toode — lisa veel {remaining} samasse tellimusse ja osaled loosis",
+    productEntryStackHint: "Iga täis €100 tellimuses = üks pilet juurde",
   },
   legal: {
     eyebrow: "Juriidiline",

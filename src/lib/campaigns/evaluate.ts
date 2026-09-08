@@ -39,6 +39,23 @@ export function getActiveCampaigns(now = Date.now()): Campaign[] {
   return CAMPAIGNS.filter((campaign) => isCampaignActive(campaign, now));
 }
 
+export function countGiveawayEntriesForAmount(
+  amount: number,
+  minEligibleSubtotal = 100,
+): number {
+  if (amount < minEligibleSubtotal) {
+    return 0;
+  }
+
+  return Math.floor(amount / minEligibleSubtotal);
+}
+
+export function getGiveawayProductCampaign(now = Date.now()): Campaign | undefined {
+  return getActiveCampaigns(now).find((campaign) =>
+    campaign.placements.includes("product-detail"),
+  );
+}
+
 export function evaluateCampaign(
   lines: readonly CartLine[],
   campaign: Campaign,

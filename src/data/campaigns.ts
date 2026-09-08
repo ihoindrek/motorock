@@ -20,6 +20,7 @@ export const GIVEAWAY_2026_CAMPAIGN = {
     "checkout",
     "blog",
     "header-nav",
+    "product-detail",
   ],
   blogSlug: "win-a-brixton-crossfire-500-storr-motorock-giveaway-2026",
   blogSlugs: {
