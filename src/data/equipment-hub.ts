@@ -249,7 +249,7 @@ export const equipmentHubBrands = [
   {
     name: "John Doe",
     slug: "john-doe",
-    image: "/john-doe-hero.webp",
+    image: "/johndoe-b.jpg",
     logo: "/John-Doe-logo.svg",
     logoInvert: true,
     imageAlt: {
