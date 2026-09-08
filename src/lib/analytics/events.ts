@@ -9,12 +9,6 @@ import {
   pushEcommerceEvent,
 } from "@/lib/analytics/data-layer";
 import {
-  identifyKlaviyoProfile,
-  trackKlaviyoAddedToCart,
-  trackKlaviyoStartedCheckout,
-  trackKlaviyoViewedProduct,
-} from "@/lib/analytics/klaviyo";
-import {
   mapCartLineToGa4Item,
   mapCartLinesToGa4Items,
   mapCatalogProductToGa4Item,
@@ -39,7 +33,6 @@ export function trackViewItem(
     value: product.price,
     items: [item],
   });
-  trackKlaviyoViewedProduct(item);
 }
 
 export function trackViewMotorcycleProduct(product: MotorcycleProduct) {
@@ -60,7 +53,6 @@ export function trackViewMotorcycleProduct(product: MotorcycleProduct) {
     value: product.sync.price,
     items: [item],
   });
-  trackKlaviyoViewedProduct(item);
 }
 
 export function trackViewItemList(input: {
@@ -95,7 +87,6 @@ export function trackAddToCart(
     value: line.price * quantity,
     items: [item],
   });
-  trackKlaviyoAddedToCart(item);
 }
 
 export function trackRemoveFromCart(line: CartLine) {
@@ -130,10 +121,6 @@ export function trackBeginCheckout(
     currency: DEFAULT_CURRENCY,
     value: value ?? sumLineValue(lines),
     items: mapCartLinesToGa4Items(lines),
-  });
-  trackKlaviyoStartedCheckout({
-    items: mapCartLinesToGa4Items(lines),
-    value: value ?? sumLineValue(lines),
   });
 }
 

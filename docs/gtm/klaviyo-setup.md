@@ -13,7 +13,8 @@ Juhend headless poe dataLayer → Klaviyo onsite tracking seadistamiseks Google 
 | Kiht | Kus | Mida teeb |
 |------|-----|-----------|
 | **WooCommerce plugin** | `shop.motorock.eu` | Placed Order, kliendid, tooted (server-side) |
-| **GTM (see juhend)** | `motorock.eu` | Viewed Product, Added to Cart, Started Checkout |
+| **GTM (see juhend)** | `motorock.eu` | Viewed Product, Added to Cart, Started Checkout (ainuke kanal) |
+| **Storefront kood** | checkout | `identify` e-mailiga (profiili sidumine) |
 
 GTM **ei asenda** Woo pluginat — täiendab käitumistrackingut enne tellimust (hüljatud korv, browse abandonment).
 
@@ -171,7 +172,7 @@ window._learnq.push(['track', 'Added to Cart', {
 | GTM Preview | `Klaviyo - Added to Cart` fires |
 | Network → `klaviyo.com` | Päringuid peale script load |
 
-**Deploy:** saidikood saadab nüüd Klaviyo evente otse (`trackKlaviyoAddedToCart`) — töötab koos GTM-iga, vajab marketing consent + GTM base script.
+**Tracking:** GTM saadab kõik browse/cart/checkout eventid. Kood ei duplikeeri — checkoutis jääb ainult `identifyKlaviyoProfile()` e-maili sisestamisel.
 
 ---
 

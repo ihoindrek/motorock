@@ -25,9 +25,7 @@ export {
   canSendKlaviyoEvents,
   identifyKlaviyoProfile,
   isKlaviyoIdentifiableEmail,
-  trackKlaviyoAddedToCart,
-  trackKlaviyoStartedCheckout,
-  trackKlaviyoViewedProduct,
+  normalizeKlaviyoEmail,
 } from "@/lib/analytics/klaviyo";
 export { canSendAnalyticsEvents, isAnalyticsConfigured } from "@/lib/analytics/consent";
 export { hasTrackedPurchase } from "@/lib/analytics/data-layer";
