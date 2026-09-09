@@ -380,8 +380,6 @@ export function EquipmentProductView({
             <Price value={activePrice} variant="xl" />
           </div>
 
-          <GiveawayProductCallout price={activePrice} />
-
           {showColorPicker ? (
             <EquipmentColorPicker
               options={colorOptions}
@@ -486,6 +484,7 @@ export function EquipmentProductView({
               </button>
             </div>
             <EquipmentTrustBadges price={activePrice} />
+            <GiveawayProductCallout price={activePrice} />
             <div className="flex items-center gap-6">
               <WishlistButton
                 variant="text"

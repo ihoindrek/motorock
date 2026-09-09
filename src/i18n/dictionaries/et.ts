@@ -72,7 +72,9 @@ export const et: Dictionary = {
     cookies: "Küpsiste poliitika (EL)",
     needHelp: "Vajad abi?",
     rights: "Kõik õigused kaitstud.",
-    trademarkNotice: "MotoRock® on MotoMad OÜ registreeritud kaubamärk.",
+    trademarkNotice:
+      "MotoRock® on MotoMad OÜ registreeritud kaubamärk. {operator}, reg. {code}, {address}.",
+    paymentMethods: "Turvaline makse",
   },
   common: {
     skipToContent: "Liigu sisuni",
@@ -112,6 +114,10 @@ export const et: Dictionary = {
     browseProducts: "Sirvi tooteid",
     motorcycleSaleUntil: "Augusti lõpuni",
     motorcycleSaleAria: "Kõik mootorrattad 10% soodsamad augusti lõpuni",
+  },
+  home: {
+    officialDealerEyebrow: "Usaldusväärsed brändid",
+    officialDealerTitle: "Ametlik edasimüüja",
   },
   search: {
     open: "Ava otsing",
@@ -380,6 +386,8 @@ export const et: Dictionary = {
     productSingular: "toode",
     productPlural: "toodet",
     clearFilters: "Tühista filtrid",
+    activeFilters: "Aktiivsed filtrid",
+    removeFilterAria: "Eemalda filter: {filter}",
     noProductsFound: "Tooteid ei leitud",
     noProductsHint: "Proovi filtreid muuta või sirvi laiemat kategooriat.",
     lookingForGear: "Otsid varustust?",
@@ -391,6 +399,10 @@ export const et: Dictionary = {
       "Selle mudeli kirjeldus on hetkel saadaval ainult inglise keeles. Eestikeelne tõlge on peagi tulemas.",
     readMore: "Loe edasi",
     readLess: "Näita vähem",
+    quickView: "Kiirvaade",
+    viewAllSizes: "Vaata kõiki suurusi",
+    previousSizes: "Eelmised suurused",
+    nextSizes: "Järgmised suurused",
   },
   showroom: {
     pickupTitle: "Tule salongi järgi ja proovi",
@@ -670,6 +682,10 @@ export const et: Dictionary = {
     productEntryNeedMore:
       "Osta see toode — lisa veel {remaining} samasse tellimusse ja osaled loosis",
     productEntryStackHint: "Iga täis €100 tellimuses = üks pilet juurde",
+    productEntryInlineOne: "Sisaldab 1 loosipileti",
+    productEntryInlineMany: "Sisaldab {count} loosipiletit",
+    productEntryInlineNeedMore: "Lisa veel {remaining} loosipileti jaoks",
+    productEntryInfoAria: "Loosipileti info",
   },
   legal: {
     eyebrow: "Juriidiline",

@@ -21,9 +21,6 @@ import {
   filterHomepageAccessoriesProducts,
 } from "@/lib/shop/favorite-product";
 
-const headingVideoClass =
-  "font-display text-5xl font-extrabold uppercase leading-[0.95] tracking-tight sm:text-6xl lg:text-5xl xl:text-6xl";
-
 const blocks = [
   {
     id: "favorites-motorcycles",
@@ -32,7 +29,7 @@ const blocks = [
     href: "/shop/motorcycles",
     linkLabel: "Shop motorcycles →",
     theme: "light" as const,
-    sectionClass: "bg-moto text-ink py-20 lg:py-24",
+    sectionClass: "home-section-padding bg-moto text-ink",
     titleClass: "text-ink",
     linkClass:
       "inline-flex items-center rounded-full bg-ink px-7 py-3 text-paper transition-colors duration-200 hover:bg-accent",
@@ -90,14 +87,10 @@ function RidersFavoritesBlock({
       className={`relative overflow-hidden ${sectionClass}`}
     >
       <div className="relative z-10 site-container">
-        <header
-          className={`mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between ${
-            theme === "light" ? "sm:mb-5" : "sm:mb-8"
-          }`}
-        >
+        <header className="home-section-header">
           <div>
             <p className="section-eyebrow">{eyebrow}</p>
-            <h3 id={id} className={`heading-block mt-2 ${titleClass}`}>
+            <h3 id={id} className={`heading-block mt-3 sm:mt-4 ${titleClass}`}>
               {title}
             </h3>
           </div>
@@ -105,7 +98,7 @@ function RidersFavoritesBlock({
             href={href}
             prefetch
             scroll
-            className={`self-start font-body text-xs font-bold uppercase tracking-aggressive transition-[color,border-color] duration-200 sm:self-auto ${linkClass}`}
+            className={`shrink-0 font-body text-xs font-bold uppercase tracking-aggressive transition-[color,border-color] duration-200 ${linkClass}`}
           >
             {linkLabel}
           </Link>
@@ -163,10 +156,6 @@ export async function RidersFavorites({ locale }: { locale: Locale }) {
   const copy =
     locale === "et"
       ? {
-          rebelTop: "Mässuline",
-          rebelBottom: "kahel rattal.",
-          description:
-            "Premium sõiduvarustus ja mootorrattad sõitjatele, kes ei taha massi sulanduda.",
           motorcyclesEyebrow: "Mootorrattad",
           motorcyclesTitle: "Populaarsed rattad",
           motorcyclesCta: "Vaata mootorrattaid →",
@@ -178,10 +167,6 @@ export async function RidersFavorites({ locale }: { locale: Locale }) {
           gearTabAccessories: "Aksessuaarid",
         }
       : {
-          rebelTop: "Rebel on",
-          rebelBottom: "two wheels.",
-          description:
-            "Premium riding gear and motorcycles for riders who refuse to blend in.",
           motorcyclesEyebrow: "Motorcycles",
           motorcyclesTitle: "Popular Bikes",
           motorcyclesCta: "Shop motorcycles →",
@@ -227,26 +212,6 @@ export async function RidersFavorites({ locale }: { locale: Locale }) {
 
   return (
     <section>
-      <header className="relative hidden overflow-hidden bg-ink px-5 py-16 text-paper sm:px-8 lg:block lg:px-12 lg:py-14 xl:py-16">
-        <div className="relative z-10 mx-auto flex max-w-site flex-col gap-6 lg:flex-row lg:items-end lg:justify-between lg:gap-8">
-          <h2
-            id="favorites-heading"
-            className={`max-w-4xl shrink-0 ${headingVideoClass}`}
-          >
-            <span className={`text-paper ${headingVideoClass}`}>
-              {copy.rebelTop}
-            </span>
-            <br />
-            <span className="bg-gradient-to-r from-[#FF5A00] via-[#ff7e26] to-[#ff9c59] bg-clip-text text-transparent">
-              {copy.rebelBottom}
-            </span>
-          </h2>
-          <p className="max-w-md text-base leading-relaxed text-paper/75 sm:text-lg lg:pb-2 lg:text-right">
-            {copy.description}
-          </p>
-        </div>
-      </header>
-
       {blocks.map((block) => (
         <RidersFavoritesBlock
           key={block.id}

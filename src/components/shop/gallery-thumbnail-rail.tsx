@@ -234,11 +234,7 @@ export function GalleryThumbnailRail({
   );
 
   const thumbRailMeta = (
-    <div
-      className={`flex shrink-0 flex-col items-center gap-1 pt-1 ${
-        isVertical ? "" : "hidden lg:flex"
-      }`}
-    >
+    <div className="flex shrink-0 flex-col items-center gap-1 pt-1">
       <p className="font-body text-[10px] font-bold tabular-nums tracking-aggressive text-ink/70">
         {String(activeIndex + 1).padStart(2, "0")}
         <span className="text-ink/35">
@@ -358,11 +354,17 @@ export function GalleryThumbnailRail({
           className={`flex shrink-0 flex-col items-stretch ${verticalShellClass}`}
         >
           {thumbList()}
+          {items.length > 1 ? thumbRailMeta : null}
         </div>
       );
     }
 
-    return thumbList();
+    return (
+      <div className={`flex flex-col ${className}`}>
+        {thumbList()}
+        {items.length > 1 ? thumbRailMeta : null}
+      </div>
+    );
   }
 
   const swiper = (
@@ -407,6 +409,7 @@ export function GalleryThumbnailRail({
         {scrollNavButton("prev", atStart)}
         <div className="min-h-0 shrink-0">{swiper}</div>
         {scrollNavButton("next", atEnd)}
+        {items.length > 1 ? thumbRailMeta : null}
       </div>
     );
   }
@@ -421,6 +424,7 @@ export function GalleryThumbnailRail({
         {scrollNavButton("prev", atStart)}
         {scrollNavButton("next", atEnd)}
       </nav>
+      {items.length > 1 ? thumbRailMeta : null}
     </div>
   );
 }

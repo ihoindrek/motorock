@@ -27,13 +27,13 @@ export async function LatestBlogPostsSection({ locale }: LatestBlogPostsSectionP
   return (
     <section
       aria-labelledby="home-latest-blog"
-      className="relative overflow-hidden bg-white py-12 text-ink lg:py-14"
+      className="home-section-padding relative overflow-hidden bg-white text-ink"
     >
       <div className="site-container relative z-10">
-        <header className="mb-6 flex flex-col gap-4 sm:mb-5 sm:flex-row sm:items-end sm:justify-between">
+        <header className="home-section-header">
           <div>
             <p className="section-eyebrow">{dict.blog.latestPostsEyebrow}</p>
-            <h2 id="home-latest-blog" className="heading-block mt-2 text-ink">
+            <h2 id="home-latest-blog" className="heading-block mt-3 text-ink sm:mt-4">
               {dict.blog.latestPostsTitle}
             </h2>
           </div>
@@ -41,7 +41,7 @@ export async function LatestBlogPostsSection({ locale }: LatestBlogPostsSectionP
             href={blogHref}
             prefetch
             scroll
-            className="inline-flex items-center self-start rounded-full border border-ink/15 bg-white px-7 py-3 font-body text-xs font-bold uppercase tracking-aggressive text-ink transition-colors duration-200 hover:bg-accent hover:text-paper sm:self-auto"
+            className="inline-flex shrink-0 items-center rounded-full border border-ink/15 bg-white px-7 py-3 font-body text-xs font-bold uppercase tracking-aggressive text-ink transition-colors duration-200 hover:bg-accent hover:text-paper"
           >
             {dict.blog.viewAllPosts}
           </Link>

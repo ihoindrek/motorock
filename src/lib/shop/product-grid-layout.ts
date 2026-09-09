@@ -1,8 +1,8 @@
 /** Shared spacing for product grids and carousels. */
 export const PRODUCT_CAROUSEL_SPACE = {
-  base: 12,
-  md: 16,
-  lg: 20,
+  base: 16,
+  md: 22,
+  lg: 28,
 } as const;
 
 type CatalogProductGridOptions = {
@@ -14,7 +14,7 @@ export function catalogProductGridClassName(
   columns: 3 | 4 = 4,
   options?: CatalogProductGridOptions,
 ) {
-  const gap = "gap-x-3 gap-y-5 lg:gap-x-4";
+  const gap = "gap-x-4 gap-y-8 sm:gap-y-9 lg:gap-x-5 lg:gap-y-10";
   const sparseCount = options?.sparseDesktopCount;
 
   if (
@@ -43,5 +43,5 @@ export function favoritesProductGridClassName(columnClass: string) {
   return `grid grid-cols-1 gap-x-4 gap-y-6 ${columnClass}`;
 }
 
-/** Vertical divider offset for gridDividers rows (half of gap-y-5). */
-export const PRODUCT_GRID_DIVIDER_ROW_OFFSET = "before:-bottom-2.5";
+/** Vertical divider offset for gridDividers rows (half of gap-y-8). */
+export const PRODUCT_GRID_DIVIDER_ROW_OFFSET = "before:-bottom-4";

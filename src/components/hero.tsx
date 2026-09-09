@@ -52,6 +52,75 @@ const equipmentLogos = equipmentHubBrands.map((brand) => ({
   className: "h-5 w-auto max-w-[5.25rem] sm:h-6 sm:max-w-[6rem]",
 }));
 
+type HeroLogo = (typeof motorcycleLogos)[number] | (typeof equipmentLogos)[number];
+
+function HeroBannerLogo({
+  logo,
+  decorative = false,
+}: {
+  logo: HeroLogo;
+  decorative?: boolean;
+}) {
+  return (
+    <Image
+      src={logo.src}
+      alt={decorative ? "" : logo.name}
+      width={logo.width}
+      height={logo.height}
+      aria-hidden={decorative ? true : undefined}
+      className={cn(
+        logo.className,
+        "opacity-90 transition-opacity duration-300 group-hover:opacity-100",
+        logo.invert && "brightness-0 invert",
+      )}
+    />
+  );
+}
+
+function HeroBannerLogos({
+  logos,
+  marquee = false,
+  gapClassName,
+}: {
+  logos: readonly HeroLogo[];
+  marquee?: boolean;
+  gapClassName: string;
+}) {
+  if (marquee) {
+    return (
+      <div className="w-full overflow-hidden">
+        <ul
+          className={cn(
+            "animate-spec-marquee flex w-max items-center py-1 motion-reduce:animate-none",
+            gapClassName,
+          )}
+        >
+          {logos.map((logo) => (
+            <li key={logo.name} className="shrink-0">
+              <HeroBannerLogo logo={logo} />
+            </li>
+          ))}
+          {logos.map((logo) => (
+            <li key={`${logo.name}-repeat`} className="shrink-0" aria-hidden="true">
+              <HeroBannerLogo logo={logo} decorative />
+            </li>
+          ))}
+        </ul>
+      </div>
+    );
+  }
+
+  return (
+    <ul className={cn("flex flex-wrap items-center justify-center", gapClassName)}>
+      {logos.map((logo) => (
+        <li key={logo.name}>
+          <HeroBannerLogo logo={logo} />
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 type HeroProps = {
   locale: Locale;
   dictionary: Dictionary;
@@ -65,34 +134,39 @@ export function Hero({ locale, dictionary }: HeroProps) {
       image: "/brixton-image.webp",
       mobileImage: "/hero-fallback.webp",
       video: "/Brixton-Neu.webm",
-      span: "col-span-1 md:col-span-2",
-      imageSizes: "(max-width: 768px) 100vw, 66vw",
+      span: "col-span-1",
+      imageSizes: "(max-width: 768px) 100vw, 50vw",
       titleClass: "text-3xl sm:text-4xl lg:text-6xl",
       cta: dictionary.hero.shopMotorcycles,
       ctaClass: "btn-hero-primary",
       logos: motorcycleLogos,
       compactLogos: false,
+      imageClassName:
+        "object-cover object-center transition-transform duration-700 ease-out group-hover:scale-105",
     },
     {
       label: dictionary.hero.equipment,
       href: localizedHref(locale, buildEquipmentHubHref(locale)),
-      image: "/JRH10015_L23.webp",
-      mobileImage: "/JRH10015_L23.webp",
+      image: "/drivin-eq-banner.jpg",
+      mobileImage: "/drivin-eq-banner.jpg",
       video: undefined,
       span: "col-span-1",
-      imageSizes: "(max-width: 768px) 100vw, 33vw",
+      imageSizes: "(max-width: 768px) 100vw, 50vw",
       titleClass: "text-2xl sm:text-3xl lg:text-4xl xl:text-5xl",
       cta: dictionary.hero.browseProducts,
       ctaClass: "btn-hero-primary",
       logos: equipmentLogos,
       compactLogos: true,
+      marqueeLogos: true,
+      imageClassName:
+        "object-cover object-[center_30%] transition-transform duration-700 ease-out group-hover:scale-105",
     },
   ] as const;
 
   return (
     <section
       aria-label={dictionary.common.shop}
-      className="grid grid-cols-1 md:grid-cols-3"
+      className="grid grid-cols-1 md:grid-cols-2"
     >
       <h1 className="sr-only">{`Motorock.eu — ${dictionary.seo.homeTitle}`}</h1>
 
@@ -118,7 +192,7 @@ export function Hero({ locale, dictionary }: HeroProps) {
                 alt=""
                 fill
                 priority={index === 0}
-                className="object-cover object-center transition-transform duration-700 ease-out group-hover:scale-105"
+                className={banner.imageClassName}
                 sizes={banner.imageSizes}
               />
             )}
@@ -138,30 +212,15 @@ export function Hero({ locale, dictionary }: HeroProps) {
               </h2>
 
               {banner.logos ? (
-                <ul
-                  className={cn(
-                    "flex flex-wrap items-center justify-center",
+                <HeroBannerLogos
+                  logos={banner.logos}
+                  marquee={"marqueeLogos" in banner && banner.marqueeLogos}
+                  gapClassName={
                     banner.compactLogos
                       ? "gap-3 sm:gap-4"
-                      : "gap-5 sm:gap-7 lg:gap-8",
-                  )}
-                >
-                  {banner.logos.map((logo) => (
-                    <li key={logo.name}>
-                      <Image
-                        src={logo.src}
-                        alt={logo.name}
-                        width={logo.width}
-                        height={logo.height}
-                        className={cn(
-                          logo.className,
-                          "opacity-90 transition-opacity duration-300 group-hover:opacity-100",
-                          logo.invert && "brightness-0 invert",
-                        )}
-                      />
-                    </li>
-                  ))}
-                </ul>
+                      : "gap-5 sm:gap-7 lg:gap-8"
+                  }
+                />
               ) : null}
 
               <span

@@ -416,21 +416,6 @@ export function ProductImageGallery({
     />
   );
 
-  const slideCounter =
-    slideCount > 1 ? (
-      <span
-        className={`pointer-events-none absolute left-3 top-3 z-10 font-body text-[10px] font-bold tabular-nums tracking-aggressive ${
-          theme === "dark" ? "text-paper" : "text-ink"
-        }`}
-      >
-        {String(resolvedIndex + 1).padStart(2, "0")}
-        <span className={theme === "dark" ? "text-paper/35" : "text-ink/40"}>
-          {" "}
-          / {String(slideCount).padStart(2, "0")}
-        </span>
-      </span>
-    ) : null;
-
   const inlineVideoStage =
     hasVideoSlide && productVideo ? (
       <GalleryInlineVideoStage
@@ -507,10 +492,7 @@ export function ProductImageGallery({
                   sizeToContent
                   className="w-full max-lg:rounded-none"
                 >
-                  <div className="relative">
-                    {inlineVideoStage}
-                    {slideCounter}
-                  </div>
+                  <div className="relative">{inlineVideoStage}</div>
                 </GalleryImageTransition>
               </div>
             ) : (
@@ -545,7 +527,6 @@ export function ProductImageGallery({
                         "transition-transform duration-500 group-hover/openable:scale-[1.01]",
                       )}
                     />
-                    {slideCounter}
                   </figure>
                 </GalleryImageTransition>
               </OpenableImageTrigger>
@@ -656,10 +637,7 @@ export function ProductImageGallery({
                 : "aspect-[4/5] w-full"
             }
           >
-            <div className="relative h-full">
-              {inlineVideoStage}
-              {slideCounter}
-            </div>
+            <div className="relative h-full">{inlineVideoStage}</div>
           </GalleryImageTransition>
         </div>
       ) : (
@@ -730,8 +708,6 @@ export function ProductImageGallery({
           }
         />
       ) : null}
-
-      {slideCounter}
 
       {slideCount > 1 ? (
         <nav

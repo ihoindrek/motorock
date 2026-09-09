@@ -239,7 +239,7 @@ export const equipmentHubBrands = [
     name: "Johnny Reb",
     slug: "johnny-reb",
     image: "/JRF00001-1LS.webp",
-    logo: "/johnny-reb.webp",
+    logo: "/johnnyreb.svg",
     logoInvert: false,
     imageAlt: {
       en: "Johnny Reb riding gear",

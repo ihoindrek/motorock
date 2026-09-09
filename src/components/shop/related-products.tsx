@@ -109,7 +109,7 @@ export function RelatedProducts({
           >
             {products.map((product) => (
               <SwiperSlide key={product.slug} className="!h-auto">
-                <ProductCard product={product} imageBackground="white" />
+                <ProductCard product={product} />
               </SwiperSlide>
             ))}
           </Swiper>

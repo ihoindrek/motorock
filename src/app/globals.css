@@ -115,7 +115,7 @@
 /* ── Component utilities ───────────────────────────────────────────────── */
 
 @utility site-container {
-  @apply mx-auto w-full max-w-site px-5 sm:px-8 lg:px-12;
+  @apply mx-auto w-full max-w-site px-6 sm:px-8 lg:px-12;
 }
 
 @utility link-nav {
@@ -314,6 +314,48 @@
 }
 
 @layer components {
+  .home-section-padding {
+    padding-block: 5rem;
+  }
+
+  @media (min-width: 40rem) {
+    .home-section-padding {
+      padding-block: 6rem;
+    }
+  }
+
+  @media (min-width: 64rem) {
+    .home-section-padding {
+      padding-block: 7rem;
+    }
+  }
+
+  .home-section-header {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1.25rem;
+    margin-bottom: 2rem;
+  }
+
+  .home-section-header > :first-child {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  @media (min-width: 40rem) {
+    .home-section-header {
+      margin-bottom: 2.5rem;
+    }
+  }
+
+  @media (min-width: 64rem) {
+    .home-section-header {
+      margin-bottom: 3rem;
+    }
+  }
+
   .grain-overlay {
     pointer-events: none;
     position: absolute;

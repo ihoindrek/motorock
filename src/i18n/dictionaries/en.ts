@@ -69,6 +69,7 @@ export type Dictionary = {
     needHelp: string;
     rights: string;
     trademarkNotice: string;
+    paymentMethods: string;
   };
   common: {
     skipToContent: string;
@@ -108,6 +109,10 @@ export type Dictionary = {
     browseProducts: string;
     motorcycleSaleUntil: string;
     motorcycleSaleAria: string;
+  };
+  home: {
+    officialDealerEyebrow: string;
+    officialDealerTitle: string;
   };
   search: {
     open: string;
@@ -350,6 +355,8 @@ export type Dictionary = {
     productSingular: string;
     productPlural: string;
     clearFilters: string;
+    activeFilters: string;
+    removeFilterAria: string;
     noProductsFound: string;
     noProductsHint: string;
     lookingForGear: string;
@@ -359,6 +366,10 @@ export type Dictionary = {
     contentAvailableInEnglish: string;
     readMore: string;
     readLess: string;
+    quickView: string;
+    viewAllSizes: string;
+    previousSizes: string;
+    nextSizes: string;
   };
   showroom: {
     pickupTitle: string;
@@ -597,6 +608,10 @@ export type Dictionary = {
     productEntryStackHint: string;
     productGiveawayTitle: string;
     productEntryHeadline: string;
+    productEntryInlineOne: string;
+    productEntryInlineMany: string;
+    productEntryInlineNeedMore: string;
+    productEntryInfoAria: string;
   };
   legal: {
     eyebrow: string;
@@ -753,7 +768,9 @@ export const en: Dictionary = {
     cookies: "Cookie Policy (EU)",
     needHelp: "Need help?",
     rights: "All rights reserved.",
-    trademarkNotice: "MotoRock® is a registered trademark of MotoMad OÜ.",
+    trademarkNotice:
+      "MotoRock® is a registered trademark of MotoMad OÜ. {operator}, reg. {code}, {address}.",
+    paymentMethods: "Secure payment",
   },
   common: {
     skipToContent: "Skip to content",
@@ -793,6 +810,10 @@ export const en: Dictionary = {
     browseProducts: "Browse products",
     motorcycleSaleUntil: "Until end of August",
     motorcycleSaleAria: "10% off all motorcycles until end of August",
+  },
+  home: {
+    officialDealerEyebrow: "Trusted brands",
+    officialDealerTitle: "As official dealer for",
   },
   search: {
     open: "Open search",
@@ -1058,6 +1079,8 @@ export const en: Dictionary = {
     productSingular: "product",
     productPlural: "products",
     clearFilters: "Clear filters",
+    activeFilters: "Active filters",
+    removeFilterAria: "Remove filter: {filter}",
     noProductsFound: "No products found",
     noProductsHint:
       "Try adjusting your filters or browse a broader category.",
@@ -1070,6 +1093,10 @@ export const en: Dictionary = {
       "This model description is currently available in English only. An Estonian translation is coming soon.",
     readMore: "Read more",
     readLess: "Show less",
+    quickView: "Quick view",
+    viewAllSizes: "View all sizes",
+    previousSizes: "Previous sizes",
+    nextSizes: "Next sizes",
   },
   showroom: {
     pickupTitle: "Pick up at showroom & try on",
@@ -1344,6 +1371,10 @@ export const en: Dictionary = {
     productEntryNeedMore:
       "Buy this product — add {remaining} in the same order to enter the draw",
     productEntryStackHint: "Every extra €100 in your order = another entry",
+    productEntryInlineOne: "Includes 1 giveaway entry",
+    productEntryInlineMany: "Includes {count} giveaway entries",
+    productEntryInlineNeedMore: "Add {remaining} more for a giveaway entry",
+    productEntryInfoAria: "Giveaway entry details",
   },
   legal: {
     eyebrow: "Legal",

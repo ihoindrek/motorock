@@ -2,10 +2,8 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import {
-  RidersFavoritesCarousel,
-  type FavoriteProduct,
-} from "@/components/riders-favorites-carousel";
+import { CatalogProductCarousel } from "@/components/shop/catalog-product-carousel";
+import type { CatalogProduct } from "@/types/catalog-product";
 import { useCategoryTree } from "@/context/category-tree-context";
 import type { Locale } from "@/i18n/config";
 import { localizedHref } from "@/i18n/paths";
@@ -25,7 +23,7 @@ type PopularGearCopy = {
 
 type PopularGearSectionProps = {
   locale: Locale;
-  productsByAudience: Record<GearAudience, readonly FavoriteProduct[]>;
+  productsByAudience: Record<GearAudience, readonly CatalogProduct[]>;
   copy: PopularGearCopy;
 };
 
@@ -66,9 +64,6 @@ export function PopularGearSection({
   const activeTab = tabs.find((tab) => tab.id === activeId) ?? tabs[0];
   const products = activeTab ? productsByAudience[activeTab.id] : [];
 
-  const audienceTabs = tabs.filter((tab) => tab.id === "men" || tab.id === "women");
-  const accessoriesTab = tabs.find((tab) => tab.id === "accessories");
-
   if (tabs.length === 0 || products.length === 0) {
     return null;
   }
@@ -87,11 +82,15 @@ export function PopularGearSection({
         aria-selected={isActive}
         onClick={() => setActiveId(tab.id)}
         className={cn(
-          "inline-flex min-h-10 shrink-0 items-center justify-center whitespace-nowrap px-4 py-2 font-body text-xs font-bold uppercase tracking-aggressive transition-colors sm:px-5",
-          options?.mobileProminent && "min-h-12 w-full text-sm sm:min-h-10 sm:w-auto sm:text-xs",
+          "inline-flex min-h-10 shrink-0 items-center justify-center px-4 py-2 text-center font-body text-xs font-bold uppercase tracking-aggressive transition-colors sm:px-5",
+          options?.mobileProminent &&
+            "min-h-12 w-full px-2 text-[10px] leading-tight sm:min-h-10 sm:w-auto sm:px-5 sm:text-xs sm:leading-normal",
+          options?.mobileProminent ? "whitespace-normal" : "whitespace-nowrap",
           isActive
             ? "bg-ink text-paper"
-            : "text-ink/60 hover:bg-surface hover:text-ink",
+            : options?.mobileProminent
+              ? "border border-ink/15 bg-white text-ink/70 hover:border-ink/30 hover:text-ink"
+              : "text-ink/60 hover:bg-surface hover:text-ink",
         )}
       >
         {tab.label}
@@ -102,58 +101,39 @@ export function PopularGearSection({
   return (
     <section
       aria-labelledby="favorites-equipment"
-      className="relative overflow-hidden bg-detail py-20 text-ink lg:py-24"
+      className="home-section-padding relative overflow-hidden bg-white text-ink"
     >
       <div className="site-container relative z-10">
-        <header className="mb-6 flex flex-col gap-4 sm:mb-5 sm:flex-row sm:items-end sm:justify-between">
+        <header className="home-section-header">
           <div>
             <p className="section-eyebrow">{copy.eyebrow}</p>
-            <h3 id="favorites-equipment" className="heading-block mt-2 text-ink">
+            <h3 id="favorites-equipment" className="heading-block mt-3 text-ink sm:mt-4">
               {copy.title}
             </h3>
           </div>
           <Link
             href={localizedHref(locale, buildEquipmentHubHref(locale))}
-            className="inline-flex items-center self-start rounded-full bg-paper px-7 py-3 font-body text-xs font-bold uppercase tracking-aggressive text-ink transition-colors duration-200 hover:bg-accent hover:text-paper sm:self-auto"
+            className="inline-flex shrink-0 items-center rounded-full bg-paper px-7 py-3 font-body text-xs font-bold uppercase tracking-aggressive text-ink transition-colors duration-200 hover:bg-accent hover:text-paper"
           >
             {copy.cta}
           </Link>
         </header>
 
-        {audienceTabs.length > 0 ? (
-          <div
-            className={cn(
-              "mb-2 grid gap-2 sm:hidden",
-              audienceTabs.length > 1 ? "grid-cols-2" : "grid-cols-1",
-            )}
-            role="tablist"
-            aria-label={copy.title}
-          >
-            {audienceTabs.map((tab) => renderTabButton(tab, { mobileProminent: true }))}
-          </div>
-        ) : null}
-
-        {accessoriesTab ? (
-          <div className="mb-4 flex sm:hidden">
-            <button
-              type="button"
-              role="tab"
-              aria-selected={activeTab?.id === "accessories"}
-              onClick={() => setActiveId("accessories")}
-              className={cn(
-                "font-body text-[11px] font-bold uppercase tracking-aggressive underline-offset-4 transition-colors",
-                activeTab?.id === "accessories"
-                  ? "text-ink underline"
-                  : "text-ink/50 hover:text-ink",
-              )}
-            >
-              {accessoriesTab.label}
-            </button>
-          </div>
-        ) : null}
+        <div
+          className={cn(
+            "mb-6 grid gap-3 sm:hidden",
+            tabs.length === 1 && "grid-cols-1",
+            tabs.length === 2 && "grid-cols-2",
+            tabs.length >= 3 && "grid-cols-3",
+          )}
+          role="tablist"
+          aria-label={copy.title}
+        >
+          {tabs.map((tab) => renderTabButton(tab, { mobileProminent: true }))}
+        </div>
 
         <div
-          className="mb-6 hidden gap-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] sm:flex sm:gap-2 [&::-webkit-scrollbar]:hidden"
+          className="mb-8 hidden gap-2 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] sm:flex sm:gap-3 lg:mb-10 [&::-webkit-scrollbar]:hidden"
           role="tablist"
           aria-label={copy.title}
         >
@@ -161,14 +141,11 @@ export function PopularGearSection({
         </div>
 
         <div role="tabpanel" aria-labelledby="favorites-equipment">
-          <RidersFavoritesCarousel
+          <CatalogProductCarousel
             key={activeTab?.id}
             products={products}
-            theme="light"
-            compact={false}
-            slideDividers={false}
-            figureBackground="white"
             slideGroup={2}
+            ariaLabel={copy.title}
           />
         </div>
       </div>

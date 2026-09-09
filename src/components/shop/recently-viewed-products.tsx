@@ -45,7 +45,7 @@ function RecentlyViewedCard({
   const isMotorcycle = item.type === "motorcycle";
 
   return (
-    <article className="relative flex h-full flex-col">
+    <article className="relative h-full">
       <Link
         href={localizedProductHref(item.slug, locale)}
         className={cn(
@@ -54,8 +54,8 @@ function RecentlyViewedCard({
       >
         <figure
           className={cn(
-            "relative overflow-hidden bg-white",
-            isMotorcycle ? "aspect-[4/3]" : "aspect-[3/4]",
+            "relative aspect-[3/4] w-full shrink-0 overflow-hidden",
+            isMotorcycle ? "bg-moto" : "bg-catalog",
           )}
         >
           <Image
@@ -64,22 +64,22 @@ function RecentlyViewedCard({
             fill
             sizes="(max-width: 640px) 40vw, (max-width: 1024px) 30vw, 25vw"
             className={cn(
-              "transition-transform duration-500 ease-out motion-reduce:transition-none motion-reduce:group-hover:scale-100",
+              "object-contain object-center transition-transform duration-500 ease-out motion-reduce:transition-none motion-reduce:group-hover:scale-100",
               isMotorcycle
-                ? "object-contain object-center p-2 mix-blend-multiply group-hover:scale-[1.06] sm:p-3"
-                : "object-contain object-center p-0.5 group-hover:scale-[1.02] sm:p-1",
+                ? "p-3 mix-blend-multiply group-hover:scale-[1.06] sm:p-4"
+                : "p-4 mix-blend-multiply group-hover:scale-[1.02] sm:p-5",
             )}
           />
         </figure>
-        <div className="flex flex-1 flex-col gap-1.5 bg-white px-3 pb-3 pt-4 sm:pt-5">
+        <div className="flex flex-col gap-1.5 bg-white px-3 pb-3 pt-4 sm:pt-5">
           {item.brand ? <BrandLogo brand={item.brand} size="sm" /> : null}
-          <h3 className="line-clamp-2 font-body text-sm font-semibold leading-snug text-ink sm:text-base">
+          <h3 className="line-clamp-2 min-h-[2.5rem] font-body text-sm font-semibold leading-snug text-ink sm:min-h-[2.75rem] sm:text-base">
             {item.name}
           </h3>
           <Price
             value={item.price}
             as="p"
-            className="mt-auto text-sm transition-colors duration-200 group-hover:text-accent"
+            className="text-sm transition-colors duration-200 group-hover:text-accent"
           />
         </div>
       </Link>
@@ -186,7 +186,7 @@ export function RecentlyViewedProducts({
             aria-label={dict.pdp.recentlyViewed}
           >
             {items.map((item) => (
-              <SwiperSlide key={item.slug} className="!h-auto">
+              <SwiperSlide key={item.slug} className="!flex !h-auto">
                 <RecentlyViewedCard item={item} locale={locale} />
               </SwiperSlide>
             ))}

@@ -72,9 +72,9 @@ export function HomePromoBanners({ locale }: { locale: Locale }) {
   return (
     <section
       aria-label={locale === "et" ? "Soovitused" : "Highlights"}
-      className="bg-detail py-8 sm:py-10 lg:py-12"
+      className="bg-white"
     >
-      <div className="site-container grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-5 lg:gap-6">
+      <div className="site-container grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-8 lg:gap-10">
         {banners.map((banner) => (
           <Link
             key={banner.href}

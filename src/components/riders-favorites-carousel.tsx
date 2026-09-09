@@ -288,7 +288,7 @@ export function RidersFavoritesCarousel({
       {showNavigation ? (
         <nav
           aria-label={dict.carousel.navigation}
-          className="mt-8 flex items-center justify-between"
+          className="mt-10 flex items-center justify-between sm:mt-12"
         >
         <CarouselArrow
           direction="prev"

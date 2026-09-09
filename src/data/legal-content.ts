@@ -2,6 +2,7 @@ import type { LegalSection } from "@/components/legal/legal-document-view";
 import { buildCookieSections } from "@/data/cookie-policy-content";
 import type { Locale } from "@/i18n/config";
 import { localizedHref } from "@/i18n/paths";
+import { STORE_OPERATOR } from "@/data/company";
 import { SHOWROOM, getShowroomCopy } from "@/data/showroom";
 import {
   DELIVERY_TIMES,
@@ -25,11 +26,11 @@ import {
   showroomPickupLabel,
 } from "@/data/storefront-policies";
 
-const companyName = "Motomonopol OÜ";
-const companyRegistryCode = "17332522";
+const companyName = STORE_OPERATOR.legalName;
+const companyRegistryCode = STORE_OPERATOR.registryCode;
 const storefrontDomain = "motorock.eu";
 const contactEmail = SHOWROOM.email;
-const showroomAddress = `${SHOWROOM.addressLine}, ${SHOWROOM.city}`;
+const showroomAddress = STORE_OPERATOR.fullAddress;
 
 function externalLink(href: string, label?: string) {
   return {

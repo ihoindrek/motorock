@@ -18,7 +18,8 @@
     "build:johndoe-medienpaket": "node scripts/johndoe-build-medienpaket-index.mjs",
     "commerce-ai:p0:related:scan": "node scripts/commerce-ai-p0-related.mjs --scan-only --limit=50",
     "commerce-ai:p0:related:dry-run": "node scripts/commerce-ai-p0-related.mjs --dry-run --limit=5",
-    "commerce-ai:p0:seo:scan": "node scripts/ai-batch-pilot.mjs --scan-only --limit=30"
+    "commerce-ai:p0:seo:scan": "node scripts/ai-batch-pilot.mjs --scan-only --limit=30",
+    "report:traffic-revenue": "node scripts/merge-traffic-revenue-report.mjs"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.20",

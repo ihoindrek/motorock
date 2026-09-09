@@ -9,6 +9,7 @@ const config = {
         surface: "#F0ECE6",
         moto: "#C8C8C8",
         detail: "#EEEEEE",
+        catalog: "#f5f5f5",
         accent: {
           DEFAULT: "#FF6813",
           hover: "#E65E12",

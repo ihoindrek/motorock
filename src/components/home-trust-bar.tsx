@@ -65,7 +65,7 @@ export function HomeTrustBar({ locale }: { locale: Locale }) {
               <Link
                 href={href}
                 className={cn(
-                  "group flex min-h-14 flex-col items-center justify-center gap-1.5 px-3 py-3 text-center",
+                  "group flex min-h-16 flex-col items-center justify-center gap-2 px-4 py-4 text-center sm:py-5",
                   "font-body text-[10px] font-bold uppercase tracking-aggressive text-paper/85",
                   "transition-colors duration-200 hover:bg-paper/5 hover:text-paper",
                   "lg:min-h-14 lg:flex-row lg:gap-2.5 lg:px-5 lg:text-xs",

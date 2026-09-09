@@ -16,7 +16,7 @@ export function NewProductBadge({
   const label = dict.motorcycle.newBadge;
 
   const pillClass = cn(
-    "inline-flex items-center justify-center rounded-full bg-accent font-display font-bold uppercase tracking-aggressive text-white",
+    "inline-flex items-center justify-center rounded-full bg-accent font-body font-bold uppercase tracking-aggressive text-white",
     variant === "overlay"
       ? "px-2.5 py-1 text-[9px]"
       : "px-3 py-1 text-[10px] sm:text-[11px]",

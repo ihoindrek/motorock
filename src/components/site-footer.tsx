@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { brands } from "@/data/brands";
+import { STORE_OPERATOR } from "@/data/company";
 import { equipmentHubBrands } from "@/data/equipment-hub";
 import { useCategoryTree, useToolsCategory } from "@/context/category-tree-context";
 import { useDictionary, useLocale } from "@/context/locale-context";
@@ -209,6 +210,13 @@ function FooterLink({ href, label }: { href: string; label: string }) {
   );
 }
 
+function formatFooterTrademarkNotice(template: string) {
+  return template
+    .replace("{operator}", STORE_OPERATOR.legalName)
+    .replace("{code}", STORE_OPERATOR.registryCode)
+    .replace("{address}", STORE_OPERATOR.fullAddress);
+}
+
 function FooterNav({
   id,
   title,
@@ -279,8 +287,8 @@ function CheckoutFooter() {
               <small className="text-xs text-paper/35">
                 &copy; {new Date().getFullYear()} Motorock.eu
               </small>
-              <small className="text-[10px] text-paper/25">
-                {dictionary.footer.trademarkNotice}
+              <small className="text-[10px] leading-relaxed text-paper/25">
+                {formatFooterTrademarkNotice(dictionary.footer.trademarkNotice)}
               </small>
             </div>
           </div>
@@ -360,7 +368,7 @@ export function SiteFooter() {
                 >
                   {SHOWROOM.email}
                 </a>
-                <span className="mt-1 block">Tallinn, Estonia · EU</span>
+                <span className="mt-1 block">{STORE_OPERATOR.fullAddress}, Estonia</span>
               </address>
             </section>
 
@@ -391,16 +399,16 @@ export function SiteFooter() {
             </div>
           </div>
 
-          <div className="flex flex-col items-start justify-between gap-4 border-t border-paper/10 py-6 sm:flex-row sm:items-center">
+          <div className="flex flex-col gap-6 border-t border-paper/10 py-6 lg:flex-row lg:items-end lg:justify-between">
             <div className="flex flex-col gap-1">
               <small className="text-xs text-paper/35">
                 &copy; {new Date().getFullYear()} Motorock.eu. {dictionary.footer.rights}
               </small>
-              <small className="text-[10px] text-paper/25">
-                {dictionary.footer.trademarkNotice}
+              <small className="max-w-2xl text-[10px] leading-relaxed text-paper/25">
+                {formatFooterTrademarkNotice(dictionary.footer.trademarkNotice)}
               </small>
             </div>
-            <nav aria-label="Legal">
+            <nav aria-label="Legal" className="shrink-0">
               <ul className="flex flex-wrap gap-x-6 gap-y-2">
                 {legalLinks.map((link) => (
                   <li key={link.href}>

@@ -71,9 +71,9 @@ export const brands: readonly BrandConfig[] = [
   {
     name: "Johnny Reb",
     slug: "johnny-reb",
-    logo: "/johnny-reb.webp",
-    width: 120,
-    height: 148,
+    logo: "/johnnyreb.svg",
+    width: 192,
+    height: 248,
     logoInvert: false,
     logoClass: "h-9 w-auto max-w-[52px] sm:h-10",
     logoClassLg: "h-11 w-auto max-w-[60px] sm:h-12",

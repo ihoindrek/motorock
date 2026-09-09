@@ -22,6 +22,7 @@ import {
   PRODUCT_GRID_DIVIDER_ROW_OFFSET,
   catalogProductGridClassName,
 } from "@/lib/shop/product-grid-layout";
+import { CategoryActiveFilterChips } from "@/components/shop/category-active-filter-chips";
 import { CategoryDescription } from "@/components/shop/category-description";
 import { CategoryFilters, type ActiveFilters } from "@/components/shop/category-filters";
 import {
@@ -726,7 +727,11 @@ export function CategoryView({
               >
                 {route.title}
               </h1>
-              <p className="mt-1 font-body text-sm text-ink/50">
+              <p
+                className="mt-1 font-body text-sm text-ink/50"
+                aria-live="polite"
+                aria-atomic="true"
+              >
                 {showSubcategoryLanding ? (
                   <>
                     <span className="font-bold text-ink">
@@ -825,6 +830,34 @@ export function CategoryView({
         />
         </div>
       </div>
+
+      <CategoryActiveFilterChips
+        activeFilters={filters}
+        priceBounds={priceBounds}
+        resultCount={filteredProducts.length}
+        isMotorcycleCatalog={isMotorcycleCatalog}
+        categoryOptions={availableProductCategories}
+        genderOptions={availableGenders}
+        className="mb-6"
+        onToggleBrand={toggleBrand}
+        onToggleSize={toggleSize}
+        onToggleCategory={showProductCategoryFilter ? toggleCategory : undefined}
+        onToggleGender={showGenderFilter ? toggleGender : undefined}
+        onToggleDisplacement={
+          filterFacets.showDisplacementFilter ? toggleDisplacement : undefined
+        }
+        onInStockChange={(value) =>
+          setFilters((current) => ({ ...current, inStockOnly: value }))
+        }
+        onPriceReset={() =>
+          setFilters((current) => ({
+            ...current,
+            priceMin: priceBounds.min,
+            priceMax: priceBounds.max,
+          }))
+        }
+        onClear={clearFilters}
+      />
 
       {filteredProducts.length > 0 ? (
         <>

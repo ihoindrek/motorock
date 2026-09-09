@@ -298,15 +298,13 @@ export function pickHomepageNewGearProducts(
   products: readonly CatalogProduct[],
   locale: Locale,
   limit: number,
-): FavoriteProduct[] {
+): CatalogProduct[] {
   const pool = products
     .filter(isEligibleFavorite)
     .sort(compareByNewest)
     .slice(0, NEW_GEAR_POOL_SIZE);
 
-  return seededShuffle(pool, stableDailySeed(audience, locale))
-    .slice(0, limit)
-    .map(catalogToFavoriteProduct);
+  return seededShuffle(pool, stableDailySeed(audience, locale)).slice(0, limit);
 }
 
 function matchesSpotlightCategory(
@@ -461,13 +459,13 @@ function scoreProtectedGearProduct(product: CatalogProduct): number {
 export function pickHomepageProtectedGearProducts(
   products: readonly CatalogProduct[],
   limit: number,
-): FavoriteProduct[] {
+): CatalogProduct[] {
   const pool = products
     .filter(isEligibleFavorite)
     .filter(isProtectedGearProduct)
     .sort((a, b) => scoreProtectedGearProduct(b) - scoreProtectedGearProduct(a));
 
-  return pickSpotlightWithBrandDiversity(pool, limit).map(catalogToFavoriteProduct);
+  return pickSpotlightWithBrandDiversity(pool, limit);
 }
 
 export function pickPopularGearProducts(
