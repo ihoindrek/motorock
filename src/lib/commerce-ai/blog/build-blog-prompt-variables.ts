@@ -47,6 +47,7 @@ export function buildBlogPromptVariables(input: {
 
   return {
     locale: input.locale,
+    currentDate: new Date().toISOString().slice(0, 10),
     topic,
     brief: brief || "Write a useful journal article for Motorock readers.",
     articleTypeInstructions: articleTypeInstructions(input.target.articleType),
