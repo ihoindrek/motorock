@@ -228,6 +228,7 @@ export function resolveEquipmentRoute(
     description,
     breadcrumbs: buildBreadcrumbs(chain, locale, dict),
     wcCategorySlug: current.slug,
+    wcCategoryId: current.databaseId ?? undefined,
     wcCategoryPath: chain.map((node) => node.slug),
     gender,
     accessoriesOnly: rootSlug === "accessories" && chain.length === 1,

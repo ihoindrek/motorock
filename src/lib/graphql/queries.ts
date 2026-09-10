@@ -185,13 +185,14 @@ export const PRODUCT_BY_DATABASE_ID = `
 `;
 
 export const PRODUCT_CATALOG_PAGE = `
-  query ProductCatalogPage($first: Int!, $after: String, $category: String, $categoryNotIn: [String]) {
+  query ProductCatalogPage($first: Int!, $after: String, $category: String, $categoryId: Int, $categoryNotIn: [String]) {
     products(
       first: $first
       after: $after
       where: {
         status: "publish"
         category: $category
+        categoryId: $categoryId
         categoryNotIn: $categoryNotIn
       }
     ) {
@@ -211,6 +212,7 @@ export const PRODUCT_BRAND_CATALOG_PAGE = `
     $first: Int!
     $after: String
     $category: String
+    $categoryId: Int
     $categoryNotIn: [String]
     $brandTaxonomyTerms: [String]!
   ) {
@@ -220,6 +222,7 @@ export const PRODUCT_BRAND_CATALOG_PAGE = `
       where: {
         status: "publish"
         category: $category
+        categoryId: $categoryId
         categoryNotIn: $categoryNotIn
         taxonomyFilter: {
           filters: [
@@ -244,13 +247,14 @@ export const PRODUCT_BRAND_CATALOG_PAGE = `
 `;
 
 export const HOMEPAGE_PRODUCT_CATALOG_PAGE = `
-  query HomepageProductCatalogPage($first: Int!, $after: String, $category: String, $categoryNotIn: [String]) {
+  query HomepageProductCatalogPage($first: Int!, $after: String, $category: String, $categoryId: Int, $categoryNotIn: [String]) {
     products(
       first: $first
       after: $after
       where: {
         status: "publish"
         category: $category
+        categoryId: $categoryId
         categoryNotIn: $categoryNotIn
         orderby: { field: DATE, order: DESC }
       }

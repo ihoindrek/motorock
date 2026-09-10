@@ -62,6 +62,7 @@ type CatalogPageResponse = {
 
 type CatalogWhere = {
   category?: string;
+  categoryId?: number;
   categoryNotIn?: string[];
   brandSlug?: string;
 };
@@ -70,6 +71,7 @@ type CatalogPageVariables = {
   first: number;
   after: string | null;
   category: string | null;
+  categoryId: number | null;
   categoryNotIn: string[] | null;
 };
 
@@ -291,7 +293,8 @@ async function fetchCatalogNodesLimited(
     const variables: CatalogPageVariables = {
       first: Math.min(CATALOG_PAGE_SIZE, remaining),
       after,
-      category: where.category ?? null,
+      category: where.categoryId ? null : (where.category ?? null),
+      categoryId: where.categoryId ?? null,
       categoryNotIn: where.categoryNotIn ?? null,
     };
 
@@ -330,7 +333,8 @@ async function fetchAllCatalogNodes(
           {
             first: CATALOG_PAGE_SIZE,
             after,
-            category: where.category ?? null,
+            category: where.categoryId ? null : (where.category ?? null),
+            categoryId: where.categoryId ?? null,
             categoryNotIn: where.categoryNotIn ?? null,
             brandTaxonomyTerms: [where.brandSlug!],
           },
@@ -345,7 +349,8 @@ async function fetchAllCatalogNodes(
           {
             first: CATALOG_PAGE_SIZE,
             after,
-            category: where.category ?? null,
+            category: where.categoryId ? null : (where.category ?? null),
+            categoryId: where.categoryId ?? null,
             categoryNotIn: where.categoryNotIn ?? null,
           },
           {

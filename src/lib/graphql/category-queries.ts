@@ -123,6 +123,7 @@ export const EQUIPMENT_CATEGORY_INDEX = `
   query EquipmentCategoryIndex {
     productCategories(first: 200, where: { hideEmpty: false }) {
       nodes {
+        databaseId
         slug
         name
         description

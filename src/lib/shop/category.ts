@@ -21,6 +21,8 @@ import { getBrandByName, getBrandBySlug } from "@/lib/shop/brands";
 
 export type EquipmentCatalogWhere = {
   category?: string;
+  /** Woo category term ID — disambiguates duplicate slugs such as rain-gear. */
+  categoryId?: number;
   categoryNotIn?: string[];
   /** pa_brand slug — fetch only this brand from WooCommerce GraphQL. */
   brandSlug?: string;
@@ -45,6 +47,10 @@ export function resolveEquipmentCatalogWhere(
     };
   }
 
+  if (route.wcCategoryId) {
+    return { categoryId: route.wcCategoryId };
+  }
+
   if (route.wcCategorySlug) {
     return { category: route.wcCategorySlug };
   }
@@ -67,6 +73,8 @@ export type CategoryRoute = {
   breadcrumbs: Breadcrumb[];
   /** WooCommerce category slug used for GraphQL catalog filter. */
   wcCategorySlug?: string;
+  /** WooCommerce category term ID when slug alone is ambiguous. */
+  wcCategoryId?: number;
   wcCategoryPath?: readonly string[];
   gender?: ProductGender;
   category?: ProductCategory;

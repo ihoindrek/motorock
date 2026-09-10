@@ -15,6 +15,7 @@ export type CategoryImage = {
 };
 
 export type WcCategoryNode = {
+  databaseId?: number | null;
   slug: string;
   name: string;
   description?: string | null;
@@ -81,6 +82,7 @@ type EquipmentCategoryIndexResponse = {
   productCategories: {
     nodes: Array<
       WcCategoryNode & {
+        databaseId?: number | null;
         parent?: {
           node?: {
             slug?: string | null;
@@ -254,6 +256,7 @@ function addNavTreeNode(
   }
 
   setCategoryNode(entries, {
+    databaseId: node.databaseId,
     slug: node.slug,
     name: node.name,
     description: node.description,
@@ -301,6 +304,7 @@ export function buildIndex(
     }
 
     setCategoryNode(entries, {
+      databaseId: node.databaseId,
       slug: node.slug,
       name: node.name,
       description: node.description,
