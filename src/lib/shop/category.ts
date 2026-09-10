@@ -6,6 +6,7 @@ import type {
 import type { Dictionary } from "@/i18n/dictionaries/en";
 import type { Locale } from "@/i18n/config";
 import {
+  canonicalizeWcCategorySlugs,
   HELMET_WC_SLUGS,
   isGenderGearLeafRoute,
   mapWcSlugToCategory,
@@ -202,7 +203,12 @@ export function filterProductsByRoute(
 
       const routeCategory = mapWcSlugToCategory(route.wcCategorySlug!);
       if (routeCategory && product.category !== routeCategory) {
-        return false;
+        const slugs = canonicalizeWcCategorySlugs(product.wcCategorySlugs);
+
+        // Products can sit in multiple Woo leaf categories (e.g. rain-gear + jackets).
+        if (!slugs.includes(route.wcCategorySlug!)) {
+          return false;
+        }
       }
     }
 

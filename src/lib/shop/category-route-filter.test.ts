@@ -119,6 +119,46 @@ describe("filterProductsByRoute men's jackets leaf", () => {
     expect(filtered).toHaveLength(1);
   });
 
+  it("keeps women's rain gear when product also maps to jackets or pants", () => {
+    const rainRoute: CategoryRoute = {
+      title: "Rain Gear",
+      description: "",
+      breadcrumbs: [],
+      gender: "women",
+      wcCategorySlug: "rain-gear",
+      wcCategoryPath: ["for-women", "rain-gear"],
+    };
+
+    const filtered = filterProductsByRoute(
+      [
+        product({
+          slug: "aqua-waterproof-jacket",
+          brand: "Holyfreedom",
+          name: "Aqua Waterproof Jacket",
+          gender: "women",
+          category: "jackets",
+          shopAudiences: ["women"],
+          wcCategorySlugs: ["jackets-and-tags-2", "for-women", "rain-gear"],
+        }),
+        product({
+          slug: "aqua-waterproof-trousers",
+          brand: "Holyfreedom",
+          name: "Aqua Waterproof Trousers",
+          gender: "women",
+          category: "pants",
+          shopAudiences: ["women"],
+          wcCategorySlugs: ["pants-jeans", "for-women", "rain-gear"],
+        }),
+      ],
+      rainRoute,
+    );
+
+    expect(filtered.map((product) => product.slug)).toEqual([
+      "aqua-waterproof-jacket",
+      "aqua-waterproof-trousers",
+    ]);
+  });
+
   it("keeps men's rain gear when rain-gear slug is shared across genders", () => {
     const rainRoute: CategoryRoute = {
       title: "Rain Gear",
