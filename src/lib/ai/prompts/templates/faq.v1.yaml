@@ -22,8 +22,12 @@ user: |
   Price: {{price}} EUR
   Attributes:
   {{attributesJson}}
+  Variations (per-variation attributes):
+  {{variationsJson}}
   Short description:
   {{existingShort}}
+  Long description excerpt (factual source):
+  {{existingDescriptionExcerpt}}
 
   Respond with JSON only:
   {

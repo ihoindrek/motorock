@@ -47,6 +47,14 @@ export function auditProduct(product: GraphQLProduct, locale: Locale): SeoAuditI
         message: "Product description is thin",
       });
     }
+  } else if (!hasExistingDescriptionContent(normalized.existing, locale)) {
+    // Content exists but fails the locale heuristic — likely written in the wrong language.
+    score += 2;
+    pushFinding(findings, {
+      code: "description.wrong_language",
+      severity: "error",
+      message: `Description exists but does not look like ${locale.toUpperCase()} content`,
+    });
   }
 
   if (!hasExistingSeoContent(normalized.existing)) {
@@ -55,6 +63,13 @@ export function auditProduct(product: GraphQLProduct, locale: Locale): SeoAuditI
       code: "seo.missing",
       severity: "error",
       message: "Missing AI SEO title or meta description",
+    });
+  } else if (!hasExistingSeoContent(normalized.existing, locale)) {
+    score += 1;
+    pushFinding(findings, {
+      code: "seo.wrong_language",
+      severity: "warning",
+      message: `SEO meta exists but does not look like ${locale.toUpperCase()} content`,
     });
   } else {
     const metaLength = normalized.existing.seoMetaDescription?.trim().length ?? 0;

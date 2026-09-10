@@ -30,10 +30,18 @@
     });
     var sections = [];
 
-    if (codes.some(function (code) { return code.indexOf("description") === 0; })) {
+    if (
+      codes.some(function (code) {
+        return code.indexOf("description") === 0;
+      })
+    ) {
       sections.push("description");
     }
-    if (codes.some(function (code) { return code.indexOf("seo") === 0; })) {
+    if (
+      codes.some(function (code) {
+        return code.indexOf("seo") === 0;
+      })
+    ) {
       sections.push("seo");
     }
     if (codes.indexOf("faq.missing") !== -1) {
@@ -495,11 +503,12 @@
         skill: "product.content_writer",
         locale: input.locale || selectedLocale(),
         target: { productId: input.productId },
-        options: {
-          dryRun: false,
-          publishStatus: "draft",
-          sections: input.sections,
-        },
+      options: {
+        dryRun: false,
+        publishStatus: "draft",
+        overwrite: "if_empty",
+        sections: input.sections,
+      },
       }).then(function (data) {
         var inner = data && data.result ? data.result : data;
         var ok = Boolean(

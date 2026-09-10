@@ -15,9 +15,12 @@ user: |
   In stock: {{inStock}}
   Attributes:
   {{attributesJson}}
-  Variations: {{variationCount}}
+  Variations ({{variationCount}} total, with per-variation attributes and stock):
+  {{variationsJson}}
   Existing short description (may be empty):
   {{existingShort}}
+  Existing long description excerpt (supplier copy — use only as a factual source, do not copy phrasing):
+  {{existingDescriptionExcerpt}}
 
   Respond with JSON only:
   {
@@ -28,5 +31,7 @@ rules:
   - shortDescription should be 1-2 sentences, optionally with a short bullet list
   - description should have 3-5 sections with h2 headings
   - mention brand and primary use case
+  - mention the available size/color range when variations exist (e.g. "available in sizes S-3XL"), but never per-size stock levels
+  - factual details from the supplier excerpt may be used, but rewrite them in Motorock's own voice
   - no medical or legal claims
   - no superlatives like best in the world

@@ -14,7 +14,7 @@ if ( defined( 'MOTOROCK_COMMERCE_AI_LOADED' ) ) {
 }
 
 define( 'MOTOROCK_COMMERCE_AI_LOADED', true );
-define( 'MOTOROCK_COMMERCE_AI_VERSION', '0.6.4' );
+define( 'MOTOROCK_COMMERCE_AI_VERSION', '0.6.5' );
 
 $commerce_ai_root = dirname( __DIR__ );
 $ai_writer_root   = $commerce_ai_root . '/motorock-ai-writer';
@@ -39,6 +39,7 @@ require_once $ai_writer_root . '/includes/class-wpml-helper.php';
 require_once $ai_writer_root . '/includes/class-content-writer.php';
 require_once $ai_writer_root . '/includes/class-blog-writer.php';
 require_once $ai_writer_root . '/includes/class-related-writer.php';
+require_once $ai_writer_root . '/includes/class-term-writer.php';
 require_once $ai_writer_root . '/includes/class-rest-write.php';
 require_once $ai_writer_root . '/includes/class-admin-storefront-config.php';
 require_once $ai_writer_root . '/includes/class-admin-product.php';
@@ -48,6 +49,9 @@ require_once __DIR__ . '/includes/class-admin-dashboard.php';
 require_once __DIR__ . '/includes/class-admin-blog.php';
 require_once __DIR__ . '/includes/class-admin-seo-audit.php';
 require_once __DIR__ . '/includes/class-admin-related-products.php';
+require_once __DIR__ . '/includes/class-admin-category-content.php';
+require_once __DIR__ . '/includes/class-admin-internal-links.php';
+require_once __DIR__ . '/includes/class-admin-fix-404.php';
 require_once __DIR__ . '/includes/class-rest-commerce-ai-proxy.php';
 
 Motorock_Ai_Admin_Storefront_Config::register();
@@ -61,3 +65,6 @@ Motorock_Ai_Admin_Bulk::register();
 Motorock_Commerce_Ai_Admin_Blog::register();
 Motorock_Commerce_Ai_Admin_Related_Products::register();
 Motorock_Commerce_Ai_Admin_Seo_Audit::register();
+Motorock_Commerce_Ai_Admin_Category_Content::register();
+Motorock_Commerce_Ai_Admin_Internal_Links::register();
+Motorock_Commerce_Ai_Admin_Fix_404::register();

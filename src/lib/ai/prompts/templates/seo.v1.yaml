@@ -10,8 +10,12 @@ user: |
   Brand: {{brand}}
   Category: {{categoryPath}}
   Price: {{price}} EUR
+  Attributes:
+  {{attributesJson}}
   Short description context:
   {{existingShort}}
+  Long description excerpt:
+  {{existingDescriptionExcerpt}}
 
   Respond with JSON only:
   {
@@ -21,6 +25,8 @@ user: |
   }
 rules:
   - title max 58 characters
-  - metaDescription max 160 characters, plain text only
+  - front-load the title with what shoppers search for (product type + brand + model), not marketing filler
+  - metaDescription max 160 characters, plain text only, with a concrete reason to click (material, protection level, use case)
   - keywords lowercase, unique, 3-12 items
+  - derive keywords from real attributes and category (e.g. product type, brand, material, CE level, riding style) — no generic terms like "quality" or "buy online"
   - include brand when natural

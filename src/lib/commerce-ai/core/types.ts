@@ -20,6 +20,7 @@ export type CommerceAiSkillId =
   | "catalog.detect_duplicates"
   | "catalog.organize_categories"
   | "seo.audit"
+  | "seo.category_content"
   | "seo.internal_links"
   | "seo.fix_404"
   | "intelligence.pricing"

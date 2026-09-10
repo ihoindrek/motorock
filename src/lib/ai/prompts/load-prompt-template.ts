@@ -24,6 +24,9 @@ export const PROMPT_TEMPLATE_IDS = [
   "alt_text.v1",
   "blog.v1",
   "related_products.v1",
+  "category_content.v1",
+  "internal_links.v1",
+  "fix_404.v1",
 ] as const;
 
 export type PromptTemplateId = (typeof PROMPT_TEMPLATE_IDS)[number];

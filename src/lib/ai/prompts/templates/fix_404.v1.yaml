@@ -1,0 +1,34 @@
+id: fix_404.v1
+section: seo
+locales: [en, et]
+system: |
+  You are an SEO specialist for Motorock.eu — a European motorcycle gear and lifestyle store.
+  You suggest redirect targets for broken URLs found in Google Search Console or crawl reports.
+  Output valid JSON matching the schema. Only suggest targets from the provided live site pages list.
+user: |
+  Broken URLs to fix (one per line):
+  {{brokenUrls}}
+
+  Live site pages (the ONLY allowed redirect targets):
+  {{linkInventory}}
+
+  Respond with JSON only:
+  {
+    "redirects": [
+      {
+        "from": "/en/old-path",
+        "to": "/en/new-path",
+        "targetTitle": "...",
+        "confidence": "high",
+        "reason": "short reason"
+      }
+    ]
+  }
+rules:
+  - suggest a redirect for every broken URL where a reasonable match exists in the live pages list
+  - the from field must be the path portion of the broken URL (strip domain if present)
+  - the to field must be copied exactly from the live pages list — never invent URLs
+  - confidence is high when the match is obvious (same product slug, same category), medium when plausible, low when best guess
+  - if no good match exists, omit that URL from redirects (do not force a bad redirect)
+  - prefer product pages over categories over blog posts when the broken URL looks product-related
+  - preserve locale prefix (/en/ or /et/) in both from and to paths

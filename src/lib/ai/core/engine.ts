@@ -316,19 +316,12 @@ export class AiEngine {
       }
 
       if (sectionHasExistingContent(section, product)) {
-        if (overwrite === "never") {
-          throw new AiEngineError(
-            `${section} already exists for product ${product.productId}`,
-            "overwrite_conflict",
-          );
-        }
-
-        if (overwrite === "if_empty") {
+        if (overwrite === "never" || overwrite === "if_empty") {
           results.push({
             section,
             locale: request.locale,
             status: "skipped",
-            message: "Existing content preserved (overwrite=if_empty)",
+            message: `Existing content preserved (overwrite=${overwrite})`,
           });
           continue;
         }

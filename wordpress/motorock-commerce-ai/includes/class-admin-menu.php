@@ -91,6 +91,39 @@ class Motorock_Commerce_Ai_Admin_Menu {
 				array( 'Motorock_Commerce_Ai_Admin_Seo_Audit', 'render_page' )
 			);
 		}
+
+		if ( class_exists( 'Motorock_Commerce_Ai_Admin_Category_Content' ) ) {
+			add_submenu_page(
+				self::MENU_SLUG,
+				__( 'Category SEO', 'motorock-commerce-ai' ),
+				__( 'Category SEO', 'motorock-commerce-ai' ),
+				'edit_products',
+				Motorock_Commerce_Ai_Admin_Category_Content::PAGE_SLUG,
+				array( 'Motorock_Commerce_Ai_Admin_Category_Content', 'render_page' )
+			);
+		}
+
+		if ( class_exists( 'Motorock_Commerce_Ai_Admin_Internal_Links' ) ) {
+			add_submenu_page(
+				self::MENU_SLUG,
+				__( 'Internal links', 'motorock-commerce-ai' ),
+				__( 'Internal links', 'motorock-commerce-ai' ),
+				'edit_products',
+				Motorock_Commerce_Ai_Admin_Internal_Links::PAGE_SLUG,
+				array( 'Motorock_Commerce_Ai_Admin_Internal_Links', 'render_page' )
+			);
+		}
+
+		if ( class_exists( 'Motorock_Commerce_Ai_Admin_Fix_404' ) ) {
+			add_submenu_page(
+				self::MENU_SLUG,
+				__( '404 repair', 'motorock-commerce-ai' ),
+				__( '404 repair', 'motorock-commerce-ai' ),
+				'edit_products',
+				Motorock_Commerce_Ai_Admin_Fix_404::PAGE_SLUG,
+				array( 'Motorock_Commerce_Ai_Admin_Fix_404', 'render_page' )
+			);
+		}
 	}
 
 	public static function remove_legacy_submenus() {
