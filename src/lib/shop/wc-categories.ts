@@ -18,6 +18,7 @@ export const WC_SLUG_TO_CATEGORY: Record<string, ProductCategory> = {
   "t-shirts-jerseys": "t-shirts",
   "base-layer-warm-underwear": "base-layers",
   "base-layer-warm-underwear-2": "base-layers",
+  "rain-gear": "rain-gear",
   goggles: "goggles",
   headwear: "headwear",
   "bags-backpacks": "bags",
@@ -66,6 +67,7 @@ export const WC_SLUG_CANONICAL: Record<string, string> = {
   sokid: "socks",
   "t-sargid-ja-trikood": "t-shirts-jerseys",
   "t-sargid-ja-sargid": "t-shirts",
+  vihmavarustus: "rain-gear",
   "tooriistad-ja-hooldus": "tools-maintenance",
   "vestid-2": "vests-3",
   vestid: "vests-2",
@@ -143,6 +145,7 @@ const CATEGORY_PRIORITY: readonly ProductCategory[] = [
   "hoodies",
   "t-shirts",
   "base-layers",
+  "rain-gear",
   "other",
 ];
 
@@ -229,6 +232,7 @@ export const MEN_GEAR_LEAF_WC_SLUGS = new Set([
   "sweaters",
   "t-shirts",
   "base-layer-warm-underwear",
+  "rain-gear",
 ]);
 
 /** Leaf Woo slugs under `for-women` — paired with {@link MEN_GEAR_LEAF_WC_SLUGS}. */
@@ -241,6 +245,7 @@ export const WOMEN_GEAR_LEAF_WC_SLUGS = new Set([
   "hoodies-sweatshirts",
   "t-shirts-jerseys",
   "base-layer-warm-underwear-2",
+  "rain-gear",
 ]);
 
 export function productHasOppositeGenderGearSlug(
@@ -329,6 +334,7 @@ export const CATEGORY_TO_WC_SLUG: Partial<
   hoodies: "sweaters",
   "t-shirts": "t-shirts",
   "base-layers": "base-layer-warm-underwear",
+  "rain-gear": "rain-gear",
   helmets: "helmets",
   "helmet-accessories": "helmet-accessories",
   goggles: "goggles",
@@ -450,6 +456,7 @@ export function inferCategoryFromName(name: string): ProductCategory | undefined
   if (/\bhelmet\b/.test(lower)) return "helmets";
   if (/\bgoggle\b|\bglasses\b/.test(lower)) return "goggles";
   if (/\bhoodie\b|\bsweater\b|\bsweatshirt\b/.test(lower)) return "hoodies";
+  if (/\brain\b|\bwaterproof\b/.test(lower)) return "rain-gear";
   if (/\bt-shirt\b|\btee\b|\bjersey\b/.test(lower)) return "t-shirts";
   if (/\bcap\b|\bhat\b|\bbeanie\b/.test(lower)) return "headwear";
   if (/\bbag\b|\bbackpack\b/.test(lower)) return "bags";

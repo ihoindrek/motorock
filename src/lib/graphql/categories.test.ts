@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildIndex,
   buildIndexFromNavTree,
   resolveCategoryPath,
+  resolveLocalizedCategoryPath,
 } from "@/lib/graphql/categories";
 
 describe("buildIndexFromNavTree", () => {
@@ -32,6 +34,48 @@ describe("buildIndexFromNavTree", () => {
     expect(resolveCategoryPath(index, ["accessories", "goggles"])).toEqual([
       expect.objectContaining({ slug: "accessories", parentSlug: null }),
       expect.objectContaining({ slug: "goggles", parentSlug: "accessories" }),
+    ]);
+  });
+});
+
+describe("buildIndex", () => {
+  it("keeps duplicate child slugs under different parents", () => {
+    const index = buildIndex([
+      {
+        slug: "for-men",
+        name: "For men",
+        parent: null,
+      },
+      {
+        slug: "for-women",
+        name: "For women",
+        parent: null,
+      },
+      {
+        slug: "rain-gear",
+        name: "Rain Gear",
+        parent: { node: { slug: "for-men" } },
+      },
+      {
+        slug: "rain-gear",
+        name: "Rain Gear",
+        parent: { node: { slug: "for-women" } },
+      },
+    ]);
+
+    expect(resolveCategoryPath(index, ["for-men", "rain-gear"])).toEqual([
+      expect.objectContaining({ slug: "for-men", parentSlug: null }),
+      expect.objectContaining({ slug: "rain-gear", parentSlug: "for-men" }),
+    ]);
+    expect(resolveCategoryPath(index, ["for-women", "rain-gear"])).toEqual([
+      expect.objectContaining({ slug: "for-women", parentSlug: null }),
+      expect.objectContaining({ slug: "rain-gear", parentSlug: "for-women" }),
+    ]);
+    expect(
+      resolveLocalizedCategoryPath(index, ["for-women", "rain-gear"], "en"),
+    ).toEqual([
+      expect.objectContaining({ slug: "for-women", parentSlug: null }),
+      expect.objectContaining({ slug: "rain-gear", parentSlug: "for-women" }),
     ]);
   });
 });

@@ -35,6 +35,7 @@ export const et: Dictionary = {
     hoodies: "Kapuutsiga pusad ja kampsunid",
     tshirts: "T-särgid ja džemprid",
     baseLayers: "Aluskihid",
+    rainGear: "Vihmavarustus",
     helmets: "Kiivrid",
     goggles: "Prillid",
     headwear: "Peakatted",

@@ -33,6 +33,7 @@ export type Dictionary = {
     hoodies: string;
     tshirts: string;
     baseLayers: string;
+    rainGear: string;
     helmets: string;
     goggles: string;
     headwear: string;
@@ -731,6 +732,7 @@ export const en: Dictionary = {
     hoodies: "Hoodies & sweaters",
     tshirts: "T-shirts & jerseys",
     baseLayers: "Base layers",
+    rainGear: "Rain gear",
     helmets: "Helmets",
     goggles: "Goggles",
     headwear: "Headwear",

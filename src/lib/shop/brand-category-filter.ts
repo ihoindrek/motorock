@@ -11,6 +11,7 @@ const BRAND_FILTER_CATEGORY_ORDER: readonly ProductCategory[] = [
   "gloves",
   "footwear",
   "base-layers",
+  "rain-gear",
   "helmets",
   "goggles",
   "headwear",

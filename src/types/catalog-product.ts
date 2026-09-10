@@ -12,6 +12,7 @@ export type ProductCategory =
   | "hoodies"
   | "t-shirts"
   | "base-layers"
+  | "rain-gear"
   | "helmets"
   | "helmet-accessories"
   | "goggles"

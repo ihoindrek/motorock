@@ -1,7 +1,10 @@
 import type { Dictionary } from "@/i18n/dictionaries/en";
 import type { Locale } from "@/i18n/config";
 import type { EquipmentCategoryIndex, WcCategoryEntry } from "@/lib/graphql/categories";
-import { getLocalizedCategoryName } from "@/lib/graphql/categories";
+import {
+  categoryNodeKey,
+  getLocalizedCategoryName,
+} from "@/lib/graphql/categories";
 import { buildBrandCatalogHref } from "@/lib/shop/brand-url";
 import { getBrandBySlug } from "@/lib/shop/brands";
 import type { Breadcrumb } from "@/lib/shop/category";
@@ -11,11 +14,38 @@ import { buildToolsCategoryHref } from "@/lib/shop/shop-category-route";
 import { canonicalizeWcCategorySlugs } from "@/lib/shop/wc-categories";
 import type { CatalogProduct } from "@/types/catalog-product";
 
+function findCategoryNode(
+  index: EquipmentCategoryIndex,
+  slug: string,
+  parentHint?: string,
+): WcCategoryEntry | null {
+  if (parentHint) {
+    const hinted = index.nodes.get(categoryNodeKey(slug, parentHint));
+
+    if (hinted) {
+      return hinted;
+    }
+  }
+
+  const matches = [...index.nodes.values()].filter((node) => node.slug === slug);
+
+  if (matches.length === 1) {
+    return matches[0] ?? null;
+  }
+
+  if (parentHint) {
+    return matches.find((node) => node.parentSlug === parentHint) ?? null;
+  }
+
+  return index.nodes.get(slug) ?? null;
+}
+
 function buildChainToRoot(
   index: EquipmentCategoryIndex,
   slug: string,
+  parentHint?: string,
 ): WcCategoryEntry[] | null {
-  const node = index.nodes.get(slug);
+  const node = findCategoryNode(index, slug, parentHint);
 
   if (!node) {
     return null;
@@ -56,14 +86,20 @@ function findDeepestEquipmentCategoryChain(
   let best: WcCategoryEntry[] | null = null;
 
   for (const slug of slugs) {
-    const chain = buildChainToRoot(index, slug);
+    const parentHints = slugs.filter((candidate) => candidate !== slug);
 
-    if (!chain) {
-      continue;
-    }
+    for (const parentHint of [undefined, ...parentHints]) {
+      const chain = buildChainToRoot(index, slug, parentHint);
 
-    if (!best || chain.length > best.length) {
-      best = chain;
+      if (!chain) {
+        continue;
+      }
+
+      if (!best || chain.length > best.length) {
+        best = chain;
+      }
+
+      break;
     }
   }
 

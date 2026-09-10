@@ -63,6 +63,7 @@ export function resolveProductCategoryLabel(
     hoodies: menu.hoodies,
     "t-shirts": menu.tshirts,
     "base-layers": menu.baseLayers,
+    "rain-gear": menu.rainGear,
     helmets: menu.helmets,
     "helmet-accessories": menu.helmets,
     goggles: menu.goggles,

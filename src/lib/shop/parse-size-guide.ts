@@ -31,6 +31,7 @@ const productCategorySchema = z.enum([
   "hoodies",
   "t-shirts",
   "base-layers",
+  "rain-gear",
   "helmets",
   "helmet-accessories",
   "goggles",

@@ -56,6 +56,20 @@ const EXCLUDED_ROOT_SLUGS = new Set([
   "uncategorized",
 ]);
 
+export function categoryNodeKey(
+  slug: string,
+  parentSlug: string | null,
+): string {
+  return parentSlug ? `${parentSlug}/${slug}` : slug;
+}
+
+function setCategoryNode(
+  entries: Map<string, WcCategoryEntry>,
+  node: WcCategoryEntry,
+) {
+  entries.set(categoryNodeKey(node.slug, node.parentSlug), node);
+}
+
 type ProductCategoryNavTreeResponse = {
   forMen: { nodes: WcCategoryNode[] };
   forWomen: { nodes: WcCategoryNode[] };
@@ -239,7 +253,7 @@ function addNavTreeNode(
     return;
   }
 
-  entries.set(node.slug, {
+  setCategoryNode(entries, {
     slug: node.slug,
     name: node.name,
     description: node.description,
@@ -276,7 +290,7 @@ export function buildIndexFromNavTree(
   return { nodes: entries, roots };
 }
 
-function buildIndex(
+export function buildIndex(
   nodes: EquipmentCategoryIndexResponse["productCategories"]["nodes"],
 ): EquipmentCategoryIndex {
   const entries = new Map<string, WcCategoryEntry>();
@@ -286,7 +300,7 @@ function buildIndex(
       continue;
     }
 
-    entries.set(node.slug, {
+    setCategoryNode(entries, {
       slug: node.slug,
       name: node.name,
       description: node.description,
@@ -406,7 +420,11 @@ export function resolveCategoryPath(
 
   for (let indexOffset = 0; indexOffset < slugSegments.length; indexOffset += 1) {
     const segment = slugSegments[indexOffset];
-    const node = index.nodes.get(segment);
+    const parentSlug = indexOffset > 0 ? slugSegments[indexOffset - 1] : null;
+    const node =
+      parentSlug == null
+        ? index.nodes.get(segment)
+        : index.nodes.get(categoryNodeKey(segment, parentSlug));
 
     if (!node) {
       return null;
@@ -416,7 +434,7 @@ export function resolveCategoryPath(
       if (!index.roots.includes(segment)) {
         return null;
       }
-    } else if (node.parentSlug !== slugSegments[indexOffset - 1]) {
+    } else if (node.parentSlug !== parentSlug) {
       return null;
     }
 
