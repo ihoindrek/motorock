@@ -11,6 +11,7 @@ import { Price } from "@/components/shop/price";
 import { CarouselArrow } from "@/components/ui/carousel-arrow";
 import { useDictionary, useLocale } from "@/context/locale-context";
 import type { Locale } from "@/i18n/config";
+import { motoStageImageLoader } from "@/lib/image-loader";
 import { localizedProductHref } from "@/lib/shop/product-url";
 import {
   readRecentlyViewed,
@@ -58,18 +59,21 @@ function RecentlyViewedCard({
             isMotorcycle ? "bg-moto" : "bg-catalog",
           )}
         >
-          <Image
-            src={item.image}
-            alt={item.name}
-            fill
-            sizes="(max-width: 640px) 40vw, (max-width: 1024px) 30vw, 25vw"
-            className={cn(
-              "object-contain object-center transition-transform duration-500 ease-out motion-reduce:transition-none motion-reduce:group-hover:scale-100",
-              isMotorcycle
-                ? "p-3 mix-blend-multiply group-hover:scale-[1.06] sm:p-4"
-                : "p-4 mix-blend-multiply group-hover:scale-[1.02] sm:p-5",
-            )}
-          />
+          <div className={cn(isMotorcycle && "absolute inset-0 mix-blend-multiply")}>
+            <Image
+              src={item.image}
+              alt={item.name}
+              fill
+              loader={isMotorcycle ? motoStageImageLoader : undefined}
+              sizes="(max-width: 640px) 40vw, (max-width: 1024px) 30vw, 25vw"
+              className={cn(
+                "object-contain object-center transition-transform duration-500 ease-out motion-reduce:transition-none motion-reduce:group-hover:scale-100",
+                isMotorcycle
+                  ? "p-3 group-hover:scale-[1.06] sm:p-4"
+                  : "p-4 mix-blend-multiply group-hover:scale-[1.02] sm:p-5",
+              )}
+            />
+          </div>
         </figure>
         <div className="flex flex-col gap-1.5 bg-white px-3 pb-3 pt-4 sm:pt-5">
           {item.brand ? <BrandLogo brand={item.brand} size="sm" /> : null}

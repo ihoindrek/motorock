@@ -16,6 +16,7 @@ import {
   getColorSwatchStyle,
 } from "@/lib/shop/product-color-swatches";
 import { getProductQuickAddMode } from "@/lib/shop/product-quick-add";
+import { motoStageImageLoader } from "@/lib/image-loader";
 import { localizedProductHref } from "@/lib/shop/product-url";
 
 type ProductCardProps = {
@@ -25,8 +26,8 @@ type ProductCardProps = {
 const EQUIPMENT_IMAGE_CLASS = "object-contain object-center p-4 sm:p-5";
 const EQUIPMENT_IMAGE_LAYER =
   "absolute inset-0 bg-catalog [&_img]:mix-blend-multiply";
-const MOTORCYCLE_FIGURE_CLASS =
-  "relative aspect-[4/3] overflow-hidden bg-moto [&_img]:mix-blend-multiply";
+const MOTORCYCLE_FIGURE_CLASS = "relative aspect-[4/3] overflow-hidden bg-moto";
+const MOTORCYCLE_IMAGE_BLEND_LAYER = "absolute inset-0 mix-blend-multiply";
 
 export function ProductCard({ product }: ProductCardProps) {
   const locale = useLocale();
@@ -102,13 +103,16 @@ export function ProductCard({ product }: ProductCardProps) {
               </div>
             </>
           ) : isMotorcycle ? (
-            <Image
-              src={product.image}
-              alt=""
-              fill
-              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-              className={`relative z-0 transition-transform duration-500 ease-out motion-reduce:transition-none motion-reduce:group-hover:scale-100 ${imageClassName}`}
-            />
+            <div className={MOTORCYCLE_IMAGE_BLEND_LAYER}>
+              <Image
+                src={product.image}
+                alt=""
+                fill
+                loader={motoStageImageLoader}
+                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                className={`relative z-0 transition-transform duration-500 ease-out motion-reduce:transition-none motion-reduce:group-hover:scale-100 ${imageClassName}`}
+              />
+            </div>
           ) : (
             <div className={EQUIPMENT_IMAGE_LAYER}>
               <Image

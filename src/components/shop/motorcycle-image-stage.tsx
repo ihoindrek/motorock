@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { motoStageImageLoader } from "@/lib/image-loader";
 
 type MotorcycleImageStageProps = {
   src: string;
@@ -58,6 +59,7 @@ export function MotorcycleImageStage({
         alt={alt}
         fill
         priority={priority}
+        loader={isProduct ? motoStageImageLoader : undefined}
         sizes={sizes}
         className={
           isProduct
