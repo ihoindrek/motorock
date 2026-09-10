@@ -242,10 +242,10 @@ function resolveShopAudiences(
 }
 
 function resolveEquipmentMeta(
-  categories: GraphQLProduct["productCategories"],
+  productCategories: GraphQLProduct["productCategories"],
   productName: string,
 ) {
-  const nodes = categories?.nodes ?? [];
+  const nodes = productCategories?.nodes ?? [];
   const slugs = nodes.map((node) => node.slug);
   const hasMen = hasGenderCategory(nodes, "for-men");
   const hasWomen = hasGenderCategory(nodes, "for-women");
