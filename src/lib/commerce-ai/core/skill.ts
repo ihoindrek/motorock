@@ -48,6 +48,10 @@ export function parseProductId(target: CommerceAiRunRequest["target"]) {
 export function parseBlogTarget(target: CommerceAiRunRequest["target"]) {
   const topic = typeof target.topic === "string" ? target.topic.trim() : "";
   const brief = typeof target.brief === "string" ? target.brief.trim() : "";
+  const categorySlug =
+    typeof target.categorySlug === "string"
+      ? target.categorySlug.trim().toLowerCase()
+      : "";
   const productId = Number(target.productId);
   const hasProductId = Number.isInteger(productId) && productId > 0;
 
@@ -59,6 +63,7 @@ export function parseBlogTarget(target: CommerceAiRunRequest["target"]) {
     topic: topic || undefined,
     brief: brief || undefined,
     productId: hasProductId ? productId : undefined,
+    categorySlug: categorySlug || undefined,
   };
 }
 

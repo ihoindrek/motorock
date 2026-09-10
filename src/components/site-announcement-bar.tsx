@@ -1,20 +1,13 @@
 import type { Locale } from "@/i18n/config";
 
-/** Europe/Tallinn calendar date (YYYY-MM-DD) until which the banner is shown. */
-const VISIBLE_THROUGH = "2026-08-31";
+/** Europe/Tallinn calendar dates (YYYY-MM-DD) for when the banner is shown. */
+const VISIBLE_FROM = "2026-09-09";
+const VISIBLE_THROUGH = "2026-09-12";
 
 const copy = {
-  et: {
-    before: "10% soodsam koodiga ",
-    after: " — kehtib augusti lõpuni",
-  },
-  en: {
-    before: "10% off with code ",
-    after: " — valid until end of August",
-  },
+  et: "Laupäeval 12.09 on esinduspood suletud.",
+  en: "The showroom is closed on Saturday, 12 Sep.",
 } as const;
-
-const COUPON_CODE = "AUGUST10";
 
 function todayInTallinn(now = new Date()) {
   return new Intl.DateTimeFormat("en-CA", {
@@ -26,7 +19,8 @@ function todayInTallinn(now = new Date()) {
 }
 
 export function isSiteAnnouncementActive(now = new Date()) {
-  return todayInTallinn(now) <= VISIBLE_THROUGH;
+  const today = todayInTallinn(now);
+  return today >= VISIBLE_FROM && today <= VISIBLE_THROUGH;
 }
 
 export function SiteAnnouncementBar({ locale }: { locale: Locale }) {
@@ -34,16 +28,12 @@ export function SiteAnnouncementBar({ locale }: { locale: Locale }) {
     return null;
   }
 
-  const message = copy[locale];
-
   return (
     <div
       role="status"
       className="bg-[#f0c8cf] px-4 py-2.5 text-center font-body text-[11px] font-semibold normal-case text-ink sm:text-xs"
     >
-      {message.before}
-      <span className="font-bold uppercase tracking-wide">{COUPON_CODE}</span>
-      {message.after}
+      {copy[locale]}
     </div>
   );
 }

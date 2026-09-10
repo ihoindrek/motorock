@@ -5,6 +5,7 @@ import { getPromptTemplate } from "@/lib/ai/prompts/templates";
 import { renderPromptTemplate } from "@/lib/ai/prompts/prompt-renderer";
 import type { ProviderRegistry } from "@/lib/ai/providers/provider-registry";
 import type { ProductReadRepository } from "@/lib/ai/repositories/graphql-product-read.repository";
+import { fetchBlogProductSuggestions } from "@/lib/commerce-ai/blog/blog-product-suggestions";
 import { buildBlogPromptVariables } from "@/lib/commerce-ai/blog/build-blog-prompt-variables";
 import {
   BlogArticleOutputSchema,
@@ -50,18 +51,44 @@ export class BlogGenerateService {
       );
     }
 
-    const product = input.target.productId
-      ? await this.deps.productRead.getById(input.target.productId, input.locale)
+    const requestedProductId = input.target.productId;
+    const product = requestedProductId
+      ? await this.deps.productRead.getById(requestedProductId, input.locale)
       : null;
+    const warnings: string[] = [];
 
-    if (input.target.productId && !product) {
-      return {
-        ok: false,
-        dryRun,
-        locale: input.locale,
-        validationErrors: [`Product ${input.target.productId} not found`],
-        durationMs: Date.now() - started,
-      };
+    if (requestedProductId && !product) {
+      const hasTopicOrBrief = Boolean(input.target.topic?.trim() || input.target.brief?.trim());
+
+      if (!hasTopicOrBrief) {
+        return {
+          ok: false,
+          dryRun,
+          locale: input.locale,
+          validationErrors: [
+            `Product ${requestedProductId} not found. Use the numeric WooCommerce product ID from the product edit URL (post=12345), or add a Topic/Brief instead.`,
+          ],
+          durationMs: Date.now() - started,
+        };
+      }
+
+      warnings.push(
+        `Product ${requestedProductId} was not found — generating without product context. Check the ID in WooCommerce (Products → edit → URL post=…).`,
+      );
+    }
+
+    const productSuggestions = input.target.categorySlug
+      ? await fetchBlogProductSuggestions({
+          locale: input.locale,
+          categorySlug: input.target.categorySlug,
+          limit: 6,
+        })
+      : [];
+
+    if (input.target.categorySlug && productSuggestions.length === 0) {
+      warnings.push(
+        `No products found for category "${input.target.categorySlug}" — the article will not include catalog recommendations. Check the WooCommerce category slug.`,
+      );
     }
 
     const template = getPromptTemplate("blog.v1");
@@ -69,6 +96,7 @@ export class BlogGenerateService {
       locale: input.locale,
       target: input.target,
       product,
+      productSuggestions,
     });
     const rendered = renderPromptTemplate(template, variables);
     const provider = this.deps.providerRegistry.get(providerName);
@@ -109,6 +137,7 @@ export class BlogGenerateService {
         locale: input.locale,
         preview: data,
         slug: data.slugSuggestion,
+        warnings: warnings.length > 0 ? warnings : undefined,
         provider: providerName,
         model: resolvedModel,
         durationMs: Date.now() - started,
@@ -155,6 +184,7 @@ export class BlogGenerateService {
       postId: writeResult.postId,
       slug: writeResult.slug,
       editUrl: writeResult.editUrl,
+      warnings: warnings.length > 0 ? warnings : undefined,
       provider: providerName,
       model: resolvedModel,
       durationMs: Date.now() - started,

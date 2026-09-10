@@ -37,6 +37,8 @@ export type BlogGenerateTarget = {
   topic?: string;
   brief?: string;
   productId?: number;
+  /** WooCommerce category slug — pulls real products into the article as recommendations. */
+  categorySlug?: string;
 };
 
 export type BlogGenerateJobResult = {
@@ -48,6 +50,7 @@ export type BlogGenerateJobResult = {
   editUrl?: string;
   locale: "en" | "et";
   validationErrors?: string[];
+  warnings?: string[];
   provider?: string;
   model?: string;
   durationMs: number;

@@ -1,11 +1,14 @@
 import type { Locale } from "@/i18n/config";
 import type { NormalizedProduct } from "@/lib/ai/domain/normalized-product";
+import type { BlogProductSuggestion } from "@/lib/commerce-ai/blog/blog-product-suggestions";
+import { formatProductSuggestionsForPrompt } from "@/lib/commerce-ai/blog/blog-product-suggestions";
 import type { BlogGenerateTarget } from "@/lib/commerce-ai/blog/schemas";
 
 export function buildBlogPromptVariables(input: {
   locale: Locale;
   target: BlogGenerateTarget;
   product?: NormalizedProduct | null;
+  productSuggestions?: BlogProductSuggestion[];
 }) {
   const topic =
     input.target.topic?.trim() ||
@@ -28,5 +31,8 @@ export function buildBlogPromptVariables(input: {
     topic,
     brief: brief || "Write a useful journal article for Motorock readers.",
     productContext,
+    productCatalog: formatProductSuggestionsForPrompt(
+      input.productSuggestions ?? [],
+    ),
   };
 }

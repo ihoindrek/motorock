@@ -202,6 +202,10 @@ class Motorock_Commerce_Ai_Rest_Proxy {
 	}
 
 	public static function handle_run( WP_REST_Request $request ) {
+		if ( function_exists( 'set_time_limit' ) ) {
+			set_time_limit( 300 );
+		}
+
 		$payload = $request->get_json_params();
 		if ( ! is_array( $payload ) ) {
 			return new WP_Error( 'motorock_commerce_ai_invalid_body', 'Invalid JSON body', array( 'status' => 400 ) );
@@ -404,6 +408,11 @@ class Motorock_Commerce_Ai_Rest_Proxy {
 
 		if ( $legacy ) {
 			$data = self::unwrap_legacy_admin_response( $data );
+		}
+
+		// Skill-level failures (HTTP 422) should still reach admin JS as JSON with ok:false.
+		if ( $status === 422 && isset( $data['skill'] ) ) {
+			return new WP_REST_Response( $data, 200 );
 		}
 
 		return new WP_REST_Response( $data, $status > 0 ? $status : 502 );

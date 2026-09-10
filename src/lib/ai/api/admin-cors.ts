@@ -1,4 +1,8 @@
-const DEFAULT_ADMIN_ORIGINS = ["https://shop.motorock.eu"];
+const DEFAULT_ADMIN_ORIGINS = [
+  "https://shop.motorock.eu",
+  "https://www.motorock.eu",
+  "https://motorock.eu",
+];
 
 function allowedAdminOrigins() {
   const fromEnv = process.env.WOOCOMMERCE_ADMIN_ORIGIN?.trim();

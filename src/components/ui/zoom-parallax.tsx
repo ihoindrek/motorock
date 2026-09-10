@@ -24,6 +24,7 @@ const POSITION_CLASSES = [
   "[&>div]:!top-[27.5vh] [&>div]:!left-[5vw] [&>div]:!h-[25vh] [&>div]:!w-[20vw]",
   "[&>div]:!top-[27.5vh] [&>div]:!-left-[22.5vw] [&>div]:!h-[25vh] [&>div]:!w-[30vw]",
   "[&>div]:!top-[22.5vh] [&>div]:!left-[25vw] [&>div]:!h-[15vh] [&>div]:!w-[15vw]",
+  "[&>div]:!top-[30vh] [&>div]:!left-[45vw] [&>div]:!h-[20vh] [&>div]:!w-[22vw]",
 ] as const;
 
 export function ZoomParallax({
@@ -40,10 +41,11 @@ export function ZoomParallax({
   const scale4 = useTransform(scrollYProgress, [0, 1], [1, 4]);
   const scale5 = useTransform(scrollYProgress, [0, 1], [1, 5]);
   const scale6 = useTransform(scrollYProgress, [0, 1], [1, 6]);
+  const scale7 = useTransform(scrollYProgress, [0, 1], [1, 7]);
   const scale8 = useTransform(scrollYProgress, [0, 1], [1, 8]);
   const scale9 = useTransform(scrollYProgress, [0, 1], [1, 9]);
 
-  const scales = [scale4, scale5, scale6, scale5, scale6, scale8, scale9];
+  const scales = [scale4, scale5, scale6, scale5, scale6, scale8, scale9, scale7];
 
   if (images.length === 0) {
     return null;
@@ -58,7 +60,7 @@ export function ZoomParallax({
       )}
     >
       <div className={stickyClassName}>
-        {images.slice(0, 7).map(({ src, alt }, index) => {
+        {images.slice(0, 8).map(({ src, alt }, index) => {
           const scale = scales[index % scales.length];
 
           return (

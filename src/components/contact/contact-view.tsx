@@ -96,6 +96,17 @@ type ContactViewProps = {
   locale: Locale;
 };
 
+const showroomGalleryImages = [
+  "/showroom/IMG_6514.jpg",
+  "/showroom/IMG_1907.jpg",
+  "/showroom/IMG_1910.jpg",
+  "/showroom/IMG_1933.jpg",
+  "/showroom/IMG_1939.jpg",
+  "/showroom/IMG_6512.jpg",
+  "/showroom/IMG_6518.jpg",
+  "/showroom/IMG_6576.jpg",
+] as const;
+
 const copy = {
   en: {
     hero: {
@@ -111,15 +122,10 @@ const copy = {
       description: "A glimpse of our space, the bikes, and the people behind Motorock.",
       ariaLabel: "Motorock gallery",
     },
-    parallaxImages: [
-      { src: "/c1.webp", alt: "Motorock showroom" },
-      { src: "/c2.webp", alt: "Motorock motorcycles" },
-      { src: "/c3.webp", alt: "Motorock team" },
-      { src: "/c4.webp", alt: "Motorock workshop" },
-      { src: "/c5.webp", alt: "Motorock riding gear" },
-      { src: "/c6.webp", alt: "Motorock bikes on display" },
-      { src: "/c7.webp", alt: "Motorock lifestyle" },
-    ],
+    parallaxImages: showroomGalleryImages.map((src) => ({
+      src,
+      alt: "Motorock showroom",
+    })),
     findUs: "Find us in",
     maps: "Google Maps →",
     waze: "Waze →",
@@ -167,15 +173,10 @@ const copy = {
       description: "Pilguheit meie salongi, ratastesse ja inimestesse Motorocki taga.",
       ariaLabel: "Motorocki galerii",
     },
-    parallaxImages: [
-      { src: "/c1.webp", alt: "Motorocki salong" },
-      { src: "/c2.webp", alt: "Motorocki mootorrattad" },
-      { src: "/c3.webp", alt: "Motorocki meeskond" },
-      { src: "/c4.webp", alt: "Motorocki töökoda" },
-      { src: "/c5.webp", alt: "Motorocki sõiduvarustus" },
-      { src: "/c6.webp", alt: "Motorocki rattad saalis" },
-      { src: "/c7.webp", alt: "Motorocki elustiil" },
-    ],
+    parallaxImages: showroomGalleryImages.map((src) => ({
+      src,
+      alt: "Motorocki salong",
+    })),
     findUs: "Leiad meid",
     maps: "Google Maps →",
     waze: "Waze →",
