@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { motoStageImageLoader } from "@/lib/image-loader";
+import { MotorcycleProductImage } from "@/components/shop/motorcycle-product-image";
 
 type MotorcycleImageStageProps = {
   src: string;
@@ -54,23 +54,28 @@ export function MotorcycleImageStage({
           aria-hidden="true"
         />
       ) : null}
-      <Image
-        src={src}
-        alt={alt}
-        fill
-        priority={priority}
-        loader={isProduct ? motoStageImageLoader : undefined}
-        sizes={sizes}
-        className={
-          isProduct
-            ? `object-contain object-center transition-transform duration-500 group-hover/openable:scale-[1.02] ${
-                seamless
-                  ? "p-[2%] sm:p-[2.5%]"
-                  : "p-[3%] mix-blend-multiply sm:p-[4%] lg:p-[5%]"
-              }`
-            : "object-cover object-center transition-transform duration-500 group-hover/openable:scale-[1.02]"
-        }
-      />
+      {isProduct ? (
+        <MotorcycleProductImage
+          src={src}
+          alt={alt}
+          sizes={sizes}
+          priority={priority}
+          className={`absolute inset-0 h-full w-full object-contain object-center transition-transform duration-500 group-hover/openable:scale-[1.02] ${
+            seamless
+              ? "p-[2%] sm:p-[2.5%]"
+              : "p-[3%] mix-blend-multiply sm:p-[4%] lg:p-[5%]"
+          }`}
+        />
+      ) : (
+        <Image
+          src={src}
+          alt={alt}
+          fill
+          priority={priority}
+          sizes={sizes}
+          className="object-cover object-center transition-transform duration-500 group-hover/openable:scale-[1.02]"
+        />
+      )}
     </figure>
   );
 }

@@ -17,6 +17,10 @@ const PROXIED_HOSTS = new Set([
 /** Matches Tailwind `moto` token — wsrv fills PNG alpha before WebP encode. */
 export const MOTO_STAGE_WSRV_BG = "c8c8c8";
 
+export const MOTO_IMAGE_WIDTHS = [
+  256, 384, 640, 750, 828, 1080, 1200, 1920, 2048, 3840,
+] as const;
+
 type WsrvStageBackground = "moto";
 
 type BuildWsrvUrlOptions = {
@@ -79,4 +83,10 @@ export function motoStageImageLoader({
   quality,
 }: ImageLoaderProps) {
   return buildWsrvUrl(src, width, quality, { stageBackground: "moto" });
+}
+
+export function buildMotoImageSrcSet(src: string, quality?: number) {
+  return MOTO_IMAGE_WIDTHS.map(
+    (width) => `${motoStageImageLoader({ src, width, quality })} ${width}w`,
+  ).join(", ");
 }

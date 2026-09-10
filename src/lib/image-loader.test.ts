@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { buildWsrvUrl, motoStageImageLoader } from "@/lib/image-loader";
+import {
+  buildMotoImageSrcSet,
+  buildWsrvUrl,
+  motoStageImageLoader,
+} from "@/lib/image-loader";
 
 describe("image-loader", () => {
   it("proxies shop uploads to wsrv", () => {
@@ -29,5 +33,13 @@ describe("image-loader", () => {
 
   it("returns local assets unchanged", () => {
     expect(buildWsrvUrl("/logo.png", 128)).toBe("/logo.png");
+  });
+
+  it("builds responsive srcset for moto stage images", () => {
+    const srcSet = buildMotoImageSrcSet(
+      "https://shop.motorock.eu/wp-content/uploads/bike.jpg",
+    );
+    expect(srcSet).toContain("256w");
+    expect(srcSet).toContain("bg=c8c8c8");
   });
 });

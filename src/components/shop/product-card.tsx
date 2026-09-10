@@ -16,7 +16,7 @@ import {
   getColorSwatchStyle,
 } from "@/lib/shop/product-color-swatches";
 import { getProductQuickAddMode } from "@/lib/shop/product-quick-add";
-import { motoStageImageLoader } from "@/lib/image-loader";
+import { MotorcycleProductImage } from "@/components/shop/motorcycle-product-image";
 import { localizedProductHref } from "@/lib/shop/product-url";
 
 type ProductCardProps = {
@@ -27,7 +27,6 @@ const EQUIPMENT_IMAGE_CLASS = "object-contain object-center p-4 sm:p-5";
 const EQUIPMENT_IMAGE_LAYER =
   "absolute inset-0 bg-catalog [&_img]:mix-blend-multiply";
 const MOTORCYCLE_FIGURE_CLASS = "relative aspect-[4/3] overflow-hidden bg-moto";
-const MOTORCYCLE_IMAGE_BLEND_LAYER = "absolute inset-0 mix-blend-multiply";
 
 export function ProductCard({ product }: ProductCardProps) {
   const locale = useLocale();
@@ -56,7 +55,7 @@ export function ProductCard({ product }: ProductCardProps) {
     );
   }, [isMotorcycle, product.gallery, product.image]);
   const imageClassName = isMotorcycle
-    ? "object-contain object-center p-3 group-hover:scale-[1.06] sm:p-4"
+    ? "absolute inset-0 h-full w-full object-contain object-center p-3 mix-blend-multiply transition-transform duration-500 ease-out motion-reduce:transition-none motion-reduce:group-hover:scale-100 group-hover:scale-[1.06] sm:p-4"
     : EQUIPMENT_IMAGE_CLASS;
   const imageFadeClass =
     "transition-[opacity,transform] duration-500 ease-in-out motion-reduce:transition-none";
@@ -103,16 +102,7 @@ export function ProductCard({ product }: ProductCardProps) {
               </div>
             </>
           ) : isMotorcycle ? (
-            <div className={MOTORCYCLE_IMAGE_BLEND_LAYER}>
-              <Image
-                src={product.image}
-                alt=""
-                fill
-                loader={motoStageImageLoader}
-                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                className={`relative z-0 transition-transform duration-500 ease-out motion-reduce:transition-none motion-reduce:group-hover:scale-100 ${imageClassName}`}
-              />
-            </div>
+            <MotorcycleProductImage src={product.image} className={imageClassName} />
           ) : (
             <div className={EQUIPMENT_IMAGE_LAYER}>
               <Image
