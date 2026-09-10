@@ -151,7 +151,8 @@ export class Fix404Service {
       }
 
       const ruleMatch = suggestRuleBasedRedirect(from, input.locale, inventory);
-      if (ruleMatch && allowedUrls.has(ruleMatch.to)) {
+      if (ruleMatch) {
+        // Rule-based targets come from our route helpers — do not require catalog inventory match.
         redirects.push(ruleMatch);
         matchedFrom.add(from);
       }

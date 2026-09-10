@@ -8,7 +8,9 @@ import {
 } from "@/lib/graphql/categories";
 import { fetchBlogPostsPage } from "@/lib/graphql/blog-posts";
 import { graphqlRequest } from "@/lib/graphql/client";
+import { buildBrandCatalogHref } from "@/lib/shop/brand-url";
 import { buildEquipmentCategoryHrefFromNodes } from "@/lib/shop/equipment-route";
+import { buildEquipmentHubHref } from "@/lib/shop/category-url";
 import { localizedProductHref } from "@/lib/shop/product-url";
 
 export type SiteLink = {
@@ -141,6 +143,41 @@ async function fetchPostLinks(locale: Locale, limit: number): Promise<SiteLink[]
   }
 }
 
+function staticHubLinks(locale: Locale): SiteLink[] {
+  return [
+    {
+      type: "category",
+      title: "Equipment hub",
+      slug: "equipment",
+      url: localizedHref(locale, buildEquipmentHubHref(locale)),
+    },
+    {
+      type: "category",
+      title: "Motorcycles",
+      slug: "motorcycles",
+      url: localizedHref(locale, "/shop/motorcycles"),
+    },
+    {
+      type: "category",
+      title: "Tools",
+      slug: "tools",
+      url: localizedHref(locale, locale === "et" ? "/shop/tooriistad-ja-hooldus" : "/shop/tools"),
+    },
+    {
+      type: "post",
+      title: "Journal",
+      slug: "blog",
+      url: localizedHref(locale, "/blog"),
+    },
+    {
+      type: "category",
+      title: "Contact",
+      slug: "contact",
+      url: localizedHref(locale, "/contact"),
+    },
+  ];
+}
+
 /** Real site URLs (products, categories, posts) that AI link suggestions must come from. */
 export async function fetchSiteLinkInventory(
   locale: Locale,
@@ -152,7 +189,22 @@ export async function fetchSiteLinkInventory(
     fetchPostLinks(locale, options?.postLimit ?? 30),
   ]);
 
-  return [...categories, ...products, ...posts];
+  const brandLinks: SiteLink[] = [
+    "brixton",
+    "holyfreedom",
+    "bobhead",
+    "johnnyreb",
+    "makita",
+    "mutt",
+    "motogirl",
+  ].map((slug) => ({
+    type: "category" as const,
+    title: slug,
+    slug,
+    url: localizedHref(locale, buildBrandCatalogHref(locale, slug)),
+  }));
+
+  return [...staticHubLinks(locale), ...brandLinks, ...categories, ...products, ...posts];
 }
 
 export function formatLinkInventoryForPrompt(links: SiteLink[]) {
