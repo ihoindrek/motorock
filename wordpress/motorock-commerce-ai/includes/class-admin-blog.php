@@ -41,12 +41,18 @@ class Motorock_Commerce_Ai_Admin_Blog {
 			array(
 				'postEditUrl' => admin_url( 'post.php?post=POST_ID&action=edit' ),
 				'i18n'        => array(
-					'running'   => __( 'Generating article… this can take 30–90 seconds. WordPress stays responsive.', 'motorock-commerce-ai' ),
-					'dryRunOk'  => __( 'Dry run complete — preview below. Nothing saved.', 'motorock-commerce-ai' ),
-					'saved'     => __( 'Draft post created in WordPress.', 'motorock-commerce-ai' ),
-					'failed'    => __( 'Generation failed.', 'motorock-commerce-ai' ),
-					'needTopic' => __( 'Enter a topic, brief, or product ID.', 'motorock-commerce-ai' ),
-					'openDraft' => __( 'Open draft in editor', 'motorock-commerce-ai' ),
+					'running'      => __( 'Generating article… this can take 30–90 seconds. WordPress stays responsive.', 'motorock-commerce-ai' ),
+					'runningBoth'  => __( 'Generating EN + ET articles… this can take 1–3 minutes. WordPress stays responsive.', 'motorock-commerce-ai' ),
+					'dryRunOk'     => __( 'Dry run complete — preview below. Edit it if needed, then save as draft.', 'motorock-commerce-ai' ),
+					'saved'        => __( 'Draft post created in WordPress.', 'motorock-commerce-ai' ),
+					'failed'       => __( 'Generation failed.', 'motorock-commerce-ai' ),
+					'needTopic'    => __( 'Enter a topic, brief, product ID, category, or brand.', 'motorock-commerce-ai' ),
+					'openDraft'    => __( 'Open draft in editor', 'motorock-commerce-ai' ),
+					'saveDraft'    => __( 'Save as draft', 'motorock-commerce-ai' ),
+					'savingDraft'  => __( 'Saving draft…', 'motorock-commerce-ai' ),
+					'draftSaved'   => __( 'Draft saved.', 'motorock-commerce-ai' ),
+					'draftFailed'  => __( 'Saving draft failed.', 'motorock-commerce-ai' ),
+					'secondLocale' => __( 'Second language version', 'motorock-commerce-ai' ),
 				),
 			)
 		);
@@ -54,10 +60,47 @@ class Motorock_Commerce_Ai_Admin_Blog {
 		wp_enqueue_script( 'motorock-commerce-ai-admin-blog' );
 	}
 
+	private static function taxonomy_options( $taxonomy ) {
+		if ( ! taxonomy_exists( $taxonomy ) ) {
+			return array();
+		}
+
+		$terms = get_terms(
+			array(
+				'taxonomy'   => $taxonomy,
+				'hide_empty' => true,
+				'orderby'    => 'name',
+				'number'     => 300,
+			)
+		);
+
+		if ( is_wp_error( $terms ) ) {
+			return array();
+		}
+
+		return $terms;
+	}
+
+	private static function render_term_select( $id, $terms, $empty_label ) {
+		?>
+		<select id="<?php echo esc_attr( $id ); ?>" name="<?php echo esc_attr( str_replace( '-', '_', $id ) ); ?>">
+			<option value=""><?php echo esc_html( $empty_label ); ?></option>
+			<?php foreach ( $terms as $term ) : ?>
+				<option value="<?php echo esc_attr( $term->slug ); ?>">
+					<?php echo esc_html( $term->name . ' (' . $term->count . ')' ); ?>
+				</option>
+			<?php endforeach; ?>
+		</select>
+		<?php
+	}
+
 	public static function render_page() {
 		if ( ! current_user_can( 'edit_products' ) ) {
 			wp_die( esc_html__( 'You do not have permission to access this page.', 'motorock-commerce-ai' ) );
 		}
+
+		$categories = self::taxonomy_options( 'product_cat' );
+		$brands     = self::taxonomy_options( 'pa_brand' );
 		?>
 		<div class="wrap">
 			<h1><?php esc_html_e( 'Commerce AI — Blog generator', 'motorock-commerce-ai' ); ?></h1>
@@ -84,11 +127,33 @@ class Motorock_Commerce_Ai_Admin_Blog {
 					</td>
 				</tr>
 				<tr>
+					<th scope="row"><label for="motorock-blog-article-type"><?php esc_html_e( 'Article type', 'motorock-commerce-ai' ); ?></label></th>
+					<td>
+						<select id="motorock-blog-article-type" name="motorock_blog_article_type">
+							<option value=""><?php esc_html_e( 'Freeform article', 'motorock-commerce-ai' ); ?></option>
+							<option value="gear_guide"><?php esc_html_e( 'Buying guide', 'motorock-commerce-ai' ); ?></option>
+							<option value="top_list"><?php esc_html_e( 'Top list (Top 5)', 'motorock-commerce-ai' ); ?></option>
+							<option value="how_to"><?php esc_html_e( 'How-to tutorial', 'motorock-commerce-ai' ); ?></option>
+							<option value="brand_story"><?php esc_html_e( 'Brand story', 'motorock-commerce-ai' ); ?></option>
+							<option value="news"><?php esc_html_e( 'Store news', 'motorock-commerce-ai' ); ?></option>
+						</select>
+					</td>
+				</tr>
+				<tr>
 					<th scope="row"><label for="motorock-blog-category"><?php esc_html_e( 'Product category', 'motorock-commerce-ai' ); ?></label></th>
 					<td>
-						<input type="text" id="motorock-blog-category" name="motorock_blog_category" class="regular-text" placeholder="<?php esc_attr_e( 'e.g. jackets-and-tags', 'motorock-commerce-ai' ); ?>" />
+						<?php self::render_term_select( 'motorock-blog-category', $categories, __( '— No category —', 'motorock-commerce-ai' ) ); ?>
 						<p class="description">
-							<?php esc_html_e( 'Optional. WooCommerce category slug — the article will include real products from this category as recommendations (with images and links).', 'motorock-commerce-ai' ); ?>
+							<?php esc_html_e( 'Optional. Real products from this category are offered to the AI as recommendations (live product cards with image, price, and link).', 'motorock-commerce-ai' ); ?>
+						</p>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row"><label for="motorock-blog-brand"><?php esc_html_e( 'Brand', 'motorock-commerce-ai' ); ?></label></th>
+					<td>
+						<?php self::render_term_select( 'motorock-blog-brand', $brands, __( '— No brand —', 'motorock-commerce-ai' ) ); ?>
+						<p class="description">
+							<?php esc_html_e( 'Optional. Uses this brand’s products as recommendations. Overrides category. Pair with the “Brand story” article type.', 'motorock-commerce-ai' ); ?>
 						</p>
 					</td>
 				</tr>
@@ -103,6 +168,11 @@ class Motorock_Commerce_Ai_Admin_Blog {
 						<label for="motorock-blog-locale-et">
 							<input type="radio" id="motorock-blog-locale-et" name="motorock-blog-locale" value="et" />
 							ET
+						</label>
+						&nbsp;
+						<label for="motorock-blog-locale-both">
+							<input type="radio" id="motorock-blog-locale-both" name="motorock-blog-locale" value="both" />
+							<?php esc_html_e( 'Both (EN + ET, linked as translations)', 'motorock-commerce-ai' ); ?>
 						</label>
 					</td>
 				</tr>

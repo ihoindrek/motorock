@@ -5,42 +5,66 @@ import { graphqlRequest } from "@/lib/graphql/client";
 /** Compact product facts passed to the blog prompt so the AI links real products. */
 export type BlogProductSuggestion = {
   name: string;
+  slug: string;
   url: string;
   price: string;
   imageUrl?: string;
   inStock: boolean;
 };
 
-const BLOG_PRODUCT_SUGGESTIONS_QUERY = `
-  query BlogProductSuggestions($first: Int!, $category: String) {
+const SUGGESTION_NODE_FIELDS = `
+  ... on Product {
+    name
+    slug
+    languageCode
+    translations {
+      slug
+      name
+      language {
+        code
+      }
+    }
+    image {
+      sourceUrl
+    }
+  }
+  ... on SimpleProduct {
+    price
+    stockStatus
+  }
+  ... on VariableProduct {
+    price
+    stockStatus
+  }
+`;
+
+const CATEGORY_SUGGESTIONS_QUERY = `
+  query BlogProductSuggestionsByCategory($first: Int!, $category: String) {
     products(
       first: $first
       where: { status: "publish", category: $category, orderby: { field: DATE, order: DESC } }
     ) {
       nodes {
-        ... on Product {
-          name
-          slug
-          languageCode
-          translations {
-            slug
-            name
-            language {
-              code
-            }
-          }
-          image {
-            sourceUrl
-          }
+        ${SUGGESTION_NODE_FIELDS}
+      }
+    }
+  }
+`;
+
+const BRAND_SUGGESTIONS_QUERY = `
+  query BlogProductSuggestionsByBrand($first: Int!, $brandTerms: [String]!) {
+    products(
+      first: $first
+      where: {
+        status: "publish"
+        orderby: { field: DATE, order: DESC }
+        taxonomyFilter: {
+          filters: [{ taxonomy: PA_BRAND, operator: IN, terms: $brandTerms }]
         }
-        ... on SimpleProduct {
-          price
-          stockStatus
-        }
-        ... on VariableProduct {
-          price
-          stockStatus
-        }
+      }
+    ) {
+      nodes {
+        ${SUGGESTION_NODE_FIELDS}
       }
     }
   }
@@ -82,18 +106,29 @@ function localizedNameAndSlug(node: SuggestionNode, locale: Locale) {
 
 export async function fetchBlogProductSuggestions(input: {
   locale: Locale;
-  categorySlug: string;
+  categorySlug?: string;
+  brandSlug?: string;
   limit?: number;
 }): Promise<BlogProductSuggestion[]> {
   const limit = Math.min(Math.max(input.limit ?? 6, 1), 12);
 
   let data: SuggestionsResponse;
   try {
-    data = await graphqlRequest<SuggestionsResponse, { first: number; category: string }>(
-      BLOG_PRODUCT_SUGGESTIONS_QUERY,
-      { first: limit * 2, category: input.categorySlug },
-      { next: { revalidate: 0 } },
-    );
+    if (input.brandSlug) {
+      data = await graphqlRequest<SuggestionsResponse, { first: number; brandTerms: string[] }>(
+        BRAND_SUGGESTIONS_QUERY,
+        { first: limit * 2, brandTerms: [input.brandSlug] },
+        { next: { revalidate: 0 } },
+      );
+    } else if (input.categorySlug) {
+      data = await graphqlRequest<SuggestionsResponse, { first: number; category: string }>(
+        CATEGORY_SUGGESTIONS_QUERY,
+        { first: limit * 2, category: input.categorySlug },
+        { next: { revalidate: 0 } },
+      );
+    } else {
+      return [];
+    }
   } catch {
     return [];
   }
@@ -109,6 +144,7 @@ export async function fetchBlogProductSuggestions(input: {
 
     suggestions.push({
       name,
+      slug,
       url: localizedProductHref(slug, input.locale),
       price: node.price ?? "",
       imageUrl: node.image?.sourceUrl ?? undefined,
@@ -135,9 +171,9 @@ export function formatProductSuggestionsForPrompt(
     .map((product) => {
       const parts = [
         `Name: ${product.name}`,
+        `Slug: ${product.slug}`,
         `URL: ${product.url}`,
         product.price ? `Price: ${product.price}` : null,
-        product.imageUrl ? `Image: ${product.imageUrl}` : null,
         product.inStock ? "In stock" : "Out of stock",
       ].filter(Boolean);
 

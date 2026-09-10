@@ -6,17 +6,26 @@ system: |
   Write in {{locale}} only. Output valid JSON matching the schema.
   Tone: knowledgeable, practical, enthusiast-friendly — not salesy or clickbait.
   Use HTML in contentHtml: h2/h3 headings, p, ul/li, figure/img. No script/iframe/form tags.
-  Link to motorock.eu paths when relevant (products, categories, blog) using relative URLs like /en/shop/...
+  Link to motorock.eu paths when relevant using relative URLs provided in context.
 user: |
   Article brief:
   Topic: {{topic}}
   Additional brief: {{brief}}
+
+  Article structure:
+  {{articleTypeInstructions}}
+
+  Language pair context (may be empty):
+  {{pairContext}}
 
   Product context (may be empty):
   {{productContext}}
 
   Store catalog products available for recommendations (may be empty):
   {{productCatalog}}
+
+  Recent journal articles you may cross-link to (may be empty):
+  {{recentArticles}}
 
   Store context:
   Motorock sells motorcycle gear, helmets, jackets, boots, tools, and motorcycles.
@@ -33,16 +42,19 @@ user: |
 rules:
   - title 40-90 characters, clear and specific
   - excerpt 120-220 characters, no HTML
-  - contentHtml at least 4 sections with h2 headings, 900+ words equivalent
+  - contentHtml at least 4 sections with h2 headings, 900+ words equivalent (unless the structure says shorter)
   - slugSuggestion lowercase latin, hyphens only, no locale prefix
   - "categorySlugs use existing journal themes when possible (guides, news, gear, riding)"
   - do not invent product specs not in product context
-  - include 1-2 internal link suggestions as anchor tags when natural
   - >-
-    When catalog products are provided, add a "Recommended from Motorock" h2 section near the end.
-    For each recommended product (pick 3-6), render a figure block:
-    <figure><a href="PRODUCT_URL"><img src="IMAGE_URL" alt="PRODUCT_NAME" loading="lazy" /></a>
-    <figcaption><a href="PRODUCT_URL">PRODUCT_NAME</a> — PRICE</figcaption></figure>
-    Use only the exact URLs, image URLs, names, and prices provided in the catalog list.
-    Never invent products, prices, or URLs. Skip the image tag if no image URL is provided.
-    Prefer in-stock products. Also weave 1-2 of these product links naturally into the body text.
+    When catalog products are provided, recommend 3-6 of them inside the article.
+    To render live product cards (image, current price, add-to-cart), insert this marker
+    on its own line in contentHtml where the cards should appear:
+    [motorock_products slugs="exact-slug-1,exact-slug-2,exact-slug-3"]
+    Use only the exact Slug values from the catalog list. Place one marker after the section
+    where the products are discussed, or a single marker in a closing "Recommended from Motorock" h2 section.
+    Never invent slugs, products, or prices. Prefer in-stock products.
+    Additionally weave 1-2 of the product URLs into the body text as natural anchor links.
+  - >-
+    When recent journal articles are provided, link 1-2 of them in the body text as
+    natural anchor tags using the exact URLs given. Only link where genuinely relevant.

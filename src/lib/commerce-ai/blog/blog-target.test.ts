@@ -4,16 +4,38 @@ import { validateBlogArticleOutput } from "@/lib/commerce-ai/blog/validate-blog-
 
 describe("parseBlogTarget", () => {
   it("accepts topic-only targets", () => {
-    expect(parseBlogTarget({ topic: "Spring gear guide" })).toEqual({
+    expect(parseBlogTarget({ topic: "Spring gear guide" })).toMatchObject({
       topic: "Spring gear guide",
+      bothLocales: false,
     });
   });
 
   it("accepts productId with optional brief", () => {
-    expect(parseBlogTarget({ productId: 42, brief: "Focus on commuting" })).toEqual({
+    expect(parseBlogTarget({ productId: 42, brief: "Focus on commuting" })).toMatchObject({
       brief: "Focus on commuting",
       productId: 42,
     });
+  });
+
+  it("accepts category, brand, article type, and bothLocales", () => {
+    expect(
+      parseBlogTarget({
+        categorySlug: "Jackets",
+        brandSlug: "BRIXTON",
+        articleType: "brand_story",
+        bothLocales: true,
+      }),
+    ).toMatchObject({
+      categorySlug: "jackets",
+      brandSlug: "brixton",
+      articleType: "brand_story",
+      bothLocales: true,
+    });
+  });
+
+  it("ignores unknown article types", () => {
+    const target = parseBlogTarget({ topic: "Guide", articleType: "poetry" });
+    expect(target?.articleType).toBeUndefined();
   });
 
   it("rejects empty targets", () => {

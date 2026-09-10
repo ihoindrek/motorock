@@ -46,8 +46,11 @@ class Motorock_Ai_Blog_Writer {
 			return $post_id;
 		}
 
-		self::assign_language( (int) $post_id, $locale );
+		$translation_of = isset( $payload['translationOfPostId'] ) ? (int) $payload['translationOfPostId'] : 0;
+
+		self::assign_language( (int) $post_id, $locale, $translation_of );
 		self::assign_categories( (int) $post_id, $payload['categorySlugs'] ?? array() );
+		self::assign_featured_image( (int) $post_id, $payload );
 		self::store_meta( (int) $post_id, $payload['meta'] ?? array(), $locale );
 
 		return array(
@@ -59,7 +62,7 @@ class Motorock_Ai_Blog_Writer {
 		);
 	}
 
-	private static function assign_language( $post_id, $locale ) {
+	private static function assign_language( $post_id, $locale, $translation_of = 0 ) {
 		if ( ! Motorock_Ai_Wpml_Helper::is_active() ) {
 			return;
 		}
@@ -70,25 +73,80 @@ class Motorock_Ai_Blog_Writer {
 		}
 
 		$element_type = apply_filters( 'wpml_element_type', 'post_post' );
-		$details      = apply_filters(
-			'wpml_element_language_details',
-			null,
-			array(
-				'element_id'   => $post_id,
-				'element_type' => $element_type,
-			)
-		);
+
+		$trid            = false;
+		$source_language = null;
+
+		if ( $translation_of > 0 ) {
+			// Link this post as a translation of an existing post: share its trid.
+			$source_details = apply_filters(
+				'wpml_element_language_details',
+				null,
+				array(
+					'element_id'   => $translation_of,
+					'element_type' => $element_type,
+				)
+			);
+
+			if ( is_object( $source_details ) && ! empty( $source_details->trid ) ) {
+				$trid            = $source_details->trid;
+				$source_language = ! empty( $source_details->language_code ) ? $source_details->language_code : null;
+			}
+		}
+
+		if ( ! $trid ) {
+			$details = apply_filters(
+				'wpml_element_language_details',
+				null,
+				array(
+					'element_id'   => $post_id,
+					'element_type' => $element_type,
+				)
+			);
+			$trid = is_object( $details ) && ! empty( $details->trid ) ? $details->trid : false;
+		}
 
 		do_action(
 			'wpml_set_element_language_details',
 			array(
 				'element_id'           => $post_id,
 				'element_type'         => $element_type,
-				'trid'                 => is_object( $details ) && ! empty( $details->trid ) ? $details->trid : false,
+				'trid'                 => $trid,
 				'language_code'        => $language,
-				'source_language_code' => null,
+				'source_language_code' => $source_language,
 			)
 		);
+	}
+
+	private static function assign_featured_image( $post_id, $payload ) {
+		$image_url = isset( $payload['featuredImageUrl'] ) ? esc_url_raw( (string) $payload['featuredImageUrl'] ) : '';
+		if ( $image_url === '' || strpos( $image_url, 'http' ) !== 0 ) {
+			return;
+		}
+
+		require_once ABSPATH . 'wp-admin/includes/media.php';
+		require_once ABSPATH . 'wp-admin/includes/file.php';
+		require_once ABSPATH . 'wp-admin/includes/image.php';
+
+		$alt = isset( $payload['featuredImageAlt'] ) ? sanitize_text_field( (string) $payload['featuredImageAlt'] ) : '';
+
+		$attachment_id = media_sideload_image( $image_url, $post_id, $alt, 'id' );
+		if ( is_wp_error( $attachment_id ) ) {
+			Motorock_Ai_Logger::info(
+				'featured image sideload failed',
+				array(
+					'postId' => $post_id,
+					'error'  => $attachment_id->get_error_message(),
+				)
+			);
+			return;
+		}
+
+		set_post_thumbnail( $post_id, (int) $attachment_id );
+
+		if ( $alt !== '' ) {
+			update_post_meta( (int) $attachment_id, '_wp_attachment_image_alt', $alt );
+		}
 	}
 
 	private static function assign_categories( $post_id, $category_slugs ) {

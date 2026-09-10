@@ -49,6 +49,16 @@ class Motorock_Commerce_Ai_Rest_Proxy {
 			)
 		);
 
+		register_rest_route(
+			'motorock/v1',
+			'/commerce-ai/save-draft',
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( __CLASS__, 'handle_save_draft' ),
+				'permission_callback' => array( __CLASS__, 'verify_admin' ),
+			)
+		);
+
 		// Legacy aliases used by existing admin JS.
 		register_rest_route(
 			'motorock/v1',
@@ -212,6 +222,49 @@ class Motorock_Commerce_Ai_Rest_Proxy {
 		}
 
 		return self::proxy_commerce_ai_run( $payload );
+	}
+
+	/**
+	 * Save an (optionally edited) blog preview as a WordPress draft without regenerating.
+	 * Writes locally via the motorock-ai-writer blog writer.
+	 */
+	public static function handle_save_draft( WP_REST_Request $request ) {
+		$payload = $request->get_json_params();
+		if ( ! is_array( $payload ) ) {
+			return new WP_Error( 'motorock_commerce_ai_invalid_body', 'Invalid JSON body', array( 'status' => 400 ) );
+		}
+
+		if ( ! class_exists( 'Motorock_Ai_Blog_Writer' ) ) {
+			return new WP_Error(
+				'motorock_commerce_ai_writer_missing',
+				'motorock-ai-writer plugin is not active — cannot save the draft.',
+				array( 'status' => 503 )
+			);
+		}
+
+		$allowed = array(
+			'locale',
+			'title',
+			'excerpt',
+			'contentHtml',
+			'slug',
+			'categorySlugs',
+			'publishStatus',
+			'featuredImageUrl',
+			'featuredImageAlt',
+			'translationOfPostId',
+			'meta',
+		);
+
+		$write_payload = array_intersect_key( $payload, array_flip( $allowed ) );
+		$write_payload['publishStatus'] = 'draft';
+
+		$result = Motorock_Ai_Blog_Writer::write( $write_payload );
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+
+		return rest_ensure_response( $result );
 	}
 
 	public static function handle_batch( WP_REST_Request $request ) {

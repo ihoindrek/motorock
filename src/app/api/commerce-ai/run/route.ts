@@ -9,7 +9,7 @@ import { createCommerceAiContainer } from "@/lib/commerce-ai/core/container";
 import { parseCommerceAiRunRequestBody } from "@/lib/commerce-ai/validation/run-request";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 180;
+export const maxDuration = 300;
 
 export async function OPTIONS(request: Request) {
   return commerceAiOptions(request);

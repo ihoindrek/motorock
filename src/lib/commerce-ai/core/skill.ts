@@ -6,6 +6,7 @@ import type {
   CommerceAiSkillDefinition,
   CommerceAiSkillId,
 } from "@/lib/commerce-ai/core/types";
+import { isBlogArticleType } from "@/lib/commerce-ai/blog/article-types";
 import type { SeoAuditScope, SeoAuditTarget } from "@/lib/commerce-ai/seo/audit-types";
 import { SEO_AUDIT_CHUNK_SIZE } from "@/lib/commerce-ai/seo/audit-types";
 import type { Locale } from "@/i18n/config";
@@ -52,10 +53,14 @@ export function parseBlogTarget(target: CommerceAiRunRequest["target"]) {
     typeof target.categorySlug === "string"
       ? target.categorySlug.trim().toLowerCase()
       : "";
+  const brandSlug =
+    typeof target.brandSlug === "string"
+      ? target.brandSlug.trim().toLowerCase()
+      : "";
   const productId = Number(target.productId);
   const hasProductId = Number.isInteger(productId) && productId > 0;
 
-  if (!topic && !brief && !hasProductId) {
+  if (!topic && !brief && !hasProductId && !brandSlug && !categorySlug) {
     return null;
   }
 
@@ -64,6 +69,9 @@ export function parseBlogTarget(target: CommerceAiRunRequest["target"]) {
     brief: brief || undefined,
     productId: hasProductId ? productId : undefined,
     categorySlug: categorySlug || undefined,
+    brandSlug: brandSlug || undefined,
+    articleType: isBlogArticleType(target.articleType) ? target.articleType : undefined,
+    bothLocales: target.bothLocales === true,
   };
 }
 

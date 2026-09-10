@@ -2,6 +2,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { BlogBadge } from "@/components/blog/blog-badge";
 import { BlogPostContent } from "@/components/blog/blog-post-content";
+import { BlogProductEmbed } from "@/components/blog/blog-product-embed";
+import { splitBlogContentSegments } from "@/lib/blog/content-embeds";
 import { HomeBlogPostsView } from "@/components/blog/home-blog-posts-view";
 import { GiveawayCountdown } from "@/components/giveaway/giveaway-countdown";
 import { GiveawayHowItWorks } from "@/components/giveaway/giveaway-how-it-works";
@@ -27,6 +29,9 @@ export function BlogPostView({
   copy,
 }: BlogPostViewProps) {
   const campaign = getCampaignForBlogPost(post);
+  const contentSegments = post.contentHtml
+    ? splitBlogContentSegments(post.contentHtml)
+    : [];
   const blogHref = localizedHref(locale, "/blog");
   const shopHref = localizedHref(
     locale,
@@ -90,9 +95,19 @@ export function BlogPostView({
               </p>
             ) : null}
 
-            {post.contentHtml ? (
+            {contentSegments.length > 0 ? (
               <div className={post.excerpt ? "mt-12 sm:mt-14" : undefined}>
-                <BlogPostContent html={post.contentHtml} />
+                {contentSegments.map((segment, index) =>
+                  segment.type === "html" ? (
+                    <BlogPostContent key={index} html={segment.html} />
+                  ) : (
+                    <BlogProductEmbed
+                      key={index}
+                      slugs={segment.slugs}
+                      locale={locale}
+                    />
+                  ),
+                )}
               </div>
             ) : null}
 

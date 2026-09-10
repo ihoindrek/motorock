@@ -7,6 +7,7 @@ import type { ProviderRegistry } from "@/lib/ai/providers/provider-registry";
 import type { ProductReadRepository } from "@/lib/ai/repositories/graphql-product-read.repository";
 import { fetchBlogProductSuggestions } from "@/lib/commerce-ai/blog/blog-product-suggestions";
 import { buildBlogPromptVariables } from "@/lib/commerce-ai/blog/build-blog-prompt-variables";
+import { fetchRecentArticleLinks } from "@/lib/commerce-ai/blog/recent-articles";
 import {
   BlogArticleOutputSchema,
   type BlogGenerateJobResult,
@@ -25,6 +26,13 @@ type BlogGenerateServiceDeps = {
   blogWrite: BlogWriteRepository;
 };
 
+type BlogGenerateOptions = {
+  dryRun?: boolean;
+  provider?: "openai" | "anthropic" | "gemini";
+  publishStatus?: "draft" | "published";
+  revalidate?: boolean;
+};
+
 export class BlogGenerateService {
   constructor(private readonly deps: BlogGenerateServiceDeps) {}
 
@@ -32,16 +40,8 @@ export class BlogGenerateService {
     jobId: string;
     locale: Locale;
     target: BlogGenerateTarget;
-    options?: {
-      dryRun?: boolean;
-      provider?: "openai" | "anthropic" | "gemini";
-      publishStatus?: "draft" | "published";
-      revalidate?: boolean;
-    };
+    options?: BlogGenerateOptions;
   }): Promise<BlogGenerateJobResult> {
-    const started = Date.now();
-    const dryRun = input.options?.dryRun ?? this.deps.config.dryRun;
-    const publishStatus = input.options?.publishStatus ?? "draft";
     const providerName = input.options?.provider ?? this.deps.config.defaultProvider;
 
     if (!isProviderConfigured(providerName, this.deps.config)) {
@@ -51,6 +51,53 @@ export class BlogGenerateService {
       );
     }
 
+    const primary = await this.generateForLocale({
+      jobId: input.jobId,
+      locale: input.locale,
+      target: input.target,
+      options: input.options,
+      providerName,
+    });
+
+    if (!input.target.bothLocales || !primary.ok) {
+      return primary;
+    }
+
+    const secondaryLocale: Locale = input.locale === "en" ? "et" : "en";
+
+    const secondary = await this.generateForLocale({
+      jobId: input.jobId,
+      locale: secondaryLocale,
+      target: input.target,
+      options: input.options,
+      providerName,
+      pairWith: primary.preview
+        ? {
+            locale: input.locale,
+            title: primary.preview.title,
+            excerpt: primary.preview.excerpt,
+          }
+        : undefined,
+      translationOfPostId: primary.postId,
+    });
+
+    return { ...primary, pair: secondary };
+  }
+
+  private async generateForLocale(input: {
+    jobId: string;
+    locale: Locale;
+    target: BlogGenerateTarget;
+    options?: BlogGenerateOptions;
+    providerName: "openai" | "anthropic" | "gemini";
+    pairWith?: { locale: Locale; title: string; excerpt: string };
+    translationOfPostId?: number;
+  }): Promise<BlogGenerateJobResult> {
+    const started = Date.now();
+    const dryRun = input.options?.dryRun ?? this.deps.config.dryRun;
+    const publishStatus = input.options?.publishStatus ?? "draft";
+    const providerName = input.providerName;
+
     const requestedProductId = input.target.productId;
     const product = requestedProductId
       ? await this.deps.productRead.getById(requestedProductId, input.locale)
@@ -58,9 +105,15 @@ export class BlogGenerateService {
     const warnings: string[] = [];
 
     if (requestedProductId && !product) {
-      const hasTopicOrBrief = Boolean(input.target.topic?.trim() || input.target.brief?.trim());
+      const hasOtherContext = Boolean(
+        input.target.topic?.trim() ||
+          input.target.brief?.trim() ||
+          input.target.categorySlug ||
+          input.target.brandSlug ||
+          input.pairWith,
+      );
 
-      if (!hasTopicOrBrief) {
+      if (!hasOtherContext) {
         return {
           ok: false,
           dryRun,
@@ -77,17 +130,27 @@ export class BlogGenerateService {
       );
     }
 
-    const productSuggestions = input.target.categorySlug
-      ? await fetchBlogProductSuggestions({
-          locale: input.locale,
-          categorySlug: input.target.categorySlug,
-          limit: 6,
-        })
-      : [];
+    const [productSuggestions, recentArticles] = await Promise.all([
+      input.target.brandSlug || input.target.categorySlug
+        ? fetchBlogProductSuggestions({
+            locale: input.locale,
+            brandSlug: input.target.brandSlug,
+            categorySlug: input.target.categorySlug,
+            limit: 6,
+          })
+        : Promise.resolve([]),
+      fetchRecentArticleLinks(input.locale, 8),
+    ]);
 
-    if (input.target.categorySlug && productSuggestions.length === 0) {
+    if (
+      (input.target.brandSlug || input.target.categorySlug) &&
+      productSuggestions.length === 0
+    ) {
+      const scope = input.target.brandSlug
+        ? `brand "${input.target.brandSlug}"`
+        : `category "${input.target.categorySlug}"`;
       warnings.push(
-        `No products found for category "${input.target.categorySlug}" — the article will not include catalog recommendations. Check the WooCommerce category slug.`,
+        `No products found for ${scope} — the article will not include catalog recommendations.`,
       );
     }
 
@@ -97,6 +160,8 @@ export class BlogGenerateService {
       target: input.target,
       product,
       productSuggestions,
+      recentArticles,
+      pairWith: input.pairWith,
     });
     const rendered = renderPromptTemplate(template, variables);
     const provider = this.deps.providerRegistry.get(providerName);
@@ -144,6 +209,10 @@ export class BlogGenerateService {
       };
     }
 
+    const featuredImage =
+      product?.images[0]?.url ??
+      productSuggestions.find((suggestion) => suggestion.imageUrl)?.imageUrl;
+
     const writeResult = await this.deps.blogWrite.write({
       locale: input.locale,
       title: data.title,
@@ -152,6 +221,9 @@ export class BlogGenerateService {
       slug: data.slugSuggestion,
       categorySlugs: data.categorySlugs,
       publishStatus,
+      featuredImageUrl: featuredImage,
+      featuredImageAlt: featuredImage ? data.title : undefined,
+      translationOfPostId: input.translationOfPostId,
       meta: {
         provider: providerName,
         model: resolvedModel,
