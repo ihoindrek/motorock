@@ -25,7 +25,8 @@ type ProductCardProps = {
 const EQUIPMENT_IMAGE_CLASS = "object-contain object-center p-4 sm:p-5";
 const EQUIPMENT_IMAGE_LAYER =
   "absolute inset-0 bg-catalog [&_img]:mix-blend-multiply";
-const MOTORCYCLE_IMAGE_LAYER = "absolute inset-0";
+const MOTORCYCLE_FIGURE_CLASS =
+  "relative aspect-[4/3] overflow-hidden bg-moto [&_img]:mix-blend-multiply";
 
 export function ProductCard({ product }: ProductCardProps) {
   const locale = useLocale();
@@ -54,7 +55,7 @@ export function ProductCard({ product }: ProductCardProps) {
     );
   }, [isMotorcycle, product.gallery, product.image]);
   const imageClassName = isMotorcycle
-    ? "object-contain object-center p-3 mix-blend-multiply group-hover:scale-[1.06] sm:p-4"
+    ? "object-contain object-center p-3 group-hover:scale-[1.06] sm:p-4"
     : EQUIPMENT_IMAGE_CLASS;
   const imageFadeClass =
     "transition-[opacity,transform] duration-500 ease-in-out motion-reduce:transition-none";
@@ -64,7 +65,7 @@ export function ProductCard({ product }: ProductCardProps) {
       <figure
         className={
           isMotorcycle
-            ? "relative aspect-[4/3] overflow-hidden bg-moto"
+            ? MOTORCYCLE_FIGURE_CLASS
             : "relative isolate aspect-[3/4] overflow-hidden rounded-sm bg-catalog shadow-none transition-[transform,box-shadow] duration-300 ease-out motion-reduce:transition-none group-hover:-translate-y-1 group-hover:shadow-[0_20px_50px_-20px_rgba(255,90,0,0.35),0_8px_24px_-12px_rgba(11,11,11,0.12)]"
         }
       >
@@ -100,8 +101,16 @@ export function ProductCard({ product }: ProductCardProps) {
                 />
               </div>
             </>
+          ) : isMotorcycle ? (
+            <Image
+              src={product.image}
+              alt=""
+              fill
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+              className={`relative z-0 transition-transform duration-500 ease-out motion-reduce:transition-none motion-reduce:group-hover:scale-100 ${imageClassName}`}
+            />
           ) : (
-            <div className={isMotorcycle ? MOTORCYCLE_IMAGE_LAYER : EQUIPMENT_IMAGE_LAYER}>
+            <div className={EQUIPMENT_IMAGE_LAYER}>
               <Image
                 src={product.image}
                 alt=""
