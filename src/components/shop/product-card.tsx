@@ -25,6 +25,7 @@ type ProductCardProps = {
 const EQUIPMENT_IMAGE_CLASS = "object-contain object-center p-4 sm:p-5";
 const EQUIPMENT_IMAGE_LAYER =
   "absolute inset-0 bg-catalog [&_img]:mix-blend-multiply";
+const MOTORCYCLE_IMAGE_LAYER = "absolute inset-0";
 
 export function ProductCard({ product }: ProductCardProps) {
   const locale = useLocale();
@@ -100,7 +101,7 @@ export function ProductCard({ product }: ProductCardProps) {
               </div>
             </>
           ) : (
-            <div className={EQUIPMENT_IMAGE_LAYER}>
+            <div className={isMotorcycle ? MOTORCYCLE_IMAGE_LAYER : EQUIPMENT_IMAGE_LAYER}>
               <Image
                 src={product.image}
                 alt=""
