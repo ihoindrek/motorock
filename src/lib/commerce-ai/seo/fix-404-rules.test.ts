@@ -29,4 +29,14 @@ describe("fix-404-rules", () => {
     const match = suggestRuleBasedRedirect("/en/shop/motron", "en", []);
     expect(match?.to).toContain("/shop/motorcycles");
   });
+
+  it("maps legacy paginated shop archives", () => {
+    const match = suggestRuleBasedRedirect("/en/shop/page/3", "en", []);
+    expect(match?.to).toContain("/shop/equipment");
+  });
+
+  it("maps legacy shop brand slugs without inventory", () => {
+    const match = suggestRuleBasedRedirect("/shop/holyfreedom", "en", []);
+    expect(match?.to).toBe("/en/brand/holyfreedom");
+  });
 });

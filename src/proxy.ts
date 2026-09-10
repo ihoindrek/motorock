@@ -13,6 +13,7 @@ import {
 import { resolveEquipmentPathPrefixRedirect, resolveEncodedSlashEquipmentPath } from "@/lib/shop/category-url";
 import { resolveBrandPathPrefixRedirect, resolveLegacyBrandSlugRedirect } from "@/lib/shop/brand-url";
 import { resolveProductPathPrefixRedirect } from "@/lib/shop/product-url";
+import { shouldNoindexCatalogFilterUrl } from "@/lib/seo/catalog-filter-url";
 import {
   hasTrailingSlash,
   normalizeUrlPath,
@@ -149,7 +150,13 @@ export function proxy(request: NextRequest) {
     // No Set-Cookie on pass-through responses: it would make them
     // uncacheable at the CDN (crawlers never send cookies, so they would
     // always miss). LocaleProvider persists the locale cookie client-side.
-    return NextResponse.next();
+    const response = NextResponse.next();
+
+    if (shouldNoindexCatalogFilterUrl(pathname, request.nextUrl.search)) {
+      response.headers.set("X-Robots-Tag", "noindex, follow");
+    }
+
+    return response;
   }
 
   const locale = resolveLocale(request, segment);

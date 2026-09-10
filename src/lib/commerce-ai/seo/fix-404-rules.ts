@@ -1,9 +1,10 @@
 import type { Locale } from "@/i18n/config";
-import { localizedHref } from "@/i18n/paths";
+import { getLocaleFromPath, localizedHref, stripLocaleFromPath } from "@/i18n/paths";
 import type { SiteLink } from "@/lib/commerce-ai/seo/site-link-inventory";
 import type { RedirectSuggestion } from "@/lib/commerce-ai/seo/fix-404.service";
 import { buildBrandCatalogHref } from "@/lib/shop/brand-url";
 import { buildEquipmentHubHref } from "@/lib/shop/category-url";
+import { resolveWordPressLegacyRedirect } from "@/lib/shop/wordpress-legacy-redirects";
 
 /** URLs that should stay unmatched (feeds, font assets, junk). */
 export function isIgnorableBrokenUrl(path: string) {
@@ -71,6 +72,19 @@ export function suggestRuleBasedRedirect(
   }
 
   const lower = from.toLowerCase();
+  const pathOnly = from.split("?")[0];
+  const pathLocale = getLocaleFromPath(pathOnly) ?? locale;
+  const basePath = stripLocaleFromPath(pathOnly);
+  const storefrontTarget = resolveWordPressLegacyRedirect(basePath, pathLocale);
+
+  if (storefrontTarget) {
+    return {
+      from,
+      to: localizedHref(pathLocale, storefrontTarget),
+      confidence: "high",
+      reason: "Legacy WordPress storefront URL",
+    };
+  }
 
   // Legacy paginated shop listings → equipment hub.
   if (/\/shop\/page\/\d+/i.test(lower) || /\/pood\/page\/\d+/i.test(lower)) {

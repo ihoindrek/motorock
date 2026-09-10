@@ -1,6 +1,8 @@
 import type { Locale } from "@/i18n/config";
+import { EQUIPMENT_BRAND_SLUGS } from "@/lib/shop/brand-catalog-url";
 import { buildEquipmentHubHref } from "@/lib/shop/category-url";
 import { buildBrandCatalogHref } from "@/lib/shop/brand-url";
+import { MOTORCYCLE_BRAND_SLUGS } from "@/lib/shop/resolve-product-brand";
 import { LEGACY_TOP_LEVEL_CATEGORY_REDIRECTS } from "@/lib/shop/equipment-legacy-redirects";
 import {
   canonicalizeWcCategorySlug,
@@ -33,6 +35,25 @@ const MOTORCYCLE_BRAND_CATEGORY_SLUGS: Record<string, string> = {
 };
 
 const SINGLE_WC_CATEGORY_REDIRECTS = buildSingleWcCategoryRedirects();
+
+const RESERVED_SHOP_CHILD_SEGMENTS = new Set([
+  "equipment",
+  "motorcycles",
+  "tools",
+  "tools-maintenance",
+  "cart",
+  "checkout",
+  "product",
+  "brands",
+  "page",
+]);
+
+const LEGACY_MOTORCYCLE_HUB_SHOP_SLUGS = new Set(["motron", "mutt", "malaguti"]);
+
+const KNOWN_BRAND_SHOP_SLUGS = new Set([
+  ...MOTORCYCLE_BRAND_SLUGS,
+  ...EQUIPMENT_BRAND_SLUGS,
+]);
 
 /** Old WPML / WordPress page slugs → canonical storefront paths (no locale). */
 const LEGACY_STATIC_PAGE_SLUGS: Record<string, string> = {
@@ -148,6 +169,58 @@ function redirectUnlessSame(pathname: string, target: string) {
 
 function resolveEquipmentHub(locale: Locale) {
   return buildEquipmentHubHref(locale === "et" ? "et" : "en");
+}
+
+function normalizeBrandShopSlug(slug: string) {
+  return slug.replace(/-2$/, "").replace(/-et$/, "");
+}
+
+function resolveLegacyShopBrandSlug(slug: string, locale: Locale) {
+  const mapped = MOTORCYCLE_BRAND_CATEGORY_SLUGS[slug];
+  if (mapped) {
+    return buildBrandCatalogHref(locale, mapped);
+  }
+
+  const normalized = normalizeBrandShopSlug(slug);
+
+  if (LEGACY_MOTORCYCLE_HUB_SHOP_SLUGS.has(normalized)) {
+    return "/shop/motorcycles";
+  }
+
+  if (KNOWN_BRAND_SHOP_SLUGS.has(normalized)) {
+    return buildBrandCatalogHref(locale, normalized);
+  }
+
+  return null;
+}
+
+function resolveLegacyShopArchiveRedirect(pathname: string, locale: Locale) {
+  if (/^\/shop\/page\/\d+\/?$/i.test(pathname) || /^\/pood\/page\/\d+\/?$/i.test(pathname)) {
+    return resolveEquipmentHub(locale);
+  }
+
+  if (
+    /^\/product-category\/page\/\d+\/?$/i.test(pathname) ||
+    /^\/tootekategooria\/page\/\d+\/?$/i.test(pathname)
+  ) {
+    return resolveEquipmentHub(locale);
+  }
+
+  if (pathname === "/equipment") {
+    return resolveEquipmentHub(locale);
+  }
+
+  const shopMatch = pathname.match(/^\/shop\/([a-z0-9-]+)\/?$/i);
+  if (!shopMatch) {
+    return null;
+  }
+
+  const slug = shopMatch[1].toLowerCase();
+  if (RESERVED_SHOP_CHILD_SEGMENTS.has(slug)) {
+    return null;
+  }
+
+  return resolveLegacyShopBrandSlug(slug, locale);
 }
 
 function buildSingleWcCategoryRedirects() {
@@ -385,6 +458,11 @@ export function resolveWordPressLegacyRedirect(
     return locale === "et"
       ? buildEquipmentHubHref("et")
       : buildEquipmentHubHref("en");
+  }
+
+  const shopArchiveTarget = resolveLegacyShopArchiveRedirect(normalized, locale);
+  if (shopArchiveTarget) {
+    return redirectUnlessSame(normalized, shopArchiveTarget);
   }
 
   return null;

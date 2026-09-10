@@ -89,6 +89,18 @@ describe("resolveWordPressLegacyRedirect", () => {
     expect(resolveWordPressLegacyRedirect("/home", "en")).toBe("/");
   });
 
+  it("maps legacy shop brand slugs and paginated archives", () => {
+    expect(resolveWordPressLegacyRedirect("/shop/brixton", "en")).toBe("/brand/brixton");
+    expect(resolveWordPressLegacyRedirect("/shop/brixton-2", "en")).toBe("/brand/brixton");
+    expect(resolveWordPressLegacyRedirect("/shop/holyfreedom", "en")).toBe(
+      "/brand/holyfreedom",
+    );
+    expect(resolveWordPressLegacyRedirect("/shop/motron", "en")).toBe("/shop/motorcycles");
+    expect(resolveWordPressLegacyRedirect("/shop/page/4", "en")).toBe("/shop/equipment");
+    expect(resolveWordPressLegacyRedirect("/pood/page/2", "et")).toBe("/tootekategooria");
+    expect(resolveWordPressLegacyRedirect("/equipment", "en")).toBe("/shop/equipment");
+  });
+
   it("maps legacy Woo archive roots and nested cart paths", () => {
     expect(resolveWordPressLegacyRedirect("/product-category", "en")).toBe(
       "/shop/equipment",
