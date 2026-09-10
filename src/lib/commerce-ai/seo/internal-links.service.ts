@@ -118,7 +118,7 @@ export class InternalLinksService {
     });
 
     if (inventory.length === 0) {
-      throw new AiEngineError("Site link inventory is empty", "inventory_unavailable");
+      throw new AiEngineError("Site link inventory is empty", "not_configured");
     }
 
     const allowedUrls = new Set(inventory.map((link) => link.url));
