@@ -80,7 +80,10 @@ export type CatalogProduct = {
   shopAudiences?: readonly ("men" | "women")[];
   /** Raw WooCommerce `productCategories` slugs from GraphQL. */
   wcCategorySlugs?: readonly string[];
+  /** Primary category for cards, SEO, and legacy filters. */
   category: ProductCategory;
+  /** All mapped Woo leaf categories when a product sits in more than one. */
+  categories?: readonly ProductCategory[];
   sizes: readonly string[];
   colors: readonly string[];
   /** Inseam / leg length (petite, regular, tall) when product has pa_leg-length. */

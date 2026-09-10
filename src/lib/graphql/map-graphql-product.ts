@@ -28,6 +28,7 @@ import { parseSpecsFromDescriptionHtml, resolveProductDescriptionHtml } from "@/
 import {
   canonicalizeWcCategorySlug,
   collectProductWcCategorySlugs,
+  resolveAllProductCategoriesFromWcNodes,
   resolveCategoryFromWcNodes,
 } from "@/lib/shop/wc-categories";
 import {
@@ -256,9 +257,10 @@ function resolveEquipmentMeta(
     gender = "women";
   }
 
+  const categories = resolveAllProductCategoriesFromWcNodes(slugs, productName);
   const category = resolveCategoryFromWcNodes(slugs, productName);
 
-  return { gender, category };
+  return { gender, category, categories };
 }
 
 function displayName(fullName: string, brand: string) {
@@ -639,7 +641,11 @@ export function mapGraphqlToCatalogProduct(
         product.sku,
       );
   const equipmentMeta = isMotorcycle
-    ? { gender: "unisex" as const, category: "motorcycles" as const }
+    ? {
+        gender: "unisex" as const,
+        category: "motorcycles" as const,
+        categories: ["motorcycles" as const],
+      }
     : resolveEquipmentMeta(product.productCategories, product.name);
   const shopAudiences = isMotorcycle
     ? undefined
@@ -710,6 +716,7 @@ export function mapGraphqlToCatalogProduct(
     shopAudiences,
     wcCategorySlugs,
     category: equipmentMeta.category,
+    categories: equipmentMeta.categories,
     sizes: sizes.length > 0 ? sizes : ["One size"],
     colors: colors.length > 0 ? colors : ["—"],
     legLengths: legLengths && legLengths.length > 1 ? legLengths : undefined,
@@ -766,7 +773,11 @@ export function mapGraphqlCardToCatalogProduct(
         product.sku,
       );
   const equipmentMeta = isMotorcycle
-    ? { gender: "unisex" as const, category: "motorcycles" as const }
+    ? {
+        gender: "unisex" as const,
+        category: "motorcycles" as const,
+        categories: ["motorcycles" as const],
+      }
     : resolveEquipmentMeta(product.productCategories, localized.name);
   const shopAudiences = isMotorcycle
     ? undefined
@@ -814,6 +825,7 @@ export function mapGraphqlCardToCatalogProduct(
     shopAudiences,
     wcCategorySlugs,
     category: equipmentMeta.category,
+    categories: equipmentMeta.categories,
     sizes: sizes.length > 0 ? sizes : ["One size"],
     colors: colors.length > 0 ? colors : ["—"],
     variations,

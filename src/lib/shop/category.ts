@@ -6,10 +6,8 @@ import type {
 import type { Dictionary } from "@/i18n/dictionaries/en";
 import type { Locale } from "@/i18n/config";
 import {
-  canonicalizeWcCategorySlugs,
   HELMET_WC_SLUGS,
   isGenderGearLeafRoute,
-  mapWcSlugToCategory,
   productHasOppositeGenderGearSlug,
   productInAccessoriesBranch,
   productInProtectionBranch,
@@ -199,16 +197,6 @@ export function filterProductsByRoute(
       const nameGender = productNameIndicatesGender(product.name);
       if (nameGender && nameGender !== "unisex" && nameGender !== gender) {
         return false;
-      }
-
-      const routeCategory = mapWcSlugToCategory(route.wcCategorySlug!);
-      if (routeCategory && product.category !== routeCategory) {
-        const slugs = canonicalizeWcCategorySlugs(product.wcCategorySlugs);
-
-        // Products can sit in multiple Woo leaf categories (e.g. rain-gear + jackets).
-        if (!slugs.includes(route.wcCategorySlug!)) {
-          return false;
-        }
       }
     }
 

@@ -1,4 +1,8 @@
-import type { ProductCategory, ProductGender } from "@/types/catalog-product";
+import type {
+  CatalogProduct,
+  ProductCategory,
+  ProductGender,
+} from "@/types/catalog-product";
 
 /** WooCommerce `productCategories` slug → storefront category */
 export const WC_SLUG_TO_CATEGORY: Record<string, ProductCategory> = {
@@ -465,6 +469,50 @@ export function pickBestCategory(
   return candidates[0];
 }
 
+export function resolveAllProductCategoriesFromWcNodes(
+  slugs: readonly string[],
+  productName: string,
+): readonly ProductCategory[] {
+  const mapped: ProductCategory[] = [];
+
+  for (const slug of slugs.map(canonicalizeWcCategorySlug)) {
+    const category = mapWcSlugToCategory(slug);
+
+    if (category && !mapped.includes(category)) {
+      mapped.push(category);
+    }
+  }
+
+  if (mapped.length > 0) {
+    return mapped;
+  }
+
+  return [inferCategoryFromName(productName) ?? "other"];
+}
+
+export function resolveProductCatalogCategories(
+  product: Pick<CatalogProduct, "category" | "categories">,
+): readonly ProductCategory[] {
+  if (product.categories?.length) {
+    return product.categories;
+  }
+
+  return [product.category];
+}
+
+export function productHasMappedCategory(
+  product: Pick<CatalogProduct, "category" | "categories" | "wcCategorySlugs">,
+  category: ProductCategory,
+): boolean {
+  if (resolveProductCatalogCategories(product).includes(category)) {
+    return true;
+  }
+
+  return canonicalizeWcCategorySlugs(product.wcCategorySlugs).some(
+    (slug) => mapWcSlugToCategory(slug) === category,
+  );
+}
+
 export function inferCategoryFromName(name: string): ProductCategory | undefined {
   const lower = name.toLowerCase();
 
@@ -492,14 +540,7 @@ export function resolveCategoryFromWcNodes(
   slugs: readonly string[],
   productName: string,
 ): ProductCategory {
-  const mapped = slugs
-    .map(canonicalizeWcCategorySlug)
-    .map((slug) => mapWcSlugToCategory(slug))
-    .filter((category): category is ProductCategory => category !== undefined);
+  const categories = resolveAllProductCategoriesFromWcNodes(slugs, productName);
 
-  return (
-    pickBestCategory(mapped) ??
-    inferCategoryFromName(productName) ??
-    "other"
-  );
+  return pickBestCategory(categories) ?? categories[0] ?? "other";
 }

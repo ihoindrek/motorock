@@ -42,6 +42,7 @@ import { MotorcycleBrandLogoFilter } from "@/components/shop/motorcycle-brand-lo
 import { MobileFilterDrawer } from "@/components/ui/mobile-filter-drawer";
 import { localizedHref } from "@/i18n/paths";
 import { buildEquipmentHubHref } from "@/lib/shop/category-url";
+import { productHasMappedCategory } from "@/lib/shop/wc-categories";
 import { trackViewItemList } from "@/lib/analytics";
 import type { EquipmentSubcategory } from "@/lib/shop/equipment-subcategories";
 import {
@@ -179,7 +180,9 @@ function applyClientFilters(
 
     if (
       filters.categories.length > 0 &&
-      !filters.categories.includes(product.category)
+      !filters.categories.some((category) =>
+        productHasMappedCategory(product, category),
+      )
     ) {
       return false;
     }

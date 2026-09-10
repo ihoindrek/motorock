@@ -75,6 +75,20 @@ describe("brand category filter", () => {
     expect(matchProductCategoriesFromParam("unknown", options)).toEqual([]);
   });
 
+  it("includes secondary Woo categories in brand filter options", () => {
+    const options = resolveAvailableProductCategories(
+      [
+        {
+          ...product("jackets"),
+          categories: ["jackets", "rain-gear"],
+        },
+      ],
+      dict,
+    );
+
+    expect(options.map((option) => option.id)).toEqual(["jackets", "rain-gear"]);
+  });
+
   it("hides the other category from brand filters", () => {
     const options = resolveAvailableProductCategories(
       [product("jackets"), product("other")],

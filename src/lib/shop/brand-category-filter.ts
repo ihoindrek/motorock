@@ -1,5 +1,6 @@
 import type { Dictionary } from "@/i18n/dictionaries/en";
 import { resolveProductCategoryLabel } from "@/lib/seo/product-seo-copy";
+import { resolveProductCatalogCategories } from "@/lib/shop/wc-categories";
 import type { CatalogProduct, ProductCategory } from "@/types/catalog-product";
 
 const BRAND_FILTER_CATEGORY_ORDER: readonly ProductCategory[] = [
@@ -43,11 +44,13 @@ export function resolveAvailableProductCategories(
   const counts = new Map<ProductCategory, number>();
 
   for (const product of products) {
-    if (HIDDEN_BRAND_FILTER_CATEGORIES.has(product.category)) {
-      continue;
-    }
+    for (const category of resolveProductCatalogCategories(product)) {
+      if (HIDDEN_BRAND_FILTER_CATEGORIES.has(category)) {
+        continue;
+      }
 
-    counts.set(product.category, (counts.get(product.category) ?? 0) + 1);
+      counts.set(category, (counts.get(category) ?? 0) + 1);
+    }
   }
 
   return BRAND_FILTER_CATEGORY_ORDER.filter((category) => counts.has(category))
