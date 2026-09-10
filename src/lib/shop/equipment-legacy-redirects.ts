@@ -85,6 +85,17 @@ export function resolveLegacyEquipmentRedirect(pathname: string): string | null 
     }
   }
 
+  if (
+    segments.length === 2 &&
+    segments[0] === "for-women" &&
+    segments[1] === "rain-gear"
+  ) {
+    return redirectUnlessSame(
+      pathname,
+      buildEquipmentCategoryHref("en", "for-women", "rain-gear-2"),
+    );
+  }
+
   if (segments.length === 2 && segments[0] === "accessories") {
     const legacyCategory = segments[1] as ProductCategory;
     const wcSlug = CATEGORY_TO_WC_SLUG[legacyCategory];

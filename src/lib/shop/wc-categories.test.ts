@@ -35,7 +35,7 @@ describe("resolveAllProductCategoriesFromWcNodes", () => {
   it("returns every mapped Woo leaf category", () => {
     expect(
       resolveAllProductCategoriesFromWcNodes(
-        ["jackets-and-tags-2", "for-women", "rain-gear"],
+        ["jackets-and-tags-2", "for-women", "rain-gear-2"],
         "Aqua Waterproof Jacket",
       ),
     ).toEqual(["jackets", "rain-gear"]);
@@ -47,7 +47,7 @@ describe("productHasMappedCategory", () => {
     const entry = product({
       category: "jackets",
       categories: ["jackets", "rain-gear"],
-      wcCategorySlugs: ["jackets-and-tags-2", "for-women", "rain-gear"],
+      wcCategorySlugs: ["jackets-and-tags-2", "for-women", "rain-gear-2"],
     });
 
     expect(productHasMappedCategory(entry, "jackets")).toBe(true);

@@ -23,6 +23,8 @@ export const WC_SLUG_TO_CATEGORY: Record<string, ProductCategory> = {
   "base-layer-warm-underwear": "base-layers",
   "base-layer-warm-underwear-2": "base-layers",
   "rain-gear": "rain-gear",
+  "rain-gear-2": "rain-gear",
+  vihmavarustus: "rain-gear",
   goggles: "goggles",
   headwear: "headwear",
   "bags-backpacks": "bags",
@@ -71,7 +73,6 @@ export const WC_SLUG_CANONICAL: Record<string, string> = {
   sokid: "socks",
   "t-sargid-ja-trikood": "t-shirts-jerseys",
   "t-sargid-ja-sargid": "t-shirts",
-  vihmavarustus: "rain-gear",
   "tooriistad-ja-hooldus": "tools-maintenance",
   "vestid-2": "vests-3",
   vestid: "vests-2",
@@ -227,7 +228,7 @@ export function productInHomepageAccessoriesTab(
 export const TOOLS_WC_SLUG = "tools-maintenance";
 
 /** Shared leaf slugs under both `for-men` and `for-women` (not gender-exclusive). */
-export const SHARED_GEAR_LEAF_WC_SLUGS = new Set(["rain-gear"]);
+export const SHARED_GEAR_LEAF_WC_SLUGS = new Set<string>();
 
 /** Leaf Woo slugs under `for-men` — paired with {@link WOMEN_GEAR_LEAF_WC_SLUGS}. */
 export const MEN_GEAR_LEAF_WC_SLUGS = new Set([
@@ -239,6 +240,7 @@ export const MEN_GEAR_LEAF_WC_SLUGS = new Set([
   "sweaters",
   "t-shirts",
   "base-layer-warm-underwear",
+  "rain-gear",
 ]);
 
 /** Leaf Woo slugs under `for-women` — paired with {@link MEN_GEAR_LEAF_WC_SLUGS}. */
@@ -251,6 +253,7 @@ export const WOMEN_GEAR_LEAF_WC_SLUGS = new Set([
   "hoodies-sweatshirts",
   "t-shirts-jerseys",
   "base-layer-warm-underwear-2",
+  "rain-gear-2",
 ]);
 
 export function productHasOppositeGenderGearSlug(

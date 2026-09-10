@@ -139,7 +139,7 @@ describe("filterProductsByRoute men's jackets leaf", () => {
           category: "jackets",
           categories: ["jackets", "rain-gear"],
           shopAudiences: ["women"],
-          wcCategorySlugs: ["jackets-and-tags-2", "for-women", "rain-gear"],
+          wcCategorySlugs: ["jackets-and-tags-2", "for-women", "rain-gear-2"],
         }),
       ],
       jacketsRoute,
@@ -156,8 +156,8 @@ describe("filterProductsByRoute men's jackets leaf", () => {
       description: "",
       breadcrumbs: [],
       gender: "women",
-      wcCategorySlug: "rain-gear",
-      wcCategoryPath: ["for-women", "rain-gear"],
+      wcCategorySlug: "rain-gear-2",
+      wcCategoryPath: ["for-women", "rain-gear-2"],
     };
 
     const filtered = filterProductsByRoute(
@@ -169,7 +169,7 @@ describe("filterProductsByRoute men's jackets leaf", () => {
           gender: "women",
           category: "jackets",
           shopAudiences: ["women"],
-          wcCategorySlugs: ["jackets-and-tags-2", "for-women", "rain-gear"],
+          wcCategorySlugs: ["jackets-and-tags-2", "for-women", "rain-gear-2"],
         }),
         product({
           slug: "aqua-waterproof-trousers",
@@ -178,7 +178,7 @@ describe("filterProductsByRoute men's jackets leaf", () => {
           gender: "women",
           category: "pants",
           shopAudiences: ["women"],
-          wcCategorySlugs: ["pants-jeans", "for-women", "rain-gear"],
+          wcCategorySlugs: ["pants-jeans", "for-women", "rain-gear-2"],
         }),
       ],
       rainRoute,
@@ -218,7 +218,7 @@ describe("filterProductsByRoute men's jackets leaf", () => {
           gender: "women",
           category: "rain-gear",
           shopAudiences: ["women"],
-          wcCategorySlugs: ["rain-gear", "for-women"],
+          wcCategorySlugs: ["rain-gear-2", "for-women"],
         }),
       ],
       rainRoute,

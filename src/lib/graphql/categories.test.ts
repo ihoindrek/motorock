@@ -57,7 +57,7 @@ describe("buildIndex", () => {
         parent: { node: { slug: "for-men" } },
       },
       {
-        slug: "rain-gear",
+        slug: "rain-gear-2",
         name: "Rain Gear",
         parent: { node: { slug: "for-women" } },
       },
@@ -67,15 +67,15 @@ describe("buildIndex", () => {
       expect.objectContaining({ slug: "for-men", parentSlug: null }),
       expect.objectContaining({ slug: "rain-gear", parentSlug: "for-men" }),
     ]);
-    expect(resolveCategoryPath(index, ["for-women", "rain-gear"])).toEqual([
+    expect(resolveCategoryPath(index, ["for-women", "rain-gear-2"])).toEqual([
       expect.objectContaining({ slug: "for-women", parentSlug: null }),
-      expect.objectContaining({ slug: "rain-gear", parentSlug: "for-women" }),
+      expect.objectContaining({ slug: "rain-gear-2", parentSlug: "for-women" }),
     ]);
     expect(
-      resolveLocalizedCategoryPath(index, ["for-women", "rain-gear"], "en"),
+      resolveLocalizedCategoryPath(index, ["for-women", "rain-gear-2"], "en"),
     ).toEqual([
       expect.objectContaining({ slug: "for-women", parentSlug: null }),
-      expect.objectContaining({ slug: "rain-gear", parentSlug: "for-women" }),
+      expect.objectContaining({ slug: "rain-gear-2", parentSlug: "for-women" }),
     ]);
   });
 });

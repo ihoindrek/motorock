@@ -8,9 +8,9 @@ describe("resolveEquipmentCatalogWhere", () => {
         title: "Rain Gear",
         description: "",
         breadcrumbs: [],
-        wcCategorySlug: "rain-gear",
+        wcCategorySlug: "rain-gear-2",
         wcCategoryId: 1797,
-        wcCategoryPath: ["for-women", "rain-gear"],
+        wcCategoryPath: ["for-women", "rain-gear-2"],
         gender: "women",
       }),
     ).toEqual({ categoryId: 1797 });
