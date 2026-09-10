@@ -14,7 +14,7 @@ if ( defined( 'MOTOROCK_COMMERCE_AI_LOADED' ) ) {
 }
 
 define( 'MOTOROCK_COMMERCE_AI_LOADED', true );
-define( 'MOTOROCK_COMMERCE_AI_VERSION', '0.6.5' );
+define( 'MOTOROCK_COMMERCE_AI_VERSION', '0.6.6' );
 
 $commerce_ai_root = dirname( __DIR__ );
 $ai_writer_root   = $commerce_ai_root . '/motorock-ai-writer';

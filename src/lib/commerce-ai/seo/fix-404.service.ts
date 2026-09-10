@@ -6,6 +6,10 @@ import { getPromptTemplate } from "@/lib/ai/prompts/templates";
 import { renderPromptTemplate } from "@/lib/ai/prompts/prompt-renderer";
 import type { ProviderRegistry } from "@/lib/ai/providers/provider-registry";
 import {
+  isIgnorableBrokenUrl,
+  suggestRuleBasedRedirect,
+} from "@/lib/commerce-ai/seo/fix-404-rules";
+import {
   fetchSiteLinkInventory,
   formatLinkInventoryForPrompt,
 } from "@/lib/commerce-ai/seo/site-link-inventory";
@@ -23,7 +27,7 @@ const Fix404OutputSchema = z.object({
         reason: z.string().max(300).optional(),
       }),
     )
-    .max(50),
+    .max(30),
 });
 
 export type RedirectSuggestion = {
@@ -41,6 +45,7 @@ export type Fix404JobResult = {
   inputCount: number;
   redirects: RedirectSuggestion[];
   unmatched: string[];
+  warnings?: string[];
   provider?: string;
   model?: string;
   durationMs: number;
@@ -50,6 +55,9 @@ export type Fix404Target = {
   /** Broken URLs — one per line or as array. */
   urls?: string | string[];
 };
+
+const MAX_URLS = 100;
+const AI_BATCH_SIZE = 25;
 
 function normalizeBrokenUrls(input: Fix404Target["urls"]): string[] {
   const raw =
@@ -87,7 +95,7 @@ function normalizeBrokenUrls(input: Fix404Target["urls"]): string[] {
     }
   }
 
-  return normalized.slice(0, 50);
+  return normalized.slice(0, MAX_URLS);
 }
 
 export class Fix404Service {
@@ -105,14 +113,8 @@ export class Fix404Service {
     options?: { provider?: "openai" | "anthropic" | "gemini" };
   }): Promise<Fix404JobResult> {
     const started = Date.now();
+    const warnings: string[] = [];
     const providerName = input.options?.provider ?? this.deps.config.defaultProvider;
-
-    if (!isProviderConfigured(providerName, this.deps.config)) {
-      throw new AiEngineError(
-        `AI provider "${providerName}" is not configured`,
-        "not_configured",
-      );
-    }
 
     const brokenUrls = normalizeBrokenUrls(input.target.urls);
 
@@ -130,7 +132,7 @@ export class Fix404Service {
 
     const inventory = await fetchSiteLinkInventory(input.locale, {
       productLimit: 120,
-      postLimit: 30,
+      postLimit: 40,
     });
 
     if (inventory.length === 0) {
@@ -138,51 +140,92 @@ export class Fix404Service {
     }
 
     const allowedUrls = new Set(inventory.map((link) => link.url));
-    const template = getPromptTemplate("fix_404.v1");
-    const rendered = renderPromptTemplate(template, {
-      locale: input.locale,
-      brokenUrls: brokenUrls.join("\n"),
-      linkInventory: formatLinkInventoryForPrompt(inventory),
-    });
-
-    const provider = this.deps.providerRegistry.get(providerName);
-    const model = resolveActiveModel(providerName, this.deps.config);
-
-    const { data, model: resolvedModel } = await provider.completeJson({
-      model,
-      system: rendered.system,
-      user: rendered.user,
-      schema: Fix404OutputSchema,
-    });
-
+    const redirects: RedirectSuggestion[] = [];
     const matchedFrom = new Set<string>();
-    const redirects = data.redirects.filter((entry) => {
-      if (!allowedUrls.has(entry.to)) {
-        return false;
+
+    // Pass 1: rule-based matching (fast, no AI).
+    for (const from of brokenUrls) {
+      if (isIgnorableBrokenUrl(from)) {
+        matchedFrom.add(from);
+        continue;
       }
-      if (!brokenUrls.includes(entry.from)) {
-        return false;
+
+      const ruleMatch = suggestRuleBasedRedirect(from, input.locale, inventory);
+      if (ruleMatch && allowedUrls.has(ruleMatch.to)) {
+        redirects.push(ruleMatch);
+        matchedFrom.add(from);
       }
-      matchedFrom.add(entry.from);
-      return true;
-    });
+    }
+
+    const remainingForAi = brokenUrls.filter((url) => !matchedFrom.has(url));
+
+    // Pass 2: AI for remaining URLs (in batches).
+    let resolvedModel: string | undefined;
+
+    if (remainingForAi.length > 0 && isProviderConfigured(providerName, this.deps.config)) {
+      const template = getPromptTemplate("fix_404.v1");
+      const provider = this.deps.providerRegistry.get(providerName);
+      const model = resolveActiveModel(providerName, this.deps.config);
+
+      for (let offset = 0; offset < remainingForAi.length; offset += AI_BATCH_SIZE) {
+        const batch = remainingForAi.slice(offset, offset + AI_BATCH_SIZE);
+        const rendered = renderPromptTemplate(template, {
+          locale: input.locale,
+          brokenUrls: batch.join("\n"),
+          linkInventory: formatLinkInventoryForPrompt(inventory),
+        });
+
+        try {
+          const { data, model: usedModel } = await provider.completeJson({
+            model,
+            system: rendered.system,
+            user: rendered.user,
+            schema: Fix404OutputSchema,
+          });
+          resolvedModel = usedModel;
+
+          for (const entry of data.redirects) {
+            if (!allowedUrls.has(entry.to) || !batch.includes(entry.from)) {
+              continue;
+            }
+            if (matchedFrom.has(entry.from)) {
+              continue;
+            }
+            redirects.push(entry);
+            matchedFrom.add(entry.from);
+          }
+        } catch (error) {
+          const message = error instanceof Error ? error.message : "AI batch failed";
+          warnings.push(`AI batch failed (${batch.length} URLs): ${message}`);
+          break;
+        }
+      }
+    } else if (remainingForAi.length > 0) {
+      warnings.push("AI provider not configured — only rule-based matches returned.");
+    }
 
     const unmatched = brokenUrls.filter((url) => !matchedFrom.has(url));
+
+    if (brokenUrls.length >= MAX_URLS) {
+      warnings.push(`Only the first ${MAX_URLS} unique URLs were processed.`);
+    }
 
     logStorefrontEvent("commerce-ai.fix_404", {
       jobId: input.jobId,
       locale: input.locale,
       inputCount: brokenUrls.length,
       suggested: redirects.length,
+      ruleBased: redirects.filter((r) => !r.reason?.includes("AI")).length,
     });
 
     return {
-      ok: true,
+      ok: redirects.length > 0 || unmatched.length > 0,
       dryRun: true,
       locale: input.locale,
       inputCount: brokenUrls.length,
       redirects,
       unmatched,
+      warnings: warnings.length > 0 ? warnings : undefined,
       provider: providerName,
       model: resolvedModel,
       durationMs: Date.now() - started,
