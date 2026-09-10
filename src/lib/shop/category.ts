@@ -160,7 +160,11 @@ export function filterProductsByRoute(
 
     if (
       route.wcCategorySlug &&
-      !productMatchesWcCategoryRoute(product.wcCategorySlugs, route.wcCategorySlug)
+      !productMatchesWcCategoryRoute(
+        product.wcCategorySlugs,
+        route.wcCategorySlug,
+        route.wcCategoryPath,
+      )
     ) {
       // Gender roots: products often only list the child slug (e.g. pants-jeans).
       // Fall back to shopAudiences, which already accounts for parent categories.

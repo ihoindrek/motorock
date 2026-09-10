@@ -119,6 +119,45 @@ describe("filterProductsByRoute men's jackets leaf", () => {
     expect(filtered).toHaveLength(1);
   });
 
+  it("keeps men's rain gear when rain-gear slug is shared across genders", () => {
+    const rainRoute: CategoryRoute = {
+      title: "Rain Gear",
+      description: "",
+      breadcrumbs: [],
+      gender: "men",
+      wcCategorySlug: "rain-gear",
+      wcCategoryPath: ["for-men", "rain-gear"],
+    };
+
+    const filtered = filterProductsByRoute(
+      [
+        product({
+          slug: "bobhead-waterproof-jacket",
+          brand: "Bobhead",
+          name: "BOBHEAD Waterproof Jacket",
+          gender: "men",
+          category: "rain-gear",
+          shopAudiences: ["men"],
+          wcCategorySlugs: ["rain-gear", "for-men"],
+        }),
+        product({
+          slug: "bobhead-waterproof-pant-womens",
+          brand: "Bobhead",
+          name: "BOBHEAD Waterproof Pant Women's",
+          gender: "women",
+          category: "rain-gear",
+          shopAudiences: ["women"],
+          wcCategorySlugs: ["rain-gear", "for-women"],
+        }),
+      ],
+      rainRoute,
+    );
+
+    expect(filtered.map((product) => product.slug)).toEqual([
+      "bobhead-waterproof-jacket",
+    ]);
+  });
+
   it("keeps men's jackets in the correct category", () => {
     const filtered = filterProductsByRoute(
       [

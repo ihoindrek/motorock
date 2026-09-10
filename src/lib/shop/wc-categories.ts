@@ -222,6 +222,9 @@ export function productInHomepageAccessoriesTab(
 
 export const TOOLS_WC_SLUG = "tools-maintenance";
 
+/** Shared leaf slugs under both `for-men` and `for-women` (not gender-exclusive). */
+export const SHARED_GEAR_LEAF_WC_SLUGS = new Set(["rain-gear"]);
+
 /** Leaf Woo slugs under `for-men` — paired with {@link WOMEN_GEAR_LEAF_WC_SLUGS}. */
 export const MEN_GEAR_LEAF_WC_SLUGS = new Set([
   "jackets-and-tags",
@@ -232,7 +235,6 @@ export const MEN_GEAR_LEAF_WC_SLUGS = new Set([
   "sweaters",
   "t-shirts",
   "base-layer-warm-underwear",
-  "rain-gear",
 ]);
 
 /** Leaf Woo slugs under `for-women` — paired with {@link MEN_GEAR_LEAF_WC_SLUGS}. */
@@ -245,14 +247,15 @@ export const WOMEN_GEAR_LEAF_WC_SLUGS = new Set([
   "hoodies-sweatshirts",
   "t-shirts-jerseys",
   "base-layer-warm-underwear-2",
-  "rain-gear",
 ]);
 
 export function productHasOppositeGenderGearSlug(
   wcCategorySlugs: readonly string[] | undefined,
   gender: Exclude<ProductGender, "unisex">,
 ): boolean {
-  const slugs = canonicalizeWcCategorySlugs(wcCategorySlugs);
+  const slugs = canonicalizeWcCategorySlugs(wcCategorySlugs).filter(
+    (slug) => !SHARED_GEAR_LEAF_WC_SLUGS.has(slug),
+  );
 
   if (gender === "men") {
     return slugs.some((slug) => WOMEN_GEAR_LEAF_WC_SLUGS.has(slug));
@@ -296,12 +299,29 @@ export function isGenderGearLeafRoute(
 export function productMatchesWcCategoryRoute(
   wcCategorySlugs: readonly string[] | undefined,
   routeWcCategorySlug: string | undefined,
+  routeWcCategoryPath?: readonly string[],
 ) {
   if (!routeWcCategorySlug || !wcCategorySlugs?.length) {
     return true;
   }
 
-  return wcCategorySlugs.includes(routeWcCategorySlug);
+  if (!wcCategorySlugs.includes(routeWcCategorySlug)) {
+    return false;
+  }
+
+  const audienceRoot = routeWcCategoryPath?.[0];
+
+  if (
+    (audienceRoot === "for-men" || audienceRoot === "for-women") &&
+    routeWcCategoryPath &&
+    routeWcCategoryPath.length > 1 &&
+    routeWcCategorySlug !== audienceRoot &&
+    SHARED_GEAR_LEAF_WC_SLUGS.has(routeWcCategorySlug)
+  ) {
+    return wcCategorySlugs.includes(audienceRoot);
+  }
+
+  return true;
 }
 
 export function productInProtectionBranch(
