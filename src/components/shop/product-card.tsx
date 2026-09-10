@@ -16,7 +16,7 @@ import {
   getColorSwatchStyle,
 } from "@/lib/shop/product-color-swatches";
 import { getProductQuickAddMode } from "@/lib/shop/product-quick-add";
-import { MotorcycleProductImage } from "@/components/shop/motorcycle-product-image";
+import { MotorcycleImageStage } from "@/components/shop/motorcycle-image-stage";
 import { localizedProductHref } from "@/lib/shop/product-url";
 
 type ProductCardProps = {
@@ -26,7 +26,8 @@ type ProductCardProps = {
 const EQUIPMENT_IMAGE_CLASS = "object-contain object-center p-4 sm:p-5";
 const EQUIPMENT_IMAGE_LAYER =
   "absolute inset-0 bg-catalog [&_img]:mix-blend-multiply";
-const MOTORCYCLE_FIGURE_CLASS = "relative aspect-[4/3] overflow-hidden bg-moto";
+const MOTORCYCLE_CARD_IMAGE_SIZES =
+  "(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw";
 
 export function ProductCard({ product }: ProductCardProps) {
   const locale = useLocale();
@@ -54,86 +55,97 @@ export function ProductCard({ product }: ProductCardProps) {
       gallery.find((src) => src && src !== product.image) ?? gallery[0]
     );
   }, [isMotorcycle, product.gallery, product.image]);
-  const imageClassName = isMotorcycle
-    ? "absolute inset-0 h-full w-full object-contain object-center p-3 mix-blend-multiply transition-transform duration-500 ease-out motion-reduce:transition-none motion-reduce:group-hover:scale-100 group-hover:scale-[1.06] sm:p-4"
-    : EQUIPMENT_IMAGE_CLASS;
   const imageFadeClass =
     "transition-[opacity,transform] duration-500 ease-in-out motion-reduce:transition-none";
 
+  const overlayBadges = (
+    <>
+      {product.isNew ? <NewProductBadge variant="overlay" /> : null}
+      {isMotorcycle && product.showroomAvailable && product.inStock ? (
+        <InStoreNowBadge variant="overlay" />
+      ) : null}
+      {!product.inStock ? (
+        <span
+          className={`absolute left-3 z-10 bg-ink px-2.5 py-1 font-body text-[9px] font-bold uppercase tracking-aggressive text-paper ${
+            product.isNew ? "bottom-3 top-auto" : "top-3"
+          }`}
+        >
+          {dict.search.soldOut}
+        </span>
+      ) : null}
+    </>
+  );
+
   return (
     <article className="group relative flex h-full flex-col">
-      <figure
-        className={
-          isMotorcycle
-            ? MOTORCYCLE_FIGURE_CLASS
-            : "relative isolate aspect-[3/4] overflow-hidden rounded-sm bg-catalog shadow-none transition-[transform,box-shadow] duration-300 ease-out motion-reduce:transition-none group-hover:-translate-y-1 group-hover:shadow-[0_20px_50px_-20px_rgba(255,90,0,0.35),0_8px_24px_-12px_rgba(11,11,11,0.12)]"
-        }
-      >
-        <Link
-          href={productHref}
-          prefetch={isMotorcycle ? true : undefined}
-          className="absolute inset-0 z-0 outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-          aria-label={product.name}
-        >
-          {hoverGalleryImage ? (
-            <>
-              <div
-                className={`${EQUIPMENT_IMAGE_LAYER} ${imageFadeClass} opacity-100 group-hover:opacity-0 motion-reduce:group-hover:opacity-100`}
-              >
+      {isMotorcycle ? (
+        <div className="relative">
+          <Link
+            href={productHref}
+            prefetch
+            className="block outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+            aria-label={product.name}
+          >
+            <MotorcycleImageStage
+              src={product.image}
+              alt=""
+              sizes={MOTORCYCLE_CARD_IMAGE_SIZES}
+              aspectClass="aspect-[4/3] w-full"
+              className="motion-reduce:transition-none group-hover:[&_img]:scale-[1.06] motion-reduce:group-hover:[&_img]:scale-100"
+            />
+          </Link>
+          {overlayBadges}
+        </div>
+      ) : (
+        <figure className="relative isolate aspect-[3/4] overflow-hidden rounded-sm bg-catalog shadow-none transition-[transform,box-shadow] duration-300 ease-out motion-reduce:transition-none group-hover:-translate-y-1 group-hover:shadow-[0_20px_50px_-20px_rgba(255,90,0,0.35),0_8px_24px_-12px_rgba(11,11,11,0.12)]">
+          <Link
+            href={productHref}
+            className="absolute inset-0 z-0 outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+            aria-label={product.name}
+          >
+            {hoverGalleryImage ? (
+              <>
+                <div
+                  className={`${EQUIPMENT_IMAGE_LAYER} ${imageFadeClass} opacity-100 group-hover:opacity-0 motion-reduce:group-hover:opacity-100`}
+                >
+                  <Image
+                    src={product.image}
+                    alt=""
+                    fill
+                    sizes={MOTORCYCLE_CARD_IMAGE_SIZES}
+                    className={`${EQUIPMENT_IMAGE_CLASS} ${imageFadeClass} group-hover:scale-[1.02] motion-reduce:group-hover:scale-100`}
+                  />
+                </div>
+                <div
+                  className={`${EQUIPMENT_IMAGE_LAYER} ${imageFadeClass} opacity-0 group-hover:opacity-100 motion-reduce:opacity-0 motion-reduce:group-hover:opacity-0`}
+                >
+                  <Image
+                    src={hoverGalleryImage}
+                    alt=""
+                    aria-hidden="true"
+                    fill
+                    sizes={MOTORCYCLE_CARD_IMAGE_SIZES}
+                    className={`${EQUIPMENT_IMAGE_CLASS} ${imageFadeClass} scale-[1.03] group-hover:scale-[1.02] motion-reduce:scale-100 motion-reduce:group-hover:scale-100`}
+                  />
+                </div>
+              </>
+            ) : (
+              <div className={EQUIPMENT_IMAGE_LAYER}>
                 <Image
                   src={product.image}
                   alt=""
                   fill
-                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                  className={`${imageClassName} ${imageFadeClass} group-hover:scale-[1.02] motion-reduce:group-hover:scale-100`}
+                  sizes={MOTORCYCLE_CARD_IMAGE_SIZES}
+                  className={`relative z-0 transition-transform duration-500 ease-out motion-reduce:transition-none motion-reduce:group-hover:scale-100 ${EQUIPMENT_IMAGE_CLASS} group-hover:scale-[1.02]`}
                 />
               </div>
-              <div
-                className={`${EQUIPMENT_IMAGE_LAYER} ${imageFadeClass} opacity-0 group-hover:opacity-100 motion-reduce:opacity-0 motion-reduce:group-hover:opacity-0`}
-              >
-                <Image
-                  src={hoverGalleryImage}
-                  alt=""
-                  aria-hidden="true"
-                  fill
-                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                  className={`${imageClassName} ${imageFadeClass} scale-[1.03] group-hover:scale-[1.02] motion-reduce:scale-100 motion-reduce:group-hover:scale-100`}
-                />
-              </div>
-            </>
-          ) : isMotorcycle ? (
-            <MotorcycleProductImage src={product.image} className={imageClassName} />
-          ) : (
-            <div className={EQUIPMENT_IMAGE_LAYER}>
-              <Image
-                src={product.image}
-                alt=""
-                fill
-                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                className={`relative z-0 transition-transform duration-500 ease-out motion-reduce:transition-none motion-reduce:group-hover:scale-100 ${imageClassName} group-hover:scale-[1.02]`}
-              />
-            </div>
-          )}
-        </Link>
+            )}
+          </Link>
 
-        {product.isNew ? <NewProductBadge variant="overlay" /> : null}
-        {isMotorcycle && product.showroomAvailable && product.inStock ? (
-          <InStoreNowBadge variant="overlay" />
-        ) : null}
-        {!product.inStock ? (
-          <span
-            className={`absolute left-3 z-10 bg-ink px-2.5 py-1 font-body text-[9px] font-bold uppercase tracking-aggressive text-paper ${
-              product.isNew ? "bottom-3 top-auto" : "top-3"
-            }`}
-          >
-            {dict.search.soldOut}
-          </span>
-        ) : null}
-
-        {!isMotorcycle ? (
+          {overlayBadges}
           <ProductCardQuickAdd product={product} mode={quickAddMode} />
-        ) : null}
-      </figure>
+        </figure>
+      )}
 
       <Link
         href={productHref}
