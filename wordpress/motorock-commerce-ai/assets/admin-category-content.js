@@ -4,16 +4,30 @@
   var config = window.MotorockCommerceAiCategoryContent || {};
   var i18n = config.i18n || {};
 
-  if (!button || !resultEl || !window.MotorockAiStorefront) {
-    return;
-  }
-
   function escapeHtml(value) {
     return String(value)
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;");
+  }
+
+  if (!button || !resultEl) {
+    return;
+  }
+
+  if (!window.MotorockAiStorefront) {
+    var storefrontConfig = window.MotorockAiStorefrontConfig || {};
+    var storefrontI18n = storefrontConfig.i18n || {};
+    var setupError =
+      storefrontI18n.notConfigured ||
+      "Commerce AI scripts did not load. Hard-refresh this page (Cmd+Shift+R).";
+
+    button.addEventListener("click", function () {
+      resultEl.innerHTML = "<p>" + escapeHtml(setupError) + "</p>";
+    });
+
+    return;
   }
 
   function selectedLocale() {

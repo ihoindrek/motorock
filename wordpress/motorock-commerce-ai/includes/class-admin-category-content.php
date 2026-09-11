@@ -28,9 +28,19 @@ class Motorock_Commerce_Ai_Admin_Category_Content {
 	}
 
 	public static function enqueue_assets( $hook_suffix ) {
-		if ( $hook_suffix !== Motorock_Commerce_Ai_Admin_Menu::page_hook( self::PAGE_SLUG ) ) {
+		$expected_hook = Motorock_Commerce_Ai_Admin_Menu::page_hook( self::PAGE_SLUG );
+
+		if ( $hook_suffix !== $expected_hook && strpos( (string) $hook_suffix, self::PAGE_SLUG ) === false ) {
 			return;
 		}
+
+		wp_register_script(
+			'motorock-ai-storefront-client',
+			content_url( 'mu-plugins/motorock-ai-writer/assets/admin-storefront-client.js' ),
+			array(),
+			MOTOROCK_COMMERCE_AI_VERSION,
+			true
+		);
 
 		wp_register_script(
 			'motorock-commerce-ai-admin-category-content',

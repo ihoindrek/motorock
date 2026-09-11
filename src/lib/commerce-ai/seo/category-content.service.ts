@@ -13,6 +13,7 @@ import {
 } from "@/lib/commerce-ai/blog/blog-product-suggestions";
 import type { Locale } from "@/i18n/config";
 import { graphqlRequest } from "@/lib/graphql/client";
+import { listGraphqlTranslations } from "@/lib/graphql/wpml";
 import { logStorefrontEvent } from "@/lib/monitoring/observability";
 import { revalidateStorefront } from "@/lib/revalidate/storefront";
 
@@ -85,12 +86,12 @@ type CategoryNode = {
   count?: number | null;
   languageCode?: string;
   parent?: { node?: { name?: string } } | null;
-  translations?: {
+  translations?: Array<{
     name?: string;
     description?: string | null;
     slug?: string;
-    language?: { code?: string };
-  }[];
+    language?: { code?: string } | null;
+  } | null> | null;
 };
 
 type CategoryContentOptions = {
@@ -316,7 +317,7 @@ export class CategoryContentService {
     let existingDescription = node.description ?? "";
 
     if (nodeLocale && nodeLocale !== locale) {
-      const translation = node.translations?.find(
+      const translation = listGraphqlTranslations(node.translations).find(
         (entry) => entry.language?.code?.toLowerCase() === locale,
       );
       if (translation?.name) {

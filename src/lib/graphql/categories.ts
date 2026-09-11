@@ -6,7 +6,7 @@ import {
   PRODUCT_CATEGORY_BY_SLUG,
   PRODUCT_CATEGORY_NAV_TREE,
 } from "@/lib/graphql/category-queries";
-import type { GraphQLTranslation } from "@/lib/graphql/wpml";
+import { listGraphqlTranslations, type GraphQLTranslation } from "@/lib/graphql/wpml";
 import { normalizeWordPressMediaUrlOptional } from "@/lib/shop/wordpress-media-url";
 
 export type CategoryImage = {
@@ -21,7 +21,7 @@ export type WcCategoryNode = {
   description?: string | null;
   count?: number | null;
   languageCode?: string | null;
-  translations?: GraphQLTranslation[] | null;
+  translations?: Array<GraphQLTranslation | null> | null;
   image?: CategoryImage | null;
   children?: {
     nodes: WcCategoryNode[];
@@ -103,7 +103,7 @@ export function getLocalizedCategoryName(
     return node.name;
   }
 
-  const translation = node.translations?.find(
+  const translation = listGraphqlTranslations(node.translations).find(
     (entry) => entry.language?.code?.toLowerCase() === locale,
   );
 
@@ -120,7 +120,7 @@ export function getLocalizedCategorySlug(
     return node.slug;
   }
 
-  const translation = node.translations?.find(
+  const translation = listGraphqlTranslations(node.translations).find(
     (entry) => entry.language?.code?.toLowerCase() === locale,
   );
 
@@ -234,7 +234,7 @@ export function getLocalizedCategoryDescription(
     }
   }
 
-  const translation = node.translations?.find(
+  const translation = listGraphqlTranslations(node.translations).find(
     (entry) => entry.language?.code?.toLowerCase() === locale,
   );
   const translated = sanitizeCategoryDescriptionHtml(translation?.description);

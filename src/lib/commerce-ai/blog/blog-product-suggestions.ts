@@ -1,4 +1,5 @@
 import type { Locale } from "@/i18n/config";
+import { listGraphqlTranslations } from "@/lib/graphql/wpml";
 import { localizedProductHref } from "@/lib/shop/product-url";
 import { graphqlRequest } from "@/lib/graphql/client";
 
@@ -74,11 +75,11 @@ type SuggestionNode = {
   name?: string;
   slug?: string;
   languageCode?: string;
-  translations?: {
+  translations?: Array<{
     slug?: string;
     name?: string;
-    language?: { code?: string };
-  }[];
+    language?: { code?: string } | null;
+  } | null> | null;
   image?: { sourceUrl?: string } | null;
   price?: string | null;
   stockStatus?: string | null;
@@ -94,7 +95,7 @@ function localizedNameAndSlug(node: SuggestionNode, locale: Locale) {
     return { name: node.name, slug: node.slug };
   }
 
-  const translation = node.translations?.find(
+  const translation = listGraphqlTranslations(node.translations).find(
     (entry) => entry.language?.code?.toLowerCase() === locale,
   );
 

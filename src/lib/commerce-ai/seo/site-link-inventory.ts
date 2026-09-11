@@ -8,6 +8,7 @@ import {
 } from "@/lib/graphql/categories";
 import { fetchBlogPostsPage } from "@/lib/graphql/blog-posts";
 import { graphqlRequest } from "@/lib/graphql/client";
+import { listGraphqlTranslations } from "@/lib/graphql/wpml";
 import { buildBrandCatalogHref } from "@/lib/shop/brand-url";
 import { buildEquipmentCategoryHrefFromNodes } from "@/lib/shop/equipment-route";
 import { buildEquipmentHubHref } from "@/lib/shop/category-url";
@@ -70,7 +71,7 @@ async function fetchProductLinks(locale: Locale, limit: number): Promise<SiteLin
 
       const nodeLocale = node.languageCode?.toLowerCase();
       if (nodeLocale && nodeLocale !== locale) {
-        const translation = node.translations?.find(
+        const translation = listGraphqlTranslations(node.translations).find(
           (entry) => entry.language?.code?.toLowerCase() === locale,
         );
         name = translation?.name ?? name;
