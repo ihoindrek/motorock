@@ -42,10 +42,12 @@ class Motorock_Commerce_Ai_Admin_Category_Content {
 			true
 		);
 
+		wp_enqueue_script( 'wp-api-fetch' );
+
 		wp_register_script(
 			'motorock-commerce-ai-admin-category-content',
 			content_url( 'mu-plugins/motorock-commerce-ai/assets/admin-category-content.js' ),
-			array( 'motorock-ai-storefront-client' ),
+			array( 'wp-api-fetch', 'motorock-ai-storefront-client' ),
 			MOTOROCK_COMMERCE_AI_VERSION,
 			true
 		);
@@ -55,11 +57,15 @@ class Motorock_Commerce_Ai_Admin_Category_Content {
 			'MotorockCommerceAiCategoryContent',
 			array(
 				'i18n' => array(
-					'running'    => __( 'Generating category SEO text… 20–60 seconds.', 'motorock-commerce-ai' ),
-					'dryRunOk'   => __( 'Preview below — nothing saved yet.', 'motorock-commerce-ai' ),
-					'saved'      => __( 'Category description saved in WooCommerce.', 'motorock-commerce-ai' ),
-					'failed'     => __( 'Generation failed.', 'motorock-commerce-ai' ),
+					'running'      => __( 'Generating category SEO text… 20–60 seconds.', 'motorock-commerce-ai' ),
+					'previewReady' => __( 'Preview below — click Save when you are happy with the text.', 'motorock-commerce-ai' ),
+					'save'         => __( 'Save to WooCommerce', 'motorock-commerce-ai' ),
+					'saving'       => __( 'Saving…', 'motorock-commerce-ai' ),
+					'saved'        => __( 'Category SEO content saved in WooCommerce.', 'motorock-commerce-ai' ),
+					'saveFailed'   => __( 'Saving failed.', 'motorock-commerce-ai' ),
+					'failed'       => __( 'Generation failed.', 'motorock-commerce-ai' ),
 					'needCategory' => __( 'Select a category.', 'motorock-commerce-ai' ),
+					'needPreview'  => __( 'Generate a preview first.', 'motorock-commerce-ai' ),
 				),
 			)
 		);
@@ -102,20 +108,14 @@ class Motorock_Commerce_Ai_Admin_Category_Content {
 						<label><input type="radio" name="motorock-cat-content-locale" value="both" /> <?php esc_html_e( 'Both (EN + ET)', 'motorock-commerce-ai' ); ?></label>
 					</td>
 				</tr>
-				<tr>
-					<th scope="row"><label for="motorock-cat-content-dry-run"><?php esc_html_e( 'Options', 'motorock-commerce-ai' ); ?></label></th>
-					<td>
-						<label for="motorock-cat-content-dry-run">
-							<input type="checkbox" id="motorock-cat-content-dry-run" checked />
-							<?php esc_html_e( 'Dry run (preview only)', 'motorock-commerce-ai' ); ?>
-						</label>
-					</td>
-				</tr>
 			</table>
 
 			<p>
 				<button type="button" class="button button-primary" id="motorock-cat-content-generate">
-					<?php esc_html_e( 'Generate category text', 'motorock-commerce-ai' ); ?>
+					<?php esc_html_e( 'Generate preview', 'motorock-commerce-ai' ); ?>
+				</button>
+				<button type="button" class="button button-secondary" id="motorock-cat-content-save" disabled>
+					<?php esc_html_e( 'Save to WooCommerce', 'motorock-commerce-ai' ); ?>
 				</button>
 			</p>
 

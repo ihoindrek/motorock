@@ -59,6 +59,16 @@ class Motorock_Commerce_Ai_Rest_Proxy {
 			)
 		);
 
+		register_rest_route(
+			'motorock/v1',
+			'/commerce-ai/save-category-content',
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( __CLASS__, 'handle_save_category_content' ),
+				'permission_callback' => array( __CLASS__, 'verify_admin' ),
+			)
+		);
+
 		// Legacy aliases used by existing admin JS.
 		register_rest_route(
 			'motorock/v1',
@@ -265,6 +275,91 @@ class Motorock_Commerce_Ai_Rest_Proxy {
 		}
 
 		return rest_ensure_response( $result );
+	}
+
+	/**
+	 * Save a category SEO preview to WooCommerce without regenerating.
+	 */
+	public static function handle_save_category_content( WP_REST_Request $request ) {
+		$payload = $request->get_json_params();
+		if ( ! is_array( $payload ) ) {
+			return new WP_Error( 'motorock_commerce_ai_invalid_body', 'Invalid JSON body', array( 'status' => 400 ) );
+		}
+
+		if ( ! class_exists( 'Motorock_Ai_Term_Writer' ) ) {
+			return new WP_Error(
+				'motorock_commerce_ai_writer_missing',
+				'motorock-ai-writer plugin is not active — cannot save category content.',
+				array( 'status' => 503 )
+			);
+		}
+
+		$category_slug = isset( $payload['categorySlug'] ) ? sanitize_title( (string) $payload['categorySlug'] ) : '';
+		$entries       = isset( $payload['entries'] ) && is_array( $payload['entries'] ) ? $payload['entries'] : array();
+
+		if ( $category_slug === '' || empty( $entries ) ) {
+			return new WP_Error(
+				'motorock_commerce_ai_invalid_category_payload',
+				'categorySlug and entries are required',
+				array( 'status' => 400 )
+			);
+		}
+
+		$saved = array();
+
+		foreach ( $entries as $entry ) {
+			if ( ! is_array( $entry ) ) {
+				continue;
+			}
+
+			$locale = isset( $entry['locale'] ) ? sanitize_key( (string) $entry['locale'] ) : '';
+			$description = isset( $entry['descriptionHtml'] ) ? wp_kses_post( (string) $entry['descriptionHtml'] ) : '';
+
+			if ( ! in_array( $locale, array( 'en', 'et' ), true ) || $description === '' ) {
+				return new WP_Error(
+					'motorock_commerce_ai_invalid_category_entry',
+					'Each entry needs locale (en|et) and descriptionHtml',
+					array( 'status' => 400 )
+				);
+			}
+
+			$write_payload = array(
+				'taxonomy'    => 'product_cat',
+				'termSlug'    => $category_slug,
+				'locale'      => $locale,
+				'description' => $description,
+				'meta'        => array(
+					'promptVersion'   => 'category_content.v2',
+					'savedFromPreview' => '1',
+				),
+			);
+
+			if ( ! empty( $entry['seoTitle'] ) ) {
+				$write_payload['seoTitle'] = sanitize_text_field( (string) $entry['seoTitle'] );
+			}
+
+			if ( ! empty( $entry['metaDescription'] ) ) {
+				$write_payload['seoMetaDescription'] = sanitize_text_field( (string) $entry['metaDescription'] );
+			}
+
+			$result = Motorock_Ai_Term_Writer::write( $write_payload );
+			if ( is_wp_error( $result ) ) {
+				return $result;
+			}
+
+			$saved[] = $result;
+		}
+
+		if ( function_exists( 'motorock_request_storefront_revalidate' ) ) {
+			motorock_request_storefront_revalidate( 'category-content-save' );
+		}
+
+		return rest_ensure_response(
+			array(
+				'ok'    => true,
+				'saved' => $saved,
+			)
+		);
 	}
 
 	public static function handle_batch( WP_REST_Request $request ) {
