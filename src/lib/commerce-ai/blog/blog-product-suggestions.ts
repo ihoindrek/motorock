@@ -1,4 +1,5 @@
 import type { Locale } from "@/i18n/config";
+import type { GraphQLProductAttribute } from "@/lib/graphql/types";
 import { listGraphqlTranslations } from "@/lib/graphql/wpml";
 import { localizedProductHref } from "@/lib/shop/product-url";
 import { graphqlRequest } from "@/lib/graphql/client";
@@ -32,10 +33,38 @@ const SUGGESTION_NODE_FIELDS = `
   ... on SimpleProduct {
     price
     stockStatus
+    attributes {
+      nodes {
+        name
+        options
+        ... on GlobalProductAttribute {
+          terms(first: 20) {
+            nodes {
+              name
+              slug
+            }
+          }
+        }
+      }
+    }
   }
   ... on VariableProduct {
     price
     stockStatus
+    attributes {
+      nodes {
+        name
+        options
+        ... on GlobalProductAttribute {
+          terms(first: 20) {
+            nodes {
+              name
+              slug
+            }
+          }
+        }
+      }
+    }
   }
 `;
 
@@ -83,6 +112,12 @@ type SuggestionNode = {
   image?: { sourceUrl?: string } | null;
   price?: string | null;
   stockStatus?: string | null;
+  attributes?: { nodes: GraphQLProductAttribute[] } | null;
+};
+
+export type CategoryProductContext = {
+  suggestions: BlogProductSuggestion[];
+  brandProducts: ReadonlyArray<{ attributes?: { nodes: GraphQLProductAttribute[] } | null }>;
 };
 
 type SuggestionsResponse = {
@@ -105,40 +140,18 @@ function localizedNameAndSlug(node: SuggestionNode, locale: Locale) {
   };
 }
 
-export async function fetchBlogProductSuggestions(input: {
-  locale: Locale;
-  categorySlug?: string;
-  brandSlug?: string;
-  limit?: number;
-}): Promise<BlogProductSuggestion[]> {
-  const limit = Math.min(Math.max(input.limit ?? 6, 1), 12);
-
-  let data: SuggestionsResponse;
-  try {
-    if (input.brandSlug) {
-      data = await graphqlRequest<SuggestionsResponse, { first: number; brandTerms: string[] }>(
-        BRAND_SUGGESTIONS_QUERY,
-        { first: limit * 2, brandTerms: [input.brandSlug] },
-        { next: { revalidate: 0 } },
-      );
-    } else if (input.categorySlug) {
-      data = await graphqlRequest<SuggestionsResponse, { first: number; category: string }>(
-        CATEGORY_SUGGESTIONS_QUERY,
-        { first: limit * 2, category: input.categorySlug },
-        { next: { revalidate: 0 } },
-      );
-    } else {
-      return [];
-    }
-  } catch {
-    return [];
-  }
-
-  const nodes = data.products?.nodes ?? [];
+function mapSuggestionNodes(
+  nodes: SuggestionNode[],
+  locale: Locale,
+  limit: number,
+): CategoryProductContext {
   const suggestions: BlogProductSuggestion[] = [];
+  const brandProducts: SuggestionNode[] = [];
 
   for (const node of nodes) {
-    const { name, slug } = localizedNameAndSlug(node, input.locale);
+    brandProducts.push(node);
+
+    const { name, slug } = localizedNameAndSlug(node, locale);
     if (!name || !slug) {
       continue;
     }
@@ -146,7 +159,7 @@ export async function fetchBlogProductSuggestions(input: {
     suggestions.push({
       name,
       slug,
-      url: localizedProductHref(slug, input.locale),
+      url: localizedProductHref(slug, locale),
       price: node.price ?? "",
       imageUrl: node.image?.sourceUrl ?? undefined,
       inStock: node.stockStatus !== "OUT_OF_STOCK",
@@ -157,7 +170,75 @@ export async function fetchBlogProductSuggestions(input: {
     }
   }
 
-  return suggestions;
+  return { suggestions, brandProducts };
+}
+
+async function fetchSuggestionNodes(input: {
+  categorySlug?: string;
+  brandSlug?: string;
+  limit: number;
+}): Promise<SuggestionNode[]> {
+  const limit = Math.min(Math.max(input.limit, 1), 12);
+
+  try {
+    if (input.brandSlug) {
+      const data = await graphqlRequest<
+        SuggestionsResponse,
+        { first: number; brandTerms: string[] }
+      >(
+        BRAND_SUGGESTIONS_QUERY,
+        { first: limit * 2, brandTerms: [input.brandSlug] },
+        { next: { revalidate: 0 } },
+      );
+      return data.products?.nodes ?? [];
+    }
+
+    if (input.categorySlug) {
+      const data = await graphqlRequest<
+        SuggestionsResponse,
+        { first: number; category: string }
+      >(
+        CATEGORY_SUGGESTIONS_QUERY,
+        { first: limit * 2, category: input.categorySlug },
+        { next: { revalidate: 0 } },
+      );
+      return data.products?.nodes ?? [];
+    }
+  } catch {
+    return [];
+  }
+
+  return [];
+}
+
+export async function fetchCategoryProductContext(input: {
+  locale: Locale;
+  categorySlug: string;
+  limit?: number;
+}): Promise<CategoryProductContext> {
+  const limit = Math.min(Math.max(input.limit ?? 6, 1), 12);
+  const nodes = await fetchSuggestionNodes({
+    categorySlug: input.categorySlug,
+    limit,
+  });
+
+  return mapSuggestionNodes(nodes, input.locale, limit);
+}
+
+export async function fetchBlogProductSuggestions(input: {
+  locale: Locale;
+  categorySlug?: string;
+  brandSlug?: string;
+  limit?: number;
+}): Promise<BlogProductSuggestion[]> {
+  const limit = Math.min(Math.max(input.limit ?? 6, 1), 12);
+  const nodes = await fetchSuggestionNodes({
+    categorySlug: input.categorySlug,
+    brandSlug: input.brandSlug,
+    limit,
+  });
+
+  return mapSuggestionNodes(nodes, input.locale, limit).suggestions;
 }
 
 /** Render suggestions as plain text lines for the prompt. */

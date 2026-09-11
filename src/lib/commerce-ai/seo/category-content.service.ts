@@ -8,9 +8,14 @@ import type { ProviderRegistry } from "@/lib/ai/providers/provider-registry";
 import { findForbiddenHtmlTags, sanitizeHtmlForAiOutput } from "@/lib/ai/validation/html-safety";
 import { matchesLocaleHeuristic } from "@/lib/ai/domain/locale-heuristic";
 import {
-  fetchBlogProductSuggestions,
+  fetchCategoryProductContext,
   formatProductSuggestionsForPrompt,
 } from "@/lib/commerce-ai/blog/blog-product-suggestions";
+import {
+  collectStorefrontBrandsFromProducts,
+  formatBrandListForPrompt,
+  storefrontBrandNames,
+} from "@/lib/commerce-ai/seo/category-brand-context";
 import type { Locale } from "@/i18n/config";
 import { graphqlRequest } from "@/lib/graphql/client";
 import { listGraphqlTranslations } from "@/lib/graphql/wpml";
@@ -18,8 +23,12 @@ import { logStorefrontEvent } from "@/lib/monitoring/observability";
 import { revalidateStorefront } from "@/lib/revalidate/storefront";
 
 export const CategoryContentOutputSchema = z.object({
-  descriptionHtml: z.string().min(200).max(4000),
+  descriptionHtml: z.string().min(80).max(700),
+  seoTitle: z.string().min(10).max(58),
+  metaDescription: z.string().min(50).max(160),
 });
+
+const CATEGORY_DESCRIPTION_MAX_WORDS = 75;
 
 export type CategoryContentTarget = {
   categorySlug: string;
@@ -33,6 +42,8 @@ export type CategoryContentJobResult = {
   categorySlug: string;
   categoryName?: string;
   descriptionHtml?: string;
+  seoTitle?: string;
+  metaDescription?: string;
   termId?: number;
   validationErrors?: string[];
   warnings?: string[];
@@ -48,8 +59,19 @@ export interface TermWriteRepository {
     termSlug: string;
     locale: Locale;
     description: string;
+    seoTitle?: string;
+    seoMetaDescription?: string;
     meta: Record<string, string>;
   }): Promise<{ ok: boolean; termId: number }>;
+}
+
+function countWords(html: string) {
+  return html
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .split(" ")
+    .filter(Boolean).length;
 }
 
 const CATEGORY_QUERY = `
@@ -171,17 +193,23 @@ export class CategoryContentService {
       };
     }
 
-    const suggestions = await fetchBlogProductSuggestions({
+    const productContext = await fetchCategoryProductContext({
       locale: input.locale,
       categorySlug: input.target.categorySlug,
-      limit: 10,
+      limit: 8,
     });
+    const { suggestions, brandProducts } = productContext;
+    const brandsInCategory = collectStorefrontBrandsFromProducts(brandProducts);
 
     if (suggestions.length === 0) {
       warnings.push("No sample products found — content is generated from the category name only.");
     }
 
-    const template = getPromptTemplate("category_content.v1");
+    if (brandsInCategory.length === 0) {
+      warnings.push("No storefront brands detected in this category — brand names will be omitted.");
+    }
+
+    const template = getPromptTemplate("category_content.v2");
     const rendered = renderPromptTemplate(template, {
       locale: input.locale,
       categoryName: category.name,
@@ -189,7 +217,9 @@ export class CategoryContentService {
         ? `${category.parentName} > ${category.name}`
         : category.name,
       productCount: String(category.count),
-      existingDescription: category.existingDescription.slice(0, 800),
+      existingDescription: category.existingDescription.slice(0, 400),
+      allowedBrands: formatBrandListForPrompt(storefrontBrandNames()),
+      brandsInCategory: formatBrandListForPrompt(brandsInCategory),
       productCatalog: formatProductSuggestionsForPrompt(suggestions),
     });
 
@@ -204,6 +234,8 @@ export class CategoryContentService {
     });
 
     const descriptionHtml = sanitizeHtmlForAiOutput(data.descriptionHtml);
+    const seoTitle = data.seoTitle.trim();
+    const metaDescription = data.metaDescription.replace(/\s+/g, " ").trim();
     const validationErrors: string[] = [];
 
     const forbidden = findForbiddenHtmlTags(descriptionHtml);
@@ -212,9 +244,26 @@ export class CategoryContentService {
     }
 
     const plain = descriptionHtml.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+    const wordCount = countWords(descriptionHtml);
+    if (wordCount > CATEGORY_DESCRIPTION_MAX_WORDS) {
+      validationErrors.push(
+        `Intro text is too long (${wordCount} words; max ${CATEGORY_DESCRIPTION_MAX_WORDS})`,
+      );
+    }
+
     if (!matchesLocaleHeuristic(plain, input.locale)) {
       validationErrors.push(
         `Generated text does not look like ${input.locale.toUpperCase()} content`,
+      );
+    }
+
+    if (seoTitle.length > 58) {
+      validationErrors.push(`SEO title is too long (${seoTitle.length} characters; max 58)`);
+    }
+
+    if (metaDescription.length > 160) {
+      validationErrors.push(
+        `Meta description is too long (${metaDescription.length} characters; max 160)`,
       );
     }
 
@@ -226,6 +275,8 @@ export class CategoryContentService {
         categorySlug: input.target.categorySlug,
         categoryName: category.name,
         descriptionHtml,
+        seoTitle,
+        metaDescription,
         validationErrors,
         provider: input.providerName,
         model: resolvedModel,
@@ -239,12 +290,14 @@ export class CategoryContentService {
         termSlug: input.target.categorySlug,
         locale: input.locale,
         description: descriptionHtml,
+        seoTitle,
+        seoMetaDescription: metaDescription,
         meta: {
           provider: input.providerName,
           model: resolvedModel,
           generatedAt: new Date().toISOString(),
           jobId: input.jobId,
-          promptVersion: "category_content.v1",
+          promptVersion: "category_content.v2",
         },
       });
 
@@ -266,6 +319,8 @@ export class CategoryContentService {
         categorySlug: input.target.categorySlug,
         categoryName: category.name,
         descriptionHtml,
+        seoTitle,
+        metaDescription,
         termId: writeResult.termId,
         warnings: warnings.length > 0 ? warnings : undefined,
         provider: input.providerName,
@@ -289,6 +344,8 @@ export class CategoryContentService {
       categorySlug: input.target.categorySlug,
       categoryName: category.name,
       descriptionHtml,
+      seoTitle,
+      metaDescription,
       warnings: warnings.length > 0 ? warnings : undefined,
       provider: input.providerName,
       model: resolvedModel,

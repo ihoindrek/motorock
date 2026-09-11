@@ -25,6 +25,7 @@ export const PROMPT_TEMPLATE_IDS = [
   "blog.v1",
   "related_products.v1",
   "category_content.v1",
+  "category_content.v2",
   "internal_links.v1",
   "fix_404.v1",
 ] as const;

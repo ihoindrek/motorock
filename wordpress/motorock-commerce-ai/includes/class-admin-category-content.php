@@ -75,7 +75,7 @@ class Motorock_Commerce_Ai_Admin_Category_Content {
 		<div class="wrap">
 			<h1><?php esc_html_e( 'Commerce AI — Category SEO content', 'motorock-commerce-ai' ); ?></h1>
 			<p class="description">
-				<?php esc_html_e( 'Generate SEO intro text for equipment category pages. Text appears at the top of category pages on motorock.eu and in meta descriptions.', 'motorock-commerce-ai' ); ?>
+				<?php esc_html_e( 'Generate a short category intro, SEO title, and meta description for equipment category pages on motorock.eu. Only Motorock storefront brands from the catalog are mentioned.', 'motorock-commerce-ai' ); ?>
 			</p>
 
 			<table class="form-table" role="presentation">

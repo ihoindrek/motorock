@@ -5,7 +5,9 @@ import type { Locale } from "@/i18n/config";
 import { localizedHref } from "@/i18n/paths";
 import { getDictionary } from "@/i18n/get-dictionary";
 import {
+  fetchCategorySeoBySlug,
   fetchEquipmentCategoryIndex,
+  getLocalizedCategorySlug,
   plainTextFromHtml,
 } from "@/lib/graphql/categories";
 import { getEquipmentCatalogForRoute } from "@/lib/graphql/products";
@@ -55,11 +57,17 @@ export async function generateEquipmentCategoryMetadata({
   const canonicalSlug = chain
     ? getCanonicalEquipmentSlugSegments(chain, locale)
     : normalizedSlug;
+  const current = chain?.[chain.length - 1];
+  const seoSlug = current
+    ? getLocalizedCategorySlug(current, locale)
+    : normalizedSlug[normalizedSlug.length - 1] ?? "";
+  const seo = seoSlug ? await fetchCategorySeoBySlug(seoSlug) : null;
 
   return buildPageMetadata({
     locale,
-    title: route.title,
-    description: plainTextFromHtml(route.description) || undefined,
+    title: seo?.title || route.title,
+    description:
+      seo?.metaDescription || plainTextFromHtml(route.description) || undefined,
     pathname: buildEquipmentCategoryHref(locale, ...canonicalSlug),
   });
 }

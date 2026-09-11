@@ -505,6 +505,51 @@ export const fetchProductCategoryBySlug = cache(
   },
 );
 
+type CategorySeoBySlugResponse = {
+  productCategory?: {
+    motorockAiSeoTitle?: string | null;
+    motorockAiMetaDescription?: string | null;
+  } | null;
+};
+
+const CATEGORY_SEO_BY_SLUG = `
+  query CategorySeoBySlug($slug: ID!) {
+    productCategory(id: $slug, idType: SLUG) {
+      motorockAiSeoTitle
+      motorockAiMetaDescription
+    }
+  }
+`;
+
+export async function fetchCategorySeoBySlug(slug: string) {
+  try {
+    const data = await graphqlRequest<CategorySeoBySlugResponse, { slug: string }>(
+      CATEGORY_SEO_BY_SLUG,
+      { slug },
+      { next: { revalidate: 300 } },
+    );
+
+    const node = data.productCategory;
+    if (!node) {
+      return null;
+    }
+
+    const title = node.motorockAiSeoTitle?.trim();
+    const metaDescription = node.motorockAiMetaDescription?.trim();
+
+    if (!title && !metaDescription) {
+      return null;
+    }
+
+    return {
+      title: title || undefined,
+      metaDescription: metaDescription || undefined,
+    };
+  } catch {
+    return null;
+  }
+}
+
 export const fetchProductCategoryTree = cache(
   async (locale: Locale): Promise<EquipmentNavTree | null> => {
     const index = await fetchEquipmentCategoryIndex(locale);

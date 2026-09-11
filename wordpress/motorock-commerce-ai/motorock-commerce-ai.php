@@ -53,8 +53,10 @@ require_once __DIR__ . '/includes/class-admin-category-content.php';
 require_once __DIR__ . '/includes/class-admin-internal-links.php';
 require_once __DIR__ . '/includes/class-admin-fix-404.php';
 require_once __DIR__ . '/includes/class-rest-commerce-ai-proxy.php';
+require_once __DIR__ . '/includes/class-graphql-category-seo.php';
 
 Motorock_Ai_Admin_Storefront_Config::register();
+Motorock_Commerce_Ai_Graphql_Category_Seo::register();
 Motorock_Ai_Meta_Registry::register();
 Motorock_Commerce_Ai_Admin_Menu::register();
 Motorock_Ai_Rest_Write::register();

@@ -46,6 +46,7 @@ class Motorock_Ai_Term_Writer {
 		}
 
 		self::store_meta( $term_id, $payload['meta'] ?? array(), $locale );
+		self::store_seo_meta( $term_id, $payload );
 
 		return array(
 			'ok'     => true,
@@ -67,6 +68,24 @@ class Motorock_Ai_Term_Writer {
 
 		$translated = apply_filters( 'wpml_object_id', $term_id, $taxonomy, false, $language );
 		return $translated ? (int) $translated : $term_id;
+	}
+
+	private static function store_seo_meta( $term_id, $payload ) {
+		if ( ! empty( $payload['seoTitle'] ) ) {
+			update_term_meta(
+				$term_id,
+				'_motorock_ai_category_seo_title',
+				sanitize_text_field( (string) $payload['seoTitle'] )
+			);
+		}
+
+		if ( ! empty( $payload['seoMetaDescription'] ) ) {
+			update_term_meta(
+				$term_id,
+				'_motorock_ai_category_seo_meta_description',
+				sanitize_text_field( (string) $payload['seoMetaDescription'] )
+			);
+		}
 	}
 
 	private static function store_meta( $term_id, $meta, $locale ) {

@@ -13,6 +13,8 @@ export class WpTermWriteRepository implements TermWriteRepository {
     termSlug: string;
     locale: Locale;
     description: string;
+    seoTitle?: string;
+    seoMetaDescription?: string;
     meta: Record<string, string>;
   }): Promise<{ ok: boolean; termId: number }> {
     if (!this.baseUrl || !this.secret) {

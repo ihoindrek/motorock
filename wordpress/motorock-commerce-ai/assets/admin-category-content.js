@@ -55,6 +55,12 @@
       if (entry.validationErrors && entry.validationErrors.length) {
         html += "<p><strong>Validation:</strong> " + escapeHtml(entry.validationErrors.join("; ")) + "</p>";
       }
+      if (entry.seoTitle) {
+        html += "<p><strong>SEO title:</strong> " + escapeHtml(entry.seoTitle) + "</p>";
+      }
+      if (entry.metaDescription) {
+        html += "<p><strong>Meta description:</strong> " + escapeHtml(entry.metaDescription) + "</p>";
+      }
       if (entry.descriptionHtml) {
         html += '<div style="border:1px solid #ccd0d4;padding:12px;background:#fff;max-width:720px">' + entry.descriptionHtml + "</div>";
       }
