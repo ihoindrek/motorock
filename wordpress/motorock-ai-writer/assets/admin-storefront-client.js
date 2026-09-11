@@ -32,7 +32,10 @@
           return {};
         })
         .then(function (data) {
-          if (!response.ok) {
+          if (
+            !response.ok &&
+            !(response.status === 422 && data && data.skill && data.result !== undefined)
+          ) {
             var error = new Error(
               (data && data.error) || config().i18n?.failed || "Generation failed",
             );

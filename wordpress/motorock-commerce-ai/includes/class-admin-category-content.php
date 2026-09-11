@@ -91,7 +91,11 @@ class Motorock_Commerce_Ai_Admin_Category_Content {
 						<select id="motorock-cat-content-category" class="regular-text">
 							<option value=""><?php esc_html_e( '— Select category —', 'motorock-commerce-ai' ); ?></option>
 							<?php foreach ( $categories as $term ) : ?>
-								<option value="<?php echo esc_attr( $term->slug ); ?>">
+								<option
+									value="<?php echo esc_attr( $term->slug ); ?>"
+									data-name="<?php echo esc_attr( $term->name ); ?>"
+									data-count="<?php echo esc_attr( (string) $term->count ); ?>"
+								>
 									<?php echo esc_html( $term->name . ' (' . $term->count . ')' ); ?>
 								</option>
 							<?php endforeach; ?>

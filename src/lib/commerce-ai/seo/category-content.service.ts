@@ -17,6 +17,7 @@ import {
   storefrontBrandNames,
 } from "@/lib/commerce-ai/seo/category-brand-context";
 import type { Locale } from "@/i18n/config";
+import { PRODUCT_CATEGORY_BY_SLUG } from "@/lib/graphql/category-queries";
 import { graphqlRequest } from "@/lib/graphql/client";
 import { listGraphqlTranslations } from "@/lib/graphql/wpml";
 import { logStorefrontEvent } from "@/lib/monitoring/observability";
@@ -33,6 +34,24 @@ const CATEGORY_DESCRIPTION_MAX_WORDS = 75;
 export type CategoryContentTarget = {
   categorySlug: string;
   bothLocales?: boolean;
+  /** Fallback from WP admin when live GraphQL lookup is slow or unavailable. */
+  categoryName?: string;
+  productCount?: number;
+  parentCategoryName?: string;
+};
+
+type ResolvedCategory = {
+  termId: number;
+  name: string;
+  parentName: string;
+  count: number;
+  existingDescription: string;
+};
+
+const COMMERCE_AI_GRAPHQL_OPTS = {
+  next: { revalidate: 0 as const },
+  retryAttempts: 1,
+  timeoutMs: 12_000,
 };
 
 export type CategoryContentJobResult = {
@@ -178,7 +197,7 @@ export class CategoryContentService {
     const dryRun = input.options?.dryRun ?? this.deps.config.dryRun;
     const warnings: string[] = [];
 
-    const category = await this.fetchCategory(input.target.categorySlug, input.locale);
+    const category = await this.fetchCategory(input.target, input.locale);
 
     if (!category) {
       return {
@@ -191,6 +210,12 @@ export class CategoryContentService {
         ],
         durationMs: Date.now() - started,
       };
+    }
+
+    if (category.termId === 0 && input.target.categoryName) {
+      warnings.push(
+        "Category details came from WordPress admin because the live WooCommerce GraphQL lookup was unavailable.",
+      );
     }
 
     const productContext = await fetchCategoryProductContext({
@@ -353,24 +378,29 @@ export class CategoryContentService {
     };
   }
 
-  private async fetchCategory(slug: string, locale: Locale) {
-    let node: CategoryNode | null | undefined;
-    try {
-      const data = await graphqlRequest<
-        { productCategory?: CategoryNode | null },
-        { slug: string }
-      >(CATEGORY_QUERY, { slug }, { next: { revalidate: 0 } });
-      node = data.productCategory;
-    } catch {
+  private resolveCategoryFromTarget(target: CategoryContentTarget): ResolvedCategory | null {
+    const name = typeof target.categoryName === "string" ? target.categoryName.trim() : "";
+    if (!name) {
       return null;
     }
 
-    if (!node?.name) {
-      return null;
-    }
+    const count = Number(target.productCount);
 
+    return {
+      termId: 0,
+      name,
+      parentName:
+        typeof target.parentCategoryName === "string"
+          ? target.parentCategoryName.trim()
+          : "",
+      count: Number.isFinite(count) && count >= 0 ? count : 0,
+      existingDescription: "",
+    };
+  }
+
+  private mapCategoryNode(node: CategoryNode, locale: Locale): ResolvedCategory {
     const nodeLocale = node.languageCode?.toLowerCase();
-    let name = node.name;
+    let name = node.name ?? "";
     let existingDescription = node.description ?? "";
 
     if (nodeLocale && nodeLocale !== locale) {
@@ -390,5 +420,44 @@ export class CategoryContentService {
       count: node.count ?? 0,
       existingDescription: existingDescription.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim(),
     };
+  }
+
+  private async fetchCategoryNode(slug: string): Promise<CategoryNode | null> {
+    try {
+      const bySlug = await graphqlRequest<
+        { productCategories: { nodes: CategoryNode[] } },
+        { slug: string }
+      >(PRODUCT_CATEGORY_BY_SLUG, { slug }, COMMERCE_AI_GRAPHQL_OPTS);
+
+      const node = bySlug.productCategories.nodes[0];
+      if (node?.name) {
+        return node;
+      }
+    } catch {
+      // fall through to alternate query
+    }
+
+    try {
+      const byId = await graphqlRequest<
+        { productCategory?: CategoryNode | null },
+        { slug: string }
+      >(CATEGORY_QUERY, { slug }, COMMERCE_AI_GRAPHQL_OPTS);
+
+      return byId.productCategory?.name ? byId.productCategory : null;
+    } catch {
+      return null;
+    }
+  }
+
+  private async fetchCategory(
+    target: CategoryContentTarget,
+    locale: Locale,
+  ): Promise<ResolvedCategory | null> {
+    const node = await this.fetchCategoryNode(target.categorySlug);
+    if (node?.name) {
+      return this.mapCategoryNode(node, locale);
+    }
+
+    return this.resolveCategoryFromTarget(target);
   }
 }

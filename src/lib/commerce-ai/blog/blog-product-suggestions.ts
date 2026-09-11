@@ -124,6 +124,12 @@ type SuggestionsResponse = {
   products?: { nodes?: SuggestionNode[] };
 };
 
+const COMMERCE_AI_GRAPHQL_OPTS = {
+  next: { revalidate: 0 as const },
+  retryAttempts: 1,
+  timeoutMs: 12_000,
+};
+
 function localizedNameAndSlug(node: SuggestionNode, locale: Locale) {
   const nodeLocale = node.languageCode?.toLowerCase();
   if (!nodeLocale || nodeLocale === locale) {
@@ -188,7 +194,7 @@ async function fetchSuggestionNodes(input: {
       >(
         BRAND_SUGGESTIONS_QUERY,
         { first: limit * 2, brandTerms: [input.brandSlug] },
-        { next: { revalidate: 0 } },
+        COMMERCE_AI_GRAPHQL_OPTS,
       );
       return data.products?.nodes ?? [];
     }
@@ -200,7 +206,7 @@ async function fetchSuggestionNodes(input: {
       >(
         CATEGORY_SUGGESTIONS_QUERY,
         { first: limit * 2, category: input.categorySlug },
-        { next: { revalidate: 0 } },
+        COMMERCE_AI_GRAPHQL_OPTS,
       );
       return data.products?.nodes ?? [];
     }

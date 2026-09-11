@@ -18,12 +18,9 @@
     return;
   }
 
-  if (!window.MotorockAiStorefront) {
-    var storefrontConfig = window.MotorockAiStorefrontConfig || {};
-    var storefrontI18n = storefrontConfig.i18n || {};
+  if (!window.wp || !window.wp.apiFetch) {
     var setupError =
-      storefrontI18n.notConfigured ||
-      "Commerce AI scripts did not load. Hard-refresh this page (Cmd+Shift+R).";
+      "WordPress REST client did not load. Hard-refresh this page (Cmd+Shift+R).";
 
     generateButton.addEventListener("click", function () {
       resultEl.innerHTML = "<p>" + escapeHtml(setupError) + "</p>";
@@ -35,6 +32,24 @@
   function selectedLocale() {
     var checked = document.querySelector('input[name="motorock-cat-content-locale"]:checked');
     return checked ? checked.value : "en";
+  }
+
+  function selectedCategoryMeta() {
+    var select = document.getElementById("motorock-cat-content-category");
+    if (!select) {
+      return null;
+    }
+
+    var option = select.options[select.selectedIndex];
+    if (!option || !option.value) {
+      return null;
+    }
+
+    return {
+      categorySlug: option.value,
+      categoryName: option.getAttribute("data-name") || option.text.replace(/\s*\(\d+\)\s*$/, "").trim(),
+      productCount: Number(option.getAttribute("data-count") || "0"),
+    };
   }
 
   function collectEntries(result) {
@@ -52,10 +67,22 @@
     });
   }
 
+  function formatFailure(data, fallback) {
+    if (data && data.result && data.result.validationErrors && data.result.validationErrors.length) {
+      return data.result.validationErrors.join("; ");
+    }
+
+    if (data && data.error) {
+      return data.error;
+    }
+
+    return fallback || i18n.failed || "Generation failed.";
+  }
+
   function renderResult(data) {
     var result = data && data.result ? data.result : null;
     if (!result) {
-      return "<p>" + escapeHtml(i18n.failed || "Generation failed.") + "</p>";
+      return "";
     }
 
     var html = "";
@@ -91,13 +118,6 @@
   function savePreview() {
     if (!lastPreview || !lastPreview.entries.length) {
       resultEl.innerHTML = "<p>" + escapeHtml(i18n.needPreview || "Generate a preview first.") + "</p>";
-      return;
-    }
-
-    if (!window.wp || !window.wp.apiFetch) {
-      resultEl.innerHTML =
-        "<p>" + escapeHtml("WordPress REST client is unavailable. Hard-refresh this page.") + "</p>" +
-        renderResult({ result: lastPreview.result });
       return;
     }
 
@@ -148,8 +168,8 @@
   }
 
   generateButton.addEventListener("click", function () {
-    var categorySlug = document.getElementById("motorock-cat-content-category").value.trim();
-    if (!categorySlug) {
+    var category = selectedCategoryMeta();
+    if (!category) {
       resultEl.innerHTML = "<p>" + escapeHtml(i18n.needCategory || "Select a category.") + "</p>";
       lastPreview = null;
       setSaveEnabled(false);
@@ -162,28 +182,36 @@
     lastPreview = null;
     resultEl.innerHTML = "<p>" + escapeHtml(i18n.running || "Generating…") + "</p>";
 
-    window.MotorockAiStorefront.runCommerceAi({
-      skill: "seo.category_content",
-      locale: localeValue === "both" ? "en" : localeValue,
-      target: {
-        categorySlug: categorySlug,
-        bothLocales: localeValue === "both",
-      },
-      options: {
-        dryRun: true,
-      },
-    })
+    window.wp
+      .apiFetch({
+        path: "/motorock/v1/commerce-ai/run",
+        method: "POST",
+        data: {
+          skill: "seo.category_content",
+          locale: localeValue === "both" ? "en" : localeValue,
+          target: {
+            categorySlug: category.categorySlug,
+            categoryName: category.categoryName,
+            productCount: category.productCount,
+            bothLocales: localeValue === "both",
+          },
+          options: {
+            dryRun: true,
+          },
+        },
+      })
       .then(function (data) {
         var ok = data && (data.ok || (data.result && data.result.ok));
         if (!ok) {
-          resultEl.innerHTML = "<p>" + escapeHtml((data && data.error) || i18n.failed) + "</p>" + renderResult(data);
+          resultEl.innerHTML =
+            "<p>" + escapeHtml(formatFailure(data, i18n.failed)) + "</p>" + renderResult(data);
           setSaveEnabled(false);
           return;
         }
 
         var entries = collectEntries(data.result);
         lastPreview = {
-          categorySlug: categorySlug,
+          categorySlug: category.categorySlug,
           result: data.result,
           entries: entries,
         };
@@ -194,7 +222,8 @@
         setSaveEnabled(entries.length > 0);
       })
       .catch(function (error) {
-        resultEl.innerHTML = "<p>" + escapeHtml(i18n.failed) + " " + escapeHtml(error.message || "") + "</p>";
+        resultEl.innerHTML =
+          "<p>" + escapeHtml(formatFailure(error && error.data, error.message || i18n.failed)) + "</p>";
         setSaveEnabled(false);
       })
       .finally(function () {
