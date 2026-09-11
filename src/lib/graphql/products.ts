@@ -91,6 +91,21 @@ type CatalogFetchResult = {
   nodesById: Map<number, GraphQLProductCard>;
 };
 
+function catalogFetchCacheOptions(where: CatalogWhere) {
+  const tags = ["woocommerce", "equipment-catalog"];
+
+  if (where.categoryId != null) {
+    tags.push(`equipment-category-id-${where.categoryId}`);
+  } else if (where.category) {
+    tags.push(`equipment-category-${where.category}`);
+  }
+
+  return {
+    revalidate: 300,
+    tags,
+  } as const;
+}
+
 export type HomepageFavoriteCatalogs = {
   motorcycles: CatalogProduct[];
   menEquipment: CatalogProduct[];
@@ -301,6 +316,7 @@ async function fetchCatalogNodesLimited(
     const data = await graphqlRequest<CatalogPageResponse, CatalogPageVariables>(
       HOMEPAGE_PRODUCT_CATALOG_PAGE,
       variables,
+      { next: catalogFetchCacheOptions(where) },
     );
 
     rawNodes.push(...data.products.nodes);
@@ -339,7 +355,7 @@ async function fetchAllCatalogNodes(
             brandTaxonomyTerms: [where.brandSlug!],
           },
           {
-            next: { revalidate: 3600 },
+            next: catalogFetchCacheOptions(where),
             retryAttempts: 3,
             timeoutMs: CATALOG_GRAPHQL_TIMEOUT_MS,
           },
@@ -354,7 +370,7 @@ async function fetchAllCatalogNodes(
             categoryNotIn: where.categoryNotIn ?? null,
           },
           {
-            next: { revalidate: 3600 },
+            next: catalogFetchCacheOptions(where),
             retryAttempts: 3,
             timeoutMs: CATALOG_GRAPHQL_TIMEOUT_MS,
           },
@@ -956,11 +972,7 @@ export async function getEquipmentCatalogForRoute(
     const { nodes, nodesById } = await fetchAllCatalogNodes(where, locale);
     const products = mapCatalogNodesForRoute(nodes, route, locale, nodesById);
 
-    if (route.brand) {
-      return filterProductsByRoute(products, route);
-    }
-
-    return products;
+    return filterProductsByRoute(products, route);
   } catch (error) {
     console.error("[equipment] GraphQL catalog fetch failed:", error);
     return [];
