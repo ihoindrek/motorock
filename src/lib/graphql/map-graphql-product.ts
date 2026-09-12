@@ -408,6 +408,7 @@ export function variationIdsFromProduct(product: GraphQLVariableProduct) {
   const variationIds: Record<string, number> = {};
   const sizeTerms = sizeAttributeNode(product)?.terms?.nodes ?? [];
   const paSizeIsColor = sizeAttributeStoresColor(product);
+  const hasLegLengthDimension = legLengthsFromVariableProduct(product).length > 1;
 
   for (const variation of product.variations?.nodes ?? []) {
     const attributes = variation.attributes?.nodes ?? [];
@@ -440,9 +441,14 @@ export function variationIdsFromProduct(product: GraphQLVariableProduct) {
     if (size || color || legLength) {
       const compositeKey = buildVariationLookupKey({ size, color, legLength });
       variationIds[compositeKey] = variation.databaseId;
+
+      if (color?.trim() && legLength) {
+        variationIds[buildVariationLookupKey({ size, legLength })] =
+          variation.databaseId;
+      }
     }
 
-    if (size && !paSizeIsColor) {
+    if (size && !paSizeIsColor && !hasLegLengthDimension) {
       const raw = sizeAttribute?.value?.trim();
       if (raw) {
         variationIds[raw] = variation.databaseId;

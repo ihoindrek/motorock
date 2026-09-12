@@ -1498,7 +1498,7 @@ export function CartCheckoutView() {
       const checkoutLinesKey = lines
         .map(
           (line) =>
-            `${line.slug}:${line.size ?? ""}:${line.quantity}:${line.variationId ?? ""}`,
+            `${line.slug}:${line.size ?? ""}:${line.legLength ?? ""}:${line.quantity}:${line.variationId ?? ""}`,
         )
         .join("|");
 
@@ -1698,7 +1698,7 @@ export function CartCheckoutView() {
       const checkoutLinesKey = lines
         .map(
           (line) =>
-            `${line.slug}:${line.size ?? ""}:${line.quantity}:${line.variationId ?? ""}`,
+            `${line.slug}:${line.size ?? ""}:${line.legLength ?? ""}:${line.quantity}:${line.variationId ?? ""}`,
         )
         .join("|");
 

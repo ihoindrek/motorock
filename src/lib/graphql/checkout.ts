@@ -135,7 +135,7 @@ export async function fetchCartItemCount(sessionToken?: string | null) {
 }
 
 function lineCacheKey(line: CartLine) {
-  return `${line.slug}:${line.size ?? ""}:${line.color ?? ""}:${line.variationId ?? ""}`;
+  return `${line.slug}:${line.size ?? ""}:${line.color ?? ""}:${line.legLength ?? ""}:${line.variationId ?? ""}`;
 }
 
 export function flattenShippingRates(

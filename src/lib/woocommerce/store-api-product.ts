@@ -554,6 +554,30 @@ export async function buildCheckoutAddToCartVariationAttributes(
   line: { size?: string; color?: string; legLength?: string },
   variationId?: number,
 ) {
+  if (typeof window !== "undefined" && variationId) {
+    try {
+      const params = new URLSearchParams({
+        productId: String(productId),
+        variationId: String(variationId),
+      });
+      const response = await fetch(
+        `/api/checkout/variation-attributes?${params.toString()}`,
+        { cache: "no-store" },
+      );
+
+      if (response.ok) {
+        const payload = (await response.json()) as {
+          variation?: WooVariationAttributeInput[];
+        };
+        if (payload.variation?.length) {
+          return payload.variation;
+        }
+      }
+    } catch {
+      // Fall through to Store API (server) or cart-line fallback.
+    }
+  }
+
   const product = await fetchStoreProduct(productId);
   if (product && variationId) {
     const fromStore = buildAddToCartVariationAttributes(product, line, variationId);

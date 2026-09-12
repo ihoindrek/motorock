@@ -3,6 +3,34 @@ import { formatSizeLabel, isOneSizeLabel, sizesMatch } from "@/lib/shop/size-lab
 import { buildVariationLookupKey } from "@/lib/shop/product-variation-dimensions";
 import { euUkSizesMatch } from "@/lib/shop/eu-uk-size";
 
+function lookupCompositeVariationId(
+  variationIds: Readonly<Record<string, number>>,
+  input: { size?: string; color?: string; legLength?: string },
+) {
+  const candidates = [
+    buildVariationLookupKey(input),
+    buildVariationLookupKey({ ...input, color: undefined }),
+  ];
+
+  if (input.color?.trim()) {
+    candidates.push(
+      buildVariationLookupKey({
+        ...input,
+        color: input.color.trim().toLowerCase(),
+      }),
+    );
+  }
+
+  for (const key of candidates) {
+    const match = variationIds[key];
+    if (match) {
+      return match;
+    }
+  }
+
+  return undefined;
+}
+
 export function resolveLineVariationId(
   product: Pick<CatalogProduct, "variationIds" | "sizes" | "legLengths">,
   size?: string,
@@ -14,9 +42,18 @@ export function resolveLineVariationId(
     return undefined;
   }
 
-  const compositeKey = buildVariationLookupKey({ size, color, legLength });
-  if (variationIds[compositeKey]) {
-    return variationIds[compositeKey];
+  const compositeMatch = lookupCompositeVariationId(variationIds, {
+    size,
+    color,
+    legLength,
+  });
+  if (compositeMatch) {
+    return compositeMatch;
+  }
+
+  const hasMultipleLegLengths = (product.legLengths?.length ?? 0) > 1;
+  if (legLength?.trim() || hasMultipleLegLengths) {
+    return undefined;
   }
 
   if (size && !isOneSizeLabel(size)) {

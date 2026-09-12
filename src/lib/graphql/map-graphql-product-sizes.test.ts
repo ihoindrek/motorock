@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { resolveVariableProductSizes } from "@/lib/graphql/map-graphql-product";
+import {
+  resolveVariableProductSizes,
+  variationIdsFromProduct,
+} from "@/lib/graphql/map-graphql-product";
 import type { GraphQLVariableProduct } from "@/lib/graphql/types";
 
 describe("resolveVariableProductSizes", () => {
@@ -128,5 +131,77 @@ describe("resolveVariableProductSizes", () => {
     } as GraphQLVariableProduct;
 
     expect(resolveVariableProductSizes(product)).toEqual(["6", "8"]);
+  });
+});
+
+describe("variationIdsFromProduct", () => {
+  it("indexes leg-length combinations without color for single-color trousers", () => {
+    const product = {
+      name: "Julia Jeggings (Black)",
+      slug: "julia-jeggings-black",
+      attributes: {
+        nodes: [
+          {
+            name: "pa_size",
+            options: ["eu34-uk6"],
+            variation: true,
+            terms: {
+              nodes: [{ name: "EU34 (UK6)", slug: "eu34-uk6" }],
+            },
+          },
+          {
+            name: "pa_leg-length",
+            options: ["petite", "regular"],
+            variation: true,
+            terms: {
+              nodes: [
+                { name: "Petite", slug: "petite" },
+                { name: "Regular", slug: "regular" },
+              ],
+            },
+          },
+          {
+            name: "pa_color",
+            options: ["black"],
+            variation: true,
+            terms: { nodes: [{ name: "Black", slug: "black" }] },
+          },
+        ],
+      },
+      variations: {
+        nodes: [
+          {
+            databaseId: 23101,
+            sku: "JUL-BLK-34P",
+            attributes: {
+              nodes: [
+                { name: "pa_size", value: "eu34-uk6" },
+                { name: "pa_leg-length", value: "petite" },
+                { name: "pa_color", value: "black" },
+              ],
+            },
+          },
+          {
+            databaseId: 23100,
+            sku: "JUL-BLK-34R",
+            attributes: {
+              nodes: [
+                { name: "pa_size", value: "eu34-uk6" },
+                { name: "pa_leg-length", value: "regular" },
+                { name: "pa_color", value: "black" },
+              ],
+            },
+          },
+        ],
+      },
+    } as GraphQLVariableProduct;
+
+    expect(variationIdsFromProduct(product)).toMatchObject({
+      "EU34 (UK6)|black|regular": 23100,
+      "EU34 (UK6)||regular": 23100,
+      "EU34 (UK6)|black|petite": 23101,
+      "EU34 (UK6)||petite": 23101,
+    });
+    expect(variationIdsFromProduct(product)?.["EU34 (UK6)"]).toBeUndefined();
   });
 });
