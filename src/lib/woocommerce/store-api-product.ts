@@ -379,17 +379,26 @@ export function cartSizeToWooAttributeSlug(size: string) {
 }
 
 /** Convert cart/UI size label to Woo `pa_size` slug (no Store API needed). */
-export function buildAddToCartVariationAttributesFromCartLine(line: {
-  size?: string;
-  color?: string;
-  legLength?: string;
-}) {
+export function buildAddToCartVariationAttributesFromCartLine(
+  line: {
+    size?: string;
+    color?: string;
+    legLength?: string;
+  },
+  product?: StoreProduct | null,
+) {
   const attributes: WooVariationAttributeInput[] = [];
 
   if (line.legLength?.trim()) {
+    const legAttr = product?.attributes?.find((attribute) =>
+      isLegLengthAttribute(attribute.name),
+    );
+
     attributes.push({
       attributeName: "pa_leg-length",
-      attributeValue: line.legLength.trim().toLowerCase(),
+      attributeValue: legAttr
+        ? resolveAttributeValueSlug(legAttr, line.legLength)
+        : line.legLength.trim().toLowerCase(),
     });
   }
 
@@ -446,13 +455,63 @@ export function resolveSizeAttributeSlug(size: string, product: StoreProduct) {
   return cartSizeToWooAttributeSlug(size);
 }
 
+function attributesFromStoreVariation(
+  product: StoreProduct,
+  variationId: number,
+): WooVariationAttributeInput[] {
+  const variation = product.variations?.find((entry) => entry.id === variationId);
+  if (!variation) {
+    return [];
+  }
+
+  const attributes: WooVariationAttributeInput[] = [];
+
+  for (const attribute of variation.attributes ?? []) {
+    const value = attribute.value?.trim();
+    if (!value) {
+      continue;
+    }
+
+    const productAttr = findProductAttribute(product, attribute.name);
+    if (!productAttr) {
+      continue;
+    }
+
+    attributes.push({
+      attributeName: productAttributeTaxonomy(productAttr),
+      attributeValue: resolveAttributeValueSlug(productAttr, value),
+    });
+  }
+
+  return attributes;
+}
+
 /** Some variable products reject addToCart unless pa_size/pa_color are sent too. */
 export function buildAddToCartVariationAttributes(
   product: StoreProduct,
-  line: { size?: string; color?: string },
+  line: { size?: string; color?: string; legLength?: string },
   variationId?: number,
 ): WooVariationAttributeInput[] {
+  if (variationId) {
+    const fromVariation = attributesFromStoreVariation(product, variationId);
+    if (fromVariation.length > 0) {
+      return fromVariation;
+    }
+  }
+
   const attributes: WooVariationAttributeInput[] = [];
+
+  if (line.legLength?.trim()) {
+    const legAttr = product.attributes?.find((attribute) =>
+      isLegLengthAttribute(attribute.name),
+    );
+    if (legAttr) {
+      attributes.push({
+        attributeName: productAttributeTaxonomy(legAttr),
+        attributeValue: resolveAttributeValueSlug(legAttr, line.legLength),
+      });
+    }
+  }
 
   if (line.size && !isOneSizeLabel(line.size)) {
     const sizeAttr = product.attributes?.find((attribute) =>
@@ -486,30 +545,6 @@ export function buildAddToCartVariationAttributes(
     }
   }
 
-  if (
-    attributes.length === 0 &&
-    variationId &&
-    product.variations?.length
-  ) {
-    const variation = product.variations.find((entry) => entry.id === variationId);
-    for (const attribute of variation?.attributes ?? []) {
-      const value = attribute.value?.trim();
-      if (!value) {
-        continue;
-      }
-
-      const productAttr = findProductAttribute(product, attribute.name);
-      if (!productAttr) {
-        continue;
-      }
-
-      attributes.push({
-        attributeName: productAttributeTaxonomy(productAttr),
-        attributeValue: resolveAttributeValueSlug(productAttr, value),
-      });
-    }
-  }
-
   return attributes;
 }
 
@@ -527,7 +562,7 @@ export async function buildCheckoutAddToCartVariationAttributes(
     }
   }
 
-  return buildAddToCartVariationAttributesFromCartLine(line);
+  return buildAddToCartVariationAttributesFromCartLine(line, product);
 }
 
 export async function enrichCatalogProductVariations<

@@ -77,6 +77,55 @@ describe("buildAddToCartVariationAttributes", () => {
     ]);
   });
 
+  it("uses all variation slugs when size is in the cart line (Motogirl trousers)", () => {
+    const product = {
+      id: 23049,
+      type: "variable",
+      attributes: [
+        {
+          name: "size",
+          taxonomy: "pa_size",
+          terms: [{ name: "EU34 (UK6)", slug: "eu34-uk6" }],
+        },
+        {
+          name: "Leg Length",
+          taxonomy: "pa_leg-length",
+          terms: [
+            { name: "Petite", slug: "petite" },
+            { name: "Regular", slug: "regular" },
+          ],
+        },
+        {
+          name: "color",
+          taxonomy: "pa_color",
+          terms: [{ name: "Black", slug: "black" }],
+        },
+      ],
+      variations: [
+        {
+          id: 23100,
+          attributes: [
+            { name: "size", value: "eu34-uk6" },
+            { name: "Leg Length", value: "regular" },
+            { name: "color", value: "black" },
+          ],
+        },
+      ],
+    };
+
+    expect(
+      buildAddToCartVariationAttributes(
+        product,
+        { size: "EU34 (UK6)", legLength: "Regular" },
+        23100,
+      ),
+    ).toEqual([
+      { attributeName: "pa_size", attributeValue: "eu34-uk6" },
+      { attributeName: "pa_leg-length", attributeValue: "regular" },
+      { attributeName: "pa_color", attributeValue: "black" },
+    ]);
+  });
+
   it("uses pa_colour taxonomy from Store API for British Colour attribute", () => {
     const product = {
       id: 35839,
