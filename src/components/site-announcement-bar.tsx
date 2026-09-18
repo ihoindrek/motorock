@@ -1,12 +1,12 @@
 import type { Locale } from "@/i18n/config";
 
 /** Europe/Tallinn calendar dates (YYYY-MM-DD) for when the banner is shown. */
-const VISIBLE_FROM = "2026-09-09";
-const VISIBLE_THROUGH = "2026-09-12";
+const VISIBLE_FROM = "2026-09-16";
+const VISIBLE_THROUGH = "2026-09-19";
 
 const copy = {
-  et: "Laupäeval 12.09 on esinduspood suletud.",
-  en: "The showroom is closed on Saturday, 12 Sep.",
+  et: "Laupäeval 19.09 on esinduspood suletud.",
+  en: "The showroom is closed on Saturday, 19 Sep.",
 } as const;
 
 function todayInTallinn(now = new Date()) {
