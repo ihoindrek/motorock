@@ -2,8 +2,13 @@ import { describe, expect, it } from "vitest";
 import {
   countGiveawayEntriesForAmount,
   evaluateCampaign,
+  getActiveCampaigns,
 } from "@/lib/campaigns/evaluate";
-import { GIVEAWAY_2026_CAMPAIGN } from "@/data/campaigns";
+import {
+  GIVEAWAY_2026_CAMPAIGN,
+  GIVEAWAY_2026_ENDED,
+  isGiveawayCampaignLive,
+} from "@/data/campaigns";
 import { en } from "@/i18n/dictionaries/en";
 
 describe("countGiveawayEntriesForAmount", () => {
@@ -17,6 +22,14 @@ describe("countGiveawayEntriesForAmount", () => {
     expect(countGiveawayEntriesForAmount(199)).toBe(1);
     expect(countGiveawayEntriesForAmount(200)).toBe(2);
     expect(countGiveawayEntriesForAmount(350)).toBe(3);
+  });
+});
+
+describe("giveaway campaign lifecycle", () => {
+  it("is marked ended after the 2026 draw", () => {
+    expect(GIVEAWAY_2026_ENDED).toBe(true);
+    expect(isGiveawayCampaignLive()).toBe(false);
+    expect(getActiveCampaigns()).toEqual([]);
   });
 });
 

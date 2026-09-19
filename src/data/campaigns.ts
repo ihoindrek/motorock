@@ -3,6 +3,20 @@ import type { Campaign } from "@/types/campaign";
 /** Prize draw moment — 19 Sep 2026, Estonian time (matches blog + popup). */
 export const GIVEAWAY_2026_DRAW_AT = "2026-09-19T23:59:59+03:00";
 
+/** Set false to re-enable storefront giveaway UI for a future campaign. */
+export const GIVEAWAY_2026_ENDED = true;
+
+export function isGiveawayCampaignLive(now = Date.now()) {
+  if (GIVEAWAY_2026_ENDED) {
+    return false;
+  }
+
+  return (
+    now >= new Date(GIVEAWAY_2026_CAMPAIGN.activeFrom).getTime() &&
+    now <= new Date(GIVEAWAY_2026_CAMPAIGN.activeUntil).getTime()
+  );
+}
+
 /** MotoRock Giveaway 2026 — Brixton Crossfire 500 STORR draw in Pärnu. */
 export const GIVEAWAY_2026_CAMPAIGN = {
   id: "giveaway-2026",
@@ -39,4 +53,6 @@ export const GIVEAWAY_2026_CAMPAIGN = {
   },
 } satisfies Campaign;
 
-export const CAMPAIGNS: readonly Campaign[] = [GIVEAWAY_2026_CAMPAIGN];
+export const CAMPAIGNS: readonly Campaign[] = GIVEAWAY_2026_ENDED
+  ? []
+  : [GIVEAWAY_2026_CAMPAIGN];
