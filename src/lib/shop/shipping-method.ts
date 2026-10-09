@@ -37,6 +37,10 @@ export function shippingMethodNeedsAddress(rate: ShippingRate) {
     return false;
   }
 
+  if (methodId === "motorock_dhl_express" || methodId.includes("dhl_express")) {
+    return true;
+  }
+
   if (
     methodId.includes("parcel_machine") ||
     methodId.includes("pickup_point") ||

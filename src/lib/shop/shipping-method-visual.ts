@@ -141,6 +141,10 @@ export function resolveShippingMethodVisual(
     return { kind: "icon", icon: "pickup" };
   }
 
+  if (methodId === "motorock_dhl_express") {
+    return carrierLogo("dhl");
+  }
+
   const montonioCarrier = montonioCarrierFromMethodId(methodId);
   if (montonioCarrier) {
     return carrierLogo(montonioCarrier);
