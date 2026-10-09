@@ -3,9 +3,9 @@ import { DEFAULT_WOO_STORE_URL } from "@/lib/storefront/url";
 
 type ShippingRateVisualInput = Pick<ShippingRate, "id" | "label" | "methodId">;
 
-/** Same carrier artwork as Montonio for WooCommerce checkout (`*-rect.svg`). */
+/** Montonio for WooCommerce carrier SVGs (plugin ≥10.x: `assets/images/carriers/*.svg`). */
 const MONTONIO_CARRIER_ICONS =
-  `${DEFAULT_WOO_STORE_URL}/wp-content/plugins/montonio-for-woocommerce/assets/images`;
+  `${DEFAULT_WOO_STORE_URL}/wp-content/plugins/montonio-for-woocommerce/assets/images/carriers`;
 
 export type ShippingMethodVisual =
   | { kind: "logo"; src: string; alt: string }
@@ -13,17 +13,17 @@ export type ShippingMethodVisual =
   | { kind: "icon"; icon: "parcel" | "courier" | "pickup" | "store" };
 
 const CARRIER_LOGOS: Record<string, { file: string; alt: string }> = {
-  smartposti: { file: "smartposti-rect.svg", alt: "SmartPosti" },
-  itella: { file: "smartposti-rect.svg", alt: "SmartPosti" },
-  omniva: { file: "omniva-rect.svg", alt: "Omniva" },
-  dpd: { file: "dpd-rect.svg", alt: "DPD" },
-  unisend: { file: "unisend-rect.svg", alt: "Unisend" },
-  inpost: { file: "inpost-rect.svg", alt: "InPost" },
-  orlen: { file: "orlen-rect.svg", alt: "Orlen" },
-  dhl: { file: "dhl-rect.svg", alt: "DHL" },
-  gls: { file: "gls-rect.svg", alt: "GLS" },
-  alzabox: { file: "alzabox-rect.svg", alt: "AlzaBox" },
-  novapost: { file: "novaPost-rect.svg", alt: "Nova Post" },
+  smartposti: { file: "smartposti.svg", alt: "SmartPosti" },
+  itella: { file: "smartposti.svg", alt: "SmartPosti" },
+  omniva: { file: "omniva.svg", alt: "Omniva" },
+  dpd: { file: "dpd.svg", alt: "DPD" },
+  unisend: { file: "unisend.svg", alt: "Unisend" },
+  inpost: { file: "inpost.svg", alt: "InPost" },
+  orlen: { file: "orlen.svg", alt: "Orlen" },
+  dhl: { file: "dhl.svg", alt: "DHL" },
+  gls: { file: "gls.svg", alt: "GLS" },
+  alzabox: { file: "alzabox.svg", alt: "AlzaBox" },
+  novapost: { file: "novaPost.svg", alt: "Nova Post" },
 };
 
 function carrierLogo(
