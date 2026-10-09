@@ -1,8 +1,26 @@
 import { describe, expect, it } from "vitest";
 import {
+  DHL_EXPRESS_SHIPPING_LOGO,
   dedupeShippingRatesByVisual,
+  resolveShippingMethodVisual,
   shippingVisualDedupeKey,
 } from "@/lib/shop/shipping-method-visual";
+
+describe("resolveShippingMethodVisual", () => {
+  it("uses Motorock DHL Express logo for motorock_dhl_express", () => {
+    expect(
+      resolveShippingMethodVisual({
+        id: "motorock_dhl_express:3",
+        methodId: "motorock_dhl_express",
+        label: "DHL Express",
+      }),
+    ).toEqual({
+      kind: "logo",
+      src: DHL_EXPRESS_SHIPPING_LOGO,
+      alt: "DHL Express",
+    });
+  });
+});
 
 describe("shippingVisualDedupeKey", () => {
   it("uses the same key for GLS parcel locker and courier", () => {

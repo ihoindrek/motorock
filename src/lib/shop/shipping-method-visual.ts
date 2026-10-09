@@ -7,6 +7,17 @@ type ShippingRateVisualInput = Pick<ShippingRate, "id" | "label" | "methodId">;
 const MONTONIO_CARRIER_ICONS =
   `${DEFAULT_WOO_STORE_URL}/wp-content/plugins/montonio-for-woocommerce/assets/images/carriers`;
 
+/** Motorock DHL Express Woo method — official logo on storefront CDN. */
+export const DHL_EXPRESS_SHIPPING_LOGO = "/shipping/dhl-express.png";
+
+function dhlExpressShippingVisual(): ShippingMethodVisual {
+  return {
+    kind: "logo",
+    src: DHL_EXPRESS_SHIPPING_LOGO,
+    alt: "DHL Express",
+  };
+}
+
 export type ShippingMethodVisual =
   | { kind: "logo"; src: string; alt: string }
   | { kind: "logos"; items: Array<{ src: string; alt: string }> }
@@ -137,12 +148,16 @@ export function resolveShippingMethodVisual(
     return { kind: "icon", icon: "store" };
   }
 
-  if (methodId === "flat_rate" || label.includes("by agreement")) {
-    return { kind: "icon", icon: "pickup" };
+  if (
+    methodId === "motorock_dhl_express" ||
+    methodId.includes("dhl_express") ||
+    label.includes("dhl express")
+  ) {
+    return dhlExpressShippingVisual();
   }
 
-  if (methodId === "motorock_dhl_express") {
-    return carrierLogo("dhl");
+  if (methodId === "flat_rate" || label.includes("by agreement")) {
+    return { kind: "icon", icon: "pickup" };
   }
 
   const montonioCarrier = montonioCarrierFromMethodId(methodId);
