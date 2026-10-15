@@ -6,11 +6,7 @@ type SendAlertEmailInput = {
 };
 
 export function getMonitoringAlertRecipients(): string[] {
-  const raw =
-    process.env.MONITORING_ALERT_EMAIL?.trim() ||
-    process.env.FORM_BCC_EMAIL?.trim() ||
-    process.env.FORM_DEFAULT_TO?.trim() ||
-    "dev@motorock.eu";
+  const raw = process.env.MONITORING_ALERT_EMAIL?.trim() || "";
 
   return raw
     .split(/[,;]+/)

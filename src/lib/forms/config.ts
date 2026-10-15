@@ -1,7 +1,6 @@
 import type { ContactTopic, FormType } from "@/lib/forms/types";
 
 const FORMS_RECIPIENT = "info@motorock.eu";
-const FORMS_BCC = "dev@motorock.eu";
 const FORMS_FROM = "Motorock <info@motorock.eu>";
 
 export function getFormFromAddress() {
@@ -31,12 +30,12 @@ export function resolveFormRecipient(
   );
 }
 
-/** BCC on staff notification emails (not customer confirmations). */
+/** BCC on staff notification emails (not customer confirmations). Empty unless FORM_BCC_EMAIL is set. */
 export function getFormBccAddresses(): string[] {
   const raw =
     process.env.FORM_BCC_EMAIL?.trim() ||
     process.env.FORM_BCC?.trim() ||
-    FORMS_BCC;
+    "";
 
   return raw
     .split(/[,;]+/)
