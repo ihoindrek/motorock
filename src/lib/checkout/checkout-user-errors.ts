@@ -1,8 +1,18 @@
 const CHECKOUT_STOCK_ERROR =
   /do not have enough|not enough.*in stock|out of stock|0 available/i;
 
+/** Expected WooPayments / Stripe outcomes — not storefront bugs. */
+const CHECKOUT_PAYMENT_DECLINED =
+  /card was declined|your card has been declined|insufficient funds|rules blocked this payment|payment was blocked|do not honor|incorrect cvc|expired card|invalid account/i;
+
 export function isCheckoutStockError(message: string | null | undefined) {
   return Boolean(message && CHECKOUT_STOCK_ERROR.test(message));
+}
+
+export function isCheckoutPaymentDeclinedError(
+  message: string | null | undefined,
+) {
+  return Boolean(message && CHECKOUT_PAYMENT_DECLINED.test(message));
 }
 
 /** Woo sometimes returns the same stock sentence twice in one message. */
@@ -48,5 +58,9 @@ export function formatCheckoutStockError(
 }
 
 export function shouldReportCheckoutError(message: string) {
-  return !isCheckoutStockError(message);
+  const normalized = normalizeCheckoutErrorMessage(message);
+  return (
+    !isCheckoutStockError(normalized) &&
+    !isCheckoutPaymentDeclinedError(normalized)
+  );
 }

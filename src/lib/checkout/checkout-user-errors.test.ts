@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   formatCheckoutStockError,
+  isCheckoutPaymentDeclinedError,
   isCheckoutStockError,
   normalizeCheckoutErrorMessage,
   shouldReportCheckoutError,
@@ -43,5 +44,21 @@ describe("checkout user errors", () => {
     expect(shouldReportCheckoutError("Checkout payment could not be started.")).toBe(
       true,
     );
+  });
+
+  it("detects card declined and Stripe rule blocks", () => {
+    expect(
+      isCheckoutPaymentDeclinedError(
+        "Error: Your card was declined. One of your rules blocked this payment.",
+      ),
+    ).toBe(true);
+  });
+
+  it("does not send Slack alerts for routine payment declines", () => {
+    expect(
+      shouldReportCheckoutError(
+        "Error: Your card was declined. One of your rules blocked this payment.",
+      ),
+    ).toBe(false);
   });
 });
