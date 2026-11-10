@@ -8,8 +8,26 @@ class Shopify_Importer_API {
 
     private $base_url;
 
+    /** @var int */
+    private $last_http_code = 0;
+
+    /** @var int */
+    private $last_retry_after = 0;
+
     public function __construct($base_url) {
         $this->base_url = rtrim($base_url, '/');
+    }
+
+    public function get_last_http_code() {
+        return $this->last_http_code;
+    }
+
+    public function get_last_retry_after() {
+        return $this->last_retry_after;
+    }
+
+    public function was_rate_limited() {
+        return $this->last_http_code === 429;
     }
 
     public static function normalize_url($url) {
@@ -127,11 +145,21 @@ class Shopify_Importer_API {
             ),
         ));
 
+        $this->last_http_code = 0;
+        $this->last_retry_after = 0;
+
         if (is_wp_error($response)) {
             return false;
         }
 
-        $code = wp_remote_retrieve_response_code($response);
+        $code = (int) wp_remote_retrieve_response_code($response);
+        $this->last_http_code = $code;
+
+        $retry_after = wp_remote_retrieve_header($response, 'retry-after');
+        if ($retry_after !== '' && is_numeric($retry_after)) {
+            $this->last_retry_after = (int) $retry_after;
+        }
+
         if ($code !== 200) {
             return false;
         }

@@ -89,6 +89,15 @@ class Shopify_Importer_Product_Importer {
 
         $this->batch_log = array();
         $products = $this->get_products_page($page, $session_key, $session);
+
+        if ($page === 1 && $batch === 0 && empty($products) && $this->api->was_rate_limited()) {
+            $wait = max(60, $this->api->get_last_retry_after());
+            throw new RuntimeException(
+                'Shopify rate limit (HTTP 429). Oota ' . $wait . ' sekundit ja proovi uuesti. '
+                . 'Ära skaneeri kollektsioone vahetult enne importi.'
+            );
+        }
+
         $offset = $batch * self::BATCH_SIZE;
         $batch_products = array_slice($products, $offset, self::BATCH_SIZE);
 
