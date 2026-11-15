@@ -5,9 +5,8 @@ import {
   generateEquipmentHubMetadata,
   renderEquipmentHubPage,
 } from "@/lib/shop/equipment-hub-page";
-import { STOREFRONT_REVALIDATE_SECONDS } from "@/lib/revalidate/cache-policy";
 
-export const revalidate = STOREFRONT_REVALIDATE_SECONDS;
+export const revalidate = 1800;
 
 type TootekategooriaHubPageProps = {
   params: Promise<{ locale: string }>;

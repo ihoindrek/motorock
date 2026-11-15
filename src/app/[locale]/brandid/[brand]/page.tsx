@@ -5,9 +5,8 @@ import {
   generateBrandCatalogMetadata,
   renderBrandCatalogPage,
 } from "@/lib/shop/brand-catalog-page";
-import { STOREFRONT_REVALIDATE_SECONDS } from "@/lib/revalidate/cache-policy";
 
-export const revalidate = STOREFRONT_REVALIDATE_SECONDS;
+export const revalidate = 1800;
 export const maxDuration = 120;
 
 // No build-time prerender (empty list), but having generateStaticParams
@@ -15,7 +14,6 @@ export const maxDuration = 120;
 export function generateStaticParams() {
   return [];
 }
-
 
 type BrandidPageProps = {
   params: Promise<{ locale: string; brand: string }>;

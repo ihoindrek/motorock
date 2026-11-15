@@ -4,9 +4,8 @@ import { isLocale } from "@/i18n/config";
 import { localizedHref } from "@/i18n/paths";
 import { generateBrandCatalogMetadata } from "@/lib/shop/brand-catalog-page";
 import { buildBrandCatalogHref } from "@/lib/shop/brand-url";
-import { STOREFRONT_REVALIDATE_SECONDS } from "@/lib/revalidate/cache-policy";
 
-export const revalidate = STOREFRONT_REVALIDATE_SECONDS;
+export const revalidate = 1800;
 export const maxDuration = 120;
 
 // No build-time prerender (empty list), but having generateStaticParams
@@ -14,7 +13,6 @@ export const maxDuration = 120;
 export function generateStaticParams() {
   return [];
 }
-
 
 type LegacyBrandPageProps = {
   params: Promise<{ locale: string; brand: string }>;

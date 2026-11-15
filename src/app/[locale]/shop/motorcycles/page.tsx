@@ -4,9 +4,8 @@ import { isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/get-dictionary";
 import { getMotorcycleCatalog } from "@/lib/graphql/products";
 import { buildPageMetadata } from "@/lib/seo/metadata";
-import { STOREFRONT_REVALIDATE_SECONDS } from "@/lib/revalidate/cache-policy";
 
-export const revalidate = STOREFRONT_REVALIDATE_SECONDS;
+export const revalidate = 1800;
 
 type MotorcyclesPageProps = {
   params: Promise<{ locale: string }>;

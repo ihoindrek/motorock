@@ -5,16 +5,14 @@ import {
   generateBrandCatalogMetadata,
   renderBrandCatalogPage,
 } from "@/lib/shop/brand-catalog-page";
-import { STOREFRONT_REVALIDATE_SECONDS } from "@/lib/revalidate/cache-policy";
 
-export const revalidate = STOREFRONT_REVALIDATE_SECONDS;
+export const revalidate = 1800;
 
 // No build-time prerender (empty list), but having generateStaticParams
 // opts the route into ISR so visited brand pages get cached on demand.
 export function generateStaticParams() {
   return [];
 }
-
 
 type BrandPageProps = {
   params: Promise<{ locale: string; brand: string }>;

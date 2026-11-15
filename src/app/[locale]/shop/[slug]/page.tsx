@@ -17,9 +17,8 @@ import {
   resolveShopCategoryRoute,
 } from "@/lib/shop/shop-category-route";
 import { buildPageMetadata } from "@/lib/seo/metadata";
-import { STOREFRONT_REVALIDATE_SECONDS } from "@/lib/revalidate/cache-policy";
 
-export const revalidate = STOREFRONT_REVALIDATE_SECONDS;
+export const revalidate = 1800;
 
 type ShopCategoryPageProps = {
   params: Promise<{ locale: string; slug: string }>;
