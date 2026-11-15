@@ -10,8 +10,9 @@ import { isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/get-dictionary";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 import { notFound } from "next/navigation";
+import { STOREFRONT_REVALIDATE_SECONDS } from "@/lib/revalidate/cache-policy";
 
-export const revalidate = 300;
+export const revalidate = STOREFRONT_REVALIDATE_SECONDS;
 
 type HomePageProps = {
   params: Promise<{ locale: string }>;

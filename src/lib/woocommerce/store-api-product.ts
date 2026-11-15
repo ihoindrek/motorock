@@ -1,3 +1,4 @@
+import { STOREFRONT_REVALIDATE_SECONDS } from "@/lib/revalidate/cache-policy";
 import { getWooStoreUrl } from "@/lib/storefront/url";
 import {
   formatSizeLabel,
@@ -153,7 +154,7 @@ export async function fetchStoreProduct(productId: number) {
     const response = await fetch(
       `${getWooStoreUrl()}/wp-json/wc/store/v1/products/${productId}`,
       {
-        next: { revalidate: 300 },
+        next: { revalidate: STOREFRONT_REVALIDATE_SECONDS },
       },
     );
 

@@ -1,6 +1,7 @@
 import { cache } from "react";
 import type { Locale } from "@/i18n/config";
 import { graphqlRequest } from "@/lib/graphql/client";
+import { STOREFRONT_REVALIDATE_SECONDS } from "@/lib/revalidate/cache-policy";
 import {
   EQUIPMENT_CATEGORY_INDEX,
   PRODUCT_CATEGORY_BY_SLUG,
@@ -526,7 +527,7 @@ export async function fetchCategorySeoBySlug(slug: string) {
     const data = await graphqlRequest<CategorySeoBySlugResponse, { slug: string }>(
       CATEGORY_SEO_BY_SLUG,
       { slug },
-      { next: { revalidate: 300 } },
+      { next: { revalidate: STOREFRONT_REVALIDATE_SECONDS } },
     );
 
     const node = data.productCategory;

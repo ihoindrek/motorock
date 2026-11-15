@@ -4,8 +4,9 @@ import {
   generateProductPageMetadata,
   renderProductPage,
 } from "@/lib/shop/product-page";
+import { STOREFRONT_REVALIDATE_SECONDS } from "@/lib/revalidate/cache-policy";
 
-export const revalidate = 300;
+export const revalidate = STOREFRONT_REVALIDATE_SECONDS;
 
 // No build-time prerender (empty list), but having generateStaticParams
 // opts the route into ISR so visited paths get cached on demand.

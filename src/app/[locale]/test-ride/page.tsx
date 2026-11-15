@@ -1,6 +1,7 @@
 import { TestRideView } from "@/components/shop/test-ride-view";
 import { isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/get-dictionary";
+import { STOREFRONT_REVALIDATE_SECONDS } from "@/lib/revalidate/cache-policy";
 
 export async function generateMetadata({
   params,
@@ -21,7 +22,7 @@ export async function generateMetadata({
   };
 }
 
-export const revalidate = 300;
+export const revalidate = STOREFRONT_REVALIDATE_SECONDS;
 
 // Prefill values are read from the query string client-side so the page
 // stays static (reading searchParams on the server would force dynamic

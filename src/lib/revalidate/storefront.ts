@@ -1,7 +1,4 @@
 import { revalidatePath, revalidateTag } from "next/cache";
-import { buildToolsCategoryHref } from "@/lib/shop/shop-category-route";
-import { buildEquipmentHubHref } from "@/lib/shop/category-url";
-import { buildBrandCatalogHref } from "@/lib/shop/brand-url";
 import {
   buildProductHref,
   LEGACY_PRODUCT_PATH_PREFIX,
@@ -39,7 +36,10 @@ export function revalidateWooCatalogTags() {
   }
 }
 
-/** Purge WooCommerce-tagged fetch cache and ISR pages across the storefront. */
+/**
+ * Purge WooCommerce-tagged fetch cache and shared hub pages.
+ * Avoids layout-wide revalidatePath storms (major ISR write cost on Vercel).
+ */
 export function revalidateStorefront() {
   revalidateTag("woocommerce", "max");
   revalidateWooCatalogTags();
@@ -48,19 +48,5 @@ export function revalidateStorefront() {
   for (const locale of LOCALES) {
     revalidatePath(`/${locale}/blog`);
     revalidatePath(`/${locale}/search`);
-    revalidatePath(`/${locale}/cart`);
-    revalidatePath(`/${locale}/shop`, "layout");
-    revalidatePath(`/${locale}/shop/product`, "layout");
-    revalidatePath(`/${locale}/product`, "layout");
-    revalidatePath(`/${locale}/toode`, "layout");
-    revalidatePath(`/${locale}/shop/equipment`, "layout");
-    revalidatePath(`/${locale}/tootekategooria`, "layout");
-    revalidatePath(`/${locale}/shop/brands`, "layout");
-    revalidatePath(`/${locale}/brand`, "layout");
-    revalidatePath(`/${locale}/brandid`, "layout");
-    revalidatePath(`/${locale}/shop/motorcycles`);
-    revalidatePath(`/${locale}/shop/tools`);
-    revalidatePath(`/${locale}${buildToolsCategoryHref(locale)}`);
-    revalidatePath(`/${locale}${buildEquipmentHubHref(locale)}`);
   }
 }

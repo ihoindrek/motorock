@@ -9,8 +9,9 @@ import {
   BLOG_INITIAL_PAGE_SIZE,
 } from "@/lib/blog/posts";
 import { buildPageMetadata } from "@/lib/seo/metadata";
+import { STOREFRONT_REVALIDATE_SECONDS } from "@/lib/revalidate/cache-policy";
 
-export const revalidate = 300;
+export const revalidate = STOREFRONT_REVALIDATE_SECONDS;
 
 type BlogPageProps = {
   params: Promise<{ locale: string }>;

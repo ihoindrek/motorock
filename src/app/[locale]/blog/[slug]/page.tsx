@@ -18,12 +18,13 @@ import {
   buildBreadcrumbJsonLd,
 } from "@/lib/seo/site-schema";
 import { getStorefrontUrl } from "@/lib/storefront/url";
+import { STOREFRONT_REVALIDATE_SECONDS } from "@/lib/revalidate/cache-policy";
 
 type BlogPostPageProps = {
   params: Promise<{ locale: string; slug: string }>;
 };
 
-export const revalidate = 300;
+export const revalidate = STOREFRONT_REVALIDATE_SECONDS;
 
 // No build-time prerender — blog posts fetch WordPress at runtime and ISR-cache.
 export function generateStaticParams() {

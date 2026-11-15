@@ -1,3 +1,4 @@
+import { CATALOG_REVALIDATE_DEBOUNCE_MS } from "@/lib/revalidate/cache-policy";
 import { runDebounced } from "@/lib/revalidate/debounce";
 import {
   revalidateStorefront,
@@ -11,6 +12,14 @@ import {
 } from "@/lib/revalidate/woocommerce-webhook";
 
 const CATALOG_DEBOUNCE_KEY = "woocommerce-catalog";
+
+function runCatalogRevalidateDebounced() {
+  return runDebounced(
+    CATALOG_DEBOUNCE_KEY,
+    revalidateWooCatalogTags,
+    CATALOG_REVALIDATE_DEBOUNCE_MS,
+  );
+}
 
 export type WooWebhookRevalidateResult = {
   mode: "full" | "product" | "catalog" | "skipped";
@@ -28,7 +37,7 @@ export function revalidateFromWooWebhook(
   if (isProductWebhookTopic(topic) && slug) {
     revalidateWooProduct(slug);
 
-    const debounced = !runDebounced(CATALOG_DEBOUNCE_KEY, revalidateWooCatalogTags);
+    const debounced = !runCatalogRevalidateDebounced();
 
     return {
       mode: "product",
@@ -37,7 +46,7 @@ export function revalidateFromWooWebhook(
     };
   }
 
-  const debounced = !runDebounced(CATALOG_DEBOUNCE_KEY, revalidateWooCatalogTags);
+  const debounced = !runCatalogRevalidateDebounced();
 
   return {
     mode: debounced ? "skipped" : "catalog",

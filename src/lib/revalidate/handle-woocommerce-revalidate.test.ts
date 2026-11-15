@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { CATALOG_REVALIDATE_DEBOUNCE_MS } from "@/lib/revalidate/cache-policy";
 import { resetDebounced, runDebounced } from "@/lib/revalidate/debounce";
 import { revalidateFromWooWebhook } from "@/lib/revalidate/handle-woocommerce-revalidate";
 
@@ -49,8 +50,8 @@ describe("runDebounced", () => {
   it("runs at most once within the interval", () => {
     const fn = vi.fn();
 
-    expect(runDebounced("test-key", fn, 60_000)).toBe(true);
-    expect(runDebounced("test-key", fn, 60_000)).toBe(false);
+    expect(runDebounced("test-key", fn, CATALOG_REVALIDATE_DEBOUNCE_MS)).toBe(true);
+    expect(runDebounced("test-key", fn, CATALOG_REVALIDATE_DEBOUNCE_MS)).toBe(false);
     expect(fn).toHaveBeenCalledTimes(1);
   });
 });

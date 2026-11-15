@@ -1,4 +1,5 @@
 import { isLocale, type Locale } from "@/i18n/config";
+import { STOREFRONT_REVALIDATE_SECONDS } from "@/lib/revalidate/cache-policy";
 import { getWooInternalSecret } from "@/lib/woocommerce/internal-secret";
 
 type WpmlSlugAlternatesResponse = {
@@ -25,7 +26,10 @@ export async function fetchWpmlProductSlugAlternates(
 
     const response = await fetch(endpoint.toString(), {
       headers: { "X-Motorock-Internal-Secret": secret },
-      next: { revalidate: 300, tags: ["woocommerce", "product-slug-alternates"] },
+      next: {
+        revalidate: STOREFRONT_REVALIDATE_SECONDS,
+        tags: ["woocommerce", "product-slug-alternates"],
+      },
     });
 
     if (!response.ok) {

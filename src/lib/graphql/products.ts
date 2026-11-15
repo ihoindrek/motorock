@@ -3,6 +3,7 @@ import { cache } from "react";
 import type { Locale } from "@/i18n/config";
 import type { CatalogProduct } from "@/types/catalog-product";
 import type { MotorcycleProduct } from "@/types/motorcycle-product";
+import { STOREFRONT_REVALIDATE_SECONDS } from "@/lib/revalidate/cache-policy";
 import {
   pickSimilarProducts,
   RELATED_PRODUCTS_LIMIT,
@@ -101,7 +102,7 @@ function catalogFetchCacheOptions(where: CatalogWhere) {
   }
 
   return {
-    revalidate: 300,
+    revalidate: STOREFRONT_REVALIDATE_SECONDS,
     tags,
   } as const;
 }
@@ -805,13 +806,13 @@ async function fetchHomepageFavoriteCatalogsUncached(
 const getHomepageFavoriteCatalogsEn = unstable_cache(
   () => fetchHomepageFavoriteCatalogsUncached("en"),
   ["homepage-favorite-catalogs", "en", "v2"],
-  { revalidate: 300, tags: ["woocommerce", "homepage-en"] },
+  { revalidate: STOREFRONT_REVALIDATE_SECONDS, tags: ["woocommerce", "homepage-en"] },
 );
 
 const getHomepageFavoriteCatalogsEt = unstable_cache(
   () => fetchHomepageFavoriteCatalogsUncached("et"),
   ["homepage-favorite-catalogs", "et", "v2"],
-  { revalidate: 300, tags: ["woocommerce", "homepage-et"] },
+  { revalidate: STOREFRONT_REVALIDATE_SECONDS, tags: ["woocommerce", "homepage-et"] },
 );
 
 const homepageFavoriteCatalogsByLocale = {
@@ -864,25 +865,25 @@ async function fetchEquipmentCatalogUncached(
 const getMotorcycleCatalogEn = unstable_cache(
   () => fetchMotorcycleCatalogUncached("en"),
   ["motorcycle-catalog", "en"],
-  { revalidate: 300, tags: ["woocommerce", "motorcycle-catalog"] },
+  { revalidate: STOREFRONT_REVALIDATE_SECONDS, tags: ["woocommerce", "motorcycle-catalog"] },
 );
 
 const getMotorcycleCatalogEt = unstable_cache(
   () => fetchMotorcycleCatalogUncached("et"),
   ["motorcycle-catalog", "et"],
-  { revalidate: 300, tags: ["woocommerce", "motorcycle-catalog"] },
+  { revalidate: STOREFRONT_REVALIDATE_SECONDS, tags: ["woocommerce", "motorcycle-catalog"] },
 );
 
 const getEquipmentCatalogEn = unstable_cache(
   () => fetchEquipmentCatalogUncached("en"),
   ["equipment-catalog", "en"],
-  { revalidate: 300, tags: ["woocommerce", "equipment-catalog"] },
+  { revalidate: STOREFRONT_REVALIDATE_SECONDS, tags: ["woocommerce", "equipment-catalog"] },
 );
 
 const getEquipmentCatalogEt = unstable_cache(
   () => fetchEquipmentCatalogUncached("et"),
   ["equipment-catalog", "et"],
-  { revalidate: 300, tags: ["woocommerce", "equipment-catalog"] },
+  { revalidate: STOREFRONT_REVALIDATE_SECONDS, tags: ["woocommerce", "equipment-catalog"] },
 );
 
 const motorcycleCatalogByLocale = {
@@ -924,7 +925,7 @@ function getEquipmentBrandCatalogCached(
     () => fetchEquipmentBrandCatalogUncached(brandSlug, brandName, locale),
     ["equipment-brand-catalog", brandSlug, locale],
     {
-      revalidate: 300,
+      revalidate: STOREFRONT_REVALIDATE_SECONDS,
       tags: ["woocommerce", "equipment-catalog", `brand-${brandSlug}`],
     },
   );

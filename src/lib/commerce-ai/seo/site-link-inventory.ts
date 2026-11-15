@@ -1,5 +1,6 @@
 import type { Locale } from "@/i18n/config";
 import { localizedHref } from "@/i18n/paths";
+import { STOREFRONT_REVALIDATE_SECONDS } from "@/lib/revalidate/cache-policy";
 import {
   EQUIPMENT_ROOT_SLUGS,
   fetchEquipmentCategoryIndex,
@@ -61,7 +62,7 @@ async function fetchProductLinks(locale: Locale, limit: number): Promise<SiteLin
     const data = await graphqlRequest<
       { products?: { nodes?: ProductNode[] } },
       { first: number }
-    >(PRODUCTS_QUERY, { first: limit }, { next: { revalidate: 300 } });
+    >(PRODUCTS_QUERY, { first: limit }, { next: { revalidate: STOREFRONT_REVALIDATE_SECONDS } });
 
     const links: SiteLink[] = [];
 
