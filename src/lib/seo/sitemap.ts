@@ -35,7 +35,7 @@ const STATIC_PATHS = [
   "/contact",
   "/blog",
   "/shop/motorcycles",
-  "/shop/tools",
+  // /shop/tools is emitted via collectCategoryPathMap with localized pathAlternates
   "/shipping",
   "/privacy",
   "/terms",
@@ -73,6 +73,8 @@ function buildPathAlternates(
 
   if (languages.en) {
     languages["x-default"] = languages.en;
+  } else if (languages.et) {
+    languages["x-default"] = languages.et;
   }
 
   return languages;
@@ -150,15 +152,18 @@ async function fetchAllProductCards(): Promise<GraphQLProductCard[]> {
   return nodes;
 }
 
-function collectEquipmentCategoryPaths(
+function collectEquipmentCategoryPathMap(
   locale: Locale,
   index: EquipmentCategoryIndex,
 ) {
-  const paths = new Set<string>();
+  const paths = new Map<string, string>();
 
   const walk = (node: WcCategoryEntry, chain: WcCategoryEntry[]) => {
     const fullChain = [...chain, node];
-    paths.add(buildEquipmentCategoryHrefFromNodes(fullChain, locale));
+    paths.set(
+      `equipment:${node.slug}`,
+      buildEquipmentCategoryHrefFromNodes(fullChain, locale),
+    );
 
     for (const child of index.nodes.values()) {
       if (child.parentSlug === node.slug) {
@@ -175,33 +180,34 @@ function collectEquipmentCategoryPaths(
     }
   }
 
-  return [...paths];
+  return paths;
 }
 
-function collectCategoryPaths(
+/** Stable key → localized path, so EN/ET can share one sitemap entry + hreflang. */
+function collectCategoryPathMap(
   locale: Locale,
   index: Awaited<ReturnType<typeof fetchEquipmentCategoryIndex>>,
 ) {
+  const paths = new Map<string, string>();
+
   if (!index) {
-    return [] as string[];
+    return paths;
   }
 
-  const paths = new Set<string>();
+  paths.set("equipment-hub", buildEquipmentHubHref(locale));
+  paths.set("tools", buildToolsCategoryHref(locale));
 
-  paths.add(buildEquipmentHubHref(locale));
-  paths.add(buildToolsCategoryHref(locale));
-
-  for (const path of collectEquipmentCategoryPaths(locale, index)) {
-    paths.add(path);
+  for (const [key, path] of collectEquipmentCategoryPathMap(locale, index)) {
+    paths.set(key, path);
   }
 
   for (const node of index.nodes.values()) {
     if (isStandaloneShopCategory(node, index)) {
-      paths.add(buildShopCategoryHref(node, locale));
+      paths.set(`shop:${node.slug}`, buildShopCategoryHref(node, locale));
     }
   }
 
-  return [...paths];
+  return paths;
 }
 
 function escapeXml(value: string) {
@@ -316,17 +322,46 @@ export async function buildSitemap(): Promise<MetadataRoute.Sitemap> {
     }
   }
 
-  for (const locale of locales) {
-    const categoryIndex = locale === "en" ? enCategoryIndex : etCategoryIndex;
+  const enCategoryPaths = collectCategoryPathMap("en", enCategoryIndex);
+  const etCategoryPaths = collectCategoryPathMap("et", etCategoryIndex);
+  const categoryKeys = new Set([
+    ...enCategoryPaths.keys(),
+    ...etCategoryPaths.keys(),
+  ]);
 
-    for (const path of collectCategoryPaths(locale, categoryIndex)) {
-      entries.push(sitemapEntry(path, { locale }));
+  for (const key of categoryKeys) {
+    const pathAlternates: Partial<Record<Locale, string>> = {};
+    const enPath = enCategoryPaths.get(key);
+    const etPath = etCategoryPaths.get(key);
+
+    if (enPath) {
+      pathAlternates.en = enPath;
     }
+    if (etPath) {
+      pathAlternates.et = etPath;
+    }
+    if (!pathAlternates.en && !pathAlternates.et) {
+      continue;
+    }
+
+    const primaryLocale: Locale = pathAlternates.en ? "en" : "et";
+    entries.push(
+      sitemapEntry(pathAlternates[primaryLocale] as string, {
+        locale: primaryLocale,
+        pathAlternates,
+      }),
+    );
   }
 
   for (const blogEntry of blogEntries) {
+    const blogLocales = Object.keys(blogEntry.slugAlternates) as Locale[];
+    if (blogLocales.length === 0) {
+      continue;
+    }
+
     entries.push(
       sitemapEntry("/blog/post", {
+        locale: blogEntry.slugAlternates.en ? "en" : "et",
         slugAlternates: blogEntry.slugAlternates,
         slugPathTemplate: "/blog/{slug}",
         lastModified: blogEntry.lastModified,
@@ -336,7 +371,8 @@ export async function buildSitemap(): Promise<MetadataRoute.Sitemap> {
 
   for (const product of products) {
     const slugAlternates = buildProductSlugAlternates(product);
-    const primarySlug = slugAlternates.en ?? slugAlternates.et;
+    const primaryLocale: Locale = slugAlternates.en ? "en" : "et";
+    const primarySlug = slugAlternates[primaryLocale];
 
     if (!primarySlug) {
       continue;
@@ -347,6 +383,7 @@ export async function buildSitemap(): Promise<MetadataRoute.Sitemap> {
 
     entries.push(
       sitemapEntry("/product/item", {
+        locale: primaryLocale,
         slugAlternates,
         slugPathTemplate: PRODUCT_SLUG_PATH_TEMPLATES,
         lastModified:

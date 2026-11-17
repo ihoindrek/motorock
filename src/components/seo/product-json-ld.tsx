@@ -5,6 +5,12 @@ import {
 } from "@/lib/seo/product-schema";
 import type { ProductSeoSnapshot } from "@/lib/seo/product-metadata";
 
+/** Fallback for Merchant/rich results when page-specific rates are not passed. */
+const DEFAULT_SCHEMA_SHIPPING: ProductSchemaShipping = {
+  cost: 2.99,
+  country: "EE",
+};
+
 type ProductJsonLdProps = {
   product: ProductSeoSnapshot;
   shipping?: ProductSchemaShipping;
@@ -12,7 +18,9 @@ type ProductJsonLdProps = {
 };
 
 export function ProductJsonLd({ product, shipping, faq }: ProductJsonLdProps) {
-  const schema = buildProductJsonLd(product, { shipping });
+  const schema = buildProductJsonLd(product, {
+    shipping: shipping ?? DEFAULT_SCHEMA_SHIPPING,
+  });
   const faqSchema = faq ? buildFaqJsonLd(faq) : null;
 
   return (

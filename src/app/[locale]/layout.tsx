@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { CookieConsentUi } from "@/components/consent/cookie-consent-ui";
 import { GiveawayPopup } from "@/components/marketing/giveaway-popup";
@@ -12,7 +13,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { MainContent } from "@/components/layout/main-content";
 import { JsonLd } from "@/components/seo/json-ld";
-import { isLocale, locales } from "@/i18n/config";
+import { isLocale, locales, type Locale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/get-dictionary";
 import {
   buildOrganizationJsonLd,
@@ -26,8 +27,34 @@ type LocaleLayoutProps = {
   params: Promise<{ locale: string }>;
 };
 
+const OPEN_GRAPH_LOCALE: Record<Locale, string> = {
+  en: "en_GB",
+  et: "et_EE",
+};
+
 export function generateStaticParams() {
   return locales.map((locale) => ({ locale }));
+}
+
+/** Helps crawlers that miss the client lang script on <html>. */
+export async function generateMetadata({
+  params,
+}: LocaleLayoutProps): Promise<Metadata> {
+  const { locale: localeParam } = await params;
+
+  if (!isLocale(localeParam)) {
+    return {};
+  }
+
+  return {
+    openGraph: {
+      locale: OPEN_GRAPH_LOCALE[localeParam],
+    },
+    other: {
+      language: localeParam,
+      "content-language": localeParam,
+    },
+  };
 }
 
 export default async function LocaleLayout({

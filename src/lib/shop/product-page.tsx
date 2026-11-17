@@ -100,7 +100,7 @@ export async function generateProductPageMetadata({
   const product = await getProductBySlug(slug, locale);
 
   if (!product) {
-    return { title: "Product not found" };
+    notFound();
   }
 
   return buildProductPageMetadataFromSnapshot(

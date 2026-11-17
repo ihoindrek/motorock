@@ -21,7 +21,7 @@ export async function generateMetadata({ params }: ProductPageProps) {
   const { locale: localeParam, slug } = await params;
 
   if (!isLocale(localeParam)) {
-    return { title: "Product not found" };
+    notFound();
   }
 
   return generateProductPageMetadata({ locale: localeParam, slug });

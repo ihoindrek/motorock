@@ -81,6 +81,8 @@ export const viewport: Viewport = {
  * read the locale on the server without headers(), which would force every
  * route dynamic and disable ISR/CDN caching.
  */
+// Runs before paint so crawlers that execute JS still see the right lang.
+// Server HTML keeps lang={defaultLocale} to preserve ISR (no headers()).
 const langScript = `document.documentElement.lang=${JSON.stringify(
   Object.fromEntries(locales.map((locale) => [locale, locale])),
 )}[location.pathname.split("/")[1]]||${JSON.stringify(defaultLocale)};`;

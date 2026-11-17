@@ -71,6 +71,22 @@ export function resolveLocalizedPath(
         template.replace("{slug}", slug),
       );
     }
+
+    // Slug-based routes must never fall back to the template placeholder
+    // (e.g. /product/item → /et/product/item). Prefer another locale's real path.
+    for (const fallbackLocale of locales) {
+      const fallbackSlug = slugAlternates[fallbackLocale];
+      const fallbackTemplate = resolveSlugPathTemplate(
+        fallbackLocale,
+        slugPathTemplate,
+      );
+      if (fallbackSlug && fallbackTemplate) {
+        return localizedHref(
+          fallbackLocale,
+          fallbackTemplate.replace("{slug}", fallbackSlug),
+        );
+      }
+    }
   }
 
   return localizedHref(locale, pathname);
@@ -82,21 +98,33 @@ export function buildLanguageAlternates(
   slugPathTemplate?: string | Partial<Record<Locale, string>>,
 ) {
   const languages: Record<string, string> = {};
+  const usesSlugTemplate = Boolean(slugPathTemplate);
 
   for (const locale of locales) {
     const template = resolveSlugPathTemplate(locale, slugPathTemplate);
+    const slug = slugAlternates?.[locale];
 
-    languages[locale] = absoluteUrl(
-      template && slugAlternates?.[locale]
-        ? localizedHref(
-            locale,
-            template.replace("{slug}", slugAlternates[locale] as string),
-          )
-        : localizedHref(locale, pathname),
-    );
+    if (usesSlugTemplate) {
+      // Only emit hreflang when this locale has a real translated slug.
+      // Missing ET used to fall back to /et/product/item (529 bad URLs).
+      if (!template || !slug) {
+        continue;
+      }
+
+      languages[locale] = absoluteUrl(
+        localizedHref(locale, template.replace("{slug}", slug)),
+      );
+      continue;
+    }
+
+    languages[locale] = absoluteUrl(localizedHref(locale, pathname));
   }
 
-  languages["x-default"] = languages.en;
+  if (languages.en) {
+    languages["x-default"] = languages.en;
+  } else if (languages.et) {
+    languages["x-default"] = languages.et;
+  }
 
   return languages;
 }
