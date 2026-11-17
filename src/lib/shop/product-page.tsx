@@ -100,7 +100,12 @@ export async function generateProductPageMetadata({
   const product = await getProductBySlug(slug, locale);
 
   if (!product) {
-    notFound();
+    // Do not call notFound() here — in generateMetadata it can yield HTTP 200
+    // + noindex (soft 404). The page body calls notFound() for a real 404.
+    return {
+      title: "Product not found",
+      robots: { index: false, follow: false },
+    };
   }
 
   return buildProductPageMetadataFromSnapshot(
