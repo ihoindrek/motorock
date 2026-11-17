@@ -329,6 +329,8 @@ export async function buildSitemap(): Promise<MetadataRoute.Sitemap> {
     ...etCategoryPaths.keys(),
   ]);
 
+  const seenCategoryLocs = new Set<string>();
+
   for (const key of categoryKeys) {
     const pathAlternates: Partial<Record<Locale, string>> = {};
     const enPath = enCategoryPaths.get(key);
@@ -345,8 +347,15 @@ export async function buildSitemap(): Promise<MetadataRoute.Sitemap> {
     }
 
     const primaryLocale: Locale = pathAlternates.en ? "en" : "et";
+    const primaryPath = pathAlternates[primaryLocale] as string;
+    const dedupeKey = `${primaryLocale}:${primaryPath}`;
+    if (seenCategoryLocs.has(dedupeKey)) {
+      continue;
+    }
+    seenCategoryLocs.add(dedupeKey);
+
     entries.push(
-      sitemapEntry(pathAlternates[primaryLocale] as string, {
+      sitemapEntry(primaryPath, {
         locale: primaryLocale,
         pathAlternates,
       }),

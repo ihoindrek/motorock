@@ -1,6 +1,10 @@
 import { notFound } from "next/navigation";
 import { isLocale } from "@/i18n/config";
 import {
+  getMotorcycleProductBySlug,
+  getProductBySlug,
+} from "@/lib/graphql/products";
+import {
   generateProductPageMetadata,
   renderProductPage,
 } from "@/lib/shop/product-page";
@@ -34,6 +38,15 @@ export default async function ProductPage({ params }: ProductPageProps) {
   const { locale: localeParam, slug } = await params;
 
   if (!isLocale(localeParam)) {
+    notFound();
+  }
+
+  // Call notFound in the route module (same pattern as blog) so Next sets HTTP 404.
+  const [motorcycle, product] = await Promise.all([
+    getMotorcycleProductBySlug(slug, localeParam),
+    getProductBySlug(slug, localeParam),
+  ]);
+  if (!motorcycle && !product) {
     notFound();
   }
 
